@@ -33,6 +33,7 @@ class BoardTests(unittest.TestCase):
  def test_visual_formula_safety_and_uncertainty(self):
   formulas=[{'latex':r'y=x^2','confidence':.95},{'latex':r'\href{https://x}{a}','confidence':1},{'latex':'{x','confidence':1},{'latex':'x=...','confidence':1},{'latex':'x=3','confidence':.4}]
   value=clean({'visible_text':'y=x²','formulas':formulas});self.assertEqual(value['formulas'],[{'latex':'y=x^2','confidence':.95,'source':'board-photo'}])
+  self.assertEqual(clean({'formulas':[{'latex':r'\\frac{\\sin(3x)}{x}','confidence':.95}]})['formulas'][0]['latex'],r'\frac{\sin(3x)}{x}')
  def test_verified_import_ack_duplicate_and_conflict(self):
   with tempfile.TemporaryDirectory() as directory:
    root=Path(directory);item={'name':NAME,'bytes':len(PAYLOAD),'sha256':SHA,'kind':'board_photo','captured_ms':CAPTURED,'source_recording':'lecture-1.wav','offset_seconds':6}

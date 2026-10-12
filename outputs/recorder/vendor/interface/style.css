@@ -74,3 +74,5 @@
 .lecture-recall{background:#22302a;border:1px solid #527064;padding:18px 22px;border-radius:14px;margin:20px 0}.lecture-recall article{padding:12px 0;border-top:1px solid #3c5349}.lecture-recall a{margin-left:12px}
 
 .board-inbox{margin-bottom:24px}.board-inbox-card,.board-photo{margin:14px 0;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}.board-photo img{display:block;width:100%;max-height:380px;object-fit:contain;border-radius:10px;background:#161819}.board-photo img.expanded{max-height:none}.board-photo-formula{overflow-x:auto;padding:8px 0}.board-photo figcaption{font-weight:600;margin-top:10px}.board-photo input{max-width:170px}.board-attachments{margin:12px 0}.board-inbox-card select{width:100%}
+
+.board-photo>small{display:block;margin-top:6px}

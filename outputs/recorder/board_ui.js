@@ -1,7 +1,7 @@
 /* Phone snapshots stay visible even when no confident lecture match is available. */
 function boardPhotoFigure(photo,source){
  const figure=el('figure',undefined,'board-photo'),analysis=photo.analysis||{},image=el('img');image.src=source||'/photos/'+photo.id;image.alt=analysis.title||'Фото доски';image.loading='lazy';figure.append(image);
- figure.append(el('figcaption',analysis.title||'Фото доски'));if(photo.start!==undefined)figure.append(el('small',timeLabel(photo.start),'muted'));
+ figure.append(el('figcaption',analysis.title||'Фото доски'));if(photo.start!==undefined)figure.append(el('small','Момент лекции · '+timeLabel(photo.start),'muted'));
  if(photo.matching?.method)figure.append(el('small',photo.matching.method==='manual'?'Момент выбран вручную':photo.matching.method.includes('+content')?'Момент найден по времени и надписям':'Момент выбран по времени съёмки','muted'));
  if(analysis.description)figure.append(el('p',analysis.description));
  for(const item of analysis.formulas||[]){const formula=el('div',undefined,'board-photo-formula');try{katex.render(item.latex,formula,{displayMode:true,throwOnError:false,trust:false})}catch{formula.textContent=item.latex}figure.append(formula)}
