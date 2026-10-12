@@ -8,10 +8,13 @@ b=io.BytesIO()
 with wave.open(b,'wb') as w:w.setparams((1,2,16000,0,'NONE','not compressed'));w.writeframes(b'\x01\x00'*16000)
 PAYLOAD=b.getvalue();SHA=hashlib.sha256(PAYLOAD).hexdigest();NAME='lecture-2026-10-12-12-00-00-123000.wav'
 class H(BaseHTTPRequestHandler):
- data=PAYLOAD;ack=0;fail=False
+ data=PAYLOAD;ack=0;fail=False;cutoff=None;ranges=[]
  def log_message(self,*_):pass
  def do_GET(self):
-  self.send_response(200);self.send_header('Content-Length',str(len(self.data)));self.end_headers();self.wfile.write(self.data)
+  requested=self.headers.get('Range');H.ranges.append(requested);offset=int(requested.removeprefix('bytes=').removesuffix('-')) if requested else 0
+  self.send_response(206 if requested else 200);self.send_header('Content-Length',str(len(self.data)-offset))
+  if requested:self.send_header('Content-Range','bytes '+str(offset)+'-'+str(len(self.data)-1)+'/'+str(len(self.data)))
+  self.end_headers();self.wfile.write(self.data[offset:H.cutoff] if H.cutoff is not None else self.data[offset:])
  def do_POST(self):
   H.ack+=1;self.rfile.read(int(self.headers['Content-Length']));self.send_response(500 if H.fail else 200);self.end_headers();self.wfile.write(b'{"ok":true}')
 class Tests(unittest.TestCase):
@@ -19,7 +22,7 @@ class Tests(unittest.TestCase):
  def setUpClass(cls):cls.server=ThreadingHTTPServer(('127.0.0.1',0),H);threading.Thread(target=cls.server.serve_forever,daemon=True).start();cls.base='http://127.0.0.1:'+str(cls.server.server_port)
  @classmethod
  def tearDownClass(cls):cls.server.shutdown();cls.server.server_close()
- def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);self.files=self.root/'files';self.files.mkdir();self.ledger=self.root/'ledger.json';H.ack=0;H.data=PAYLOAD;H.fail=False;self.item={'name':NAME,'bytes':len(PAYLOAD),'sha256':SHA}
+ def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);self.files=self.root/'files';self.files.mkdir();self.ledger=self.root/'ledger.json';H.ack=0;H.data=PAYLOAD;H.fail=False;H.cutoff=None;H.ranges=[];self.item={'name':NAME,'bytes':len(PAYLOAD),'sha256':SHA}
  def tearDown(self):self.tmp.cleanup()
  def run_import(self):
   with patch('phone_sync.queue_pending'),patch('lesson_schedule.organize'):
@@ -42,6 +45,13 @@ class Tests(unittest.TestCase):
   H.data=PAYLOAD[:-100];self.item['bytes']=len(H.data);self.item['sha256']=hashlib.sha256(H.data).hexdigest()
   with self.assertRaises(ValueError):self.run_import()
   self.assertEqual(H.ack,0)
+ def test_interrupted_download_resumes_verified_partial_copy(self):
+  H.cutoff=10000
+  with self.assertRaises(ConnectionError):self.run_import()
+  self.assertEqual(H.ack,0);self.assertEqual((self.files/(NAME+'.phone-part')).stat().st_size,10000)
+  H.cutoff=None;self.run_import()
+  self.assertEqual(H.ranges,[None,'bytes=10000-']);self.assertEqual(H.ack,1)
+  self.assertEqual(phone_sync.digest(self.files/NAME),SHA)
  def test_bad_name_never_ack(self):
   self.item['name']='../outside.wav'
   with self.assertRaises(ValueError):self.run_import()

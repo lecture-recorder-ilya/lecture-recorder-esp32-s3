@@ -2,6 +2,7 @@ import array
 import glob
 import json
 import math
+import os
 import queue
 import shutil
 import socket
@@ -194,6 +195,8 @@ def capture(transport):
     global connection
     stream = None
     output = None
+    raw = None
+    last_checkpoint = 0
     count = 0
     gaps = []
     gap_start = None
@@ -251,7 +254,8 @@ def capture(transport):
                         raise RuntimeError('Нет ответа от программы микрофона.')
                     if output is None:
                         filename = datetime.now(ZoneInfo('Europe/Moscow')).strftime('lecture-%Y-%m-%d-%H-%M-%S') + '-' + str(time.time_ns() % 1000000) + '.wav'
-                        output = wave.open(str(FILES / filename), 'wb')
+                        raw = (FILES / filename).open('w+b')
+                        output = wave.open(raw, 'wb')
                         output.setnchannels(1)
                         output.setsampwidth(2)
                         output.setframerate(16000)
@@ -272,6 +276,11 @@ def capture(transport):
                 finish_gap()
                 output.writeframesraw(data)
                 count += length // 2
+                if time.monotonic() - last_checkpoint >= 2:
+                    output.writeframes(b'')
+                    raw.flush()
+                    os.fsync(raw.fileno())
+                    last_checkpoint = time.monotonic()
                 last_audio = time.monotonic()
                 values = array.array('h', data)
                 rms = math.sqrt(sum(v*v for v in values) / len(values))
@@ -300,6 +309,9 @@ def capture(transport):
         if output:
             finish_gap()
             output.close()
+            raw.flush()
+            os.fsync(raw.fileno())
+            raw.close()
         with lock:
             state.update(recording=False, busy=False, reconnecting=False, level=0)
             completed = filename if filename and not state.get('error') else None
@@ -376,13 +388,21 @@ class Handler(BaseHTTPRequestHandler):
         global worker
         if self.headers.get('Origin') not in (None, 'http://127.0.0.1:8765', 'http://localhost:8765'):
             return self.reply({'error': 'Запрос отклонён'}, 403)
-        length = int(self.headers.get('Content-Length', 0))
-        if length > 4096:
+        try:
+            length = int(self.headers.get('Content-Length', 0))
+        except ValueError:
+            return self.reply({'error': 'Некорректный размер запроса'}, 400)
+        if not 0 <= length <= 4096:
             return self.reply({'error': 'Слишком большой запрос'}, 413)
         try:
             body = json.loads(self.rfile.read(length)) if length else {}
         except (ValueError, UnicodeDecodeError):
             return self.reply({'error': 'Некорректный запрос'}, 400)
+        if not isinstance(body, dict):
+            return self.reply({'error': 'Нужен объект JSON'}, 400)
+        with lock:
+            if state.get('updating'):
+                return self.reply({'error': 'Устанавливается обновление'}, 409)
         if self.path == '/ai-settings':
             if 'economical' in body:
                 ai_service.set_economical(body['economical'])
@@ -434,6 +454,16 @@ class Handler(BaseHTTPRequestHandler):
             worker = threading.Thread(target=capture, args=(transport,), daemon=True)
             worker.start()
             return self.reply({'ok': True})
+        if self.path == '/shutdown-for-update':
+            with lock:
+                with ai_service.lock:
+                    if state['recording'] or state['busy'] or ai_service.pending:
+                        return self.reply({'error': 'Запись или обработка ещё идёт'}, 409)
+                    state.update(busy=True, updating=True)
+                    ai_service.stopping = True
+            self.reply({'ok': True})
+            threading.Thread(target=self.server.shutdown, daemon=True).start()
+            return
         if self.path == '/stop':
             stop_recording.set()
             with lock:
@@ -449,6 +479,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
+    from wav_recovery import recover
+    recover(FILES)
     lesson_schedule.organize_existing()
     server = ThreadingHTTPServer(('127.0.0.1', 8765), Handler)
     print('Recorder: http://127.0.0.1:8765', flush=True)

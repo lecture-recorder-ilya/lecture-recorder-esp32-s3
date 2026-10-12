@@ -5,6 +5,8 @@ import signal
 import subprocess
 import threading
 import lesson_schedule
+from asr_policy import selected_model
+from transcript_cache import WHISPER_ENGINE
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -20,7 +22,7 @@ process = None
 stopping = False
 configuration = json.loads(CONFIG.read_text()) if CONFIG.exists() else {}
 auto = configuration.get('auto', True)
-speech = configuration.get('speech', 'whisper')
+speech = configuration.get('speech', 'auto')
 paused = configuration.get('paused', False)
 economical = configuration.get('economical', True)
 
@@ -42,7 +44,7 @@ def set_paused(value):
 ASR_PYTHON = PROJECT/'work/asr-env/bin/python'
 def qwen_ready():
     from quality_asr import ready
-    return PYTHON.exists() and ready()
+    return PYTHON.exists() and ASR_PYTHON.exists() and ready()
 
 
 def file_path(name):
@@ -72,7 +74,9 @@ def status():
             jobs[progress.name.removesuffix('.progress.json') + '.wav'] = json.loads(progress.read_text())
         except (ValueError, OSError):
             pass
-    return {'auto':auto, 'speech':speech, 'paused':paused, 'economical':economical, 'qwen_ready':qwen_ready(), 'ready':PYTHON.exists() and (PROJECT / 'work/models/manifest.json').exists(), 'jobs':jobs}
+    available = qwen_ready()
+    chosen = selected_model(speech, available)
+    return {'selected_speech':chosen, 'auto':auto, 'speech':speech, 'paused':paused, 'economical':economical, 'qwen_ready':available, 'ready':PYTHON.exists() and (PROJECT / 'work/models/manifest.json').exists() and (chosen != 'qwen' or available), 'jobs':jobs}
 
 
 def set_auto(value):
@@ -83,7 +87,7 @@ def set_auto(value):
 
 def set_speech(value):
     global speech
-    if value not in ('whisper','qwen'):
+    if value not in ('auto','whisper','qwen'):
         raise ValueError('Неизвестная модель речи.')
     if value=='qwen' and not qwen_ready():
         raise ValueError('Модель русской речи ещё не готова.')
@@ -96,6 +100,8 @@ def submit(name, wait_models=False):
     if not wait_models and not status()['ready']:
         raise RuntimeError('Локальные модели ещё не готовы.')
     with lock:
+        if stopping:
+            raise RuntimeError('Служба готовится к обновлению. Повтори после перезапуска.')
         if name in pending:
             return
         pending.add(name)
@@ -135,15 +141,15 @@ def run_queue():
                             child.send_signal(signal.SIGCONT)
                     return child.wait()
                 code=0
-                if speech=='qwen':
+                chosen=selected_model(speech,qwen_ready())
+                engine=WHISPER_ENGINE
+                if chosen=='qwen':
+                    from quality_asr import ENGINE
+                    engine=ENGINE
                     if not qwen_ready():raise RuntimeError('Модель русской речи ещё не готова.')
                     code=execute([str(ASR_PYTHON),str(ROOT/'qwen_transcribe.py'),str(file_path(name)),str(result),str(progress)])
-                else:
-                    transcript=result.with_suffix('.transcript.json')
-                    if transcript.exists() and json.loads(transcript.read_text()).get('engine','').startswith('Qwen'):
-                        transcript.replace(transcript.with_suffix('.qwen-backup.json'))
                 if code==0 and not stopping:
-                    code=execute([str(PYTHON),str(ROOT/'ai_worker.py'),str(file_path(name)),str(result),str(progress)])
+                    code=execute([str(PYTHON),str(ROOT/'ai_worker.py'),str(file_path(name)),str(result),str(progress),'--transcript-engine',engine])
             data = json.loads(progress.read_text()) if progress.exists() else {}
             if code == 0:
                 lesson_schedule.organize(name)

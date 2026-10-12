@@ -109,13 +109,13 @@ final class Bridge: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     func serve(_ client:Int32) {
         defer {condition.lock();if fd==client {fd = -1};condition.unlock();Darwin.close(client)}
         var noSignal:Int32=1;setsockopt(client,SOL_SOCKET,SO_NOSIGPIPE,&noSignal,socklen_t(MemoryLayout<Int32>.size))
-        var timeout=timeval(tv_sec:45,tv_usec:0);setsockopt(client,SOL_SOCKET,SO_RCVTIMEO,&timeout,socklen_t(MemoryLayout<timeval>.size));setsockopt(client,SOL_SOCKET,SO_SNDTIMEO,&timeout,socklen_t(MemoryLayout<timeval>.size))
+        var timeout=timeval(tv_sec:300,tv_usec:0);setsockopt(client,SOL_SOCKET,SO_RCVTIMEO,&timeout,socklen_t(MemoryLayout<timeval>.size));setsockopt(client,SOL_SOCKET,SO_SNDTIMEO,&timeout,socklen_t(MemoryLayout<timeval>.size))
         var request=Data();var buffer=[UInt8](repeating:0,count:4096);var expected:Int?
-        while request.count<19000 {
+        while request.count<2*1024*1024+16384 {
             let n=recv(client,&buffer,buffer.count,0);if n<=0 {return};request.append(contentsOf:buffer.prefix(n))
             if expected==nil,let r=request.range(of:Data("\r\n\r\n".utf8)),let headers=String(data:request.prefix(r.lowerBound),encoding:.utf8) {
-                var size=0;for line in headers.components(separatedBy:"\r\n") {if line.lowercased().hasPrefix("content-length:"){size=Int(line.dropFirst(15).trimmingCharacters(in:.whitespaces)) ?? 19000}}
-                guard size>=0 && size<=2048 else {return};expected=r.upperBound+size
+                var size=0;for line in headers.components(separatedBy:"\r\n") {if line.lowercased().hasPrefix("content-length:"){size=Int(line.dropFirst(15).trimmingCharacters(in:.whitespaces)) ?? -1}}
+                guard size>=0 && size<=2*1024*1024 else {return};expected=r.upperBound+size
             }
             if let size=expected,request.count>=size {request=request.prefix(size);break}
         }

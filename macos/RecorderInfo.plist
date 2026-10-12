@@ -26,6 +26,6 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Приложение подключается к вашему ESP32 по Wi-Fi для записи звука на этот Mac.</string>
+	<string>Приложение подключается к ESP32 и телефону по локальной сети для записи и переноса лекций.</string>
 </dict>
 </plist>

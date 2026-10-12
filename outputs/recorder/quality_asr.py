@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent;PROJECT=ROOT.parent.parent
 MODEL=PROJECT/'work/models/gigaam';RNNT=PROJECT/'work/models/gigaam-rnnt'
 CHAR=PROJECT/'work/models/gigaam-beam'
-ENGINE='GigaAM-v3-3pass-context-v4'
+ENGINE='GigaAM-v3-3pass-context-v5'
 
 def ready():
  return all(p.exists() for p in [MODEL/'v3_e2e_ctc.int8.onnx',MODEL/'v3_e2e_ctc_vocab.txt',PROJECT/'work/models/gigaam-manifest.json',RNNT/'v3_e2e_rnnt_encoder.onnx',RNNT/'v3_e2e_rnnt_decoder.onnx',RNNT/'v3_e2e_rnnt_joint.onnx',RNNT/'v3_e2e_rnnt_vocab.txt',PROJECT/'work/models/gigaam-rnnt-manifest.json',CHAR/'v3_ctc.onnx',CHAR/'v3_vocab.txt',PROJECT/'work/models/gigaam-beam-manifest.json'])

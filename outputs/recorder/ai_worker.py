@@ -16,6 +16,8 @@ from speech_context import context_for_recording
 from learning_moments import date_supported, safe_image_query, merge_moments, dated_segments
 from power_budget import Budget, streamed_text
 from pathlib import Path
+from transcript_cache import WHISPER_ENGINE,identity,prepare,checkpoint as transcript_checkpoint
+from asr_windows import audio_window,central_segment
 from math_formulas import merge as merge_formulas
 
 ROOT = Path(__file__).resolve().parent
@@ -195,14 +197,13 @@ def parse_json(text):
     return value
 
 
-def run(audio_path, result_path, progress_path, transcribe_only=False):
+def run(audio_path, result_path, progress_path, transcribe_only=False, transcript_engine=WHISPER_ENGINE):
     started = time.monotonic()
     def progress(stage, percent, message):
         save(progress_path, {'status': 'processing', 'stage': stage, 'percent': percent, 'message': message})
     import numpy as np
     import mlx.core as mx
     budget = Budget(synchronize=lambda: mx.synchronize(mx.gpu))
-    import mlx_whisper
     transcript_path = result_path.with_suffix('.transcript.json')
     with wave.open(str(audio_path)) as audio:
         rate, channels, width = audio.getframerate(), audio.getnchannels(), audio.getsampwidth()
@@ -210,25 +211,28 @@ def run(audio_path, result_path, progress_path, transcribe_only=False):
         if channels != 1 or width != 2 or rate != 16000:
             raise RuntimeError('Ожидается WAV: моно, 16 кГц, PCM16.')
         duration = total / rate
-        cached = json.loads(transcript_path.read_text()) if transcript_path.exists() else {}
+        expected = identity(audio_path, transcript_engine)
+        cached = prepare(transcript_path, expected, total, (30 if transcript_engine == WHISPER_ENGINE else 20) * rate)
         segments = cached.get('segments', [])
-        if not cached or not cached.get('complete', True):
+        if not cached['complete']:
+            if transcript_engine != WHISPER_ENGINE:
+                raise RuntimeError('Распознавание русской речи не завершено. Запусти разбор повторно.')
+            import mlx_whisper
             step = 30 * rate
             completed_frames = cached.get('completed_frames', 0)
             for offset in range(completed_frames, total, step):
                 progress('transcribing', 5 + round(55 * offset / max(total, 1)),
                          f'Распознаю речь: {int(offset/rate)//60} из {int(duration)//60 + 1} мин')
-                audio.setpos(offset)
-                samples = np.frombuffer(audio.readframes(min(step, total-offset)), dtype='<i2').astype(np.float32) / 32768
+                read_start, read_end = audio_window(offset, step, total, rate)
+                audio.setpos(read_start)
+                samples = np.frombuffer(audio.readframes(read_end-read_start), dtype='<i2').astype(np.float32) / 32768
                 ranges=speech_ranges(samples)
                 if not ranges:
-                    save(transcript_path, {'segments':segments, 'duration':duration, 'language':'ru',
-                                          'complete':False, 'completed_frames':min(offset+step,total)})
+                    save(transcript_path, transcript_checkpoint(expected, segments, duration, min(offset+step,total)))
                     continue
-                # Moderate gain assists low-level speech; original WAV is never modified.
                 strict_ranges=strict_speech_ranges(samples)
                 if not strict_ranges:
-                    save(transcript_path, {'segments':segments, 'duration':duration, 'language':'ru', 'complete':False, 'completed_frames':min(offset+step,total)})
+                    save(transcript_path, transcript_checkpoint(expected, segments, duration, min(offset+step,total)))
                     continue
                 peak = float(np.max(np.abs(samples)))
                 samples *= min(8.0, .8 / max(peak, .001))
@@ -236,16 +240,17 @@ def run(audio_path, result_path, progress_path, transcribe_only=False):
                     language='ru', temperature=0, condition_on_previous_text=False, verbose=None, word_timestamps=True,
                     initial_prompt=context_for_recording(audio_path.name,offset/rate)['prompt'],clip_timestamps=clips(ranges))
                 for segment in recognized.get('segments', []):
-                    if not usable(segment) or not supported_words(segment,ranges,strict_ranges) or not overlaps_speech(segment['start'],segment['end'],strict_ranges):
+                    segment = central_segment(segment, (offset-read_start)/rate, (min(total,offset+step)-read_start)/rate)
+                    if not segment or not usable(segment) or not supported_words(segment,ranges,strict_ranges) or not overlaps_speech(segment['start'],segment['end'],strict_ranges):
                         continue
                     text = clean_asr_text(segment.get('text', ''))
                     if text:
-                        segments.append({'id':len(segments), 'start':round(offset/rate+segment['start'], 2),
-                                         'end':round(min(duration, offset/rate+segment['end']), 2), 'text':text})
-                save(transcript_path, {'segments':segments, 'duration':duration, 'language':'ru',
-                                      'complete':False, 'completed_frames':min(offset+step,total)})
+                        segments.append({'id':len(segments), 'start':round(read_start/rate+segment['start'], 2),
+                                         'end':round(min(duration, read_start/rate+segment['end']), 2), 'text':text})
+                save(transcript_path, transcript_checkpoint(expected, segments, duration, min(offset+step,total)))
                 budget.checkpoint(force=True)
-            save(transcript_path, {'segments':segments, 'duration':duration, 'language':'ru', 'complete':True, 'completed_frames':total})
+            cached = transcript_checkpoint(expected, segments, duration, total, complete=True)
+            save(transcript_path, cached)
     if transcribe_only:
         save(progress_path, {'status':'transcribed','stage':'transcribed','percent':60,'message':'Речь распознана; ожидаю модель разбора'})
         return
@@ -259,11 +264,11 @@ def run(audio_path, result_path, progress_path, transcribe_only=False):
         result = {'subject':None, 'teacher':None, 'topic':None, 'overview':'', 'summary':[], 'homework':[], 'highlights':[], 'formulas':[], 'warnings':['Разборчивой речи не обнаружено.'], 'evidence':{}, 'segments':[], 'transcript':'', 'duration':duration}
     else:
         progress('analyzing', 65, 'Разбираю содержание на Mac')
-        # Whisper holds its model globally; release it before loading the LLM.
-        import importlib
-        holder = importlib.import_module('mlx_whisper.transcribe').ModelHolder
-        holder.model = None
-        holder.model_path = None
+        import sys
+        whisper_module = sys.modules.get('mlx_whisper.transcribe')
+        if whisper_module:
+            whisper_module.ModelHolder.model = None
+            whisper_module.ModelHolder.model_path = None
         gc.collect()
         mx.clear_cache()
         from mlx_lm import load
@@ -407,13 +412,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('audio'); parser.add_argument('result'); parser.add_argument('progress')
     parser.add_argument('--transcribe-only', action='store_true')
+    parser.add_argument('--transcript-engine', default=WHISPER_ENGINE)
     args = parser.parse_args()
     progress_path = Path(args.progress)
     try:
         import fcntl
         with (ROOT.parent.parent/'work/lecture-inference.lock').open('a') as guard:
             fcntl.flock(guard,fcntl.LOCK_EX)
-            run(Path(args.audio), Path(args.result), progress_path, args.transcribe_only)
+            run(Path(args.audio), Path(args.result), progress_path, args.transcribe_only, args.transcript_engine)
     except Exception as exc:
         save(progress_path, {'status':'error','stage':'error','percent':0,'message':str(exc)[:1000]})
         raise

@@ -165,6 +165,7 @@ def enrich(status):
         draft=read(ROOT/'analysis'/(Path(name).stem+'.live.json'))
         meta['has_draft']=bool(draft.get('segments'))
         meta['draft_updated']=draft.get('updated',0)
+        meta['material_revision']=[p.stat().st_mtime_ns if p.exists() else 0 for p in (ROOT/'analysis'/(Path(name).stem+'.json'),ROOT/'analysis'/(Path(name).stem+'.live.json'))]
         record_notes=notes(name)
         meta['markers']=record_notes.get('markers',[])
         meta['photos']=record_notes.get('photos',[])

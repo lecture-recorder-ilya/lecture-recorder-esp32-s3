@@ -22,13 +22,13 @@ public class CaptureService extends Service {
  }
  private void notifyState(){Intent open=new Intent(this,MainActivity.class);PendingIntent p=PendingIntent.getActivity(this,0,open,PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);Notification.Builder n=new Notification.Builder(this,"record").setSmallIcon(ru.ilya.lecturerecorder.R.drawable.icon).setContentTitle(recording?"Идёт запись лекции":"Перенос записей на Mac").setContentText(recording?status:SyncServer.status).setContentIntent(p).setOngoing(true);
   if(recording)n.addAction(new Notification.Action.Builder(null,"Остановить и сохранить",PendingIntent.getService(this,1,command(this,"STOP"),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT)).build());
-  startForeground(1,n.build(),ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+  if(Build.VERSION.SDK_INT>=29)startForeground(1,n.build(),ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);else startForeground(1,n.build());
  }
  @Override public int onStartCommand(Intent intent,int flags,int id){String secret=getSharedPreferences("settings",0).getString("sync_token","");if(intent==null||secret.isEmpty()||!secret.equals(intent.getStringExtra("auth"))){if(!recording)stopSelf();return START_NOT_STICKY;}
   try{if(server==null)server=new SyncServer(this);}catch(Exception e){status="Перенос: "+e.getMessage();}
   String action=intent.getAction();if("START".equals(action)&&!recording){recording=true;stop=false;samples=0;status="Подключаюсь к ESP…";notifyState();worker=new Thread(()->capture(),"ESP capture");worker.start();}
   else if("STOP".equals(action)){stop=true;status="Сохраняю запись…";try{if(socket!=null){socket.getOutputStream().write('x');socket.close();}}catch(Exception ignored){}}
-  try{if(bleSync==null&&checkSelfPermission("android.permission.BLUETOOTH_ADVERTISE")==0)bleSync=new BleSync(this,server);}catch(Exception ignored){}
+  try{if(server!=null&&bleSync==null&&(Build.VERSION.SDK_INT<31||(checkSelfPermission("android.permission.BLUETOOTH_ADVERTISE")==0&&checkSelfPermission("android.permission.BLUETOOTH_CONNECT")==0)))bleSync=new BleSync(this,server);}catch(Exception ignored){}
   notifyState();timer.removeCallbacksAndMessages(null);timer.postDelayed(new Runnable(){public void run(){if(!recording&&!pending()&&server!=null&&server.clients==0&&System.currentTimeMillis()-server.lastUse>60000){stopSelf();return;}if(server!=null&&server.clients>0){if(syncWake==null)syncWake=getSystemService(PowerManager.class).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"lectures:sync");if(!syncWake.isHeld())syncWake.acquire(120000);}else if(syncWake!=null&&syncWake.isHeld())syncWake.release();notifyState();timer.postDelayed(this,5000);}},5000);return START_NOT_STICKY;
  }
  private boolean pending(){File[] files=Store.root(this).listFiles(f->Store.transferable(f.getName()));return files!=null&&files.length>0;}
