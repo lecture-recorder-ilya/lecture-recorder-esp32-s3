@@ -1,12 +1,19 @@
-"""Automatic USB / local Wi-Fi / Bluetooth import; acknowledge only durable verified copies."""
 import fcntl,hashlib,hmac,json,os,re,secrets,shutil,socket,subprocess,threading,time,wave
 from pathlib import Path
 from urllib.request import Request,urlopen
+from urllib.error import URLError,HTTPError
+from http.client import IncompleteRead
 
 ROOT=Path(__file__).resolve().parent;WORK=ROOT.parent.parent/'work'
 CONFIG=WORK/'phone-sync.json';LEDGER=WORK/'phone-imports.json';FILES=ROOT/'recordings'
 state={'connected':False,'message':'Ожидаю телефон · Wi-Fi / Bluetooth / USB','imported':0};started=False
 STATUS=WORK/'phone-sync-status.json'
+WAKE=threading.Event()
+REVOKED=set()
+
+def revoke(token):
+ REVOKED.add(token)
+ WAKE.set()
 def status():
  try:return json.loads(STATUS.read_text())
  except (OSError,ValueError):return dict(state)
@@ -32,11 +39,11 @@ def auth_headers(token,method,route,body=b'',extra=None):
  signed='\n'.join((method,route,stamp,nonce,headers.get('Range',''),hashlib.sha256(body).hexdigest()))
  headers.update({'X-Lecture-Time':stamp,'X-Lecture-Nonce':nonce,'X-Lecture-Signature':hmac.new(token.encode(),signed.encode(),hashlib.sha256).hexdigest(),'Content-Type':'application/json'})
  return headers
-def request(base,token,route,data=None,extra=None):
+def request(base,token,route,data=None,extra=None,timeout=None):
+ if token in REVOKED:raise PermissionError('Сопряжение с телефоном удалено')
  body=json.dumps(data).encode() if data is not None else None
  headers=auth_headers(token,'POST' if body is not None else 'GET',route,body or b'',extra)
- if base=='http://127.0.0.1:8781':headers['Authorization']='Bearer '+token # Legacy APK; USB loopback only.
- return urlopen(Request(base+route,data=body,headers=headers),timeout=60)
+ return urlopen(Request(base+route,data=body,headers=headers),timeout=timeout if timeout is not None else 300 if route == '/notes' else 60)
 def discover_wifi(token):
  nonce=secrets.token_hex(16);expected=hmac.new(token.encode(),('DISCOVER\n'+nonce+'\n8780').encode(),hashlib.sha256).hexdigest()
  destinations={'255.255.255.255'}
@@ -60,8 +67,8 @@ def import_one(item,base,token,files=FILES,ledger_path=LEDGER):
  if re.fullmatch(r'board-[0-9]{13}-[a-f0-9]{32}\.jpg',item.get('name','')):
   import board_photos
   return board_photos.import_one(item,base,token,root=files.parent)
- name=item['name'];size=item['bytes'];sha=item['sha256']
- if not re.fullmatch(r'lecture-[0-9-]+\.wav',name) or not isinstance(size,int) or not 44<=size<=4_200_000_044 or not re.fullmatch(r'[a-f0-9]{64}',sha):raise ValueError('Некорректные сведения записи')
+ name=item.get('name');size=item.get('bytes');sha=item.get('sha256')
+ if not isinstance(name,str) or not re.fullmatch(r'lecture-[0-9-]+\.wav',name) or type(size) is not int or not 44<=size<=4_200_000_044 or not isinstance(sha,str) or not re.fullmatch(r'[a-f0-9]{64}',sha):raise ValueError('Некорректные сведения записи')
  files.mkdir(exist_ok=True);target=files/name;ledger=json.loads(ledger_path.read_text()) if ledger_path.exists() else {}
  if target.exists():
   if target.stat().st_size!=size or digest(target)!=sha:raise ValueError('На Mac уже есть другая запись с этим именем; телефон сохранён')
@@ -84,7 +91,7 @@ def import_one(item,base,token,files=FILES,ledger_path=LEDGER):
        if count>size:raise ValueError('Размер записи изменился')
        f.write(data)
      finally:f.flush();os.fsync(f.fileno())
-   if count!=size:raise OSError('Перенос прервался; продолжу при подключении')
+   if count!=size:raise ConnectionError('Перенос прервался; продолжу при подключении')
   if digest(temp)!=sha:
    temp.unlink(missing_ok=True);resume_meta.unlink(missing_ok=True);raise ValueError('Копия не совпала; телефон сохранён')
   validate(temp)
@@ -117,17 +124,32 @@ def candidates(cfg):
  token=cfg['token'];adb=shutil.which('adb') or '/opt/homebrew/bin/adb'
  def command(args):return subprocess.run([adb,*args],stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=8,check=True).stdout
  try:
-  if cfg['serial']+'\tdevice' in command(['devices']).decode():
-   command(['-s',cfg['serial'],'forward','tcp:8781','tcp:8780'])
-   base='http://127.0.0.1:8781'
-   try:
-    with request(base,token,'/list') as r:json.load(r)
-   except OSError:
-    command(['-s',cfg['serial'],'shell','am','start-foreground-service','-n','ru.ilya.lecturerecorder/.CaptureService','-a','SYNC','--es','auth',token]);time.sleep(1)
-   yield base,'USB'
- except (OSError,subprocess.SubprocessError):pass
+  if Path(adb).exists():
+   serials=[line.split()[0] for line in command(['devices']).decode().splitlines() if len(line.split())==2 and line.split()[1]=='device'][:8]
+   if cfg.get('serial') in serials:serials.remove(cfg['serial']);serials.insert(0,cfg['serial'])
+   for serial in serials:
+    try:
+     command(['-s',serial,'forward','tcp:8781','tcp:8780']);base='http://127.0.0.1:8781'
+     try:
+      with request(base,token,'/list',timeout=2) as response:json.load(response)
+     except HTTPError:continue
+     except OSError:
+      command(['-s',serial,'shell','am','start','-n','ru.ilya.lecturerecorder/.MainActivity'])
+      time.sleep(.5)
+      with request(base,token,'/list',timeout=2) as response:json.load(response)
+     yield base,'USB'
+     break
+    except (OSError,ValueError,subprocess.SubprocessError):continue
+ except (OSError,ValueError,subprocess.SubprocessError):pass
+ saved=cfg.get('address')
+ if isinstance(saved,str):
+  try:
+   import ipaddress
+   saved=str(ipaddress.IPv4Address(saved))
+   yield 'http://'+saved+':8780','Wi-Fi'
+  except ValueError:pass
  base=discover_wifi(token)
- if base:yield base,'Wi-Fi'
+ if base and base!='http://'+str(saved)+':8780':yield base,'Wi-Fi'
  # Bluetooth helper is a native accessory app with the macOS Bluetooth usage description.
  bridge=ROOT.parent/'Синхронизация Bluetooth.app'
  if bridge.exists():
@@ -137,28 +159,77 @@ def candidates(cfg):
    subprocess.run(['/usr/bin/open','-g','-j',str(bridge)],capture_output=True,timeout=5)
    time.sleep(1)
   yield 'http://127.0.0.1:8782','Bluetooth'
+class RetryQueue:
+ def __init__(self):self.entries={}
+ def key(self,item):return item.get('name'),item.get('sha256')
+ def waiting(self,item,now):return self.entries.get(self.key(item),{}).get('after',0)>now
+ def failed(self,item,error,now):
+  key=self.key(item);attempts=self.entries.get(key,{}).get('attempts',0)+1
+  self.entries[key]={'attempts':attempts,'after':now+min(300,10*2**min(attempts-1,5)),'message':str(error)[:160]}
+ def succeeded(self,item):self.entries.pop(self.key(item),None)
+ def retain(self,items):
+  active={self.key(item) for item in items}
+  self.entries={key:value for key,value in self.entries.items() if key in active}
+
+def connection_error(error):
+ if isinstance(error,HTTPError):return error.code in (401,403,408,429) or error.code>=500
+ return isinstance(error,(URLError,ConnectionError,TimeoutError,IncompleteRead))
+
+def sync_once(cfg,retries,now=None):
+ from phone_notes import push
+ fixed_time=now
+ now=time.monotonic() if now is None else now
+ token=cfg.get('token')
+ if not isinstance(token,str) or not token:raise ValueError('Сначала настрой соединение телефона с Mac')
+ last_error=None
+ for base,transport in candidates(cfg):
+  try:
+   with request(base,token,'/list') as response:items=json.load(response)
+   if not isinstance(items,list):raise ValueError('Телефон вернул некорректный список')
+   items=[item for item in items if isinstance(item,dict) and isinstance(item.get('name'),str) and re.fullmatch(r'lecture-[0-9-]+\.wav|board-[0-9]{13}-[a-f0-9]{32}\.jpg',item['name']) and isinstance(item.get('sha256'),str)]
+   retries.retain(items);errors=[];copied=0
+   state.update(connected=True,transport=transport,pending=len(items),failed=0,message='Телефон подключён · '+transport)
+   try:push(base,token)
+   except Exception as error:
+    if connection_error(error):raise
+    errors.append('Текст: '+str(error)[:120])
+   for item in items:
+    if retries.waiting(item,now):
+     errors.append(item['name']+': '+retries.entries[retries.key(item)]['message']);continue
+    state['message']='Переношу '+item['name']+' · '+transport;atomic(STATUS,state)
+    try:import_one(item,base,token)
+    except Exception as error:
+     if connection_error(error):raise
+     retries.failed(item,error,time.monotonic() if fixed_time is None else now)
+     errors.append(item['name']+': '+str(error)[:120]);continue
+    retries.succeeded(item);state['imported']+=1;copied+=1
+   if copied:
+    try:push(base,token)
+    except Exception as error:
+     if connection_error(error):raise
+     errors.append('Текст: '+str(error)[:120])
+   state.update(pending=len(items)-copied,failed=len(retries.entries),errors=list(dict.fromkeys(errors))[:10])
+   state['message']=(('Ожидают переноса: '+str(state['pending'])+' · ' if state['pending'] else '')+'Повторю автоматически · '+errors[0]) if errors else 'Всё перенесено · '+transport
+   return True
+  except Exception as error:last_error=error
+ state.update(connected=False,pending=0,failed=len(retries.entries),errors=[],message='Ожидаю телефон · общая Wi-Fi сеть, Bluetooth или USB'+(' · '+str(last_error)[:120] if last_error else ''))
+ return False
+
 def loop():
+ WORK.mkdir(parents=True,exist_ok=True)
  guard=(WORK/'phone-sync.lock').open('a')
  try:fcntl.flock(guard,fcntl.LOCK_EX|fcntl.LOCK_NB)
  except BlockingIOError:guard.close();return
+ retries=RetryQueue()
  while True:
   try:
-   if not CONFIG.exists():time.sleep(10);continue
-   queue_pending();cfg=json.loads(CONFIG.read_text());connected=False
-   for base,transport in candidates(cfg):
-    try:
-     with request(base,cfg['token'],'/list') as response:items=json.load(response)
-     connected=True;state.update(connected=True,transport=transport,message='Телефон подключён · '+transport)
-     for item in items:
-      if not re.fullmatch(r'lecture-[0-9-]+\.wav|board-[0-9]{13}-[a-f0-9]{32}\.jpg',item.get('name','')):continue
-      state['message']='Переношу запись · '+transport;atomic(STATUS,state)
-      import_one(item,base,cfg['token']);state['imported']+=1
-     state['message']='Всё перенесено · '+transport
-     break
-    except Exception:continue
-   if not connected:state.update(connected=False,message='Ожидаю телефон · общая Wi-Fi сеть, Bluetooth или USB')
-  except Exception:state.update(connected=False,message='Перенос ожидает подключения. Записи остаются на телефоне.')
-  atomic(STATUS,state);time.sleep(10)
+   if not CONFIG.exists():
+    state.update(connected=False,message='Телефон не подключён. Добавь его в настройках Mac.');atomic(STATUS,state)
+    WAKE.wait(10);WAKE.clear();continue
+   queue_pending();cfg=json.loads(CONFIG.read_text())
+   sync_once(cfg,retries)
+  except Exception as error:state.update(connected=False,message='Перенос ожидает подключения · '+str(error)[:120])
+  atomic(STATUS,state);WAKE.wait(10);WAKE.clear()
 def start():
  global started
  if not started:started=True;threading.Thread(target=loop,daemon=True,name='Phone wireless import').start()

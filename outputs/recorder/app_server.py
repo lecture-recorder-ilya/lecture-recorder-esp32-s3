@@ -13,11 +13,14 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from urllib.parse import urlsplit, parse_qs, unquote
+import update_manager
+update_manager.recover()
 import study_store
 from learning_moments import moments_for_report, safe_image_query
 from speech_context import context_for_recording
 import illustrations
 import board_photos
+from phone_pairing import Pairing, PairingError
 
 ROOT = Path(__file__).resolve().parent
 PROJECT = ROOT.parent.parent
@@ -77,6 +80,12 @@ class ApplicationServer(ThreadingHTTPServer):
         super().__init__(address, Handler)
         self.service_url = service_url
         self.reload_requested = threading.Event()
+        self.install_requested = False
+        self.pairing = Pairing(PROJECT)
+
+    def server_close(self):
+        self.pairing.close()
+        super().server_close()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -127,6 +136,14 @@ class Handler(BaseHTTPRequestHandler):
         route = urlsplit(self.path)
         query = parse_qs(route.query)
         try:
+            if route.path in ('/phone-pairing', '/phone_pairing_ui.js'):
+                if self.headers.get('Host') not in (f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}'):
+                    return self.reply({'error':'Запрос отклонён'},403)
+                if route.path == '/phone-pairing':
+                    return self.reply(self.server.pairing.public())
+                return self.reply((ROOT/'phone_pairing_ui.js').read_bytes(),mime='text/javascript; charset=utf-8')
+            if route.path=='/updates_ui.js':
+                return self.reply((ROOT/'updates_ui.js').read_bytes(),mime='text/javascript; charset=utf-8')
             if route.path=='/board-photos':return self.reply(board_photos.public())
             if route.path.startswith('/board-photo-image/'):
                 return self.reply(board_photos.image(route.path.removeprefix('/board-photo-image/')).read_bytes(),mime='image/jpeg')
@@ -207,7 +224,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/':
             return self.reply((ROOT / 'index.html').read_bytes(), mime='text/html; charset=utf-8')
         if self.path == '/app-info':
-            return self.reply({'generation': GENERATION, 'pid': os.getpid()})
+            return self.reply({'generation': GENERATION, 'pid': os.getpid(), 'project':str(PROJECT.resolve()), 'updates': dict(update_manager.STATE)})
         if self.path == '/status' or self.path.startswith(('/recordings/', '/analysis/', '/export/')):
             return self.proxy()
         self.reply({'error': 'Не найдено'}, 404)
@@ -255,6 +272,37 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply({'error':'Служба записи временно недоступна'},503)
         try:
             value = json.loads(body) if body else {}
+            if self.path == '/quit-for-install':
+                if self.headers.get('Host') not in (f'127.0.0.1:{port}',f'localhost:{port}'):
+                    return self.reply({'error':'Запрос отклонён'},403)
+                if self.server.reload_requested.is_set():
+                    return self.reply({'error':'Приложение перезапускается. Повтори через несколько секунд.'},409)
+                if self.server.pairing.public()['active']:
+                    return self.reply({'error':'Заверши сопряжение телефона перед выходом.'},409)
+                try:
+                    with urlopen(self.server.service_url+'/status',timeout=3) as response:status=json.load(response)
+                except URLError:status={}
+                if (status.get('recording') or status.get('busy') or any(j.get('status') in ('queued','processing') for j in status.get('ai',{}).get('jobs',{}).values())):
+                    return self.reply({'error':'Дождись завершения записи и разбора перед выходом.'},409)
+                update_manager.STOP.set()
+                update_manager.stop_service(self.server.service_url)
+                update_manager.stop_service('http://127.0.0.1:8768')
+                self.reply({'ok':True})
+                threading.Thread(target=self.server.shutdown,daemon=True).start()
+                return
+            if self.path.startswith('/phone-pairing/'):
+                if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
+                    return self.reply({'error':'Запрос отклонён'},403)
+                if self.server.reload_requested.is_set():
+                    return self.reply({'error':'Приложение перезапускается. Повтори через несколько секунд.'},409)
+                pairing = self.server.pairing
+                if self.path == '/phone-pairing/start': return self.reply(pairing.start())
+                if self.path == '/phone-pairing/cancel':
+                    pairing.close();return self.reply(pairing.public())
+                if self.path == '/phone-pairing/approve':return self.reply(pairing.decide(value.get('request_id'),True))
+                if self.path == '/phone-pairing/reject':return self.reply(pairing.decide(value.get('request_id'),False))
+                if self.path == '/phone-pairing/forget':return self.reply(pairing.forget())
+                return self.reply({'error':'Не найдено'},404)
             if self.path=='/board-photo-assign':
                 with urlopen(self.server.service_url+'/status',timeout=5) as response:active=json.load(response)
                 return self.reply(board_photos.assign(value.get('id'),value.get('file'),value.get('start',0),active))
@@ -277,11 +325,15 @@ class Handler(BaseHTTPRequestHandler):
             if self.path in ('/live-settings','/speaker-choice'):
                 with urlopen(Request('http://127.0.0.1:8768'+self.path,data=body,headers={'Content-Type':'application/json'}),timeout=10) as response:
                     return self.reply(response.read())
+        except PairingError as error:
+            return self.reply({'error':str(error)},error.status)
         except (ValueError, TypeError, KeyError) as error:
             return self.reply({'error':str(error)},400)
         except (OSError, URLError) as error:
             return self.reply({'error':str(error)},503)
         if self.path == '/reload-app':
+            if self.server.pairing.public()['active']:
+                return self.reply({'error':'Заверши или закрой сопряжение телефона перед перезапуском.'},409)
             try:
                 source = Path(__file__).resolve()
                 compile(source.read_bytes(), str(source), 'exec')
@@ -294,6 +346,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.server.reload_requested.set()
                 threading.Thread(target=self.server.shutdown, daemon=True).start()
             return
+        if self.path == '/check-updates':
+            update_manager.CHECK.set()
+            return self.reply({'ok': True})
         if self.path in ('/start', '/stop', '/pair', '/check-wifi', '/setup-hotspot', '/ai-settings', '/analyze'):
             return self.proxy(body)
         self.reply({'error': 'Не найдено'}, 404)
@@ -313,12 +368,22 @@ def main():
             import phone_sync
             phone_sync.start()
             board_photos.start()
+            update_manager.start(server)
         print(f'Application: http://127.0.0.1:{options.port}', flush=True)
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
+        update_manager.STOP.set()
         server.server_close()
+    if server.install_requested:
+        try:
+            update_manager.stop_service(server.service_url)
+            update_manager.stop_service('http://127.0.0.1:8768')
+            update_manager.install()
+        except Exception as error:
+            update_manager.atomic(update_manager.PROJECT/'work/updates/hold.json', {'until': time.time()+3600, 'error': str(error)[:300]})
+        os.execv(sys.executable, [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]])
     if server.reload_requested.is_set():
         os.execv(sys.executable, [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]])
 

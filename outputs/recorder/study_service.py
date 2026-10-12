@@ -18,6 +18,7 @@ import study_store as store
 from speech_quality import usable, repetition, clean_asr_text
 from speech_gate import speech_ranges,overlaps_speech,clips,supported_words,strict_speech_ranges
 from speech_context import context_for_recording
+from asr_policy import selected_model
 from preview_history import PreviewHistory
 from live_draft import LiveDraft
 from quality_asr import Decoder, ENGINE as QUALITY_ENGINE, ready as quality_ready
@@ -323,7 +324,7 @@ def monitor_quality(name,total,flush=False):
             'seconds':end/16000,'model':QUALITY_ENGINE,'subject':context['subject'],'context_seconds':12,'latency':round(time.monotonic()-started,3),'updated':time.time()}
 
 def monitor_chunk(name,total):
-    if store.read(PROJECT/'work/ai-settings.json').get('speech')=='qwen':return monitor_quality(name,total)
+    if selected_model(store.read(PROJECT/'work/ai-settings.json').get('speech','auto'),quality_ready())=='qwen':return monitor_quality(name,total)
     import numpy as np
     import mlx_whisper
     started=time.monotonic()
@@ -365,7 +366,7 @@ def live_loop():
             if not STATE['live'] or not status.get('recording'):
                 # Publish the final short tail once when capture stops. Waiting
                 # for whole phrases must not lose the end of the live draft.
-                if STATE['live'] and not status.get('recording') and status.get('file')==QUALITY_CURSOR['file'] and int(status.get('samples',0))>QUALITY_CURSOR['end'] and store.read(PROJECT/'work/ai-settings.json').get('speech')=='qwen':
+                if STATE['live'] and not status.get('recording') and status.get('file')==QUALITY_CURSOR['file'] and int(status.get('samples',0))>QUALITY_CURSOR['end'] and selected_model(store.read(PROJECT/'work/ai-settings.json').get('speech','auto'),quality_ready())=='qwen':
                     name=status['file'];total=int(status.get('samples',0))
                     value=monitor_quality(name,total,flush=True)
                     publish_preview(name,value,force=True)
@@ -505,6 +506,17 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as error:self.reply({'error':str(error)[:500]},503)
     def do_POST(self):
         if self.headers.get('Origin') not in (None,'http://127.0.0.1:8768','http://localhost:8768'):return self.reply({'error':'Запрос отклонён'},403)
+        if self.path=='/shutdown-for-update':
+            try:
+                status=recorder_status()
+                if status.get('recording') or not status.get('busy'):
+                    return self.reply({'error':'Сначала подготовь службу записи к обновлению'},409)
+            except OSError:
+                pass  # The updater has already stopped the recording service.
+            self.reply({'ok':True})
+            CONTEXT_REVIEWER.close()
+            threading.Thread(target=self.server.shutdown,daemon=True).start()
+            return
         try:
             length=int(self.headers.get('Content-Length',0))
             if not 0<=length<=4096:raise ValueError('Слишком большой запрос')

@@ -9,6 +9,8 @@ from zoneinfo import ZoneInfo
 
 ROOT=Path(__file__).resolve().parent
 DATA=json.loads((ROOT/('schedule.json' if (ROOT/'schedule.json').exists() else 'schedule.example.json')).read_text())
+DATA.setdefault('group','')
+DATA.setdefault('entries',[])
 LESSONS=ROOT/'lessons'
 TZ=ZoneInfo(DATA['timezone'])
 organizing_lock=threading.Lock()
@@ -39,7 +41,7 @@ def current():
     future=[e for e in DATA['entries'] if e['date']>now.strftime('%Y-%m-%d') or (e['date']==now.strftime('%Y-%m-%d') and e['start']>now.strftime('%H:%M'))]
     upcoming=min(future,key=lambda e:(e['date'],e['start'])) if future else None
     return dict(group=DATA['group'],current=entry,next=upcoming,timezone=DATA['timezone'],
-                first=min(e['date'] for e in DATA['entries']),last=max(e['date'] for e in DATA['entries']))
+                first=min((e['date'] for e in DATA['entries']),default=None),last=max((e['date'] for e in DATA['entries']),default=None))
 
 def organize(name):
     with organizing_lock:
