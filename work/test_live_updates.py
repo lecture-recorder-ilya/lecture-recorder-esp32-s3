@@ -81,11 +81,13 @@ def wait_for(check, timeout=8):
     raise AssertionError('Timed out')
 
 with tempfile.TemporaryDirectory() as folder:
-    directory = Path(folder)
+    directory = Path(folder)/'project/outputs/recorder'
+    directory.mkdir(parents=True)
     recording.FILES = directory / 'recordings'
     recording.FILES.mkdir()
-    shutil.copy(SOURCE / 'app_server.py', directory)
-    shutil.copy(SOURCE / 'study_store.py', directory)
+    for source in SOURCE.glob('*.py'):
+        shutil.copy(source, directory)
+    shutil.copy(SOURCE/'schedule.example.json',directory)
     (directory / 'index.html').write_text('before update')
     engine = recording.ThreadingHTTPServer(('127.0.0.1', 0), recording.Handler)
     engine_thread = threading.Thread(target=engine.serve_forever, daemon=True)

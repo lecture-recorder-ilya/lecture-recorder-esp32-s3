@@ -1,12 +1,16 @@
 import json,sys,tempfile,unittest
 from pathlib import Path
+from unittest.mock import patch
 sys.path.insert(0,str(Path('outputs/recorder').resolve()))
+import lesson_schedule
 from speech_context import context_for_recording
 from speech_quality import usable,clean_asr_text
 class ContextTest(unittest.TestCase):
  def test_schedule_uses_recording_date(self):
-  value=context_for_recording('lecture-2026-10-07-14-24-14-49000.wav')
-  self.assertIsNone(value['prompt']);self.assertIn('Линейная',value['subject'])
+  entry={'date':'2026-10-07','start':'14:00','end':'15:30','subject':'Линейная алгебра','type':'Практика','variants':[]}
+  with tempfile.TemporaryDirectory() as d,patch.object(lesson_schedule,'DATA',{'entries':[entry]}):
+   value=context_for_recording('lecture-2026-10-07-14-24-14-49000.wav',root=Path(d))
+  self.assertIsNone(value['prompt']);self.assertEqual('Линейная алгебра',value['subject'])
  def test_dictionary_repetition_is_rejected(self):
   self.assertFalse(usable({'text':'князь '*40}))
  def test_outro_hallucination(self):

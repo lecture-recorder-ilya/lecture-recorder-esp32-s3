@@ -11,7 +11,7 @@ class QwenTests(unittest.TestCase):
    root=Path(d);audio=root/'lecture.wav';result=root/'result.json';progress=root/'progress.json'
    with wave.open(str(audio),'wb') as w:w.setnchannels(1);w.setsampwidth(2);w.setframerate(16000);w.writeframes((np.ones(41*16000)*300).astype('<i2').tobytes())
    result.with_suffix('.transcript.json').write_text(json.dumps({'engine':'Whisper','complete':True,'segments':[{'text':'original'}]}))
-   with patch('speech_gate.strict_speech_ranges',return_value=[(0,1)]),patch('speech_gate.speech_ranges',return_value=[(0,1)]),patch.object(Decoder,'transcribe',return_value='Историческая лекция.' ) as decode,patch('power_budget.Budget.checkpoint'):
+   with patch('speech_gate.strict_speech_ranges',side_effect=lambda x:[(0,len(x)/16000)]),patch('speech_gate.speech_ranges',side_effect=lambda x:[(0,len(x)/16000)]),patch.object(Decoder,'transcribe',return_value='Историческая лекция.' ) as decode,patch('power_budget.Budget.checkpoint'):
     qwen_transcribe.run(audio,result,progress);self.assertEqual(decode.call_count,3)
     qwen_transcribe.run(audio,result,progress);self.assertEqual(decode.call_count,3)
    data=json.loads(result.with_suffix('.transcript.json').read_text())
