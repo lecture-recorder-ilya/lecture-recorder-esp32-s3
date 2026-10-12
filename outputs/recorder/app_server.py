@@ -21,6 +21,7 @@ import illustrations
 ROOT = Path(__file__).resolve().parent
 PROJECT = ROOT.parent.parent
 GENERATION = uuid.uuid4().hex
+DOWNLOADS = Path.home()/'Downloads'
 
 
 def ensure_recording_service(service_url):
@@ -212,6 +213,16 @@ class Handler(BaseHTTPRequestHandler):
         try:
             length = int(self.headers.get('Content-Length', 0))
             route = urlsplit(self.path)
+            if route.path=='/telegram-export':
+                if not 0<length<=2*1024*1024:raise ValueError('Слишком большой запрос')
+                value=json.loads(self.rfile.read(length));name=value.get('file');study_store.audio(name)
+                text=value.get('text')
+                if not isinstance(text,str) or not text.strip():raise ValueError('Нет текста для сохранения')
+                DOWNLOADS.mkdir(parents=True,exist_ok=True)
+                target=DOWNLOADS/(Path(name).stem+'-telegram-'+uuid.uuid4().hex[:8]+'.txt')
+                with target.open('x',encoding='utf-8') as out:
+                    out.write(text);out.flush();os.fsync(out.fileno())
+                return self.reply({'ok':True,'filename':target.name})
             if route.path=='/asr-vocabulary':
                 if not 0<length<=2048:raise ValueError('Слишком большой запрос')
                 body=json.loads(self.rfile.read(length));name=body.get('file');study_store.audio(name)

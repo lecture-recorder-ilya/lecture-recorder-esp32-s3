@@ -28,7 +28,7 @@
   return rows.filter(Boolean).join('\n\n');
  }
  function prefix(result,lesson={},name=''){
-  const title=clean(result.topic||lesson.subject||result.subject||'Лекция');const short=[...title].slice(0,100).join('')+(Array.from(title).length>100?'…':'');const lines=['📚 '+short];
+  const title=clean((result.draft&&(lesson.subject||result.subject))||result.topic||lesson.subject||result.subject||'Лекция');const short=[...title].slice(0,100).join('')+(Array.from(title).length>100?'…':'');const lines=['📚 '+short];
   const subject=clean(lesson.subject||result.subject);if(subject&&subject!==title)lines.push(subject.slice(0,80));
   const date=/lecture-(\d{4})-(\d{2})-(\d{2})/.exec(name);if(date)lines.push(date[3]+'.'+date[2]+'.'+date[1]);
   const teacher=clean(lesson.teacher||result.teacher);if(teacher)lines.push('Преподаватель: '+teacher.slice(0,80));

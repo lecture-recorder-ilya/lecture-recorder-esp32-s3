@@ -10,3 +10,5 @@ assert.equal(api.formula(String.raw`x^{2}+x_{0}=\sqrt{\frac{4}{2}}`),'x²+x₀=�
 assert.equal(api.prepare({segments:[]},{},'a.wav',true).parts.length,0);
 const privateData={...result,recognition:{token:'should-not-export'},password:'secret'};assert(!api.prepare(privateData,{},'',true).text.includes('should-not-export'));assert(!api.prepare(privateData,{},'',true).text.includes('secret'));
 console.log('PASS: readable text, complete lecture, bounded messages, Unicode, formulas, no private metadata');
+
+assert(api.prepare({...result,draft:true,topic:'Текст текущей пары'},{subject:'Математика'},'',true).text.startsWith('📚 Математика'));

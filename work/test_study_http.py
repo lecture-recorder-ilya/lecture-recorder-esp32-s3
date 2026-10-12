@@ -31,6 +31,16 @@ with tempfile.TemporaryDirectory() as directory:
    with urlopen(Request(base+path,data=payload,headers=headers),timeout=10) as response:return response.status,json.load(response)
   except HTTPError as error:return error.code,json.load(error)
  try:
+  from unittest.mock import patch
+  with patch.object(application,'DOWNLOADS',store.ROOT/'exports'):
+   text='📚 Лекция\n\nПолный текст без обрезки.'
+   code,exported=call('/telegram-export',{'file':names[0],'text':text});assert code==200
+   assert (store.ROOT/'exports'/exported['filename']).read_text()==text
+   assert call('/telegram-export',{'file':names[0],'text':text})[1]['filename']!=exported['filename']
+   assert call('/telegram-export',{'file':names[0],'text':text},origin='https://evil.test')[0]==403
+   assert call('/telegram-export',{'file':'../secret.wav','text':text})[0]==400
+   assert call('/telegram-export',{'file':names[0],'text':''})[0]==400
+  print('PASS: complete Telegram export, unique files, origin and path guards')
   assert call('/marker',{'file':names[0],'start':.5})[0]==200
   assert call('/marker',{'file':names[0],'start':.5},origin='https://evil.test')[0]==403
   assert call('/notes?file=..%2Fsecret.wav')[0]==400
