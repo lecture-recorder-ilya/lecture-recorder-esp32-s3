@@ -1,0 +1,9 @@
+{
+  "python_version": "3.12.12",
+  "uv_version": "0.13.0",
+  "uv_url": "https://github.com/astral-sh/uv/releases/download/0.13.0/uv-aarch64-apple-darwin.tar.gz",
+  "uv_sha256": "a9c1b29002cf3c83f07fa9cd8a887a3be0107d90e23189721221e7257db8e3d6",
+  "required_free_bytes": 22000000000,
+  "minimum_macos": "14.0",
+  "architecture": "arm64"
+}
