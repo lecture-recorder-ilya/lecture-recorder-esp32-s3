@@ -9,18 +9,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var attempts = 0
     var finishRecordingOnExit = false
     var reloading = false
-    let root = URL(fileURLWithPath: CommandLine.arguments[0]).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+    let root = Bundle.main.bundleURL.resolvingSymlinksInPath().deletingLastPathComponent().deletingLastPathComponent()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        let state = root.deletingLastPathComponent().appendingPathComponent("install-state.json")
+        if let data = try? Data(contentsOf: state),
+           let value = try? JSONSerialization.jsonObject(with: data) as? [String: Any], value["status"] as? String == "installing" {
+            repairInstallation(); NSApp.terminate(nil); return
+        }
         let menu = NSMenu()
         let item = NSMenuItem(); menu.addItem(item)
         let appMenu = NSMenu(); item.submenu = appMenu
         let reloadItem = NSMenuItem(title: "Обновить приложение", action: #selector(reloadApplication), keyEquivalent: "r")
         reloadItem.target = self; appMenu.addItem(reloadItem)
+        let repairItem = NSMenuItem(title: "Восстановить компоненты…", action: #selector(repairInstallation), keyEquivalent: "")
+        repairItem.target = self; appMenu.addItem(repairItem)
         appMenu.addItem(NSMenuItem.separator())
         appMenu.addItem(NSMenuItem(title: "Выйти — запись продолжится", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         let finishItem = NSMenuItem(title: "Завершить запись и выйти", action: #selector(finishAndQuit), keyEquivalent: "")
         finishItem.target = self; appMenu.addItem(finishItem)
+        let shutdownItem = NSMenuItem(title: "Завершить работу", action: #selector(shutdownApplication), keyEquivalent: "")
+        shutdownItem.target = self; appMenu.addItem(shutdownItem)
         NSApp.mainMenu = menu
         window = NSWindow(contentRect: NSRect(x:0, y:0, width:880, height:840), styleMask:[.titled,.closable,.miniaturizable,.resizable], backing:.buffered, defer:false)
         window.title = "Запись лекций"
@@ -28,6 +37,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         view = WKWebView(frame: window.contentView!.bounds)
         view.autoresizingMask = [.width,.height]
         window.contentView!.addSubview(view)
+        view.loadHTMLString("<html><meta charset='utf-8'><style>body{font:18px -apple-system;display:grid;place-content:center;height:90vh;color-scheme:light dark}p{opacity:.6;font-size:14px}</style><body>Запускаю библиотеку…<p>Записи и тексты загружаются с этого Mac.</p></body></html>", baseURL: nil)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps:true)
         probe(startIfMissing: true)
@@ -41,6 +51,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 try? diagnostic.write(to: self.root.appendingPathComponent("work/app-probe.txt"), atomically: true, encoding: .utf8)
                 if let response = response as? HTTPURLResponse, response.statusCode == 200 {
                     self.timer?.invalidate()
+                    let info = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+                    guard info?["project"] as? String == self.root.path else {
+                        let alert = NSAlert(); alert.messageText = "Уже запущена другая копия приложения"
+                        alert.informativeText = "Заверши её работу через меню приложения и открой эту копию снова. Её записи останутся на месте."
+                        alert.runModal(); return
+                    }
                     self.view.load(URLRequest(url:URL(string:"http://127.0.0.1:8767/")!))
                 } else if startIfMissing {
                     if let error = error {
@@ -56,6 +72,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         child.executableURL = root.appendingPathComponent("work/esp-check-env/bin/python")
         child.arguments = [root.appendingPathComponent("outputs/recorder/app_server.py").path]
         child.currentDirectoryURL = root
+        var environment = ProcessInfo.processInfo.environment
+        environment["PYTHONNOUSERSITE"] = "1"
+        if FileManager.default.fileExists(atPath: "/etc/ssl/cert.pem") { environment["SSL_CERT_FILE"] = "/etc/ssl/cert.pem" }
+        environment.removeValue(forKey: "PYTHONHOME"); environment.removeValue(forKey: "PYTHONPATH")
+        child.environment = environment
         child.standardOutput = FileHandle.nullDevice
         let logURL = root.appendingPathComponent("work/app-server.log")
         if !FileManager.default.fileExists(atPath:logURL.path) { FileManager.default.createFile(atPath:logURL.path, contents:nil) }
@@ -63,15 +84,41 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         log?.seekToEndOfFile(); child.standardError = log ?? FileHandle.nullDevice
         do { try child.run(); process = child }
         catch {
-            let alert = NSAlert(); alert.messageText = "Не удалось запустить приложение"; alert.informativeText = "Оставь приложение в папке проекта: ему нужна установленная среда записи."; alert.runModal(); NSApp.terminate(nil); return
+            let alert = NSAlert(); alert.messageText = "Нужно подготовить компоненты приложения"
+            alert.informativeText = "Открой установщик «Запись лекций». Он установит компоненты и сохранит библиотеку."
+            alert.addButton(withTitle: "Восстановить"); alert.addButton(withTitle: "Закрыть")
+            if alert.runModal() == .alertFirstButtonReturn { self.repairInstallation() }
+            NSApp.terminate(nil); return
         }
         timer = Timer.scheduledTimer(withTimeInterval:0.5, repeats:true) { _ in
             self.attempts += 1
             if self.attempts > 100 {
                 self.timer?.invalidate()
-                let alert = NSAlert(); alert.messageText = "Сервис записи не отвечает"; alert.informativeText = "Проверь, что папка проекта не перемещена."; alert.runModal()
+                let alert = NSAlert(); alert.messageText = "Приложение пока не запустилось"; alert.informativeText = "Можно восстановить компоненты через меню приложения. Записи сохранятся."; alert.runModal()
             } else { self.probe(startIfMissing:false) }
         }
+    }
+    @objc func repairInstallation() {
+        let installer = root.deletingLastPathComponent().appendingPathComponent("Установить Запись лекций.app")
+        if FileManager.default.fileExists(atPath: installer.path) { NSWorkspace.shared.open(installer) }
+        else {
+            let alert = NSAlert(); alert.messageText = "Открой установщик «Запись лекций»"
+            alert.informativeText = "Он подготовит компоненты без терминала. Библиотека этой копии останется на месте."; alert.runModal()
+        }
+    }
+    @objc func shutdownApplication() {
+        var request = URLRequest(url: URL(string: "http://127.0.0.1:8767/quit-for-install")!)
+        request.httpMethod = "POST"; request.timeoutInterval = 20
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                if (response as? HTTPURLResponse)?.statusCode == 200 { NSApp.terminate(nil) }
+                else {
+                    let value = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+                    let alert = NSAlert(); alert.messageText = "Приложение ещё работает"
+                    alert.informativeText = value?["error"] as? String ?? "Дождись завершения записи и разбора, затем повтори."; alert.runModal()
+                }
+            }
+        }.resume()
     }
     @objc func reloadApplication() {
         guard !reloading else { return }
