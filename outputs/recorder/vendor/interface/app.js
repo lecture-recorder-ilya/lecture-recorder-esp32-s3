@@ -25,29 +25,32 @@
   button.onclick=()=>show(id);
  }
  const navFoot=create('div','nav-foot','Аудио остаётся на этом Mac');nav.append(navFoot);document.body.prepend(nav);
- function show(id){
+ function show(id,refresh=true){
   for(const key of Object.keys(views)){views[key].hidden=key!==id;buttons[key].setAttribute('aria-current',key===id?'page':'false')}
   document.body.dataset.view=id;
   try{localStorage.setItem('lecture-view',id)}catch{}
-  main.scrollIntoView({block:'start'});
+  main.scrollIntoView({block:'start'});if(refresh)update();
  }
  window.showLectureView=show;
  const heading=(view,title,description)=>{const box=create('div','view-intro');box.append(create('h2','',title),create('p','muted',description));view.append(box)};
  heading(views.record,'Новая запись','Подключи микрофон и начни запись. Аудио сохраняется целиком.');
- views.record.append(recording,livePanel);
- recording.classList.add('recorder-hero');livePanel.classList.add('monitor-card');
+ views.record.append(recording);
+ recording.classList.add('recorder-hero');livePanel.classList.remove('card');livePanel.classList.add('monitor-card');
+ const previewPanel=create('details','card preview-panel');previewPanel.append(create('summary','','Расшифровка и контроль звука'),livePanel);views.record.append(previewPanel);let previousActive=null;window.syncRecordingPreview=s=>{const active=Boolean(s.recording);if(active!==previousActive){if(active)previewPanel.open=true;else if(previousActive===true)previewPanel.open=false;previousActive=active;}};
  liveLabel.lastChild.textContent='Показывать, что слышит микрофон';
- livePanel.querySelector('p').textContent='Последние 5 минут разговора · можно прокрутить назад. Текст предварительный.';
+ livePanel.querySelector('p').id='live-preview-caption';
+ livePanel.querySelector('p').textContent='Предварительная расшифровка появится после начала записи.';
  const scheduleDetails=create('details','card schedule-card');scheduleDetails.append(create('summary','','Расписание занятий'));
  schedule.classList.remove('card');scheduleDetails.append(schedule);views.record.append(scheduleDetails);
  footnote.textContent='Можно закрыть приложение — запись продолжится. Перед отключением микрофона нажми «Завершить запись».';
  views.record.append(footnote);
  document.querySelector('#start').textContent='Начать запись';document.querySelector('#stop').textContent='Завершить запись';
+ const timerCaption=create('div','timer-caption','ДЛИТЕЛЬНОСТЬ ЗАПИСИ');document.querySelector('#timer').before(timerCaption);
  const heroHelp=create('p','hero-help','Запись ещё не началась');recording.append(heroHelp);
  function state(){
   const text=document.querySelector('#status').textContent;
-  recording.classList.toggle('is-recording',text.includes('Идёт запись'));
-  heroHelp.textContent=text.includes('Идёт запись')?'Аудио сохраняется. Добавляй метки и фото ниже.':'Подключи ESP по USB или выбери Wi-Fi.';
+  const active=recording.dataset.recording==='true';recording.classList.toggle('is-recording',active);
+  heroHelp.textContent=text.includes('Связь потеряна')?'Восстанавливаю соединение. Запись продолжается в том же файле; пропущенный звук заменяется тишиной.':active?'Аудио сохраняется. Добавляй метки и фото ниже.':text.includes('Подключаю')?'Устанавливаю соединение с микрофоном…':'Подключи ESP по USB или выбери Wi-Fi. Записи с телефона появятся в библиотеке после переноса.';
  }
  new MutationObserver(state).observe(document.querySelector('#status'),{childList:true});state();
  heading(views.library,'Конспекты занятий','Выбери пару: главные темы, выводы и то, что важно запомнить.');
@@ -68,9 +71,10 @@
  pauseLabel.lastChild.textContent=' Приостановить разбор';ecoLabel.lastChild.textContent=' Экономный режим';
  const help=create('p','muted','Экономный режим делает паузы между вычислениями: меньше нагрев, дольше обработка. «Приостановить» останавливает очередь, сохраняя результаты.');analysis.append(help);
  const advanced=create('details','advanced-model');advanced.append(create('summary','','Модель распознавания'));advanced.append(document.querySelector('#speech-model').parentElement);analysis.append(advanced);
+ const vocabularyDetails=create('details','advanced-model');vocabularyDetails.append(create('summary','','Термины и фамилии'));vocabularyDetails.append(vocabularyBox);analysis.append(vocabularyDetails);vocabularyBox.querySelector('label').textContent='Подсказки для текущей или последней записи';document.querySelector('#save-asr-terms').classList.add('secondary');
  const refreshButton=document.querySelector('#reload-app');refreshButton.textContent='↻ Обновить';refreshButton.title='Обновить приложение без остановки записи';navFoot.replaceChildren(refreshButton);
  const refreshMessage=document.querySelector('#reload-message');intro.after(refreshMessage);
  views.settings.append(analysis,connection);
  const error=document.querySelector('#error');error.setAttribute('role','alert');error.className='global-error';intro.after(error);
- let initial='record';try{initial=localStorage.getItem('lecture-view')||initial}catch{};show(views[initial]?initial:'record');
+ let initial='record';try{initial=localStorage.getItem('lecture-view')||initial}catch{};show(views[initial]?initial:'record',false);
 })();

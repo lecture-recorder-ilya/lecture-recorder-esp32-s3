@@ -169,7 +169,7 @@ async function voiceControls(){return}
 let activeNoteName='';
 async function pollStudy(){
  if(document.hidden||pollStudy.busy)return;if(!studyStatus?.recording&&Date.now()-(pollStudy.lastPoll||0)<5000)return;pollStudy.lastPoll=Date.now();pollStudy.busy=true;try{
-  const response=await fetch('/live');const data=await response.json();if(!response.ok)throw Error(data.error);liveState=data;liveToggle.checked=data.enabled;liveMessage.textContent=data.message||'';
+  const response=await fetch('/live');const data=await response.json();if(!response.ok)throw Error(data.error);liveState=data;liveToggle.checked=data.enabled;listen.disabled=!data.recording&&!monitorAudio;const previewCaption=document.querySelector('#live-preview-caption');if(previewCaption)previewCaption.textContent=data.recording?'Последние 5 минут текущей записи · текст предварительный.':'Последние фрагменты предыдущей записи. Новая расшифровка появится после начала записи.';liveMessage.textContent=data.message||'';
   const review=data.self_review;liveReview.hidden=!review||!data.enabled;liveReview.textContent=review?(review.state==='checking'?'Самопроверка · уточняю по контексту':review.state==='unavailable'?'Самопроверка временно недоступна · исходный текст сохранён':'Самопроверка · память на 4 фрагмента')+(review.changed_rows?' · уточнено фрагментов: '+review.changed_rows:''):'';
   renderLiveFormulas(data.formulas);
   renderRecall(data.recall);const library=document.querySelector('#view-library');if(library){let mirror=document.querySelector('#library-recall');if(!mirror){mirror=el('section',undefined,'lecture-recall');mirror.id='library-recall';mirror.hidden=true;library.prepend(mirror)}renderRecall(data.recall,mirror)}liveVoice.textContent=data.passive_teacher?.message||'';liveVoice.className='muted';appendLivePreview(data);
@@ -179,7 +179,7 @@ async function pollStudy(){
  }catch(e){liveMessage.textContent=e.message}finally{pollStudy.busy=false}
 }
 setInterval(pollStudy,1000);pollStudy();
-const listen=el('button','Слушать звук ESP','secondary');livePanel.insertBefore(listen,liveMessage);
+const listen=el('button','Слушать звук ESP','secondary');listen.disabled=true;listen.title='Прослушивание доступно во время записи';livePanel.insertBefore(listen,liveMessage);
 let monitorContext=null,monitorAudio=false,monitorFrame=0,monitorFile='',monitorNext=0;
 listen.onclick=async()=>{try{monitorAudio=!monitorAudio;if(monitorAudio){monitorContext=monitorContext||new (window.AudioContext||window.webkitAudioContext)();await monitorContext.resume();monitorFrame=0;monitorNext=0;listen.textContent='Выключить прослушивание';await hearESP()}else{await monitorContext?.suspend();listen.textContent='Слушать звук ESP'}}catch(e){monitorAudio=false;listen.textContent='Слушать звук ESP';studyError(e)}};
 async function hearESP(){if(!monitorAudio||hearESP.busy)return;hearESP.busy=true;try{
