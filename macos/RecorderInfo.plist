@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>Recorder</string>
+	<key>CFBundleIconFile</key>
+	<string>Recorder.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>local.esp.recorder</string>
+	<key>CFBundleName</key>
+	<string>Запись лекций</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_esp-recorder._tcp</string>
+	</array>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Приложение подключается к вашему ESP32 по Wi-Fi для записи звука на этот Mac.</string>
+</dict>
+</plist>

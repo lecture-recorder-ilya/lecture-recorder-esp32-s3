@@ -1,0 +1,119 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Запись лекций</title>
+<link rel="stylesheet" href="/vendor/katex/katex.min.css"><script src="/vendor/katex/katex.min.js"></script><style>
+:root{color-scheme:dark;accent-color:rgb(100% 35% 23%)}input,select{color:#f4eee8;background:#211e1b}button:hover:not(:disabled){background:#ff765c}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #ff9b87;outline-offset:3px}button:disabled{cursor:default}
+
+body{margin:0;background:#121212;color:#f4eee8;font:16px system-ui}main{max-width:780px;margin:35px auto;padding:28px}h1{font-size:36px;margin:0 0 8px}.muted{color:#aaa39b;line-height:1.5}.card{background:#1c1c1c;border-radius:22px;padding:26px;margin:24px 0;box-shadow:0 5px 25px #00000030}#timer{font-size:60px;font-variant-numeric:tabular-nums;margin:14px 0}button{border:0;border-radius:12px;padding:13px 18px;font:inherit;cursor:pointer;background:rgb(100% 35% 23%);color:#241507;margin:4px 6px 4px 0}button:disabled{opacity:.4;cursor:default}.secondary{background:rgb(100% 35% 23%);color:#241507}meter{width:100%;height:22px}.error{color:#ff8686}.good{color:rgb(100% 35% 23%)}li{padding:12px 0;border-bottom:1px solid #35302a;overflow-wrap:anywhere}a{color:rgb(100% 35% 23%)}audio{width:100%;margin-top:10px}ul{list-style:none;padding:0}input{display:block;box-sizing:border-box;width:100%;font:inherit;padding:12px;border:1px solid #494037;border-radius:9px;margin:10px 0 18px}select{font:inherit;border:1px solid #494037;border-radius:9px;padding:9px;background:#1c1c1c}label{margin-right:10px}summary{cursor:pointer;font-weight:600}code{background:#2a241f;border-radius:6px;padding:4px 8px;font-size:15px;overflow-wrap:anywhere}#network div{margin:16px 0}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}@media(max-width:600px){main{margin:8px auto;padding:20px}h1{font-size:30px}#timer{font-size:48px}}
+.ai-result{margin-top:18px;padding:20px;background:#24201c;border-radius:14px}.ai-result h3{margin-top:0}.ai-result h4{margin-bottom:8px}.ai-result ul{list-style:disc;padding-left:20px}.ai-result li{border:0;padding:5px 0}.ai-result blockquote{border-left:3px solid rgb(100% 35% 23%);padding-left:12px;margin-left:0;color:#c5bcb2}.ai-result details{margin:15px 0}.ai-result .segment{display:flex;gap:10px;align-items:flex-start;margin:8px 0}.ai-result .segment button{padding:5px 8px;font-size:13px;white-space:nowrap}.ai-progress{font-size:14px;color:#aaa39b;margin-top:8px}.ai-button{font-size:14px;padding:9px 14px}.tag{display:inline-block;font-size:13px;color:rgb(100% 35% 23%);background:#3d2a16;padding:5px 9px;border-radius:20px}.teacher-voice{border-left:3px solid #ff765c;background:#35241d;padding:8px}.voice-label{color:#aaa;margin-left:8px}figure{margin:16px 0}#files details{margin:10px 0}</style>
+<link rel="stylesheet" href="/vendor/interface/style.css"><main><div class="row"><h1>Запись лекций</h1><button id="reload-app" class="secondary">Обновить приложение</button></div><div class="muted">Микрофон на ESP · записи на этом Mac. Можно закрывать и обновлять приложение во время записи.</div><p id="reload-message" class="muted" role="status"></p>
+<section class="card"><div class="row"><div id="status">Готово к записи</div><label>Соединение <select id="transport"><option value="usb">USB</option><option value="wifi">Wi-Fi</option></select></label></div><div id="timer">00:00:00</div><meter id="level" min="0" max="100" value="0"></meter><p class="muted">Уровень микрофона</p><button id="start">Начать запись</button><button id="stop" class="secondary" disabled>Остановить</button><p id="error" class="error"></p><div id="usbstatus" class="muted"></div></section>
+<section class="card"><details id="wifi-details" open><summary>Wi-Fi телефона Samsung</summary><p class="muted">Включи точку доступа телефона в диапазоне 2,4 ГГц. Подключи к ней Mac. Для первой настройки ESP оставь подключённой через USB.</p><div><label for="hotspot-ssid">Название сети</label><input id="hotspot-ssid" placeholder="Точное название из настроек телефона" autocomplete="off" maxlength="32"></div><div><label for="hotspot-password">Пароль сети</label><input id="hotspot-password" type="password" autocomplete="off" placeholder="Пароль точки доступа"></div><button id="setup" class="secondary">Подключить ESP к телефону</button><div id="network" hidden><div>Сеть ESP: <code id="ssid"></code></div><div id="ap-password-row" hidden>Пароль: <code id="password"></code></div><button id="check" class="secondary">Проверить связь</button><p id="wifi-result"></p></div><p class="muted">ESP запомнит сеть и будет подключаться к ней после включения. Пароль отправляется по USB на ESP и не отображается в списке записей. Для записи Mac и ESP должны находиться в одной сети телефона.</p><details><summary>Резервная сеть ESP</summary><p class="muted">Если потребуется собственная сеть ESP, подготовь её через USB.</p><button id="pair" class="secondary">Подготовить сеть ESP</button><div id="reserve-network" hidden><p>Сеть: <code id="reserve-ssid"></code></p><p>Пароль: <code id="reserve-password"></code></p><button id="reserve-check" class="secondary">Проверить резервную сеть</button></div></details></details></section>
+<section class="card"><h2 style="margin-top:0">Занятие по расписанию</h2><p id="current-lesson">Проверяю расписание…</p><p id="next-lesson" class="muted"></p><p class="muted">Предмет, тип занятия и преподаватель берутся из расписания по времени начала записи. Каждая пара — отдельная папка. Вне времени пары записи отмечаются «Вне расписания».</p></section><section class="card"><div class="row"><h2 style="margin:0">Разбор лекций на Mac</h2><label><input id="auto-ai" type="checkbox" style="display:inline;width:auto;margin:0 8px">После каждой записи</label></div><label>Распознавание речи <select id="speech-model"><option value="whisper">Whisper · запасной</option><option value="qwen">Русская речь · проверка слов</option></select></label><p id="ai-ready" class="muted">Проверяю локальные модели…</p><p class="muted">Предмет, преподаватель, конспект и ДЗ. Имя преподавателя определяется из речи, если оно названо. Для домашних заданий показываются цитаты и момент записи.</p></section><p class="muted">Останови запись перед выключением ESP. Закрытие приложения и обновление интерфейса запись не прерывают. При потере Wi-Fi приложение переподключится и продолжит тот же файл. Звук во время разрыва заменяется тишиной. Автономность пока не измерена.</p><h2>Сохранённые записи</h2><ul id="files"></ul></main>
+<script>
+const $=selector=>document.querySelector(selector);
+const pauseLabel=document.createElement('label');pauseLabel.innerHTML='<input id="pause-ai" type="checkbox" style="display:inline;width:auto"> Пауза тяжёлого разбора (меньше нагрев)';$('#auto-ai').parentElement.after(pauseLabel);$('#pause-ai').onchange=async e=>{try{await post('/ai-settings',{paused:e.target.checked});await update()}catch(error){$('#error').textContent=error.message}};
+const ecoLabel=document.createElement('label');ecoLabel.innerHTML='<input id="eco-ai" type="checkbox" style="display:inline;width:auto"> Экономный разбор · меньше нагрев, дольше обработка';pauseLabel.after(ecoLabel);$('#eco-ai').onchange=async e=>{try{await post('/ai-settings',{economical:e.target.checked});await update()}catch(error){$('#error').textContent=error.message}};
+const cards=new Map();
+function prettyLesson(label){return label.replace(/^\d{4}-\d{2}-\d{2}/,value=>new Intl.DateTimeFormat('ru',{day:'numeric',month:'long',year:'numeric'}).format(new Date(value+'T12:00:00')))}
+const lessonGroups=new Map();
+let inFlight=false;
+let vocabularyFile=null;
+const vocabularyBox=document.createElement('div');vocabularyBox.innerHTML='<label for="asr-terms">Фамилии и термины этой записи</label><input id="asr-terms" maxlength="300" placeholder="Точные слова через запятую"><button id="save-asr-terms" type="button">Сохранить подсказки</button><span id="asr-terms-status" class="muted"></span>';
+$('#speech-model').parentElement.after(vocabularyBox);
+$('#save-asr-terms').onclick=async()=>{try{const file=vocabularyFile;if(!file)return;await post('/asr-vocabulary',{file,terms:$('#asr-terms').value});$('#asr-terms-status').textContent='Сохранено для этой записи'}catch(e){$('#asr-terms-status').textContent=e.message}};
+$('#speech-model').onchange=async()=>{try{await post('/ai-settings',{speech:$('#speech-model').value});await update()}catch(e){$('#error').textContent=e.message;await update()}};
+async function post(path,body){const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});const value=await r.json();if(!r.ok)throw Error(value.error||'Ошибка');return value}
+async function action(path){if(inFlight)return;inFlight=true;try{
+ const body={transport:$('#transport').value,ssid:$('#hotspot-ssid').value,password:path==='/setup-hotspot'?$('#hotspot-password').value:''};
+ await post(path,body);$('#error').textContent='';
+ if(path==='/check-wifi'){$('#wifi-result').textContent='Связь есть · микрофон готов';$('#wifi-result').className='good';$('#transport').value='wifi';localStorage.setItem('transport','wifi')}
+ if(path==='/pair')$('#wifi-result').textContent='Подключи Mac к резервной сети ESP.';
+ if(path==='/setup-hotspot'){$('#wifi-result').textContent='ESP подключилась к телефону. Подключи Mac к той же сети и проверь связь.';$('#hotspot-password').value=''}
+ await update();
+ }catch(e){$('#error').textContent=e.message;if(path==='/check-wifi'){$('#wifi-result').textContent='Нет связи. Проверь выбранную сеть и питание ESP.';$('#wifi-result').className='error'}}finally{inFlight=false}}
+for(const [id,path] of [['start','/start'],['stop','/stop'],['pair','/pair'],['check','/check-wifi'],['setup','/setup-hotspot'],['reserve-check','/check-wifi']])$('#'+id).onclick=()=>action(path);
+$('#transport').value=localStorage.getItem('transport')||'usb';$('#transport').onchange=e=>{localStorage.setItem('transport',e.target.value);update()};
+$('#auto-ai').onchange=async e=>{try{await post('/ai-settings',{auto:e.target.checked})}catch(error){$('#error').textContent=error.message}};
+function el(tag,text,cls){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node}
+function timeLabel(seconds){const s=Math.floor(seconds);return [Math.floor(s/60),s%60].map(v=>String(v).padStart(2,'0')).join(':')}
+function jumpButton(seconds,audio){const button=el('button',timeLabel(seconds),'secondary');button.onclick=()=>{const tools=audio.closest('details');if(tools)tools.open=true;audio.currentTime=seconds;audio.play().catch(()=>{})};return button}
+function showResult(card,result,name){
+ const openSections=[...card.result.querySelectorAll('.temporal-section[open]')].map(d=>d.dataset.start);
+ card.audioTools.querySelectorAll('.voice-details').forEach(node=>node.remove());card.voiceBox=null;card.voiceStamp='';card.result.replaceChildren();card.chapters.hidden=true;const box=el('div',undefined,'ai-result');
+ box.append(el('span',result.draft?'Предварительный текст':'Конспект лекции','tag'),el('h3',result.topic||result.subject||card.lesson?.subject||'Содержание занятия'));
+ const overview=el('details',undefined,'lesson-overview-details');overview.append(el('summary','Содержание занятия'));overview.open=true;if(result.overview)overview.append(el('p',result.overview));const notes=el('ul');for(const note of result.summary||[])notes.append(el('li',note));overview.append(notes);if(result.overview||result.summary?.length)box.append(overview);
+ renderTelegramExport(box,result,card.lesson||{},name);
+ renderFullLecture(box,card,result,name);
+ renderTeacherRemarks(box,card,result);
+ renderPresentations(box,card,result,name);
+ box.append(el('h4','Краткие темы по времени'));renderTemporalSections(box,card,result,name);
+ if(result.homework?.length){const tasks=el('details');tasks.append(el('summary','Что сделать к следующей паре'));for(const task of result.homework)tasks.append(el('p',task.task),jumpButton(task.start,card.audio));box.append(tasks)}
+ const download=el('a','Сохранить конспект');download.href='/export/'+encodeURIComponent(name);download.download=name.replace(/\.wav$/,'.md');box.append(download);
+ const info=el('details',undefined,'lesson-info');info.append(el('summary','О занятии'));info.append(el('p','Предмет: '+(card.lesson?.subject||result.subject||'не определён')));if(card.lesson?.type)info.append(el('p','Тип: '+card.lesson.type));const teacher=card.lesson?.teacher||result.teacher;if(teacher)info.append(el('p','Преподаватель: '+teacher));info.append(el('p','Конспект создан автоматически; важные формулировки можно проверить по записи.','muted'));box.append(info);
+ for(const warning of result.warnings||[])box.append(el('p',warning,'muted'));
+ card.result.append(box);for(const d of box.querySelectorAll('.temporal-section'))if(openSections.includes(d.dataset.start))d.open=true;voiceControls(card,name).catch(studyError);
+}
+function addCard(name){
+ const li=el('li');const link=el('a',name);link.href='/recordings/'+encodeURIComponent(name);link.download=name;
+ const audio=el('audio');audio.controls=true;audio.preload='none';audio.src=link.href;link.textContent='Скачать аудио';
+ const button=el('button','Разобрать запись','secondary ai-button');const progress=el('div','','ai-progress');const result=el('div');
+ const card={li,audio,button,progress,result,lesson:null,loaded:false,loading:false,lastStatus:''};
+ button.onclick=async()=>{try{await post('/analyze',{file:name});card.loaded=false;await update()}catch(e){$('#error').textContent=e.message}};
+ li.append(link,audio,button,progress,result);cards.set(name,card);initStudyCard(card,name);return card;
+}
+async function update(){try{
+ const response=await fetch('/status');const s=await response.json();studyStatus=s;
+ let phoneStatus=$('#phone-sync-status');if(!phoneStatus){phoneStatus=document.createElement('p');phoneStatus.id='phone-sync-status';phoneStatus.className='muted';$('#status').parentNode.append(phoneStatus)}phoneStatus.textContent=s.phone_sync?'Телефон: '+s.phone_sync.message:'';
+ $('#status').textContent=s.reconnecting?'Связь потеряна · переподключаю ESP…':s.busy?'Подключаю ESP…':s.recording?'● Идёт запись':'Готово к записи';
+ const sec=Math.floor(s.seconds);$('#timer').textContent=[Math.floor(sec/3600),Math.floor(sec/60)%60,sec%60].map(v=>String(v).padStart(2,'0')).join(':');
+ $('#level').value=s.level>0?Math.max(0,100+20*Math.log10(s.level/32768)):0;
+ $('#start').disabled=s.recording||s.busy||(!s.usb_present&&$('#transport').value==='usb');if(!s.recording&&!s.busy&&!s.usb_present&&$('#transport').value==='usb')$('#status').textContent='Подключи микрофон';$('#stop').disabled=!(s.recording||s.busy);$('#transport').disabled=s.recording||s.busy;if((s.recording||s.busy)&&s.transport)$('#transport').value=s.transport;
+ for(const id of ['pair','setup','check','reserve-check'])$('#'+id).disabled=s.recording||s.busy||inFlight;
+ if(s.error)$('#error').textContent=s.error;else $('#error').textContent=s.missing_seconds?'Пропущено '+s.missing_seconds+' с звука из-за потери связи.':'';
+ $('#usbstatus').textContent=s.usb_present?'USB подключён':'USB не подключён';
+ $('#network').hidden=!s.wifi.ssid||s.wifi.mode!=='hotspot';$('#ssid').textContent=s.wifi.ssid;$('#password').textContent=s.wifi.password;
+ $('#ap-password-row').hidden=!s.wifi.password;$('#reserve-network').hidden=!s.wifi.password;$('#reserve-ssid').textContent=s.wifi.ssid;$('#reserve-password').textContent=s.wifi.password;
+ if(s.wifi.mode==='hotspot'&&!$('#hotspot-ssid').value)$('#hotspot-ssid').value=s.wifi.ssid;
+ const schedule=s.schedule||{};const formatLesson=e=>e.date+' · '+e.start+'–'+e.end+' · '+e.subject+' · '+e.type;
+ $('#current-lesson').textContent=schedule.current?'Сейчас: '+formatLesson(schedule.current):'Сейчас занятия по расписанию нет';
+ $('#next-lesson').textContent=(schedule.next?'Следующее: '+formatLesson(schedule.next)+' · ':'')+(schedule.group||'')+' · Москва';
+ if(vocabularyFile!==s.file){vocabularyFile=s.file||null;$('#asr-terms').value='';$('#save-asr-terms').disabled=!vocabularyFile;$('#asr-terms-status').textContent='';if(vocabularyFile){const file=vocabularyFile;fetch('/asr-vocabulary?file='+encodeURIComponent(file)).then(r=>r.json()).then(v=>{if(vocabularyFile===file)$('#asr-terms').value=v.terms||''}).catch(()=>{})}}
+ const ai=s.ai||{ready:false,auto:true,jobs:{}};$('#eco-ai').checked=ai.economical!==false;$('#speech-model').value=ai.speech||'whisper';$('#speech-model').querySelector('option[value=qwen]').disabled=!ai.qwen_ready;$('#auto-ai').checked=ai.auto;if($('#pause-ai'))$('#pause-ai').checked=!!ai.paused;$('#ai-ready').textContent=ai.ready?'Модели готовы · обработка полностью на этом Mac':'Локальные модели пока не готовы';
+ let folderOptions=$('#study-folders');if(!folderOptions){folderOptions=el('datalist');folderOptions.id='study-folders';document.body.append(folderOptions)}folderOptions.replaceChildren(...(s.study_folders||[]).map(v=>{const o=el('option');o.value=v;return o}));const orderedGroups=[];
+ const files=s.files;
+ for(const [name,card] of cards)if(!files.includes(name)){card.li.remove();cards.delete(name)}
+ for(let i=0;i<files.length;i++){
+  const name=files[i];let card=cards.get(name);if(!card)card=addCard(name);
+  card.lesson=(s.lessons||{})[name]||null;renderSummaryPreview(card);card.topic.textContent=card.lesson?.topic||card.lesson?.subject||'Тема пока не определена';renderChapters(card);card.clock.textContent=card.lesson?.merged_parts?.length?card.lesson.merged_parts.length+' отрывков':name.slice(19,24).replace('-',':');const groupKey=card.lesson?card.lesson.folder:'Без даты';
+  let group=lessonGroups.get(groupKey);if(!group){const li=el('li');const details=el('details');details.open=false;details.append(el('summary',prettyLesson(card.lesson?card.lesson.label:groupKey)));const list=el('ul');details.append(list);li.append(details);$('#files').append(li);group={li,list};lessonGroups.set(groupKey,group)}
+  const groupLabel=prettyLesson(card.lesson?card.lesson.label:groupKey);if(group.li.querySelector('summary').textContent!==groupLabel)group.li.querySelector('summary').textContent=groupLabel;
+  if(!orderedGroups.includes(group))orderedGroups.push(group);
+  if(card.li.parentNode!==group.list)group.list.append(card.li);
+  const index=[...group.list.children].indexOf(card.li);const preceding=files.slice(0,i).filter(n=>((s.lessons||{})[n]||{}).folder===groupKey).length;
+  if(index!==preceding)group.list.insertBefore(card.li,group.list.children[preceding]||null);
+  const job=ai.jobs[name]||{};const recording=s.recording&&s.file===name;const active=recording||['queued','processing'].includes(job.status);card.button.disabled=!ai.ready||active;
+  card.button.hidden=recording;card.progress.hidden=recording;
+  card.button.textContent=job.status==='done'?'Обновить конспект':job.status==='error'?'Повторить создание':'Составить конспект';
+  card.progress.hidden=recording||job.status==='done';card.progress.textContent=job.message?(job.message+(job.status==='processing'?' · '+job.percent+'%':'')):'';
+  if(job.status==='error')card.progress.className='ai-progress error';else card.progress.className='ai-progress';
+  if(job.status==='done'&&card.lastStatus!=='done')card.loaded=false;card.lastStatus=job.status;
+  const notesStamp=JSON.stringify(card.lesson?.markers||[]);if(card.notesStamp!==notesStamp){card.notesStamp=notesStamp;card.loaded=false}
+  if(card.lesson?.has_draft&&card.draftUpdated!==card.lesson.draft_updated){card.draftUpdated=card.lesson.draft_updated;card.loaded=false}
+  if((job.status==='done'||card.lesson?.has_summary||card.lesson?.has_draft)&&card.details.open&&!card.loaded&&!card.loading){card.loading=true;fetch('/analysis/'+encodeURIComponent(name)).then(r=>{if(!r.ok)throw Error('Разбор пока недоступен');return r.json()}).then(result=>{showResult(card,result,name);card.loaded=true}).catch(e=>card.progress.textContent=e.message).finally(()=>card.loading=false)}
+ }
+ orderedGroups.forEach((group,i)=>{if($('#files').children[i]!==group.li)$('#files').insertBefore(group.li,$('#files').children[i]||null)});
+ for(const [key,group] of lessonGroups)if(!group.list.children.length){group.li.remove();lessonGroups.delete(key)}
+ window.refreshLectureCalendar?.(s);
+ }catch(e){$('#error').textContent='Нет связи с приложением записи.'}}
+$('#reload-app').onclick=async()=>{
+ const button=$('#reload-app'),message=$('#reload-message');button.disabled=true;
+ message.textContent='Обновляю приложение…';
+ try{
+  const response=await fetch('/reload-app',{method:'POST'}),previous=await response.json();if(!response.ok)throw Error(previous.error||'Не удалось обновить приложение');
+  for(let attempt=0;attempt<120;attempt++){
+   await new Promise(resolve=>setTimeout(resolve,500));
+   try{const info=await fetch('/app-info',{cache:'no-store',signal:AbortSignal.timeout(1000)});if(info.ok&&(await info.json()).generation!==previous.generation){location.reload();return}}catch{}
+  }
+  throw Error('Обновление ещё не завершено. Запись работает отдельно; попробуй открыть приложение снова.');
+ }catch(error){message.textContent=error.message;button.disabled=false}
+};
+</script><script src="/telegram_export.js"></script><script src="/study_ui.js"></script><script src="/vendor/interface/app.js"></script><script src="/vendor/interface/calendar.js"></script><script src="/vendor/interface/effects.js"></script><script>async function refreshLoop(){if(!document.hidden)await update();setTimeout(refreshLoop,studyStatus?.recording?1000:3000)}refreshLoop();</script></html>

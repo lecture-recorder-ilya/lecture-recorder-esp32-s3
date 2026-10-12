@@ -1,0 +1,30 @@
+package ru.ilya.lecturerecorder;
+import android.bluetooth.*;
+import android.bluetooth.le.*;
+import android.content.Context;
+import android.os.ParcelUuid;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
+
+/** Bluetooth carries the same authenticated HTTP protocol as Wi-Fi. */
+final class BleSync {
+ static final UUID SERVICE=UUID.fromString("b8a20001-51e9-4a0b-8e27-047c45f78210"),RX=UUID.fromString("b8a20002-51e9-4a0b-8e27-047c45f78210"),TX=UUID.fromString("b8a20003-51e9-4a0b-8e27-047c45f78210"),CCC=UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+ private BluetoothGattServer gatt;private BluetoothLeAdvertiser advertiser;private BluetoothGattCharacteristic output;
+ private final SyncServer http;private final ExecutorService worker=Executors.newSingleThreadExecutor();private final Semaphore sent=new Semaphore(0);
+ private volatile BluetoothDevice peer;private volatile int mtu=23,notificationResult=-1;private volatile boolean busy=false,closed=false;private ByteArrayOutputStream request=new ByteArrayOutputStream();
+ private final AdvertiseCallback advertiseCallback=new AdvertiseCallback(){@Override public void onStartFailure(int error){SyncServer.status="Bluetooth недоступен · используйте Wi-Fi или USB";}};
+ BleSync(Context c,SyncServer sync)throws Exception{http=sync;BluetoothManager manager=c.getSystemService(BluetoothManager.class);BluetoothAdapter a=manager.getAdapter();if(a==null||!a.isEnabled())throw new IOException("Bluetooth выключен");advertiser=a.getBluetoothLeAdvertiser();if(advertiser==null)throw new IOException("BLE advertising unavailable");
+  gatt=manager.openGattServer(c,new BluetoothGattServerCallback(){
+   @Override public void onServiceAdded(int status,BluetoothGattService s){if(status==0&&!closed)advertiser.startAdvertising(new AdvertiseSettings.Builder().setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER).setConnectable(true).setTimeout(0).build(),new AdvertiseData.Builder().addServiceUuid(new ParcelUuid(SERVICE)).build(),advertiseCallback);}
+   @Override public void onConnectionStateChange(BluetoothDevice d,int status,int state){if(state==BluetoothProfile.STATE_CONNECTED&&peer==null)mtu=23;if(state==BluetoothProfile.STATE_DISCONNECTED&&d.equals(peer)){peer=null;request.reset();sent.release();}}
+   @Override public void onMtuChanged(BluetoothDevice d,int value){mtu=value;}
+   @Override public void onDescriptorWriteRequest(BluetoothDevice d,int id,BluetoothGattDescriptor desc,boolean prepared,boolean response,int offset,byte[] value){boolean ok=!prepared&&offset==0&&desc.getUuid().equals(CCC)&&(Arrays.equals(value,BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)||Arrays.equals(value,BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE))&&(peer==null||peer.equals(d));if(ok){peer=d;request.reset();}if(response)gatt.sendResponse(d,id,ok?BluetoothGatt.GATT_SUCCESS:BluetoothGatt.GATT_FAILURE,0,null);}
+   @Override public void onCharacteristicWriteRequest(BluetoothDevice d,int id,BluetoothGattCharacteristic ch,boolean prepared,boolean response,int offset,byte[] value){boolean ok=d.equals(peer)&&ch.getUuid().equals(RX)&&!prepared&&offset==0&&!busy&&value.length>0;try{if(ok){if(value[0]==0){if(request.size()+value.length-1>19000)throw new IOException();request.write(value,1,value.length-1);}else if(value[0]==1){byte[] body=request.toByteArray();request.reset();busy=true;worker.execute(()->transfer(d,body));}else throw new IOException();}}catch(Exception e){request.reset();ok=false;}if(response)gatt.sendResponse(d,id,ok?BluetoothGatt.GATT_SUCCESS:BluetoothGatt.GATT_FAILURE,0,null);}
+   @Override public void onNotificationSent(BluetoothDevice d,int status){notificationResult=status;sent.release();}
+  });if(gatt==null)throw new IOException();BluetoothGattService service=new BluetoothGattService(SERVICE,BluetoothGattService.SERVICE_TYPE_PRIMARY);service.addCharacteristic(new BluetoothGattCharacteristic(RX,BluetoothGattCharacteristic.PROPERTY_WRITE,BluetoothGattCharacteristic.PERMISSION_WRITE));output=new BluetoothGattCharacteristic(TX,BluetoothGattCharacteristic.PROPERTY_INDICATE,0);output.addDescriptor(new BluetoothGattDescriptor(CCC,BluetoothGattDescriptor.PERMISSION_WRITE|BluetoothGattDescriptor.PERMISSION_READ));service.addCharacteristic(output);if(!gatt.addService(service))throw new IOException();
+ }
+ private void packet(BluetoothDevice d,byte[] value)throws IOException{if(closed||!d.equals(peer))throw new IOException("Disconnected");sent.drainPermits();notificationResult=-1;if(android.os.Build.VERSION.SDK_INT>=33){if(gatt.notifyCharacteristicChanged(d,output,true,value)!=0)throw new IOException();}else{output.setValue(value);if(!gatt.notifyCharacteristicChanged(d,output,true))throw new IOException();}try{if(!sent.tryAcquire(20,TimeUnit.SECONDS)||notificationResult!=BluetoothGatt.GATT_SUCCESS||!d.equals(peer))throw new IOException();}catch(InterruptedException e){throw new IOException(e);}}
+ private void transfer(BluetoothDevice d,byte[] bytes){try{boolean defer=CaptureService.recording;byte[] input=defer?"GET /recording HTTP/1.1\r\n\r\n".getBytes("US-ASCII"):bytes;OutputStream transport=new OutputStream(){@Override public void write(int b)throws IOException{write(new byte[]{(byte)b});}@Override public void write(byte[] b,int offset,int count)throws IOException{while(count>0){int n=Math.min(count,Math.max(19,Math.min(512,mtu-4)));byte[] chunk=new byte[n+1];System.arraycopy(b,offset,chunk,1,n);packet(d,chunk);offset+=n;count-=n;}}};if(defer){SyncServer.status="Перенос по Bluetooth начнётся после сохранения записи";transport.write("HTTP/1.1 409 Recording\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".getBytes("US-ASCII"));}else http.handle(new ByteArrayInputStream(input),transport,false);packet(d,new byte[]{1});}catch(Exception ignored){try{gatt.cancelConnection(d);}catch(Exception e){}}finally{busy=false;}}
+ void close(){closed=true;peer=null;sent.release();worker.shutdownNow();try{advertiser.stopAdvertising(advertiseCallback);}catch(Exception ignored){}try{gatt.close();}catch(Exception ignored){}}
+}
