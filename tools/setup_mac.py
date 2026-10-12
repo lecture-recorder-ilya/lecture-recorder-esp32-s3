@@ -3,7 +3,7 @@ import subprocess,sys,venv
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent.parent
 work=ROOT/'work';work.mkdir(exist_ok=True)
-for name,requirements in [('ai-env','requirements-ai.txt'),('esp-check-env','requirements-recorder.txt')]:
+for name,requirements in [('ai-env','requirements-ai.txt'),('esp-check-env','requirements-recorder.txt'),('vision-env','requirements-vision.txt')]:
  target=work/name
  if not (target/'bin/python').exists():venv.EnvBuilder(with_pip=True).create(target)
  subprocess.run([str(target/'bin/python'),'-m','pip','install','-r',str(ROOT/'outputs/recorder'/requirements)],check=True)

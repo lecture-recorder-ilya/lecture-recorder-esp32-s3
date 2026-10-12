@@ -144,7 +144,7 @@ function initStudyCard(card,name){
  header.ondragover=e=>{if(draggedRecording&&draggedRecording!==name&&!mergingRecords){e.preventDefault();e.dataTransfer.dropEffect='copy';card.li.classList.add('drop-target')}};
  header.ondragleave=()=>card.li.classList.remove('drop-target');
  header.ondrop=e=>{e.preventDefault();e.stopPropagation();card.li.classList.remove('drop-target');const source=e.dataTransfer.getData('application/x-lecture-recording');mergeByDrop(source,name)};
- const body=el('div',undefined,'record-body');body.append(...card.li.childNodes);details.append(header,body);card.li.append(details);const chapters=el('section',undefined,'chapter-list');chapters.hidden=true;body.insertBefore(chapters,card.result);const audioTools=el('details',undefined,'audio-tools');audioTools.append(el('summary','Аудиозапись и отрывки'),card.audio,body.querySelector('a'));body.append(audioTools);body.insertBefore(card.result,body.firstChild);body.insertBefore(chapters,card.result.nextSibling);Object.assign(card,{details,topic,choice,clock,chapters,preview,audioTools});audioTools.ontoggle=()=>{if(audioTools.open&&card.audio.preload==='none'){card.audio.preload='metadata';card.audio.load()}};
+ const body=el('div',undefined,'record-body');body.append(...card.li.childNodes);details.append(header,body);card.li.append(details);const chapters=el('section',undefined,'chapter-list');chapters.hidden=true;body.insertBefore(chapters,card.result);const audioTools=el('details',undefined,'audio-tools');audioTools.append(el('summary','Аудиозапись и отрывки'),card.audio,body.querySelector('a'));body.append(audioTools);body.insertBefore(card.result,body.firstChild);body.insertBefore(chapters,card.result.nextSibling);Object.assign(card,{details,topic,choice,clock,chapters,preview,audioTools});initBoardPhotoCard(card,name);audioTools.ontoggle=()=>{if(audioTools.open&&card.audio.preload==='none'){card.audio.preload='metadata';card.audio.load()}};
  details.ontoggle=()=>{if(details.open)update()};
 
 }
@@ -255,7 +255,7 @@ function renderFullLecture(box,card,result,name){
   for(const {kind,item} of events){
    if(kind==='speech'){const row=el('p',undefined,'segment');row.dataset.start=item.start;row.dataset.end=item.end;row.dataset.segment=item.id;const remark=result.teacher_remarks?.find(r=>(r.segment_ids||[r.segment_id]).includes(item.id));if(remark){row.classList.add('teacher-remark-'+remark.category);row.title=remark.category==='important'?'Важное замечание преподавателя · предварительно':'Организационная реплика · предварительно'}if(result.speaker_roles?.[item.id]){row.dataset.role=speakerLabel(result,item);row.append(el('strong',row.dataset.role+': ','speaker-label'))}row.append(el('span',item.text));timeline.append(row)}
    if(kind==='marker'){const row=el('div',undefined,'lecture-marker mythic-card');row.append(el('strong','◆ '+(item.title||'Метка')));timeline.append(row)}
-   if(kind==='photo'){const figure=el('figure',undefined,'section-photo'),image=el('img');image.src='/photos/'+item.id;image.alt='Фото на '+timeLabel(item.start);image.loading='lazy';figure.append(image,el('figcaption','Фото к лекции'));timeline.append(figure)}
+   if(kind==='photo'){timeline.append(boardPhotoFigure(item))}
    if(kind==='formula')formulaRows(timeline,{formulas:[item]},card);
    if(kind==='highlight')timeline.append(el('p',item.point,'emphasis'));
   }

@@ -96,7 +96,8 @@ async function update(){try{
   card.progress.hidden=recording||job.status==='done';card.progress.textContent=job.message?(job.message+(job.status==='processing'?' · '+job.percent+'%':'')):'';
   if(job.status==='error')card.progress.className='ai-progress error';else card.progress.className='ai-progress';
   if(job.status==='done'&&card.lastStatus!=='done')card.loaded=false;card.lastStatus=job.status;
-  const notesStamp=JSON.stringify(card.lesson?.markers||[]);if(card.notesStamp!==notesStamp){card.notesStamp=notesStamp;card.loaded=false}
+  updateBoardPhotoCard(card,name);
+  const notesStamp=JSON.stringify([card.lesson?.markers||[],card.lesson?.photos||[]]);if(card.notesStamp!==notesStamp){card.notesStamp=notesStamp;card.loaded=false}
   if(card.lesson?.has_draft&&card.draftUpdated!==card.lesson.draft_updated){card.draftUpdated=card.lesson.draft_updated;card.loaded=false}
   if((job.status==='done'||card.lesson?.has_summary||card.lesson?.has_draft)&&card.details.open&&!card.loaded&&!card.loading){card.loading=true;fetch('/analysis/'+encodeURIComponent(name)).then(r=>{if(!r.ok)throw Error('Разбор пока недоступен');return r.json()}).then(result=>{showResult(card,result,name);card.loaded=true}).catch(e=>card.progress.textContent=e.message).finally(()=>card.loading=false)}
  }
@@ -116,4 +117,4 @@ $('#reload-app').onclick=async()=>{
   throw Error('Обновление ещё не завершено. Запись работает отдельно; попробуй открыть приложение снова.');
  }catch(error){message.textContent=error.message;button.disabled=false}
 };
-</script><script src="/telegram_export.js"></script><script src="/study_ui.js"></script><script src="/vendor/interface/app.js"></script><script src="/vendor/interface/calendar.js"></script><script src="/vendor/interface/effects.js"></script><script>async function refreshLoop(){if(!document.hidden)await update();setTimeout(refreshLoop,studyStatus?.recording?1000:3000)}refreshLoop();</script></html>
+</script><script src="/telegram_export.js"></script><script src="/study_ui.js"></script><script src="/vendor/interface/app.js"></script><script src="/board_ui.js"></script><script src="/vendor/interface/calendar.js"></script><script src="/vendor/interface/effects.js"></script><script>async function refreshLoop(){if(!document.hidden)await update();setTimeout(refreshLoop,studyStatus?.recording?1000:3000)}refreshLoop();</script></html>

@@ -95,7 +95,7 @@ def photo_time(body,active=None):
         data=notes(name)
         photo=next((v for v in data.get('photos',[]) if v['id']==body.get('id')),None)
         if not photo:raise ValueError('Фото не найдено')
-        photo['start']=start;save(note_path(name),data)
+        photo['start']=start;photo.setdefault('matching',{})['method']='manual';save(note_path(name),data)
     return data
 
 def overrides():return read(ROOT/'study/folders.json')
@@ -167,6 +167,7 @@ def enrich(status):
         meta['draft_updated']=draft.get('updated',0)
         record_notes=notes(name)
         meta['markers']=record_notes.get('markers',[])
+        meta['photos']=record_notes.get('photos',[])
         if record_notes.get('parts'):
             meta['merged_parts']=record_notes['parts']
             meta['source_records']=record_notes.get('source_records',[])

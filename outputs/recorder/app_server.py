@@ -17,6 +17,7 @@ import study_store
 from learning_moments import moments_for_report, safe_image_query
 from speech_context import context_for_recording
 import illustrations
+import board_photos
 
 ROOT = Path(__file__).resolve().parent
 PROJECT = ROOT.parent.parent
@@ -126,6 +127,9 @@ class Handler(BaseHTTPRequestHandler):
         route = urlsplit(self.path)
         query = parse_qs(route.query)
         try:
+            if route.path=='/board-photos':return self.reply(board_photos.public())
+            if route.path.startswith('/board-photo-image/'):
+                return self.reply(board_photos.image(route.path.removeprefix('/board-photo-image/')).read_bytes(),mime='image/jpeg')
             if route.path=='/proofread':
                 name=query.get('file',[''])[0];study_store.audio(name)
                 from transcript_corrector import proofread
@@ -152,6 +156,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(json.loads((ROOT/'schedule.json').read_text()))
             if route.path == '/study_ui.js':
                 return self.reply((ROOT/'study_ui.js').read_bytes(),mime='text/javascript; charset=utf-8')
+            if route.path == '/board_ui.js':
+                return self.reply((ROOT/'board_ui.js').read_bytes(),mime='text/javascript; charset=utf-8')
             if route.path == '/telegram_export.js':
                 return self.reply((ROOT/'telegram_export.js').read_bytes(),mime='text/javascript; charset=utf-8')
             if route.path.startswith('/vendor/'):
@@ -249,6 +255,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply({'error':'Служба записи временно недоступна'},503)
         try:
             value = json.loads(body) if body else {}
+            if self.path=='/board-photo-assign':
+                with urlopen(self.server.service_url+'/status',timeout=5) as response:active=json.load(response)
+                return self.reply(board_photos.assign(value.get('id'),value.get('file'),value.get('start',0),active))
             if self.path in ('/marker','/photo-time','/move','/merge'):
                 with urlopen(self.server.service_url+'/status',timeout=5) as response:
                     status = study_store.enrich(json.load(response))
@@ -303,6 +312,7 @@ def main():
             ensure_study_service()
             import phone_sync
             phone_sync.start()
+            board_photos.start()
         print(f'Application: http://127.0.0.1:{options.port}', flush=True)
         server.serve_forever()
     except KeyboardInterrupt:

@@ -57,6 +57,9 @@ def discover_wifi(token):
    except (OSError,ValueError):pass
  return None
 def import_one(item,base,token,files=FILES,ledger_path=LEDGER):
+ if re.fullmatch(r'board-[0-9]{13}-[a-f0-9]{32}\.jpg',item.get('name','')):
+  import board_photos
+  return board_photos.import_one(item,base,token,root=files.parent)
  name=item['name'];size=item['bytes'];sha=item['sha256']
  if not re.fullmatch(r'lecture-[0-9-]+\.wav',name) or not isinstance(size,int) or not 44<=size<=4_200_000_044 or not re.fullmatch(r'[a-f0-9]{64}',sha):raise ValueError('Некорректные сведения записи')
  files.mkdir(exist_ok=True);target=files/name;ledger=json.loads(ledger_path.read_text()) if ledger_path.exists() else {}
@@ -147,7 +150,7 @@ def loop():
      with request(base,cfg['token'],'/list') as response:items=json.load(response)
      connected=True;state.update(connected=True,transport=transport,message='Телефон подключён · '+transport)
      for item in items:
-      if not re.fullmatch(r'lecture-[0-9-]+\.wav',item.get('name','')):continue
+      if not re.fullmatch(r'lecture-[0-9-]+\.wav|board-[0-9]{13}-[a-f0-9]{32}\.jpg',item.get('name','')):continue
       state['message']='Переношу запись · '+transport;atomic(STATUS,state)
       import_one(item,base,cfg['token']);state['imported']+=1
      state['message']='Всё перенесено · '+transport

@@ -14,8 +14,9 @@
  <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"/>
  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+ <queries><intent><action android:name="android.media.action.IMAGE_CAPTURE"/></intent></queries>
  <application android:label="Запись лекций" android:theme="@android:style/Theme.Material.NoActionBar" android:icon="@drawable/icon" android:allowBackup="false" android:usesCleartextTraffic="true" android:debuggable="true">
   <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
   <service android:name=".CaptureService" android:exported="true" android:foregroundServiceType="connectedDevice"/>
- </application>
+ <provider android:name=".BoardPhotoProvider" android:authorities="ru.ilya.lecturerecorder.photos" android:exported="false" android:grantUriPermissions="true"/></application>
 </manifest>

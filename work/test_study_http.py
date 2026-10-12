@@ -7,6 +7,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'outputs/recorder'))
 import study_store as store
 import study_service as study
 import app_server as application
+import board_photos as board
 
 with tempfile.TemporaryDirectory() as directory:
  store.ROOT=Path(directory);study.ROOT=store.ROOT
@@ -41,11 +42,24 @@ with tempfile.TemporaryDirectory() as directory:
    assert call('/telegram-export',{'file':'../secret.wav','text':text})[0]==400
    assert call('/telegram-export',{'file':names[0],'text':''})[0]==400
   print('PASS: complete Telegram export, unique files, origin and path guards')
+  with patch.object(board,'ROOT',store.ROOT):
+   ident='a'*32;board.folder().mkdir(parents=True);board.image(ident).write_bytes(b'fixture')
+   store.save(board.job_path(ident),{'id':ident,'captured_ms':1791817260000,'state':'queued'})
+   assert call('/board-photos')[1]['photos'][0]['id']==ident
+   assert call('/board-photo-assign',{'id':ident,'file':names[0],'start':1.5})[0]==200
+   assert store.notes(names[0])['photos'][0]['start']==1.5
+   assert call('/board-photo-assign',{'id':ident,'file':names[0],'start':3})[0]==400
+   assert call('/board-photo-assign',{'id':'../secret','file':names[0]})[0]==400
+   assert call('/board-photo-assign',{'id':ident,'file':'../secret.wav'})[0]==400
+   assert call('/board-photo-assign',{'id':ident,'file':names[0]},origin='https://evil.test')[0]==403
+   assert call('/board-photo-image/..%2Fsecret')[0]==400
+  print('PASS: board inbox, manual placement, bounds, origin and path guards')
+
   assert call('/marker',{'file':names[0],'start':.5})[0]==200
   assert call('/marker',{'file':names[0],'start':.5},origin='https://evil.test')[0]==403
   assert call('/notes?file=..%2Fsecret.wav')[0]==400
   assert call('/photo?file='+names[0]+'&start=.8',b'\xff\xd8\xfffixture',True)[0]==200
-  photo=store.notes(names[0])['photos'][0]
+  photo=store.notes(names[0])['photos'][-1]
   assert call('/photo-time',{'file':names[0],'id':photo['id'],'start':1.2})[0]==200
   assert call('/photo?file='+names[0]+'&start=0',b'<svg><script>bad</script></svg>',True)[0]==400
   assert call('/move',{'file':names[0],'folder':'Моя пара'})[0]==200
