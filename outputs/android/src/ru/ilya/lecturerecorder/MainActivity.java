@@ -28,6 +28,7 @@ public class MainActivity extends Activity {
  private int dp(int n){return Math.round(getResources().getDisplayMetrics().density*n);}
  private GradientDrawable surface(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));return d;}
  private TextView text(String value,int size){TextView t=new TextView(this);t.setText(value);t.setTextSize(size);t.setTextColor(fg);t.setPadding(0,dp(5),0,dp(5));t.setLineSpacing(dp(3),1);return t;}
+ private String feedback(String value,String fallback){if(value==null||value.isEmpty())return fallback;return value.matches("(?is).*(HTTP|SSL|Exception|Errno|Connection refused|timed out|Offline|certificate).*" )?fallback:value;}
  private TextView note(String value){TextView t=text(value,13);t.setTextColor(muted);return t;}
  private TextView heading(String value,int size){TextView t=text(value,size);t.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));return t;}
  private LinearLayout column(){LinearLayout v=new LinearLayout(this);v.setOrientation(LinearLayout.VERTICAL);return v;}
@@ -93,7 +94,7 @@ public class MainActivity extends Activity {
   String mac=getSharedPreferences("settings",0).getString("paired_mac","");boolean hasMac=!getSharedPreferences("settings",0).getString("sync_token","").isEmpty();pairedMac.setText(hasMac?(mac.isEmpty()?"Mac настроен":"Подключён к «"+mac+"»"):"Mac ещё не подключён");pairMac.setText(hasMac?"Подключить другой Mac":"Подключить Mac");pairMac.setEnabled(!active);pairMac.setAlpha(active?.45f:1f);
   state.setText(message.startsWith("Записываю ·")?"● Идёт запись":message);state.setTextColor(active?orange:fg);
   long seconds=active?CaptureService.samples/16000:0;duration.setText(String.format(Locale.US,"%02d:%02d:%02d",seconds/3600,seconds/60%60,seconds%60));
-  syncState.setText(SyncServer.status);start.setEnabled(!active);stop.setEnabled(active);transport.setEnabled(!active);start.setAlpha(active?.45f:1f);stop.setAlpha(active?1f:.45f);
+  syncState.setText(feedback(SyncServer.status,"Не удаётся связаться с Mac. Проверь общую сеть или USB."));start.setEnabled(!active);stop.setEnabled(active);transport.setEnabled(!active);start.setAlpha(active?.45f:1f);stop.setAlpha(active?1f:.45f);
   File[] files=Store.root(this).listFiles(f->f.getName().endsWith(".wav"));if(files==null)files=new File[0];Arrays.sort(files,Comparator.comparing(File::getName).reversed());
   File[] images=Store.root(this).listFiles(f->f.getName().startsWith("board-")&&f.getName().endsWith(".jpg"));StringBuilder signature=new StringBuilder();if(images!=null)for(File f:images)signature.append(f.getName()).append(f.length());for(File f:files)signature.append(f.getName()).append(f.length());
   if(!signature.toString().equals(previous)){previous=signature.toString();list.removeAllViews();libraryCount.setText("Сохранённые записи"+(files.length>0?" · "+files.length:""));
@@ -101,7 +102,7 @@ public class MainActivity extends Activity {
    if(files.length==0){LinearLayout empty=card(list);empty.addView(heading("Пока нет записей",16));empty.addView(note("На телефоне нет готовых записей. Новая появится здесь после завершения; перенесённые ищи в библиотеке на Mac."));}
    for(File file:files){LinearLayout row=card(list);row.addView(heading(recordingTitle(file),17));long sec=Math.max(0,file.length()-44)/32000;row.addView(note(String.format(new Locale("ru"),"%d:%02d · %.1f МБ · ожидает переноса",sec/60,sec%60,file.length()/1000000.0)));row.addView(button("Послушать запись",()->play(file)));}
   }
-  refreshNotes();AppUpdates.check(this,false);updateState.setText(AppUpdates.status);installUpdate.setVisibility(AppUpdates.ready(this)?View.VISIBLE:View.GONE);installUpdate.setEnabled(!active);
+  refreshNotes();AppUpdates.check(this,false);updateState.setText(feedback(AppUpdates.status,"Не удалось проверить обновления. Попробуй позже."));installUpdate.setVisibility(AppUpdates.ready(this)?View.VISIBLE:View.GONE);installUpdate.setEnabled(!active);
   timer.postDelayed(()->refresh(),1000);
  }
  private void refreshNotes(){try{File[] files=LectureNotes.files(this);StringBuilder stamp=new StringBuilder();for(File f:files)stamp.append(f.getName()).append(f.lastModified()).append(f.length());if(!stamp.toString().equals(notesSignature)){notesSignature=stamp.toString();notesList.removeAllViews();if(files.length==0)notesList.addView(text("Тексты появятся после подключения к Mac",15));for(File f:files){JSONObject value=new JSONObject(Store.read(f));notesList.addView(button(LectureNotes.title(value),()->openNote(f)));}}if(openedNote!=null&&openedText!=null){String revision=openedNote.lastModified()+":"+openedNote.length();if(!revision.equals(noteStamp)){int y=noteScroll.getScrollY();openedText.setText(LectureNotes.text(new JSONObject(Store.read(openedNote))));noteStamp=revision;ScrollView scroll=noteScroll;scroll.post(()->scroll.scrollTo(0,y));}}}catch(Exception e){CaptureService.status="Текст: "+e.getMessage();}}

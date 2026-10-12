@@ -65,7 +65,7 @@ function addCard(name){
 let updating=false;
 async function update(){if(updating)return;updating=true;try{
  const response=await fetch('/status',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Status unavailable');const s=await response.json();studyStatus=s;
- let phoneStatus=$('#phone-sync-status');if(!phoneStatus){phoneStatus=document.createElement('p');phoneStatus.id='phone-sync-status';phoneStatus.className='muted';$('#status').parentNode.append(phoneStatus)}phoneStatus.textContent=s.phone_sync?'Телефон: '+s.phone_sync.message:'';
+ let phoneStatus=$('#phone-sync-status');if(!phoneStatus){phoneStatus=document.createElement('p');phoneStatus.id='phone-sync-status';phoneStatus.className='muted';$('#status').parentNode.append(phoneStatus)}phoneStatus.textContent=s.phone_sync?(s.phone_sync.connected?'Телефон: '+s.phone_sync.message:'Телефон не подключён · записи перенесутся, когда он будет доступен.'):'';
  $('#timer').closest('section').classList.toggle('is-recording',Boolean(s.recording));$('#timer').closest('section').dataset.recording=String(Boolean(s.recording));window.syncRecordingPreview?.(s);
  $('#status').textContent=s.reconnecting?'Связь потеряна · переподключаю ESP…':s.busy?'Подключаю ESP…':s.recording?'● Идёт запись':'Готово к записи';
  const sec=s.recording||s.busy?Math.floor(s.seconds||0):0;$('#timer').textContent=[Math.floor(sec/3600),Math.floor(sec/60)%60,sec%60].map(v=>String(v).padStart(2,'0')).join(':');
