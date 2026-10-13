@@ -75,6 +75,9 @@
  const refreshButton=document.querySelector('#reload-app');refreshButton.textContent='↻ Обновить';refreshButton.title='Обновить приложение без остановки записи';navFoot.replaceChildren(refreshButton);
  const refreshMessage=document.querySelector('#reload-message');intro.after(refreshMessage);
  views.settings.append(analysis,connection);
+ const ownAI=create('section','card settings-card');ownAI.append(create('h2','','Наш ИИ'));
+ ownAI.append(create('p','muted','Учебные примеры для своих моделей речи и разбора занятия. Экспериментальный этап: проверяем данные и качество.'));
+ const learn=create('button','secondary','Подготовить учебные примеры');learn.onclick=()=>{window.location.href='/own-ai'};ownAI.append(learn);views.settings.append(ownAI);
  const error=document.querySelector('#error');error.setAttribute('role','alert');error.className='global-error';intro.after(error);
  let initial='record';try{initial=localStorage.getItem('lecture-view')||initial}catch{};show(views[initial]?initial:'record',false);
 })();
