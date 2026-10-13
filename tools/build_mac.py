@@ -14,5 +14,6 @@ for title,source,template,binary in [('Запись лекций','RecorderApp.s
  if binary=='Recorder':
   (contents/'Resources').mkdir(exist_ok=True);shutil.copyfile(ROOT/'macos/Recorder.icns',contents/'Resources/Recorder.icns')
  subprocess.run(['xcrun','swiftc','-target','arm64-apple-macos14.0','-O',str(ROOT/'macos'/source),'-o',str(contents/'MacOS'/binary)],check=True)
+ subprocess.run(['xattr','-cr',str(app)],check=True)
  subprocess.run(['codesign','--force','--deep','--sign','-',str(app)],check=True)
  print('Готово:',app)

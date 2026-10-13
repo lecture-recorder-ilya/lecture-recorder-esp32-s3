@@ -77,3 +77,23 @@ body.organized{-webkit-font-smoothing:antialiased} .organized main{max-width:122
 @media(max-width:850px){.organized main{scroll-margin-top:78px}}
 
 .organized .telegram-export .row{justify-content:flex-start;gap:9px;margin:12px 0}.organized .telegram-export .row button{margin:0}.telegram-export>p{font-size:13px}.organized .ai-result li{border:0;padding:5px 0}.organized .ai-result ul{margin:10px 0}.organized .ai-result .tag{color:#ff927d;background:#33231f}
+
+/* Shared Mac / Android visual language: quiet surfaces, one orange accent. */
+:root{--bg:#101113;--panel:#191b1f;--line:#2b2d33;--accent:#ff593b;--muted:#a7a9b2}
+.app-nav{width:220px;background:#141519;padding:28px 14px}
+.organized main{margin-left:220px;padding:36px 40px 60px}
+.brand{font-size:26px;letter-spacing:-.8px;padding-bottom:28px}.brand small{font-size:11px}
+.organized .nav-button{display:grid;grid-template-columns:20px 1fr;align-items:center;gap:12px;min-height:48px;padding:12px;border-radius:12px}
+.organized .nav-button span{font-size:14px;font-weight:600}.organized .nav-button small{display:none}
+.nav-icon{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.organized .nav-button[aria-current=page]{background:#30211e;color:var(--accent)}
+.organized .card{border-radius:18px;border-color:var(--line);box-shadow:none}
+.recorder-hero{background:var(--panel)!important;border-color:var(--line)!important;overflow:hidden}
+.recorder-hero::before{content:'';position:absolute;top:0;left:28px;width:40px;height:3px;background:var(--accent);border-radius:0 0 3px 3px}
+.organized button.secondary{background:#24262c;border-color:var(--line)}
+.organized .calendar-modes button[aria-pressed=true]{background:#30211e;color:var(--accent)}
+.organized .pair-button[aria-pressed=true],.organized .calendar-date[aria-pressed=true]{border-color:#ff593b80}
+.organized :is(button,input,select,summary):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(min-width:1300px){.organized main{margin-left:calc(220px + (100vw - 1300px)/2)}}
+@media(max-width:850px){.app-nav{width:100%;padding:10px 16px}.organized main{margin-left:0;padding:26px 24px 40px}.organized .nav-button{display:flex;gap:8px;min-height:44px;padding:10px 12px}.nav-icon{width:18px;height:18px}}
+@media(max-width:560px){.organized main{padding:22px 16px 36px}.app-nav{padding:9px 10px}.organized .nav-button{gap:6px;padding:9px 8px}.organized .nav-button span{font-size:12px}.nav-icon{width:16px;height:16px}.organized .card{border-radius:16px}}

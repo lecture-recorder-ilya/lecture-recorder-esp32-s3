@@ -8,6 +8,7 @@ import ssl
 import subprocess
 import sys
 import tarfile
+import tempfile
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -55,7 +56,10 @@ def main():
         subprocess.run([str(uv), '--no-config', 'python', 'install', '--no-bin', '--managed-python', distribution['python_version']], env=env, check=True)
         runtime = tools / 'python' / ('cpython-' + distribution['python_version'] + '-macos-aarch64-none')
     subprocess.run([sys.executable, str(ROOT / 'tools/build_mac.py')], check=True)
-    app = work / 'Установить Запись лекций.app'
+    # File Provider can re-add FinderInfo while a bundle is being signed.
+    staging = tempfile.TemporaryDirectory(prefix='lecture-installer-') if not args.skip_dmg else None
+    build_root = Path(staging.name) if staging else work
+    app = build_root / 'Установить Запись лекций.app'
     if app.exists():
         shutil.rmtree(app)
     contents = app / 'Contents'
@@ -85,10 +89,11 @@ def main():
     manifest['files'] = {path.name: sha(path) for path in setup.iterdir() if path.is_file()}
     (setup / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
     subprocess.run(['xcrun', 'swiftc', '-target', 'arm64-apple-macos14.0', '-O', str(ROOT / 'macos/InstallerApp.swift'), '-o', str(contents / 'MacOS/Installer')], check=True)
+    subprocess.run(['xattr', '-cr', str(app)], check=True)
     subprocess.run(['codesign', '--force', '--deep', '--sign', '-', str(app)], check=True)
     subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
     if not args.skip_dmg:
-        disk = work / 'disk'
+        disk = build_root / 'disk'
         if disk.exists():
             shutil.rmtree(disk)
         disk.mkdir()
@@ -99,7 +104,8 @@ def main():
         subprocess.run(['hdiutil', 'create', '-volname', 'Запись лекций', '-srcfolder', str(disk), '-format', 'UDZO', str(dmg)], check=True)
         subprocess.run(['hdiutil', 'verify', str(dmg)], check=True)
         print(dmg)
-    print(app)
+    if args.skip_dmg:
+        print(app)
 
 
 if __name__ == '__main__':

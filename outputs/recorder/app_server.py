@@ -72,30 +72,6 @@ def ensure_study_service():
             subprocess.Popen([str(work/'ai-env/bin/python'),str(ROOT/'study_service.py')],cwd=PROJECT,stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
 
 
-def ensure_custom_ai():
-    """Launch only the isolated annotation service; audio capture is independent."""
-    work=PROJECT/'work'
-    def running():
-        try:
-            with urlopen('http://127.0.0.1:8769/status',timeout=1) as response:
-                if json.load(response).get('workspace')!='custom-ai-v1':
-                    raise ValueError('Порт страницы обучения занят другим приложением')
-                return True
-        except URLError:return False
-    with (work/'custom-ai-service.lock').open('a') as guard:
-        fcntl.flock(guard,fcntl.LOCK_EX)
-        if running():return
-        python=work/'ai-env/bin/python'
-        with (work/'custom-ai-service.log').open('ab') as log:
-            subprocess.Popen([str(python) if python.exists() else sys.executable,'-m','custom_ai.server'],
-                             cwd=ROOT,stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
-        deadline=time.monotonic()+4
-        while time.monotonic()<deadline:
-            if running():return
-            time.sleep(.1)
-        raise ValueError('Страница обучения пока не запустилась. Попробуй открыть её снова.')
-
-
 class ApplicationServer(ThreadingHTTPServer):
     # Finish in-flight commands/downloads before replacing the application code.
     daemon_threads = False
@@ -160,12 +136,6 @@ class Handler(BaseHTTPRequestHandler):
         route = urlsplit(self.path)
         query = parse_qs(route.query)
         try:
-            if route.path=='/own-ai':
-                if self.headers.get('Host') not in (f'127.0.0.1:{self.server.server_port}',f'localhost:{self.server.server_port}'):
-                    return self.reply({'error':'Запрос отклонён'},403)
-                ensure_custom_ai()
-                self.send_response(302);self.send_header('Location','http://127.0.0.1:8769/')
-                self.send_header('Content-Length','0');self.end_headers();return
             if route.path in ('/phone-pairing', '/phone_pairing_ui.js'):
                 if self.headers.get('Host') not in (f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}'):
                     return self.reply({'error':'Запрос отклонён'},403)

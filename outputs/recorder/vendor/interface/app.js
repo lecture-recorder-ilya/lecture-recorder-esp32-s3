@@ -18,9 +18,10 @@
  const nav=create('nav','app-nav');nav.setAttribute('aria-label','Разделы приложения');
  const brand=create('div','brand','Пары');const brandNote=create('small','','Личный архив занятий');brand.append(brandNote);nav.append(brand);
  const views={};const buttons={};
+ const navIcons={record:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',library:'<path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/>',settings:'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/>'};
  const options=[['record','Запись','Микрофон и контроль звука'],['library','Библиотека','Темы и краткие конспекты'],['settings','Настройки','Подключение и разбор']];
  for(const [id,title,hint] of options){
-  const button=create('button','nav-button');button.type='button';button.append(create('span','',title),create('small','',hint));button.setAttribute('aria-controls','view-'+id);
+  const button=create('button','nav-button');button.type='button';const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('class','nav-icon');icon.setAttribute('aria-hidden','true');icon.innerHTML=navIcons[id];button.append(icon,create('span','',title),create('small','',hint));button.setAttribute('aria-controls','view-'+id);
   const view=create('section','app-view');view.id='view-'+id;view.setAttribute('aria-label',title);views[id]=view;buttons[id]=button;nav.append(button);main.append(view);
   button.onclick=()=>show(id);
  }
@@ -75,9 +76,6 @@
  const refreshButton=document.querySelector('#reload-app');refreshButton.textContent='↻ Обновить';refreshButton.title='Обновить приложение без остановки записи';navFoot.replaceChildren(refreshButton);
  const refreshMessage=document.querySelector('#reload-message');intro.after(refreshMessage);
  views.settings.append(analysis,connection);
- const ownAI=create('section','card settings-card');ownAI.append(create('h2','','Наш ИИ'));
- ownAI.append(create('p','muted','Учебные примеры для своих моделей речи и разбора занятия. Экспериментальный этап: проверяем данные и качество.'));
- const learn=create('button','secondary','Подготовить учебные примеры');learn.onclick=()=>{window.location.href='/own-ai'};ownAI.append(learn);views.settings.append(ownAI);
  const error=document.querySelector('#error');error.setAttribute('role','alert');error.className='global-error';intro.after(error);
  let initial='record';try{initial=localStorage.getItem('lecture-view')||initial}catch{};show(views[initial]?initial:'record',false);
 })();
