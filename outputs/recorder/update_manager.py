@@ -15,6 +15,7 @@ from pathlib import Path, PurePosixPath
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen, build_opener, HTTPSHandler, HTTPRedirectHandler
 from urllib.parse import urlsplit
+from update_auth import AUTH
 
 PROJECT = Path(__file__).resolve().parents[2]
 REPOSITORY = 'lecture-recorder-ilya/lecture-recorder-esp32-s3'
@@ -105,54 +106,83 @@ def inspect_package(archive, project=PROJECT):
 
 def headers():
     value = {'User-Agent': 'LectureRecorder-Updater', 'Accept': 'application/vnd.github+json'}
-    token = os.environ.get('LECTURE_GITHUB_TOKEN')
+    token = os.environ.get('LECTURE_GITHUB_TOKEN') or AUTH.token()
     if token:
         value['Authorization'] = 'Bearer ' + token
     return value
 
 
+def download_asset(asset, target):
+    expected = asset.get('digest', '')
+    if not re.fullmatch(r'sha256:[a-f0-9]{64}', expected) or not 0 < asset.get('size', 0) <= MAX_BYTES:
+        raise ValueError('Нет проверяемой контрольной суммы обновления')
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temp = target.with_suffix('.part')
+    values = headers()
+    values['Accept'] = 'application/octet-stream'
+    url = f'https://api.github.com/repos/{REPOSITORY}/releases/assets/{int(asset["id"])}'
+    digest, size = hashlib.sha256(), 0
+    try:
+        with fetch(Request(url, headers=values), timeout=60) as response, temp.open('wb') as out:
+            for block in iter(lambda: response.read(65536), b''):
+                size += len(block)
+                if size > asset['size']: raise ValueError('Размер обновления изменился')
+                digest.update(block)
+                out.write(block)
+            out.flush()
+            os.fsync(out.fileno())
+        if size != asset['size'] or digest.hexdigest() != expected[7:]:
+            raise ValueError('Контрольная сумма обновления не совпала')
+        os.replace(temp, target)
+    finally:
+        temp.unlink(missing_ok=True)
+    return digest.hexdigest()
+
+
+def cache_android(release, project=PROJECT):
+    asset = next((a for a in release.get('assets', []) if a.get('name') == 'lecture-recorder.apk'), None)
+    if not asset: return
+    folder = project/'work/updates/android'
+    target = folder/'update.apk'
+    cached = read(folder/'ready.json')
+    expected = asset.get('digest', '')
+    if (cached.get('digest') == expected and target.is_file()
+            and hashlib.sha256(target.read_bytes()).hexdigest() == expected.removeprefix('sha256:')): return
+    download_asset(asset, target)
+    with zipfile.ZipFile(target) as apk:
+        if 'AndroidManifest.xml' not in apk.namelist():
+            target.unlink(missing_ok=True)
+            raise ValueError('Получен некорректный APK')
+    atomic(folder/'ready.json', dict(tag=release.get('tag_name'), digest=expected, size=asset['size']))
+
+
 def download_release(project=PROJECT):
+    if not headers().get('Authorization'):
+        STATE.update(message='Войди в GitHub на этом Mac для закрытых обновлений')
+        return
     url = 'https://api.github.com/repos/' + REPOSITORY + '/releases/latest'
     with fetch(Request(url, headers=headers()), timeout=20) as response:
         release = json.loads(response.read(2 * 1024 * 1024))
     if release.get('draft') or release.get('prerelease'):
         return
+    cache_android(release, project)
     tag = release.get('tag_name', '')
     if tag == 'v' + read(project / 'release.json').get('version', ''):
-        STATE.update(message='Установлена последняя версия')
+        STATE.update(message='На Mac последняя версия · APK доступен сопряжённому телефону')
         return
     asset = next((a for a in release.get('assets', []) if a['name'] == 'lecture-mac-update.zip'), None)
     if not asset:
         raise ValueError('В релизе пока нет обновления Mac')
-    expected = asset.get('digest', '')
-    if not re.fullmatch(r'sha256:[a-f0-9]{64}', expected) or not 0 < asset.get('size', 0) <= MAX_BYTES:
-        raise ValueError('Нет проверяемой контрольной суммы обновления')
     folder = project / 'work/updates'
     folder.mkdir(parents=True, exist_ok=True)
     archive = folder / 'candidate.zip'
-    temp = folder / 'download.part'
-    asset_headers = headers()
-    asset_headers['Accept'] = 'application/octet-stream'
-    asset_url = f'https://api.github.com/repos/{REPOSITORY}/releases/assets/{int(asset["id"])}'
-    digest = hashlib.sha256()
-    size = 0
-    with fetch(Request(asset_url, headers=asset_headers), timeout=60) as response, temp.open('wb') as out:
-        for block in iter(lambda: response.read(65536), b''):
-            size += len(block)
-            if size > MAX_BYTES:
-                raise ValueError('Обновление слишком большое')
-            digest.update(block)
-            out.write(block)
-        out.flush()
-        os.fsync(out.fileno())
-    if size != asset['size'] or digest.hexdigest() != expected[7:]:
-        temp.unlink(missing_ok=True)
-        raise ValueError('Контрольная сумма обновления не совпала')
-    meta, _ = inspect_package(temp, project)
+    downloaded = folder / 'download.zip'
+    digest = download_asset(asset, downloaded)
+    meta, _ = inspect_package(downloaded, project)
     if tag != 'v' + meta['version']:
         raise ValueError('Версия пакета отличается от тега релиза')
-    os.replace(temp, archive)
-    atomic(folder / 'pending.json', dict(meta, sha256=digest.hexdigest()))
+    os.replace(downloaded, archive)
+    atomic(folder / 'pending.json', dict(meta, sha256=digest))
     STATE.update(pending=True, version=meta['version'], message='Обновление скачано · установлю после записи и обработки')
 
 
@@ -274,10 +304,12 @@ def _install(project):
 
 
 def start(server):
+    AUTH.wake = CHECK.set
     def loop():
         last = -6 * 3600
         while not STOP.is_set():
             try:
+                AUTH.poll()
                 if time.monotonic() - last >= 6 * 3600 or CHECK.is_set():
                     CHECK.clear(); last = time.monotonic()
                     try:

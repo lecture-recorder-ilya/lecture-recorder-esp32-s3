@@ -282,7 +282,9 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/':
             return self.reply((ROOT / 'index.html').read_bytes(), mime='text/html; charset=utf-8')
         if self.path == '/app-info':
-            return self.reply({'generation': GENERATION, 'pid': os.getpid(), 'project':str(PROJECT.resolve()), 'updates': dict(update_manager.STATE)})
+            if self.headers.get('Host') not in (f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}'):
+                return self.reply({'error': 'Запрос отклонён'}, 403)
+            return self.reply({'generation': GENERATION, 'pid': os.getpid(), 'project':str(PROJECT.resolve()), 'updates': dict(update_manager.STATE), 'update_auth': update_manager.AUTH.public()})
         if self.path == '/status' or self.path.startswith(('/recordings/', '/analysis/', '/export/')):
             return self.proxy()
         self.reply({'error': 'Не найдено'}, 404)
@@ -345,6 +347,14 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply({'error':'Служба записи временно недоступна'},503)
         try:
             value = json.loads(body) if body else {}
+            if self.path.startswith('/update-auth/'):
+                if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
+                    return self.reply({'error': 'Запрос отклонён'}, 403)
+                actions = {'/update-auth/start': update_manager.AUTH.begin,
+                           '/update-auth/cancel': update_manager.AUTH.cancel,
+                           '/update-auth/disconnect': update_manager.AUTH.disconnect}
+                if self.path not in actions: return self.reply({'error': 'Не найдено'}, 404)
+                return self.reply(actions[self.path]())
             if self.path == '/imports/retry':
                 result = self.server.importer.retry(value.get('id'))
                 return self.reply({'id': result['id'], 'status': result['status']})

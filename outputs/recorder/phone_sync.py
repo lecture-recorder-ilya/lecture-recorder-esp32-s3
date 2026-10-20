@@ -34,9 +34,9 @@ def validate(path):
  with wave.open(str(path)) as w:
   if (w.getnchannels(),w.getsampwidth(),w.getframerate())!=(1,2,16000):raise ValueError('Неподдерживаемый WAV телефона')
   if path.stat().st_size!=44+2*w.getnframes():raise ValueError('Неполный WAV телефона')
-def auth_headers(token,method,route,body=b'',extra=None):
+def auth_headers(token,method,route,body=b'',extra=None,body_digest=None):
  headers=dict(extra or {});stamp=str(int(time.time()));nonce=secrets.token_hex(16)
- signed='\n'.join((method,route,stamp,nonce,headers.get('Range',''),hashlib.sha256(body).hexdigest()))
+ signed='\n'.join((method,route,stamp,nonce,headers.get('Range',''),body_digest or hashlib.sha256(body).hexdigest()))
  headers.update({'X-Lecture-Time':stamp,'X-Lecture-Nonce':nonce,'X-Lecture-Signature':hmac.new(token.encode(),signed.encode(),hashlib.sha256).hexdigest(),'Content-Type':'application/json'})
  return headers
 def request(base,token,route,data=None,extra=None,timeout=None):
@@ -44,6 +44,17 @@ def request(base,token,route,data=None,extra=None,timeout=None):
  body=json.dumps(data).encode() if data is not None else None
  headers=auth_headers(token,'POST' if body is not None else 'GET',route,body or b'',extra)
  return urlopen(Request(base+route,data=body,headers=headers),timeout=timeout if timeout is not None else 300 if route == '/notes' else 60)
+def request_file(base,token,route,path):
+ if token in REVOKED:raise PermissionError('Сопряжение с телефоном удалено')
+ with path.open('rb') as body:
+  size=os.fstat(body.fileno()).st_size;sha=hashlib.sha256()
+  if not 0<size<=80*1024*1024:raise ValueError('Недопустимый размер APK')
+  for block in iter(lambda:body.read(65536),b''):sha.update(block)
+  body.seek(0)
+  headers=auth_headers(token,'POST',route,body_digest=sha.hexdigest())
+  headers.update({'Content-Type':'application/vnd.android.package-archive','Content-Length':str(size),'X-Lecture-Body-SHA256':sha.hexdigest()})
+  with urlopen(Request(base+route,data=body,headers=headers,method='POST'),timeout=90) as response:
+   return json.loads(response.read(8192))
 def discover_wifi(token):
  nonce=secrets.token_hex(16);expected=hmac.new(token.encode(),('DISCOVER\n'+nonce+'\n8780').encode(),hashlib.sha256).hexdigest()
  destinations={'255.255.255.255'}
@@ -216,6 +227,11 @@ def sync_once(cfg,retries,now=None):
     except Exception as error:
      if connection_error(error):raise
      errors.append('Текст: '+str(error)[:120])
+   try:
+    from phone_updates import push as push_update
+    push_update(base,token)
+   except Exception:
+    state['update_message']='Обновление телефона повторю при следующем подключении'
    state.update(pending=len(items)-copied,failed=len(retries.entries),errors=list(dict.fromkeys(errors))[:10])
    state['message']=(('Ожидают переноса: '+str(state['pending'])+' · ' if state['pending'] else '')+'Повторю автоматически · '+errors[0]) if errors else 'Всё перенесено · '+transport
    return True
