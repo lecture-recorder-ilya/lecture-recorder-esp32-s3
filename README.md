@@ -6,20 +6,20 @@
 
 Записи, расшифровки, формулы и конспекты — на твоём Mac.
 
-![Версия 0.5.0](https://img.shields.io/badge/версия-0.5.0-ff8c61)
+![Версия 0.5.1](https://img.shields.io/badge/версия-0.5.1-ff8c61)
 ![Apple Silicon](https://img.shields.io/badge/Mac-Apple_Silicon-242628)
 ![Android](https://img.shields.io/badge/телефон-Android-8bd5bd)
 ![Локальная обработка](https://img.shields.io/badge/обработка-локально-7b73ff)
 
-[**Скачать для Mac**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.0/lecture-recorder-0.5.0-arm64.dmg) · [**Скачать для Android**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.0/lecture-recorder.apk) · [Изменения 0.5.0](CHANGELOG.md)
+[**Скачать для Mac**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.1/lecture-recorder-0.5.1-arm64.dmg) · [**Скачать для Android**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.1/lecture-recorder.apk) · [Изменения 0.5.1](CHANGELOG.md)
 
 </div>
 
-Android 0.5.0 обновляет сборки с ключом Макса 0.4.0. Для обновления поверх APK Ильи 0.4.1 нужен его прежний ключ: [совместимость подписи](UPDATES.md#подпись-android-050).
+Android 0.5.1 обновляет сборки с ключом Макса 0.4.0. Для обновления поверх APK Ильи 0.4.1 нужен его прежний ключ: [совместимость подписи](UPDATES.md#подпись-android-050).
 
 Приложение загружает готовые аудиозаписи, записывает занятия с ESP32-S3, переносит аудио с Android, распознаёт русскую речь и собирает материалы занятия. Обработка выполняется на Apple Silicon, исходное аудио сохраняется рядом с текстом.
 
-**0.5.0 — ранняя версия продукта.** Полный сценарий с готовым аудио проверен на Mac; запись, перенос и сопряжение на настоящем Android и ESP ещё требуют проверки. Для установки и сопряжения ESP не нужна; запись с микрофона самого Mac пока в плане.
+**0.5.1 — ранняя версия продукта.** Полный сценарий с готовым аудио проверен на Mac; запись, перенос и сопряжение на настоящем Android и ESP ещё требуют проверки. Для установки и сопряжения ESP не нужна; запись с микрофона самого Mac пока в плане.
 
 ## Начать за три шага
 
@@ -34,7 +34,7 @@ Android 0.5.0 обновляет сборки с ключом Макса 0.4.0. 
 
 [Установка](INSTALL.md) · [Подключение телефона](PAIRING.md) · [Обновления](UPDATES.md) · [Планы продукта](PRODUCT.md) · [Плата диктофона v0.1](hardware/v0.1/README.md) · [Корпус-карточка v0.2](hardware/v0.2/README.md)
 
-Текущий DMG подписан локально и не прошёл notarization Apple. Репозиторий приватный: ссылки на сборки доступны участникам, а автоматические обновления Android требуют публичного источника. Подробнее в инструкциях по установке и обновлениям.
+Текущий DMG подписан локально и не прошёл notarization Apple. Репозиторий приватный. В «Настройки → Обновления» на Mac войди в GitHub один раз: доступ хранится в Связке ключей macOS и обновляется автоматически. APK приходит телефону через сопряжённый Mac, без отдельного входа и токенов на телефоне. Для первого перехода со старых версий нужны DMG и совместимый APK 0.5.1. Подробнее в инструкциях по установке и обновлениям.
 
 <p align="center"><img src="preview-library.png" width="760" alt="Библиотека записей и конспектов на Mac"></p>
 
