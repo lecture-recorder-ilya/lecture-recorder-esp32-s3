@@ -15,6 +15,7 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'outputs/recorder'
+sys.path.insert(0, str(SOURCE))
 submitted = []
 ai = types.ModuleType('ai_service')
 ai.auto = True

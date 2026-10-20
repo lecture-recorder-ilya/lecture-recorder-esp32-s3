@@ -154,7 +154,7 @@ class Notes(unittest.TestCase):
     if route=='/notes-index':return io.BytesIO(b'{}')
     calls.append(data);return io.BytesIO(json.dumps({'sha256':hashlib.sha256(json.dumps(data).encode()).hexdigest()}).encode())
    with patch('phone_sync.request',side_effect=request),self.assertRaisesRegex(ValueError,'Пропущено файлов: 1'):phone_notes.push('fixture','token',root)
-   self.assertEqual(len(calls),1);self.assertEqual(calls[0]['report']['segments'],[{'text':'сохранённый текст'}])
+   self.assertEqual(len(calls),1);self.assertEqual([row['text'] for row in calls[0]['report']['segments']],['сохранённый текст']);self.assertNotIn('start',calls[0]['report']['segments'][0])
  def test_empty_default_schedule(self):
   with patch.object(lesson_schedule,'DATA',{'group':'','entries':[],'timezone':'Europe/Moscow'}):
    value=lesson_schedule.current();self.assertIsNone(value['first']);self.assertIsNone(value['next'])
