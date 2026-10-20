@@ -18,6 +18,7 @@
  <queries><intent><action android:name="android.media.action.IMAGE_CAPTURE"/></intent></queries>
  <application android:label="Запись лекций" android:theme="@android:style/Theme.Material.NoActionBar" android:icon="@drawable/icon" android:allowBackup="false" android:usesCleartextTraffic="true" android:debuggable="false">
   <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
+  <activity android:name=".LectureReaderActivity" android:exported="false"/>
   <service android:name=".CaptureService" android:exported="false" android:foregroundServiceType="connectedDevice"/>
  <provider android:name=".BoardPhotoProvider" android:authorities="ru.ilya.lecturerecorder.photos" android:exported="false" android:grantUriPermissions="true"/><provider android:name=".UpdateProvider" android:authorities="ru.ilya.lecturerecorder.updates" android:exported="false" android:grantUriPermissions="true"/></application>
 </manifest>
