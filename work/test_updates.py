@@ -32,8 +32,8 @@ class Updates(unittest.TestCase):
   def responses(correct):
    release={'tag_name':'v2.0','assets':[{'name':'lecture-mac-update.zip','id':123,'digest':'sha256:'+correct,'size':len(archive)}]}
    return [io.BytesIO(json.dumps(release).encode()),io.BytesIO(archive)]
-  with patch.object(u,'fetch',side_effect=responses('0'*64)),self.assertRaises(ValueError):u.download_release(self.root)
-  with patch.object(u,'fetch',side_effect=responses(digest)):u.download_release(self.root)
+  with patch.object(u,'headers',return_value={'Authorization':'Bearer fixture'}),patch.object(u,'fetch',side_effect=responses('0'*64)),self.assertRaises(ValueError):u.download_release(self.root)
+  with patch.object(u,'headers',return_value={'Authorization':'Bearer fixture'}),patch.object(u,'fetch',side_effect=responses(digest)):u.download_release(self.root)
   self.assertEqual(u.read(self.root/'work/updates/pending.json')['sha256'],digest)
   u.install(self.root);self.assertEqual(u.read(self.root/'release.json')['code'],2)
  def test_startup_waits_for_active_install(self):
