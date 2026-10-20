@@ -36,24 +36,24 @@ for(const [id,path] of [['start','/start'],['stop','/stop'],['pair','/pair'],['c
 $('#transport').value=localStorage.getItem('transport')||'usb';$('#transport').onchange=e=>{localStorage.setItem('transport',e.target.value);update()};
 $('#auto-ai').onchange=async e=>{try{await post('/ai-settings',{auto:e.target.checked})}catch(error){$('#error').textContent=error.message}};
 function el(tag,text,cls){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node}
-function timeLabel(seconds){const s=Math.floor(seconds);return [Math.floor(s/60),s%60].map(v=>String(v).padStart(2,'0')).join(':')}
-function jumpButton(seconds,audio){const button=el('button',timeLabel(seconds),'secondary');button.onclick=()=>{const tools=audio.closest('details');if(tools)tools.open=true;audio.currentTime=seconds;audio.play().catch(()=>{})};return button}
+function timeLabel(seconds){const s=Math.max(0,Math.floor(Number(seconds)||0)),h=Math.floor(s/3600);return (h?[h,Math.floor(s/60)%60,s%60]:[Math.floor(s/60),s%60]).map(v=>String(v).padStart(2,'0')).join(':')}
+function jumpButton(seconds,audio){const button=el('button',timeLabel(seconds),'secondary');button.onclick=()=>{if(window.LectureWorkflow){const card=[...cards.values()].find(c=>c.audio===audio)||{audio,audioTools:audio.closest('details')};window.LectureWorkflow.seek(card,seconds)}else{audio.currentTime=seconds;audio.play().catch(()=>{})}};return button}
 function showResult(card,result,name){
+ if(card.readerTimeline&&card.readerState)card.readerState.scroll=card.readerTimeline.scrollTop;
  const openSections=[...card.result.querySelectorAll('.temporal-section[open]')].map(d=>d.dataset.start);
  card.audioTools.querySelectorAll('.voice-details').forEach(node=>node.remove());card.voiceBox=null;card.voiceStamp='';card.result.replaceChildren();card.chapters.hidden=true;const box=el('div',undefined,'ai-result');
- box.append(el('span',result.draft?'Предварительный текст':'Конспект лекции','tag'),el('h3',result.topic||result.subject||card.lesson?.subject||'Содержание занятия'));
- const overview=el('details',undefined,'lesson-overview-details');overview.append(el('summary','Содержание занятия'));overview.open=true;if(result.overview)overview.append(el('p',result.overview));const notes=el('ul');for(const note of result.summary||[])notes.append(el('li',note));overview.append(notes);if(result.overview||result.summary?.length)box.append(overview);
- renderTelegramExport(box,result,card.lesson||{},name);
- renderFullLecture(box,card,result,name);
- renderTeacherRemarks(box,card,result);
- renderPresentations(box,card,result,name);
- box.append(el('h4','Краткие темы по времени'));renderTemporalSections(box,card,result,name);
- if(result.homework?.length){const tasks=el('details');tasks.append(el('summary','Что сделать к следующей паре'));for(const task of result.homework)tasks.append(el('p',task.task),jumpButton(task.start,card.audio));box.append(tasks)}
- const download=el('a','Сохранить конспект');download.href='/export/'+encodeURIComponent(name);download.download=name.replace(/\.wav$/,'.md');box.append(download);
- const info=el('details',undefined,'lesson-info');info.append(el('summary','О занятии'));info.append(el('p','Предмет: '+(card.lesson?.subject||result.subject||'не определён')));if(card.lesson?.type)info.append(el('p','Тип: '+card.lesson.type));const teacher=card.lesson?.teacher||result.teacher;if(teacher)info.append(el('p','Преподаватель: '+teacher));info.append(el('p','Конспект создан автоматически; важные формулировки можно проверить по записи.','muted'));box.append(info);
- for(const warning of result.warnings||[])box.append(el('p',warning,'muted'));
+ box.append(el('h3',result.topic||card.lesson?.title||result.subject||card.lesson?.subject||'Содержание занятия'));
+ if(window.LectureWorkflow)window.LectureWorkflow.renderReader(box,card,result,name);else renderFullLecture(box,card,result,name);
+ const extras=el('details',undefined,'lesson-extras');extras.append(el('summary','Фото, метки и другие материалы занятия'));box.append(extras);
+ renderTelegramExport(extras,result,card.lesson||{},name);
+ renderTeacherRemarks(extras,card,result);
+ renderPresentations(extras,card,result,name);
+ renderTemporalSections(extras,card,result,name);
+ const info=el('details',undefined,'lesson-info');info.append(el('summary','О занятии'));info.append(el('p','Предмет: '+(card.lesson?.subject||result.subject||'не определён')));const teacher=card.lesson?.teacher||result.teacher;if(teacher)info.append(el('p','Преподаватель: '+teacher));extras.append(info);
+ for(const warning of result.warnings||[])extras.append(el('p',warning,'muted'));
  card.result.append(box);for(const d of box.querySelectorAll('.temporal-section'))if(openSections.includes(d.dataset.start))d.open=true;voiceControls(card,name).catch(studyError);
 }
+
 function addCard(name){
  const li=el('li');const link=el('a',name);link.href='/recordings/'+encodeURIComponent(name);link.download=name;
  const audio=el('audio');audio.controls=true;audio.preload='none';audio.src=link.href;link.textContent='Скачать аудио';
@@ -99,7 +99,7 @@ async function update(){if(updating)return;updating=true;try{
   card.button.textContent=job.status==='done'?'Обновить конспект':job.status==='error'?'Повторить создание':'Составить конспект';
   card.progress.hidden=recording||job.status==='done';card.progress.textContent=job.message?(job.message+(job.status==='processing'?' · '+job.percent+'%':'')):'';
   if(job.status==='error')card.progress.className='ai-progress error';else card.progress.className='ai-progress';
-  if(job.status==='done'&&card.lastStatus!=='done')card.loaded=false;card.lastStatus=job.status;
+  if(job.status==='done'&&card.lastStatus!=='done')card.loaded=false;card.lastStatus=job.status;window.LectureWorkflow?.refreshCard(card,job);
   const revision=JSON.stringify(card.lesson?.material_revision||[]);if(card.materialRevision!==revision){card.materialRevision=revision;card.loaded=false}
   updateBoardPhotoCard(card,name);
   const notesStamp=JSON.stringify([card.lesson?.markers||[],card.lesson?.photos||[]]);if(card.notesStamp!==notesStamp){card.notesStamp=notesStamp;card.loaded=false}
@@ -122,4 +122,4 @@ $('#reload-app').onclick=async()=>{
   throw Error('Обновление ещё не завершено. Запись работает отдельно; попробуй открыть приложение снова.');
  }catch(error){message.textContent=error.message;button.disabled=false}
 };
-</script><script src="/telegram_export.js"></script><script src="/study_ui.js"></script><script src="/vendor/interface/app.js"></script><script src="/board_ui.js"></script><script src="/vendor/interface/calendar.js"></script><script>async function refreshLoop(first=false){if(first||!document.hidden)await update();setTimeout(refreshLoop,studyStatus?.recording?1000:3000)}document.addEventListener('visibilitychange',()=>{if(!document.hidden){update();pollStudy()}});refreshLoop(true);</script><script src='/phone_pairing_ui.js'></script><script src='/updates_ui.js'></script></html>
+</script><script src="/telegram_export.js"></script><script src="/study_ui.js"></script><script src="/vendor/interface/app.js"></script><script src="/board_ui.js"></script><script src="/vendor/interface/calendar.js"></script><link rel="stylesheet" href="/vendor/interface/lecture_workflow.css"><script src="/lecture_workflow.js"></script><script>async function refreshLoop(first=false){if(first||!document.hidden)await update();setTimeout(refreshLoop,studyStatus?.recording?1000:3000)}document.addEventListener('visibilitychange',()=>{if(!document.hidden){update();pollStudy()}});refreshLoop(true);</script><script src='/phone_pairing_ui.js'></script><script src='/updates_ui.js'></script></html>

@@ -158,14 +158,15 @@ def enrich(status):
         if not meta.get('teacher') and key in teachers:
             meta['teacher']=teachers[key]['name'];meta['teacher_source']='speech';meta['teacher_quote']=teachers[key]['quote']
         meta.setdefault('teachers',[])
-        meta['topic']=result.get('topic') or result.get('subject') or meta.get('subject') or 'Тема пока не определена'
+        meta['topic']=result.get('topic') or meta.get('title') or result.get('subject') or meta.get('subject') or 'Тема пока не определена'
         meta['overview']=result.get('overview') or ''
         meta['key_points']=(result.get('summary') or [])[:3]
         meta['has_summary']=bool(result.get('overview') or result.get('summary'))
         draft=read(ROOT/'analysis'/(Path(name).stem+'.live.json'))
-        meta['has_draft']=bool(draft.get('segments'))
+        transcript=read(ROOT/'analysis'/(Path(name).stem+'.transcript.json'))
+        meta['has_draft']=bool(draft.get('segments') or transcript.get('segments'))
         meta['draft_updated']=draft.get('updated',0)
-        meta['material_revision']=[p.stat().st_mtime_ns if p.exists() else 0 for p in (ROOT/'analysis'/(Path(name).stem+'.json'),ROOT/'analysis'/(Path(name).stem+'.live.json'))]
+        meta['material_revision']=[p.stat().st_mtime_ns if p.exists() else 0 for p in (ROOT/'analysis'/(Path(name).stem+'.json'),ROOT/'analysis'/(Path(name).stem+'.live.json'),ROOT/'analysis'/(Path(name).stem+'.transcript.json'),ROOT/'study'/(Path(name).stem+'.notes.json'))]
         record_notes=notes(name)
         meta['markers']=record_notes.get('markers',[])
         meta['photos']=record_notes.get('photos',[])

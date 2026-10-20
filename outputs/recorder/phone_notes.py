@@ -7,25 +7,32 @@ from pathlib import Path
 
 def documents(root, errors=None):
     import lesson_schedule
+    from transcript_quality import annotate
     errors = errors if errors is not None else []
     selected = {}
     for path in (root / 'analysis').glob('*.json'):
-        stem = path.name.removesuffix('.json').removesuffix('.live')
+        stem = path.name.removesuffix('.json').removesuffix('.live').removesuffix('.transcript')
         if re.fullmatch(r'lecture-[0-9-]+', stem):
             selected.setdefault(stem + '.wav', []).append(path)
     for name, paths in sorted(selected.items()):
         value = None
-        for path in sorted(paths, key=lambda p: p.name.endswith('.live.json')):
+        for path in sorted(paths, key=lambda p: (p.name.endswith(('.live.json', '.transcript.json')), -p.stat().st_mtime_ns)):
             try:
                 report = json.loads(path.read_text())
                 if not isinstance(report, dict):
                     raise ValueError('Некорректный формат расшифровки')
+                notes_path = root / 'study' / (Path(name).stem + '.notes.json')
+                try:
+                    decisions = json.loads(notes_path.read_text()).get('transcript_review', {})
+                except (OSError, ValueError):
+                    decisions = {}
+                report = annotate(report, decisions)
                 rows = report.get('segments') or []
                 if not isinstance(rows, list):
                     raise ValueError('Некорректные строки расшифровки')
                 clean = {k: report[k] for k in ('subject', 'topic', 'teacher', 'overview')
                          if isinstance(report.get(k), str) and report[k].strip()}
-                clean.update({k: report[k] for k in ('summary', 'homework', 'formulas', 'warnings')
+                clean.update({k: report[k] for k in ('summary', 'homework', 'formulas', 'warnings', 'sections')
                               if isinstance(report.get(k), list)})
                 clean['segments'] = []
                 for row in rows:
@@ -38,11 +45,17 @@ def documents(root, errors=None):
                         segment['original_text'] = original
                     if row.get('needs_review') is True:
                         segment['needs_review'] = True
+                    segment.update({key: row[key] for key in ('id', 'review_key', 'reviewed', 'quality', 'timing') if key in row})
                     clean['segments'].append(segment)
                 if not clean['segments'] and not clean.get('summary'):
                     continue
-                clean['draft'] = path.name.endswith('.live.json')
+                clean['draft'] = path.name.endswith(('.live.json', '.transcript.json'))
                 meta = lesson_schedule.metadata(name) or {}
+                try:
+                    changed = json.loads((root / 'study/folders.json').read_text())
+                    meta = changed.get(name) or meta
+                except (OSError, ValueError):
+                    pass
                 lesson = {k: meta[k] for k in ('subject', 'teacher', 'date', 'start') if meta.get(k)}
                 value = {'file': name, 'lesson': lesson, 'report': clean}
                 raw = json.dumps(value).encode()

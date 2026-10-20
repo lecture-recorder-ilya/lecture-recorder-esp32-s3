@@ -19,6 +19,7 @@ from pathlib import Path
 from transcript_cache import WHISPER_ENGINE,identity,prepare,checkpoint as transcript_checkpoint
 from asr_windows import audio_window,central_segment
 from math_formulas import merge as merge_formulas
+from transcript_quality import annotate
 
 ROOT = Path(__file__).resolve().parent
 MODELS = ROOT.parent.parent / 'work' / 'models'
@@ -245,8 +246,19 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
                         continue
                     text = clean_asr_text(segment.get('text', ''))
                     if text:
-                        segments.append({'id':len(segments), 'start':round(read_start/rate+segment['start'], 2),
-                                         'end':round(min(duration, read_start/rate+segment['end']), 2), 'text':text})
+                        row = {'id':len(segments), 'start':round(read_start/rate+segment['start'], 2),
+                               'end':round(min(duration, read_start/rate+segment['end']), 2), 'text':text}
+                        for key in ('avg_logprob', 'no_speech_prob', 'compression_ratio'):
+                            if type(segment.get(key)) in (int, float):
+                                row[key] = segment[key]
+                        row['words'] = []
+                        for word in segment.get('words', []):
+                            item = {k: word[k] for k in ('word', 'probability') if k in word}
+                            for key in ('start', 'end'):
+                                if type(word.get(key)) in (int, float):
+                                    item[key] = round(read_start / rate + word[key], 3)
+                            row['words'].append(item)
+                        segments.append(row)
                 save(transcript_path, transcript_checkpoint(expected, segments, duration, min(offset+step,total)))
                 budget.checkpoint(force=True)
             cached = transcript_checkpoint(expected, segments, duration, total, complete=True)
@@ -349,7 +361,7 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
                 if key not in seen:
                     seen.add(key); homework.append(task)
         excluded={v['id']:v for p in parts for v in p['excluded_asides']}
-        displayed_segments=[v for v in segments if v['id'] not in excluded]
+        displayed_segments=list(segments)
         result = {'subject':subjects[0] if len(subjects)==1 else None,
                   'teacher':teachers[0] if len(teachers)==1 else None,
                   'summary':notes, 'teacher_remarks':remarks(displayed_segments,role_map), 'homework':homework, 'highlights':merge_highlights(parts), 'segments':displayed_segments, 'excluded_asides':list(excluded.values()),
@@ -379,6 +391,7 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
         result['moments']=dated_segments(result['segments'],context_for_recording(audio_path.name)['subject'])
     result['final_review'] = final_review
     transcript = result['transcript']
+    result = annotate(result)
     save(result_path, result)
     markdown = ['# '+(result['subject'] or 'Предмет не определён'), '', 'Преподаватель: '+(result['teacher'] or 'не определён'), '', '## Конспект', '']
     markdown[4:4] = ['Тема: '+(result.get('topic') or 'не определена'), '', result.get('overview',''), '']

@@ -20,6 +20,8 @@ from learning_moments import moments_for_report, safe_image_query
 from speech_context import context_for_recording
 import illustrations
 import board_photos
+from audio_import import Importer, MAX_BYTES
+from transcript_quality import annotate, report_for, plain_text, markdown
 from phone_pairing import Pairing, PairingError
 
 ROOT = Path(__file__).resolve().parent
@@ -82,8 +84,33 @@ class ApplicationServer(ThreadingHTTPServer):
         self.reload_requested = threading.Event()
         self.install_requested = False
         self.pairing = Pairing(PROJECT)
+        self.importer = Importer(ROOT, self.import_ready)
+
+    def import_ready(self, job):
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        now = datetime.fromtimestamp(job['created'], ZoneInfo('Europe/Moscow'))
+        subject = job.get('subject') or 'Загруженная запись'
+        date = job.get('date') or now.strftime('%Y-%m-%d')
+        meta = {'subject': subject, 'teacher': job.get('teacher', ''), 'date': date,
+                'start': now.strftime('%H:%M'), 'end': '', 'type': 'Лекция',
+                'title': job.get('title') or Path(job['name']).stem,
+                'imported': True, 'original_name': job['name']}
+        folder = study_store.folder_name(date + ' — ' + subject)
+        study_store.move(job['file'], folder, meta)
+        with study_store.transaction():
+            notes = study_store.notes(job['file'])
+            notes.update(import_id=job['id'], original_name=job['name'])
+            study_store.save(study_store.note_path(job['file']), notes)
+        if job['analyze']:
+            request = Request(self.service_url + '/analyze',
+                              data=json.dumps({'file': job['file'], 'wait_models': True}).encode(),
+                              headers={'Content-Type': 'application/json'})
+            with urlopen(request, timeout=15) as response:
+                json.load(response)
 
     def server_close(self):
+        self.importer.close()
         self.pairing.close()
         super().server_close()
 
@@ -105,7 +132,10 @@ class Handler(BaseHTTPRequestHandler):
     def proxy(self, body=None):
         response_started = False
         headers = {'Content-Type': 'application/json'} if body is not None else {}
-        request = Request(self.server.service_url + self.path, data=body, headers=headers)
+        if self.headers.get('Range'):
+            headers['Range'] = self.headers['Range']
+        request = Request(self.server.service_url + self.path, data=body, headers=headers,
+                          method='HEAD' if self.command == 'HEAD' else None)
         try:
             try:
                 response = urlopen(request, timeout=45)
@@ -113,13 +143,15 @@ class Handler(BaseHTTPRequestHandler):
                 response = error
             with response:
                 self.send_response(response.code)
-                for name in ('Content-Type', 'Content-Length'):
+                for name in ('Content-Type', 'Content-Length', 'Accept-Ranges', 'Content-Range', 'Content-Disposition'):
                     value = response.headers.get(name)
                     if value is not None:
                         self.send_header(name, value)
                 self.send_header('Cache-Control', 'no-store')
                 self.end_headers()
                 response_started = True
+                if self.command == 'HEAD':
+                    return
                 while True:
                     block = response.read(65536)
                     if not block:
@@ -132,10 +164,37 @@ class Handler(BaseHTTPRequestHandler):
             # Closing or reloading the UI never sends Stop to the audio service.
             pass
 
+    def do_HEAD(self):
+        if urlsplit(self.path).path.startswith('/recordings/'):
+            return self.proxy()
+        self.send_response(404)
+        self.send_header('Content-Length', '0')
+        self.end_headers()
+
     def do_GET(self):
         route = urlsplit(self.path)
         query = parse_qs(route.query)
         try:
+            if route.path == '/imports':
+                return self.reply({'jobs': self.server.importer.list()})
+            if route.path == '/lecture_workflow.js':
+                return self.reply((ROOT / 'lecture_workflow.js').read_bytes(), mime='text/javascript; charset=utf-8')
+            if route.path.startswith('/transcript-export/'):
+                name = unquote(route.path.removeprefix('/transcript-export/'))
+                study_store.audio(name)
+                report = report_for(ROOT, name)
+                if report is None:
+                    return self.reply({'error': 'Расшифровка ещё не готова.'}, 404)
+                decisions = study_store.notes(name).get('transcript_review', {})
+                return self.reply(plain_text(annotate(report, decisions)).encode(), mime='text/plain; charset=utf-8')
+            if route.path.startswith('/export/'):
+                name = unquote(route.path.removeprefix('/export/'))
+                study_store.audio(name)
+                report = report_for(ROOT, name)
+                if report is None:
+                    return self.reply({'error': 'Конспект ещё не готов.'}, 404)
+                report = annotate(report, study_store.notes(name).get('transcript_review', {}))
+                return self.reply(markdown(report).encode(), mime='text/markdown; charset=utf-8')
             if route.path in ('/phone-pairing', '/phone_pairing_ui.js'):
                 if self.headers.get('Host') not in (f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}'):
                     return self.reply({'error':'Запрос отклонён'},403)
@@ -157,10 +216,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply({'terms':study_store.notes(name).get('asr_terms','')})
             if route.path.startswith('/analysis/'):
                 name=unquote(route.path.removeprefix('/analysis/'));study_store.audio(name)
-                path=ROOT/'analysis'/(Path(name).stem+'.json')
-                if not path.exists():path=path.with_suffix('.live.json')
-                if path.exists():
-                    report=study_store.read(path)
+                report = report_for(ROOT, name)
+                if report is not None:
+                    report = annotate(report, study_store.notes(name).get('transcript_review', {}))
                     from presentation_sections import presentations,roles
                     from passive_teacher import public
                     report['presentations']=presentations(report.get('segments',[]),report.get('duration',0))
@@ -170,7 +228,7 @@ class Handler(BaseHTTPRequestHandler):
                     report['teacher_remarks']=remarks(report.get('segments',[]),report['speaker_roles'],report.get('teacher_remarks',[]))
                     return self.reply(report)
             if route.path == '/calendar':
-                return self.reply(json.loads((ROOT/'schedule.json').read_text()))
+                return self.reply(json.loads((ROOT/('schedule.json' if (ROOT/'schedule.json').exists() else 'schedule.example.json')).read_text()))
             if route.path == '/study_ui.js':
                 return self.reply((ROOT/'study_ui.js').read_bytes(),mime='text/javascript; charset=utf-8')
             if route.path == '/board_ui.js':
@@ -236,6 +294,20 @@ class Handler(BaseHTTPRequestHandler):
         try:
             length = int(self.headers.get('Content-Length', 0))
             route = urlsplit(self.path)
+            if route.path == '/import-audio':
+                self.close_connection = True
+                if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
+                    return self.reply({'error': 'Запрос отклонён'}, 403)
+                if self.server.reload_requested.is_set():
+                    return self.reply({'error': 'Приложение перезапускается. Повтори загрузку.'}, 409)
+                if not 0 < length <= MAX_BYTES:
+                    return self.reply({'error': 'Выбери непустую запись размером до 2 ГБ.'}, 413)
+                query = parse_qs(route.query)
+                self.connection.settimeout(180)
+                values = {key: query.get(key, [''])[0] for key in ('title', 'subject', 'teacher', 'date')}
+                values['analyze'] = query.get('analyze', ['1'])[0] != '0'
+                value = self.server.importer.receive(self.rfile, length, query.get('name', [''])[0], values)
+                return self.reply({key: value[key] for key in ('id', 'file', 'status', 'message', 'duplicate') if key in value}, 202)
             if route.path=='/telegram-export':
                 if not 0<length<=2*1024*1024:raise ValueError('Слишком большой запрос')
                 value=json.loads(self.rfile.read(length));name=value.get('file');study_store.audio(name)
@@ -266,12 +338,33 @@ class Handler(BaseHTTPRequestHandler):
             body = self.rfile.read(length)
             if body and not isinstance(json.loads(body), dict):
                 raise ValueError('Expected object')
-        except (ValueError, UnicodeDecodeError, TypeError):
-            return self.reply({'error': 'Некорректный запрос'}, 400)
+        except (ValueError, UnicodeDecodeError, TypeError) as error:
+            message = str(error) if urlsplit(self.path).path == '/import-audio' else 'Некорректный запрос'
+            return self.reply({'error': message}, 400)
         except (OSError, URLError):
             return self.reply({'error':'Служба записи временно недоступна'},503)
         try:
             value = json.loads(body) if body else {}
+            if self.path == '/imports/retry':
+                result = self.server.importer.retry(value.get('id'))
+                return self.reply({'id': result['id'], 'status': result['status']})
+            if self.path == '/transcript-review':
+                name = value.get('file')
+                study_store.audio(name)
+                report = report_for(ROOT, name)
+                if report is None:
+                    raise ValueError('Расшифровка ещё не готова.')
+                item = next((row for row in annotate(report)['segments'] if row['review_key'] == value.get('key')), None)
+                if item is None:
+                    return self.reply({'error': 'Текст изменился. Открой обновлённый фрагмент и проверь его ещё раз.'}, 409)
+                if type(value.get('reviewed')) is not bool:
+                    raise ValueError('Выбери состояние проверки.')
+                with study_store.transaction():
+                    notes = study_store.notes(name)
+                    notes.setdefault('transcript_review', {})[item['review_key']] = {
+                        'reviewed': value['reviewed'], 'updated': time.time()}
+                    study_store.save(study_store.note_path(name), notes)
+                return self.reply({'key': item['review_key'], 'reviewed': value['reviewed']})
             if self.path == '/quit-for-install':
                 if self.headers.get('Host') not in (f'127.0.0.1:{port}',f'localhost:{port}'):
                     return self.reply({'error':'Запрос отклонён'},403)
@@ -279,6 +372,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.reply({'error':'Приложение перезапускается. Повтори через несколько секунд.'},409)
                 if self.server.pairing.public()['active']:
                     return self.reply({'error':'Заверши сопряжение телефона перед выходом.'},409)
+                if self.server.importer.active():
+                    return self.reply({'error': 'Дождись завершения загрузки и подготовки аудио перед выходом.'}, 409)
                 try:
                     with urlopen(self.server.service_url+'/status',timeout=3) as response:status=json.load(response)
                 except URLError:status={}
@@ -332,6 +427,8 @@ class Handler(BaseHTTPRequestHandler):
         except (OSError, URLError) as error:
             return self.reply({'error':str(error)},503)
         if self.path == '/reload-app':
+            if self.server.importer.active():
+                return self.reply({'error': 'Дождись подготовки загруженной записи перед обновлением.'}, 409)
             if self.server.pairing.public()['active']:
                 return self.reply({'error':'Заверши или закрой сопряжение телефона перед перезапуском.'},409)
             try:

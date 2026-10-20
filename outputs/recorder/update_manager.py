@@ -289,6 +289,7 @@ def start(server):
                 if (read(PROJECT / 'work/updates/pending.json')
                         and read(PROJECT/'work/updates/hold.json').get('until',0) < time.time()
                         and not (getattr(server, 'pairing', None) and server.pairing.public()['active'])
+                        and not (getattr(server, 'importer', None) and server.importer.active())
                         and idle(server.service_url)):
                     server.install_requested = True
                     server.shutdown()

@@ -131,7 +131,7 @@ function noteControls(parent,name,audio,active=false){
 }
 function renderSummaryPreview(card){
  const meta=card.lesson||{},parts=meta.merged_parts||[];
- const text=meta.overview||(meta.has_draft?'Идёт запись · предварительный текст':'')||meta.key_points?.[0]||parts.find(p=>p.summary)?.summary||'Краткий конспект ещё не готов. Открой занятие, чтобы составить его.';
+ const text=meta.overview||(meta.has_draft?'Предварительный текст · готовим конспект':'')||meta.key_points?.[0]||parts.find(p=>p.summary)?.summary||'Краткий конспект ещё не готов. Открой занятие, чтобы составить его.';
  const preview=text.length>250?text.slice(0,247)+'…':text;
  if(card.preview.textContent!==preview)card.preview.textContent=preview;
 }
@@ -145,6 +145,7 @@ function initStudyCard(card,name){
  header.ondragleave=()=>card.li.classList.remove('drop-target');
  header.ondrop=e=>{e.preventDefault();e.stopPropagation();card.li.classList.remove('drop-target');const source=e.dataTransfer.getData('application/x-lecture-recording');mergeByDrop(source,name)};
  const body=el('div',undefined,'record-body');body.append(...card.li.childNodes);details.append(header,body);card.li.append(details);const chapters=el('section',undefined,'chapter-list');chapters.hidden=true;body.insertBefore(chapters,card.result);const audioTools=el('details',undefined,'audio-tools');audioTools.append(el('summary','Аудиозапись и отрывки'),card.audio,body.querySelector('a'));body.append(audioTools);body.insertBefore(card.result,body.firstChild);body.insertBefore(chapters,card.result.nextSibling);Object.assign(card,{details,topic,choice,clock,chapters,preview,audioTools});initBoardPhotoCard(card,name);audioTools.ontoggle=()=>{if(audioTools.open&&card.audio.preload==='none'){card.audio.preload='metadata';card.audio.load()}};
+ const playerDock=el('div',undefined,'workflow-player');playerDock.append(el('span','Аудиозапись пары','player-title'),card.audio);body.insertBefore(playerDock,card.result);body.insertBefore(card.progress,card.result);body.insertBefore(card.button,card.result);card.playerDock=playerDock;
  details.ontoggle=()=>{if(details.open)update()};
 
 }

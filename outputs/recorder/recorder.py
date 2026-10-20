@@ -342,6 +342,13 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(payload)
 
+    def do_HEAD(self):
+        if self.path.startswith('/recordings/'):
+            return self.do_GET()
+        self.send_response(404)
+        self.send_header('Content-Length', '0')
+        self.end_headers()
+
     def do_GET(self):
         if self.path == '/':
             return self.reply((ROOT / 'index.html').read_bytes(), mime='text/html; charset=utf-8')
@@ -368,20 +375,13 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError as exc:
                 return self.reply({'error':str(exc)}, 400)
         if self.path.startswith('/recordings/'):
-            name = self.path[len('/recordings/'):]
+            from urllib.parse import unquote, urlsplit
+            name = unquote(urlsplit(self.path).path[len('/recordings/'):])
             if '/' not in name and '\\' not in name and name.endswith('.wav') and (FILES / name).is_file():
                 with lock:
                     active = state['recording'] and state['file'] == name
-                if active:
-                    return self.reply({'error': 'Сначала останови запись.'}, 409)
-                path = FILES / name
-                self.send_response(200)
-                self.send_header('Content-Type', 'audio/wav')
-                self.send_header('Content-Length', str(path.stat().st_size))
-                self.end_headers()
-                with path.open('rb') as audio:
-                    shutil.copyfileobj(audio, self.wfile)
-                return
+                from media_stream import serve_audio
+                return serve_audio(self, FILES / name, active)
         self.reply({'error': 'Не найдено'}, 404)
 
     def do_POST(self):
@@ -422,7 +422,7 @@ class Handler(BaseHTTPRequestHandler):
             if active:
                 return self.reply({'error':'Сначала останови эту запись.'}, 409)
             try:
-                ai_service.submit(body.get('file'))
+                ai_service.submit(body.get('file'), wait_models=body.get('wait_models') is True)
                 return self.reply({'ok':True})
             except (ValueError, RuntimeError) as exc:
                 return self.reply({'error':str(exc)}, 400)

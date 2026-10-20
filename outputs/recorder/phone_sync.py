@@ -106,6 +106,14 @@ def import_one(item,base,token,files=FILES,ledger_path=LEDGER):
   atomic(target.with_suffix('.phone.json'),dict(source='android',sha256=sha,started_ms=item.get('started_ms'),error=item.get('error','')))
   import lesson_schedule
   lesson_schedule.organize(name)
+  if item.get('imported') is True:
+   import study_store
+   from datetime import datetime
+   from zoneinfo import ZoneInfo
+   stamp=item.get('started_ms')
+   moment=datetime.fromtimestamp(stamp/1000,ZoneInfo('Europe/Moscow')) if type(stamp) in (int,float) else datetime.now(ZoneInfo('Europe/Moscow'))
+   meta={'date':moment.strftime('%Y-%m-%d'),'start':moment.strftime('%H:%M'),'end':'','type':'Лекция','subject':'Загруженная запись','title':str(item.get('title') or item.get('original_name') or 'Запись с телефона')[:160],'imported':True}
+   study_store.move(name,meta['date']+' — Загруженные записи',meta)
   ledger[name]={'sha256':sha,'bytes':size,'queued':False};atomic(ledger_path,ledger)
  # A failed acknowledgement is retried against the already verified local copy.
  with request(base,token,'/ack',{'name':name,'sha256':sha}) as r:
@@ -117,7 +125,7 @@ def queue_pending(ledger_path=LEDGER):
  for name,entry in ledger.items():
   if entry.get('queued'):continue
   try:
-   with urlopen(Request('http://127.0.0.1:8765/analyze',data=json.dumps({'file':name}).encode(),headers={'Content-Type':'application/json'}),timeout=10) as r:json.load(r)
+   with urlopen(Request('http://127.0.0.1:8765/analyze',data=json.dumps({'file':name,'wait_models':True}).encode(),headers={'Content-Type':'application/json'}),timeout=10) as r:json.load(r)
    ledger[name]['queued']=True;atomic(ledger_path,ledger)
   except OSError:pass
 def candidates(cfg):
