@@ -23,7 +23,9 @@ final class LectureNotes {
  }
  static File[] files(Context c){File[] fs=root(c).listFiles(f->f.getName().endsWith(".wav.json"));if(fs==null)return new File[0];Arrays.sort(fs,Collections.reverseOrder());return fs;}
  static String title(JSONObject value){JSONObject r=value.optJSONObject("report"),m=value.optJSONObject("lesson");String subject=r.optString("subject",m==null?"":m.optString("subject"));String date=m==null?"":m.optString("date");return subject.isEmpty()?value.optString("file"):subject+(date.isEmpty()?"":" · "+date);}
- static String text(JSONObject v)throws Exception{
+ static String text(JSONObject v)throws Exception{return text(v,true);}
+ static String summary(JSONObject v)throws Exception{return text(v,false);}
+ private static String text(JSONObject v,boolean includeTranscript)throws Exception{
   JSONObject r=v.getJSONObject("report"),m=v.optJSONObject("lesson");StringBuilder s=new StringBuilder();
   if(r.optBoolean("draft"))s.append("Предварительная расшифровка · может содержать ошибки\n\n");
   s.append(r.optString("topic",title(v))).append("\n");
@@ -31,7 +33,7 @@ final class LectureNotes {
   String teacher=r.optString("teacher",m==null?"":m.optString("teacher"));if(!teacher.isEmpty())s.append("Преподаватель: ").append(teacher).append("\n");
   if(!r.optString("overview").isEmpty())s.append("\n").append(r.optString("overview")).append("\n");
   JSONArray summary=r.optJSONArray("summary");if(summary!=null&&summary.length()>0){s.append("\nКонспект\n");for(int i=0;i<summary.length();i++)s.append("• ").append(summary.get(i)).append("\n");}
-  JSONArray rows=r.optJSONArray("segments");s.append("\nПолный текст\n");if(rows!=null)for(int i=0;i<rows.length();i++){JSONObject row=rows.getJSONObject(i);s.append(row.optString("text")).append("\n\n");}
+  JSONArray rows=includeTranscript?r.optJSONArray("segments"):null;if(includeTranscript)s.append("\nПолный текст\n");if(rows!=null)for(int i=0;i<rows.length();i++){JSONObject row=rows.getJSONObject(i);s.append("[").append((row.has("start")?LectureReaderActivity.clock(row.optDouble("start")):"Без таймкода")).append("] ");if(row.optBoolean("needs_review"))s.append("Проверь по аудио · ");s.append(row.optString("text")).append("\n\n");}
   JSONArray tasks=r.optJSONArray("homework");if(tasks!=null&&tasks.length()>0){s.append("\nЗадания из записи\n");for(int i=0;i<tasks.length();i++){JSONObject task=tasks.optJSONObject(i);if(task==null)continue;s.append("• ").append(task.optString("task"));String deadline=task.optString("deadline");if(!deadline.isEmpty())s.append(" · ").append(deadline);s.append("\n");String quote=task.optString("quote");if(!quote.isEmpty())s.append("Основание: «").append(quote).append("»\n");}}
   JSONArray warnings=r.optJSONArray("warnings");if(warnings!=null&&warnings.length()>0){s.append("\nПримечания\n");for(int i=0;i<warnings.length();i++)s.append("• ").append(warnings.optString(i)).append("\n");}
   return s.toString();

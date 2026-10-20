@@ -7,6 +7,7 @@ import java.util.*;
 
 final class Store {
  static File root(Context c){File f=new File(c.getFilesDir(),"recordings");f.mkdirs();return f;}
+ static File library(Context c){File f=new File(c.getFilesDir(),"library-audio");f.mkdirs();return f;}
  static void header(RandomAccessFile f,long bytes)throws IOException{
   f.seek(0);f.writeBytes("RIFF");le(f,bytes+36,4);f.writeBytes("WAVEfmt ");le(f,16,4);le(f,1,2);le(f,1,2);le(f,16000,4);le(f,32000,4);le(f,2,2);le(f,16,2);f.writeBytes("data");le(f,bytes,4);
  }
@@ -29,5 +30,5 @@ final class Store {
  }
  static String read(File f)throws IOException{try(InputStream i=new FileInputStream(f);ByteArrayOutputStream o=new ByteArrayOutputStream()){byte[] b=new byte[8192];int n;while((n=i.read(b))>0)o.write(b,0,n);return o.toString("UTF-8");}}
  static void write(File f,JSONObject j)throws IOException{File temp=new File(f.getPath()+".tmp");try(FileOutputStream o=new FileOutputStream(temp)){o.write(j.toString().getBytes("UTF-8"));o.getFD().sync();}if(!temp.renameTo(f))throw new IOException("Не удалось сохранить метаданные");}
- static synchronized void acknowledge(Context c,String name,String digest)throws Exception{File f=file(c,name);if(!f.exists())return;if(!hash(f).equals(digest))throw new IOException("Контрольная сумма отличается");if(!f.delete())throw new IOException("Не удалось удалить подтверждённую копию");new File(f.getPath()+".json").delete();if(name.startsWith("board-")){String id=name.substring(name.lastIndexOf('-')+1,name.length()-4);new File(BoardPhotos.camera(c),id+".jpg").delete();new File(BoardPhotos.camera(c),id+".json").delete();}}
+ static synchronized void acknowledge(Context c,String name,String digest)throws Exception{File f=file(c,name);if(!f.exists())return;if(!hash(f).equals(digest))throw new IOException("Контрольная сумма отличается");if(name.endsWith(".wav")&&c.getSharedPreferences("settings",0).getBoolean("keep_audio_copy",true)){File saved=new File(library(c),name);if(saved.exists()){if(!hash(saved).equals(digest))throw new IOException("Аудиокопия в библиотеке отличается");if(!f.delete())throw new IOException("Не удалось завершить перенос в библиотеку");}else if(!f.renameTo(saved))throw new IOException("Не удалось сохранить аудиокопию для прослушивания");}else if(!f.delete())throw new IOException("Не удалось удалить подтверждённую копию");new File(f.getPath()+".json").delete();if(name.startsWith("board-")){String id=name.substring(name.lastIndexOf('-')+1,name.length()-4);new File(BoardPhotos.camera(c),id+".jpg").delete();new File(BoardPhotos.camera(c),id+".json").delete();}}
 }
