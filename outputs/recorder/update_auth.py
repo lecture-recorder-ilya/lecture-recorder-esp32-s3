@@ -134,6 +134,7 @@ class Authorization:
             if self.credentials is None: self.credentials = self.vault.read()
             if not self.credentials: return None
             if self.clock()+120 < self.credentials.get('expires_at', 0):
+                if not self.pending: self.message = 'GitHub подключён · закрытые обновления включены.'
                 return self.credentials['access_token']
             if not self.credentials.get('refresh_token') or self.clock() >= self.credentials.get('refresh_expires_at', 0):
                 self.message = 'Доступ истёк. Войди в GitHub ещё раз.'
