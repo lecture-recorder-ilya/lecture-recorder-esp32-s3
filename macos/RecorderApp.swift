@@ -1,7 +1,7 @@
 import Cocoa
 import WebKit
 
-class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate {
     var window: NSWindow!
     var process: Process?
     var timer: Timer?
@@ -9,6 +9,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var attempts = 0
     var finishRecordingOnExit = false
     var reloading = false
+    var downloads: [ObjectIdentifier: (temporary: URL, destination: URL)] = [:]
     let root = Bundle.main.bundleURL.resolvingSymlinksInPath().deletingLastPathComponent().deletingLastPathComponent()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -35,12 +36,99 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.title = "Запись лекций"
         window.center(); window.delegate = self
         view = WKWebView(frame: window.contentView!.bounds)
+        view.uiDelegate = self
+        view.navigationDelegate = self
         view.autoresizingMask = [.width,.height]
         window.contentView!.addSubview(view)
         view.loadHTMLString("<html><meta charset='utf-8'><style>body{font:18px -apple-system;display:grid;place-content:center;height:90vh;color-scheme:light dark}p{opacity:.6;font-size:14px}</style><body>Запускаю библиотеку…<p>Записи и тексты загружаются с этого Mac.</p></body></html>", baseURL: nil)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps:true)
         probe(startIfMissing: true)
+    }
+    func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {
+        let panel = NSOpenPanel()
+        panel.title = "Выбрать файл"
+        panel.prompt = "Открыть"
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = parameters.allowsMultipleSelection
+        panel.beginSheetModal(for: window) { result in
+            completionHandler(result == .OK ? panel.urls : nil)
+        }
+    }
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        decisionHandler(navigationAction.shouldPerformDownload ? .download : .allow)
+    }
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        download.delegate = self
+    }
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        download.delegate = self
+    }
+    func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
+        let panel = NSSavePanel()
+        panel.title = "Сохранить материалы занятия"
+        panel.nameFieldStringValue = (suggestedFilename as NSString).lastPathComponent
+        if let url = response.url, url.path.hasPrefix("/transcript-export/") {
+            panel.nameFieldStringValue = url.deletingPathExtension().lastPathComponent + ".txt"
+        } else if let url = response.url, url.path.hasPrefix("/export/") {
+            panel.nameFieldStringValue = url.deletingPathExtension().lastPathComponent + ".md"
+        }
+        panel.canCreateDirectories = true
+        panel.beginSheetModal(for: window) { result in
+            guard result == .OK, let destination = panel.url else { completionHandler(nil); return }
+            let temporary = destination.deletingLastPathComponent().appendingPathComponent(".lecture-" + UUID().uuidString + ".download")
+            if let url = response.url, ["http", "https"].contains(url.scheme ?? "") {
+                completionHandler(nil)
+                self.fetchExport(url, temporary: temporary, destination: destination)
+                return
+            }
+            self.downloads[ObjectIdentifier(download)] = (temporary, destination)
+            completionHandler(temporary)
+        }
+    }
+    func downloadDidFinish(_ download: WKDownload) {
+        guard let files = downloads.removeValue(forKey: ObjectIdentifier(download)) else { return }
+        commitExport(temporary: files.temporary, destination: files.destination)
+    }
+    func fetchExport(_ url: URL, temporary: URL, destination: URL) {
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 600
+        URLSession.shared.downloadTask(with: request) { location, response, error in
+            guard error == nil, let location = location, let response = response as? HTTPURLResponse, response.statusCode == 200 else {
+                DispatchQueue.main.async { self.exportError("Не удалось скачать файл. Попробуй сохранить его ещё раз.") }
+                return
+            }
+            do {
+                let size = try location.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+                guard response.expectedContentLength < 0 || Int64(size) == response.expectedContentLength else {
+                    throw NSError(domain: "LectureExport", code: 1)
+                }
+                try FileManager.default.moveItem(at: location, to: temporary)
+                DispatchQueue.main.async { self.commitExport(temporary: temporary, destination: destination) }
+            } catch {
+                DispatchQueue.main.async { self.exportError("Файл сохранился не полностью. Повтори скачивание.") }
+            }
+        }.resume()
+    }
+    func commitExport(temporary: URL, destination: URL) {
+        do {
+            if FileManager.default.fileExists(atPath: destination.path) {
+                _ = try FileManager.default.replaceItemAt(destination, withItemAt: temporary)
+            } else {
+                try FileManager.default.moveItem(at: temporary, to: destination)
+            }
+        } catch { exportError("Не удалось сохранить файл. Подготовленная копия находится здесь: " + temporary.path) }
+    }
+    func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
+        if let files = downloads.removeValue(forKey: ObjectIdentifier(download)) { try? FileManager.default.removeItem(at: files.temporary) }
+        if (error as NSError).code != NSURLErrorCancelled { exportError("Не удалось скачать файл. Попробуй сохранить его ещё раз.") }
+    }
+    func exportError(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = "Сохранение материалов"
+        alert.informativeText = message
+        alert.beginSheetModal(for: window)
     }
     func probe(startIfMissing: Bool) {
         let url = URL(string:"http://127.0.0.1:8767/app-info")!
