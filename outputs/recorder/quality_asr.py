@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent;PROJECT=ROOT.parent.parent
 MODEL=PROJECT/'work/models/gigaam';RNNT=PROJECT/'work/models/gigaam-rnnt'
 CHAR=PROJECT/'work/models/gigaam-beam'
-ENGINE='GigaAM-v3-3pass-context-v5'
+ENGINE='GigaAM-v3-3pass-phrases-v6'
 
 def ready():
  return all(p.exists() for p in [MODEL/'v3_e2e_ctc.int8.onnx',MODEL/'v3_e2e_ctc_vocab.txt',PROJECT/'work/models/gigaam-manifest.json',RNNT/'v3_e2e_rnnt_encoder.onnx',RNNT/'v3_e2e_rnnt_decoder.onnx',RNNT/'v3_e2e_rnnt_joint.onnx',RNNT/'v3_e2e_rnnt_vocab.txt',PROJECT/'work/models/gigaam-rnnt-manifest.json',CHAR/'v3_ctc.onnx',CHAR/'v3_vocab.txt',PROJECT/'work/models/gigaam-beam-manifest.json'])
@@ -24,34 +24,58 @@ class Decoder:
   return self.models[kind]
  def transcribe(self,samples,terms=None,speech=None,emit_start=0,emit_end=float('inf')):
   from speech_gate import strict_speech_ranges,anchored_speech_ranges
-  from asr_guard import prepare,supported_words,join_words,choose_candidate,refine_words
+  from asr_guard import prepare,supported_words,join_words,choose_candidate,refine_words,speech_windows,lexical
+  from asr_terms import apply_terms
   from speech_quality import repetition
   from context_review import acoustic_evidence
   core=strict_speech_ranges(samples) if speech is None else speech
-  if not core:
-   self.last={'selected':'silence','words':0};return ''
-  ranges=anchored_speech_ranges(samples,core);audio=prepare(samples,highpass=False)
+  ranges=anchored_speech_ranges(samples,core) if core else []
+  windows=speech_windows(ranges,len(samples)/16000,padding=.5,max_seconds=24)
+  if not windows:
+   self.last={'selected':'silence','words':0,'word_evidence':[]};return ''
+  selected_all=[];raw_all=[];alternatives={'ctc':[],'rnnt':[],'character':[]};changes=[];uncertain=[];scores_all=[];kinds=[];decoded_seconds=0
   with self.lock:
-   ctc_result=self._load('ctc').recognize(audio,sample_rate=16000)
-   ctc=supported_words(ctc_result,ranges,emit_start,emit_end)
-   # Keep CTC phrases on weak audio. The second pass can independently
-   # confirm truncated words without replacing the entire weak excerpt.
-   scores=[lp for token,lp in zip(ctc_result.tokens or [],ctc_result.logprobs or []) if re.search(r'[^\W_]',token)]
-   confidence=math.exp(sum(scores)/len(scores)) if scores else 0;rnnt=[]
-   rnnt_result=self._load('rnnt').recognize(audio,sample_rate=16000)
-   rnnt=supported_words(rnnt_result,ranges,emit_start,emit_end)
-   selected=choose_candidate(ctc,rnnt);kind='rnnt' if selected is rnnt else 'ctc'
-   character=[]
-   # This independent character model helped clear historical speech, but
-   # regressed on weak classroom audio. It may only refine anchored words.
-   if confidence>=.85:
-    result=self._load('char').recognize(audio,sample_rate=16000)
-    character=supported_words(result,ranges,emit_start,emit_end)
-   original=join_words(selected)
-   selected,changes,uncertain=refine_words(selected,ctc if kind=='rnnt' else rnnt,character)
-   text=join_words(selected)
-   if repetition(text):text=''
-   self.last={'selected':kind,'words':len(selected),'ctc_confidence':round(confidence,3),'needs_review':bool(uncertain) or confidence<.85 or any(c['source']=='character-acoustic-pass' for c in changes),'uncertain_words':uncertain,'refinements':changes}
-   self.last['word_evidence']=acoustic_evidence(selected,[('ctc',ctc),('rnnt',rnnt),('character',character)])
-   if changes:self.last['original_text']=original
-   return text
+   for left,right in windows:
+    begin,finish=int(left*16000),min(len(samples),int(right*16000))
+    if finish<=begin or right<=emit_start or left>=emit_end:continue
+    left=begin/16000
+    audio=prepare(samples[begin:finish],highpass=False)
+    local=[(max(0,a-left),min(len(audio)/16000,b-left)) for a,b in ranges if b>left and a<finish/16000]
+    ctc_result=self._load('ctc').recognize(audio,sample_rate=16000)
+    ctc=supported_words(ctc_result,local,emit_start-left,emit_end-left)
+    scores=[lp for token,lp in zip(ctc_result.tokens or [],ctc_result.logprobs or []) if re.search(r'[^\W_]',token)]
+    confidence=math.exp(sum(scores)/len(scores)) if scores else 0
+    rnnt_result=self._load('rnnt').recognize(audio,sample_rate=16000)
+    rnnt=supported_words(rnnt_result,local,emit_start-left,emit_end-left)
+    selected=choose_candidate(ctc,rnnt);kind='rnnt' if selected is rnnt else 'ctc'
+    character=[]
+    if confidence>=.85:
+     result=self._load('char').recognize(audio,sample_rate=16000)
+     character=supported_words(result,local,emit_start-left,emit_end-left)
+    raw=[dict(word) for word in selected]
+    selected,refinements,weak=refine_words(selected,ctc if kind=='rnnt' else rnnt,character)
+    selected,term_changes=apply_terms(selected,[('ctc',ctc),('rnnt',rnnt),('character',character)],terms)
+    for i,word in enumerate(selected):
+     if word['text']!=raw[i]['text']:word['original_text']=raw[i]['text']
+     word['needs_review']=bool(word.get('needs_review')) or word['confidence']<.7 or word['text']!=raw[i]['text']
+     for other_words in (ctc,rnnt):
+      nearby=[(j,other) for j,other in enumerate(other_words) if abs(other['start']-word['start'])<=.35 and other['confidence']>=.65]
+      if not nearby:continue
+      j,other=min(nearby,key=lambda value:abs(value[1]['start']-word['start']))
+      anchored=any(0<=i+d<len(selected) and 0<=j+d<len(other_words) and lexical(selected[i+d]['text'])==lexical(other_words[j+d]['text']) for d in (-1,1))
+      if anchored and lexical(word['text'])!=lexical(other['text']):word['needs_review']=True
+    for word in selected+raw+ctc+rnnt+character:
+     word['start']+=left;word['end']=min(finish/16000,word['end']+left)
+    selected_all.extend(selected);raw_all.extend(raw)
+    for source,words in [('ctc',ctc),('rnnt',rnnt),('character',character)]:alternatives[source].extend(words)
+    changes.extend(dict(change,start=change['start']+left) for change in refinements+term_changes)
+    uncertain.extend(weak);scores_all.extend(scores);kinds.append(kind);decoded_seconds+=len(audio)/16000
+  text=join_words(selected_all)
+  if repetition(text):text=''
+  confidence=math.exp(sum(scores_all)/len(scores_all)) if scores_all else 0
+  self.last={'selected':kinds[0] if len(set(kinds))==1 else 'mixed','words':len(selected_all),
+             'ctc_confidence':round(confidence,3),'needs_review':bool(uncertain) or confidence<.85 or any(w['needs_review'] for w in selected_all),
+             'uncertain_words':uncertain,'refinements':changes,'decoded_seconds':round(decoded_seconds,3),'speech_windows':len(kinds)}
+  self.last['word_evidence']=acoustic_evidence(selected_all,list(alternatives.items()))
+  if changes:self.last['original_text']=join_words(raw_all)
+  return text

@@ -5,12 +5,18 @@ SPACE=re.compile(r'\A\s|\s\B|(\s)\b')
 def speech_windows(core,duration,padding=.32,merge_gap=1.0,max_seconds=22):
  """Cut on real pauses; a brief voiced event cannot authorize a long quiet tail."""
  groups=[]
- for start,end in core:
+ if max_seconds<=0:raise ValueError('Длина фрагмента должна быть положительной.')
+ for start,end in sorted(core):
   start=max(0,float(start)-padding);end=min(duration,float(end)+padding)
   if end<=start:continue
   if groups and start-groups[-1][1]<=merge_gap and end-groups[-1][0]<=max_seconds:groups[-1]=(groups[-1][0],end)
   else:groups.append((start,end))
- return groups
+ bounded=[]
+ for start,end in groups:
+  while end-start>max_seconds:
+   bounded.append((start,start+max_seconds));start+=max_seconds
+  bounded.append((start,end))
+ return bounded
 
 def supported_words(result,core,emit_start=0,emit_end=float('inf')):
  tokens=result.tokens or [];times=result.timestamps or [];logprobs=result.logprobs or []
@@ -108,5 +114,5 @@ def prepare(samples,highpass=True):
  if highpass:
   from scipy.signal import butter,sosfilt
   x=sosfilt(butter(2,70,fs=16000,btype='highpass',output='sos'),x).astype(np.float32)
- x*=min(8,.8/max(float(np.abs(x).max()),.001))
- return x
+ from speech_audio import normalize_audio
+ return normalize_audio(x)

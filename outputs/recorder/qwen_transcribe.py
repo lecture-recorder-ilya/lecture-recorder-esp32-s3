@@ -1,6 +1,7 @@
 import argparse,json,os,wave
 from transcript_cache import identity,prepare,checkpoint
 from asr_windows import audio_window
+from asr_segments import phrase_rows
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 PROJECT=ROOT.parent.parent
@@ -37,10 +38,9 @@ def run(audio_path,result_path,progress_path):
      context=context_for_recording(audio_path.name,offset/rate)
      terms=(context['prompt'] or '').split(', ') if context['prompt'] else []
      text=clean_asr_text(decoder.transcribe(samples,terms,speech=core,emit_start=(offset-read_start)/rate,emit_end=(min(total,offset+step)-read_start)/rate))
-     row=dict(id=len(segments),start=round(max(offset/rate,read_start/rate+first),2),end=round(min(duration,(offset+step)/rate,read_start/rate+last),2),text=text,timing='audio_excerpt')
-     row['needs_review']=bool(decoder.last.get('needs_review'))
-     row['recognition']=dict(decoder.last,audio_offset=read_start/rate)
-     if row['start']<row['end'] and usable(row):segments.append(row)
+     segments.extend(phrase_rows(text,decoder.last,read_start/rate,
+                                 max(offset/rate,read_start/rate+first),
+                                 min(duration,(offset+step)/rate,read_start/rate+last),len(segments)))
     save(cache,checkpoint(expected,segments,duration,min(offset+step,total)))
     budget.checkpoint(force=True)
   save(cache,checkpoint(expected,segments,duration,total,complete=True))

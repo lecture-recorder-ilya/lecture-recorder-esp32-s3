@@ -1,5 +1,6 @@
 """Local speech presence check. Original recording is never modified."""
 import threading
+from speech_audio import normalize_audio
 _LOCK=threading.Lock()
 _MODEL=None
 
@@ -10,9 +11,8 @@ def speech_ranges(samples):
  with _LOCK:
   torch.set_num_threads(1)
   if _MODEL is None:_MODEL=load_silero_vad()
-  audio=torch.as_tensor(samples,dtype=torch.float32)
+  audio=torch.as_tensor(normalize_audio(samples),dtype=torch.float32)
   # Quiet ESP microphones need the same bounded gain as the decoder.
-  if audio.numel():audio=audio*min(8,.8/max(float(audio.abs().max()),.001))
   with torch.inference_mode():
    rows=get_speech_timestamps(audio,_MODEL,sampling_rate=16000,threshold=.45,min_speech_duration_ms=200,min_silence_duration_ms=700,speech_pad_ms=500)
  return [(row['start']/16000,row['end']/16000) for row in rows]
@@ -43,8 +43,7 @@ def strict_speech_ranges(samples):
  with _LOCK:
   torch.set_num_threads(1)
   if _MODEL is None:_MODEL=load_silero_vad()
-  audio=torch.as_tensor(samples,dtype=torch.float32)
-  if audio.numel():audio=audio*min(8,.8/max(float(audio.abs().max()),.001))
+  audio=torch.as_tensor(normalize_audio(samples),dtype=torch.float32)
   with torch.inference_mode():
    rows=get_speech_timestamps(audio,_MODEL,sampling_rate=16000,threshold=.7,min_speech_duration_ms=350,min_silence_duration_ms=300,speech_pad_ms=0)
  return [(row['start']/16000,row['end']/16000) for row in rows]
@@ -59,8 +58,7 @@ def anchored_speech_ranges(samples,core):
  with _LOCK:
   torch.set_num_threads(1)
   if _MODEL is None:_MODEL=load_silero_vad()
-  audio=torch.as_tensor(samples,dtype=torch.float32)
-  if audio.numel():audio=audio*min(8,.8/max(float(audio.abs().max()),.001))
+  audio=torch.as_tensor(normalize_audio(samples),dtype=torch.float32)
   with torch.inference_mode():
    rows=get_speech_timestamps(audio,_MODEL,sampling_rate=16000,threshold=.55,min_speech_duration_ms=250,min_silence_duration_ms=300,speech_pad_ms=0)
  weak=[(row['start']/16000,row['end']/16000) for row in rows]

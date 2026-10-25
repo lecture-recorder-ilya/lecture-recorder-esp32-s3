@@ -316,10 +316,9 @@ def monitor_quality(name,total,flush=False):
     context=context_for_recording(name,offset/16000)
     text=clean_asr_text(QUALITY_DECODER.transcribe(samples,(context['prompt'] or '').split(', ') if context['prompt'] else [],speech=core,emit_start=(offset-read_start)/16000,emit_end=(end-read_start)/16000))
     QUALITY_CURSOR['end']=end
-    row={'id':0,'start':round(max(offset/16000,read_start/16000+first),2),'end':round(min(end/16000,read_start/16000+last),2),'text':text,'timing':'audio_excerpt'}
-    row['needs_review']=bool(QUALITY_DECODER.last.get('needs_review'))
-    row['recognition']=dict(QUALITY_DECODER.last,audio_offset=read_start/16000)
-    rows=[row] if usable(row) else []
+    from asr_segments import phrase_rows
+    rows=phrase_rows(text,QUALITY_DECODER.last,read_start/16000,
+                     max(offset/16000,read_start/16000+first),min(end/16000,read_start/16000+last))
     return {'file':name,'segments':rows,'message':'Контроль ESP · GigaAM · черновой текст' if rows else 'Речь слышна, текст пока неразборчив',
             'seconds':end/16000,'model':QUALITY_ENGINE,'subject':context['subject'],'context_seconds':12,'latency':round(time.monotonic()-started,3),'updated':time.time()}
 
@@ -339,7 +338,8 @@ def monitor_chunk(name,total):
     if not ranges:return {'file':name,'segments':[],'message':'Пауза · речи нет','seconds':end/16000,'rms':rms,'speech_detected':False}
     strict_ranges=strict_speech_ranges(samples)
     if not strict_ranges:return {'file':name,'segments':[],'message':'Фоновый звук · подтверждённой речи нет','seconds':end/16000,'rms':rms,'speech_detected':False}
-    samples*=min(8,.8/max(float(np.max(np.abs(samples))),.001))
+    from speech_audio import normalize_audio
+    samples=normalize_audio(samples)
     model_path=MODELS/'whisper'
     if not any((model_path/name).exists() for name in ('weights.npz','weights.safetensors')):model_path=MODELS/'monitor-base'
     context=context_for_recording(name,offset/16000)
