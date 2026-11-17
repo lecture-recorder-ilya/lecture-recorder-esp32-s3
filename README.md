@@ -6,18 +6,18 @@
 
 Записи, расшифровки, формулы и конспекты — на твоём Mac.
 
-![Версия 0.5.2](https://img.shields.io/badge/версия-0.5.2-ff8c61)
+![Версия 0.5.3](https://img.shields.io/badge/версия-0.5.3-ff8c61)
 ![Apple Silicon](https://img.shields.io/badge/Mac-Apple_Silicon-242628)
 ![Android](https://img.shields.io/badge/телефон-Android-8bd5bd)
 ![Локальная обработка](https://img.shields.io/badge/обработка-локально-7b73ff)
 
-[**Скачать для Mac**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.2/lecture-recorder-0.5.2-arm64.dmg) · [**Скачать для Android**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.2/lecture-recorder.apk) · [Изменения 0.5.2](CHANGELOG.md)
+[**Скачать для Mac**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.3/lecture-recorder-0.5.3-arm64.dmg) · [**Скачать для Android**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.3/lecture-recorder.apk) · [Изменения 0.5.3](CHANGELOG.md)
 
 </div>
 
 Приложение загружает готовые аудиозаписи, записывает занятия с ESP32-S3, переносит аудио с Android, распознаёт русскую речь и собирает материалы занятия. Обработка выполняется на Apple Silicon, исходное аудио сохраняется рядом с текстом.
 
-**0.5.2 — ранняя версия продукта.** Полный сценарий с готовым аудио проверен на Mac; запись, перенос и сопряжение на настоящем Android и ESP ещё требуют проверки. Для установки и сопряжения ESP не нужна; запись с микрофона самого Mac пока в плане.
+**0.5.3 — ранняя версия продукта.** Полный сценарий с готовым аудио проверен на Mac; запись, перенос и сопряжение на настоящем Android и ESP ещё требуют проверки. Для установки и сопряжения ESP не нужна; запись с микрофона самого Mac пока в плане.
 
 ## Начать за три шага
 
@@ -30,7 +30,7 @@
 | Apple Silicon, macOS 14+ | Приложение из APK | 22 ГБ свободного места, интернет |
 | Рекомендуется 16 ГБ памяти | Общая Wi-Fi сеть для сопряжения | Около 12 ГБ моделей |
 
-[Установка](INSTALL.md) · [Подключение телефона](PAIRING.md) · [Обновления](UPDATES.md) · [Распознавание и проверка качества](ASR.md) · [Очистка звука в разработке](AUDIO.md) · [Планы продукта](PRODUCT.md) · [Плата диктофона v0.1](hardware/v0.1/README.md) · [Корпус-карточка v0.2](hardware/v0.2/README.md)
+[Установка](INSTALL.md) · [Подключение телефона](PAIRING.md) · [Обновления](UPDATES.md) · [Распознавание и проверка качества](ASR.md) · [Очистка звука](AUDIO.md) · [Приложения телефона](MOBILE.md) · [Планы продукта](PRODUCT.md) · [Плата диктофона v0.1](hardware/v0.1/README.md) · [Корпус-карточка v0.2](hardware/v0.2/README.md)
 
 Текущий DMG подписан локально и не прошёл notarization Apple. Репозиторий приватный. В «Настройки → Обновления» на Mac войди в GitHub один раз: доступ хранится в Связке ключей macOS и обновляется автоматически. APK приходит телефону через сопряжённый Mac, без отдельного входа и токенов на телефоне. Для первого перехода со старых версий нужны DMG и совместимый APK 0.5.1. Подробнее в инструкциях по установке и обновлениям.
 

@@ -47,8 +47,7 @@ final class PhoneFiles {
         return nil
     }
     func list() throws -> [[String: Any]] {
-        lock.lock(); defer { lock.unlock() }
-        return try recordings().filter { $0.deletingLastPathComponent() == folder("recordings") }.map { url in
+        return try FileManager.default.contentsOfDirectory(at: folder("recordings"), includingPropertiesForKeys: nil).filter { validRecording($0.lastPathComponent) }.sorted { $0.path < $1.path }.map { url in
             var meta = (try? JSONSerialization.jsonObject(with: Data(contentsOf: url.appendingPathExtension("json")))) as? [String: Any] ?? [:]
             let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
             meta["name"] = url.lastPathComponent; meta["bytes"] = size; meta["sha256"] = try fileSHA(url)
