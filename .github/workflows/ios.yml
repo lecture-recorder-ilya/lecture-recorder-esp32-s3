@@ -18,8 +18,19 @@ jobs:
         run: xcodebuild -project outputs/ios/LectureRecorder.xcodeproj -scheme LectureRecorder -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
       - name: Собрать для iPhone без подписи
         run: xcodebuild -project outputs/ios/LectureRecorder.xcodeproj -scheme LectureRecorder -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build/iphone CODE_SIGNING_ALLOWED=NO build
+      - name: Проверить запуск в симуляторе
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; print(next(d["udid"] for group in json.load(sys.stdin)["devices"].values() for d in group if "iPhone" in d["name"] and d["isAvailable"]))')
+          xcrun simctl boot "$DEVICE_ID"
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl install "$DEVICE_ID" build/ios/Build/Products/Release-iphonesimulator/LectureRecorder.app
+          xcrun simctl launch "$DEVICE_ID" ru.ilya.lecturerecorder.ios
+          sleep 3
+          xcrun simctl io "$DEVICE_ID" screenshot build/ios-preview.png
       - uses: actions/upload-artifact@v4
         with:
           name: ios-simulator
-          path: build/ios/Build/Products/Release-iphonesimulator/LectureRecorder.app
+          path: |
+            build/ios/Build/Products/Release-iphonesimulator/LectureRecorder.app
+            build/ios-preview.png
           retention-days: 7
