@@ -146,6 +146,7 @@ function initStudyCard(card,name){
  header.ondrop=e=>{e.preventDefault();e.stopPropagation();card.li.classList.remove('drop-target');const source=e.dataTransfer.getData('application/x-lecture-recording');mergeByDrop(source,name)};
  const body=el('div',undefined,'record-body');body.append(...card.li.childNodes);details.append(header,body);card.li.append(details);const chapters=el('section',undefined,'chapter-list');chapters.hidden=true;body.insertBefore(chapters,card.result);const audioTools=el('details',undefined,'audio-tools');audioTools.append(el('summary','Аудиозапись и отрывки'),card.audio,body.querySelector('a'));body.append(audioTools);body.insertBefore(card.result,body.firstChild);body.insertBefore(chapters,card.result.nextSibling);Object.assign(card,{details,topic,choice,clock,chapters,preview,audioTools});initBoardPhotoCard(card,name);audioTools.ontoggle=()=>{if(audioTools.open&&card.audio.preload==='none'){card.audio.preload='metadata';card.audio.load()}};
  const playerDock=el('div',undefined,'workflow-player');playerDock.append(el('span','Аудиозапись пары','player-title'),card.audio);body.insertBefore(playerDock,card.result);body.insertBefore(card.progress,card.result);body.insertBefore(card.button,card.result);card.playerDock=playerDock;
+ window.AudioEnhancement?.attach(card,name);
  details.ontoggle=()=>{if(details.open)update()};
 
 }

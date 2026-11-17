@@ -21,6 +21,7 @@ from speech_context import context_for_recording
 import illustrations
 import board_photos
 from audio_import import Importer, MAX_BYTES
+from audio_enhance import Enhancer
 from transcript_quality import annotate, report_for, plain_text, markdown
 from phone_pairing import Pairing, PairingError
 
@@ -85,6 +86,7 @@ class ApplicationServer(ThreadingHTTPServer):
         self.install_requested = False
         self.pairing = Pairing(PROJECT)
         self.importer = Importer(ROOT, self.import_ready)
+        self.enhancer = Enhancer(ROOT)
 
     def import_ready(self, job):
         from datetime import datetime
@@ -111,6 +113,7 @@ class ApplicationServer(ThreadingHTTPServer):
 
     def server_close(self):
         self.importer.close()
+        self.enhancer.close()
         self.pairing.close()
         super().server_close()
 
@@ -165,6 +168,9 @@ class Handler(BaseHTTPRequestHandler):
             pass
 
     def do_HEAD(self):
+        route = urlsplit(self.path)
+        if route.path.startswith('/enhanced-audio/'):
+            return self.do_GET()
         if urlsplit(self.path).path.startswith('/recordings/'):
             return self.proxy()
         self.send_response(404)
@@ -175,6 +181,16 @@ class Handler(BaseHTTPRequestHandler):
         route = urlsplit(self.path)
         query = parse_qs(route.query)
         try:
+            if route.path == '/audio_enhance_ui.js':
+                return self.reply((ROOT / 'audio_enhance_ui.js').read_bytes(), mime='text/javascript; charset=utf-8')
+            if route.path == '/audio-enhancement' or route.path.startswith('/enhanced-audio/'):
+                name = query.get('file', [''])[0] if route.path == '/audio-enhancement' else unquote(route.path.removeprefix('/enhanced-audio/'))
+                study_store.audio(name)
+                profile = query.get('profile', ['gentle'])[0]
+                if route.path == '/audio-enhancement':
+                    return self.reply(self.server.enhancer.status(name, profile))
+                from media_stream import serve_audio
+                return serve_audio(self, self.server.enhancer.audio(name, profile))
             if route.path == '/imports':
                 return self.reply({'jobs': self.server.importer.list()})
             if route.path == '/lecture_workflow.js':
@@ -358,6 +374,18 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/imports/retry':
                 result = self.server.importer.retry(value.get('id'))
                 return self.reply({'id': result['id'], 'status': result['status']})
+            if self.path == '/audio-enhancement':
+                if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
+                    return self.reply({'error': 'Запрос отклонён'}, 403)
+                if self.server.reload_requested.is_set():
+                    return self.reply({'error': 'Приложение перезапускается. Повтори после запуска.'}, 409)
+                name = value.get('file')
+                study_store.audio(name)
+                with urlopen(self.server.service_url + '/status', timeout=5) as response:
+                    status = json.load(response)
+                if status.get('recording') and status.get('file') == name:
+                    return self.reply({'error': 'Сначала останови запись, затем очисти звук.'}, 409)
+                return self.reply(self.server.enhancer.request(name, value.get('profile', 'gentle')), 202)
             if self.path == '/transcript-review':
                 name = value.get('file')
                 study_store.audio(name)
@@ -382,8 +410,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.reply({'error':'Приложение перезапускается. Повтори через несколько секунд.'},409)
                 if self.server.pairing.public()['active']:
                     return self.reply({'error':'Заверши сопряжение телефона перед выходом.'},409)
-                if self.server.importer.active():
-                    return self.reply({'error': 'Дождись завершения загрузки и подготовки аудио перед выходом.'}, 409)
+                if self.server.importer.active() or self.server.enhancer.active():
+                    return self.reply({'error': 'Дождись завершения загрузки и обработки звука перед выходом.'}, 409)
                 try:
                     with urlopen(self.server.service_url+'/status',timeout=3) as response:status=json.load(response)
                 except URLError:status={}
@@ -437,8 +465,8 @@ class Handler(BaseHTTPRequestHandler):
         except (OSError, URLError) as error:
             return self.reply({'error':str(error)},503)
         if self.path == '/reload-app':
-            if self.server.importer.active():
-                return self.reply({'error': 'Дождись подготовки загруженной записи перед обновлением.'}, 409)
+            if self.server.importer.active() or self.server.enhancer.active():
+                return self.reply({'error': 'Дождись завершения подготовки и очистки звука перед обновлением.'}, 409)
             if self.server.pairing.public()['active']:
                 return self.reply({'error':'Заверши или закрой сопряжение телефона перед перезапуском.'},409)
             try:

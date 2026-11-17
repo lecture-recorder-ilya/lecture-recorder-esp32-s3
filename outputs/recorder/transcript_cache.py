@@ -4,7 +4,7 @@ import math
 import time
 from pathlib import Path
 
-WHISPER_ENGINE = 'Whisper-large-v3-turbo-context-v4'
+WHISPER_ENGINE = 'Whisper-large-v3-turbo-context-v5-clean'
 
 
 def context_identity(name, root):

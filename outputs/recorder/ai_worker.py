@@ -284,8 +284,8 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
                 if not strict_ranges:
                     save(transcript_path, transcript_checkpoint(expected, segments, duration, min(offset+step,total)))
                     continue
-                from speech_audio import normalize_audio
-                samples = normalize_audio(samples)
+                from speech_audio import enhance_audio, normalize_audio
+                samples = normalize_audio(enhance_audio(samples, strict_ranges, level=False))
                 recognized = mlx_whisper.transcribe(samples, path_or_hf_repo=str(MODELS / 'whisper'),
                     language='ru', temperature=0, condition_on_previous_text=False, verbose=None, word_timestamps=True,
                     initial_prompt=context_for_recording(audio_path.name,offset/rate)['prompt'],clip_timestamps=clips(ranges))

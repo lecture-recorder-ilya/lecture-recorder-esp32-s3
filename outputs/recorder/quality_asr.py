@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent;PROJECT=ROOT.parent.parent
 MODEL=PROJECT/'work/models/gigaam';RNNT=PROJECT/'work/models/gigaam-rnnt'
 CHAR=PROJECT/'work/models/gigaam-beam'
-ENGINE='GigaAM-v3-3pass-phrases-v6'
+ENGINE='GigaAM-v3-3pass-phrases-v7-clean'
 
 def ready():
  return all(p.exists() for p in [MODEL/'v3_e2e_ctc.int8.onnx',MODEL/'v3_e2e_ctc_vocab.txt',PROJECT/'work/models/gigaam-manifest.json',RNNT/'v3_e2e_rnnt_encoder.onnx',RNNT/'v3_e2e_rnnt_decoder.onnx',RNNT/'v3_e2e_rnnt_joint.onnx',RNNT/'v3_e2e_rnnt_vocab.txt',PROJECT/'work/models/gigaam-rnnt-manifest.json',CHAR/'v3_ctc.onnx',CHAR/'v3_vocab.txt',PROJECT/'work/models/gigaam-beam-manifest.json'])
@@ -33,13 +33,15 @@ class Decoder:
   windows=speech_windows(ranges,len(samples)/16000,padding=.5,max_seconds=24)
   if not windows:
    self.last={'selected':'silence','words':0,'word_evidence':[]};return ''
+  from speech_audio import enhance_audio
+  working=enhance_audio(samples,ranges,level=False)
   selected_all=[];raw_all=[];alternatives={'ctc':[],'rnnt':[],'character':[]};changes=[];uncertain=[];scores_all=[];kinds=[];decoded_seconds=0
   with self.lock:
    for left,right in windows:
     begin,finish=int(left*16000),min(len(samples),int(right*16000))
     if finish<=begin or right<=emit_start or left>=emit_end:continue
     left=begin/16000
-    audio=prepare(samples[begin:finish],highpass=False)
+    audio=prepare(working[begin:finish],highpass=False)
     local=[(max(0,a-left),min(len(audio)/16000,b-left)) for a,b in ranges if b>left and a<finish/16000]
     ctc_result=self._load('ctc').recognize(audio,sample_rate=16000)
     ctc=supported_words(ctc_result,local,emit_start-left,emit_end-left)

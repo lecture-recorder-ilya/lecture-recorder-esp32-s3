@@ -338,8 +338,8 @@ def monitor_chunk(name,total):
     if not ranges:return {'file':name,'segments':[],'message':'Пауза · речи нет','seconds':end/16000,'rms':rms,'speech_detected':False}
     strict_ranges=strict_speech_ranges(samples)
     if not strict_ranges:return {'file':name,'segments':[],'message':'Фоновый звук · подтверждённой речи нет','seconds':end/16000,'rms':rms,'speech_detected':False}
-    from speech_audio import normalize_audio
-    samples=normalize_audio(samples)
+    from speech_audio import enhance_audio,normalize_audio
+    samples=normalize_audio(enhance_audio(samples,strict_ranges,level=False))
     model_path=MODELS/'whisper'
     if not any((model_path/name).exists() for name in ('weights.npz','weights.safetensors')):model_path=MODELS/'monitor-base'
     context=context_for_recording(name,offset/16000)

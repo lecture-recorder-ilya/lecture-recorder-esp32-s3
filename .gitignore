@@ -42,6 +42,7 @@ __pycache__/
 /outputs/recorder/lessons/
 /outputs/recorder/study/
 /outputs/recorder/imports/
+/outputs/recorder/enhanced/
 /outputs/recorder/schedule.json
 /outputs/recorder/README.md
 /outputs/microphone-firmware/.pio/
