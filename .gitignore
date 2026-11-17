@@ -35,6 +35,7 @@ __pycache__/
 !/outputs/recorder/
 !/outputs/microphone-firmware/
 !/outputs/android/
+!/outputs/ios/
 !/outputs/recorder-icon.png
 !/outputs/recorder-dock-icon.png
 /outputs/recorder/recordings/

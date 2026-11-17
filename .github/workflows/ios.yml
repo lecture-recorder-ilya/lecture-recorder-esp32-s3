@@ -1,0 +1,25 @@
+name: Сборка приложения iPhone
+on:
+  push:
+    branches: [main]
+    paths: ['outputs/ios/**', 'tools/build_ios_project.py', 'release.json', '.github/workflows/ios.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Подготовить проект
+        run: python3 tools/build_ios_project.py
+      - name: Собрать для симулятора
+        run: xcodebuild -project outputs/ios/LectureRecorder.xcodeproj -scheme LectureRecorder -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+      - name: Собрать для iPhone без подписи
+        run: xcodebuild -project outputs/ios/LectureRecorder.xcodeproj -scheme LectureRecorder -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build/iphone CODE_SIGNING_ALLOWED=NO build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator
+          path: build/ios/Build/Products/Release-iphonesimulator/LectureRecorder.app
+          retention-days: 7
