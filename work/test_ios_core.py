@@ -7,6 +7,7 @@ import tempfile
 import unittest
 import wave
 from pathlib import Path
+from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -126,6 +127,20 @@ import Darwin
             with self.assertRaises(HTTPError) as error:
                 self.request(route)
             self.assertIn(error.exception.code, (400, 404))
+
+    def test_mac_import_downloads_verifies_and_acknowledges_the_recording(self):
+        import phone_sync
+        with self.request('/list') as response:
+            item = json.load(response)[0]
+        original = (self.root / 'recordings' / NAME).read_bytes()
+        mac = self.root / 'mac'
+        mac.mkdir()
+        with patch('phone_sync.queue_pending'), patch('lesson_schedule.organize'):
+            name = phone_sync.import_one(item, self.base, KEY, files=mac / 'recordings', ledger_path=mac / 'ledger.json')
+        self.assertEqual(name, NAME)
+        self.assertEqual((mac / 'recordings' / NAME).read_bytes(), original)
+        self.assertEqual((self.root / 'library' / NAME).read_bytes(), original)
+        self.assertEqual(json.loads((mac / 'ledger.json').read_text())[NAME]['sha256'], item['sha256'])
 
 
 if __name__ == '__main__':
