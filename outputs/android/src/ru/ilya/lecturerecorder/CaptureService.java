@@ -16,6 +16,9 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class CaptureService extends Service {
+ enum Link { OFF, CONNECTING, CONNECTED, ERROR }
+ static volatile Link link=Link.OFF;
+ static volatile String linkSource="";
  static volatile boolean recording=false;static volatile String status="Готово к записи",current="";static volatile long samples=0;
  private boolean phoneMicrophone;
  private boolean destroyed;
@@ -42,13 +45,14 @@ public class CaptureService extends Service {
   String action=intent.getAction();
   if(("START".equals(action)||"START_PHONE".equals(action))&&!recording){
    phoneMicrophone="START_PHONE".equals(action);
+   linkSource=phoneMicrophone?"phone":getSharedPreferences("settings",0).getString("transport","wifi");
    if(phoneMicrophone&&checkSelfPermission("android.permission.RECORD_AUDIO")!=0){
-    status="Разреши доступ к микрофону в настройках телефона";stopSelf();return START_NOT_STICKY;
+    link=Link.ERROR;status="Разреши доступ к микрофону в настройках телефона";stopSelf();return START_NOT_STICKY;
    }
-   recording=true;stop=false;samples=0;
+   link=Link.CONNECTING;recording=true;stop=false;samples=0;
    status=phoneMicrophone?"Включаю микрофон телефона…":"Подключаюсь к ESP…";
    try{notifyState();}catch(RuntimeException error){
-    recording=false;status="Открой экран записи и попробуй ещё раз";stopSelf();return START_NOT_STICKY;
+    link=Link.ERROR;recording=false;status="Открой экран записи и попробуй ещё раз";stopSelf();return START_NOT_STICKY;
    }
    boolean phone=phoneMicrophone;
    new Thread(()->runCapture(phone),"Lecture capture").start();
@@ -69,9 +73,10 @@ public class CaptureService extends Service {
   }finally{
    if(awake.isHeld())awake.release();
   }
-  String result=failure.isEmpty()?"Запись сохранена на телефоне":failure;
+  boolean saved=failure.isEmpty();
+  String result=saved?"Запись сохранена на телефоне":failure;
   timer.post(()->{
-   recording=false;status=result;
+   link=saved?Link.OFF:Link.ERROR;recording=false;status=result;
    if(destroyed)return;
    if(getSharedPreferences("settings",0).getString("sync_token","").isEmpty())stopSelf();
    else notifyState();
@@ -87,7 +92,7 @@ public class CaptureService extends Service {
    SimpleDateFormat fmt=new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss",Locale.US);fmt.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));current="lecture-"+fmt.format(new Date(started))+"-"+String.format(Locale.US,"%06d",started%1000*1000)+".wav";part=new File(Store.root(this),current.replace(".wav",".part"));
    if(part.exists()||new File(Store.root(this),current).exists())throw new IOException("Запись с этим временем уже существует");
    Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android_microphone").put("started_ms",started).put("gaps",new JSONArray()));
-   try(RandomAccessFile out=new RandomAccessFile(part,"rw")){Store.header(out,0);out.seek(44);try(BufferedOutputStream output=new BufferedOutputStream(new OutputStream(){public void write(int b)throws IOException{out.write(b);}public void write(byte[] b,int offset,int length)throws IOException{out.write(b,offset,length);}},65536)){PcmResampler resampler=new PcmResampler(output,rate);short[] block=new short[buffer/2];microphone.startRecording();if(microphone.getRecordingState()!=AudioRecord.RECORDSTATE_RECORDING)throw new IOException("Не удалось запустить микрофон");long checkpoint=SystemClock.elapsedRealtime();
+   try(RandomAccessFile out=new RandomAccessFile(part,"rw")){Store.header(out,0);out.seek(44);try(BufferedOutputStream output=new BufferedOutputStream(new OutputStream(){public void write(int b)throws IOException{out.write(b);}public void write(byte[] b,int offset,int length)throws IOException{out.write(b,offset,length);}},65536)){PcmResampler resampler=new PcmResampler(output,rate);short[] block=new short[buffer/2];microphone.startRecording();if(microphone.getRecordingState()!=AudioRecord.RECORDSTATE_RECORDING)throw new IOException("Не удалось запустить микрофон");link=Link.CONNECTED;long checkpoint=SystemClock.elapsedRealtime();
     while(!stop){int count=microphone.read(block,0,block.length,AudioRecord.READ_BLOCKING);if(count<0)throw new IOException("Микрофон прервал запись. Сохранён доступный звук");if(count==0)continue;for(int i=0;i<count;i++)resampler.sample(block[i]);samples=resampler.frames();status=String.format(Locale.US,"Записываю · %d:%02d",samples/16000/60,samples/16000%60);if(SystemClock.elapsedRealtime()-checkpoint>2000){output.flush();out.getFD().sync();checkpoint=SystemClock.elapsedRealtime();if(out.length()>4_200_000_000L||Store.root(this).getUsableSpace()<30*1024*1024)throw new IOException("Память заканчивается — запись сохранена");}}
     resampler.finish();output.flush();out.getFD().sync();samples=resampler.frames();}
    }
@@ -116,11 +121,11 @@ public class CaptureService extends Service {
    SimpleDateFormat fmt=new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss",Locale.US);fmt.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));current="lecture-"+fmt.format(new Date(started))+"-"+(started%1000*1000)+".wav";part=new File(Store.root(this),current.replace(".wav",".part"));if(part.exists()||new File(Store.root(this),current).exists())throw new IOException("Запись с этим временем уже существует");
    Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android").put("started_ms",started).put("gaps",gaps));
    try(RandomAccessFile out=new RandomAccessFile(part,"rw")){Store.header(out,0);out.seek(44);byte[] zeros=new byte[32000];
-    while(!stop){try(Socket s=connect()){
+    while(!stop){link=Link.CONNECTING;try(Socket s=connect()){
      if(stop)break;
      if(gapAt>=0){long missing=(SystemClock.elapsedRealtime()-gapAt)*16;long from=samples;while(missing>0){if(Store.root(this).getUsableSpace()<30*1024*1024)throw new StorageException("Память заканчивается — запись сохранена");int frames=(int)Math.min(missing,16000);out.write(zeros,0,frames*2);samples+=frames;missing-=frames;}gaps.put(new JSONObject().put("start",from/16000.0).put("end",samples/16000.0).put("seconds",(samples-from)/16000.0));Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android").put("started_ms",started).put("gaps",gaps));gapAt=-1;}
-     InputStream input=s.getInputStream();long connectionBase=samples;DataInputStream in=new DataInputStream(input);while(!stop){byte[] h=new byte[6];in.readFully(h);if(h[0]!='P'||h[1]!='C'||h[2]!='M'||h[3]!='1')throw new IOException("Некорректный поток ESP");int count=(h[4]&255)|((h[5]&255)<<8);if(count==0)throw new EOFException("ESP завершила поток");if(count>4096||count%2!=0)throw new IOException("Некорректный размер блока");byte[] b=new byte[count];in.readFully(b);if(stop)break;out.write(b);samples+=count/2;lastAudio=SystemClock.elapsedRealtime();if(input instanceof BleStream){JSONArray lost=((BleStream)input).takeGaps();for(int i=0;i<lost.length();i++){JSONObject gap=lost.getJSONObject(i);gap.put("start",connectionBase/16000.0+gap.getDouble("start"));gaps.put(gap);}}status=String.format(Locale.US,"Записываю · %d:%02d",samples/16000/60,samples/16000%60);if(SystemClock.elapsedRealtime()-lastSync>2000){out.getFD().sync();Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android").put("started_ms",started).put("gaps",gaps));lastSync=SystemClock.elapsedRealtime();}if(out.length()>4_200_000_000L||Store.root(this).getUsableSpace()<30*1024*1024)throw new StorageException("Память заканчивается — запись сохранена");}
-    }catch(StorageException e){throw e;}catch(Exception e){if(stop)break;if(samples>0&&gapAt<0)gapAt=lastAudio>0?lastAudio:SystemClock.elapsedRealtime();status="Связь потеряна — переподключаюсь…";for(int i=0;i<20&&!stop;i++)Thread.sleep(100);}}
+     InputStream input=s.getInputStream();long connectionBase=samples;DataInputStream in=new DataInputStream(input);while(!stop){byte[] h=new byte[6];in.readFully(h);if(h[0]!='P'||h[1]!='C'||h[2]!='M'||h[3]!='1')throw new IOException("Некорректный поток ESP");int count=(h[4]&255)|((h[5]&255)<<8);if(count==0)throw new EOFException("ESP завершила поток");if(count>4096||count%2!=0)throw new IOException("Некорректный размер блока");byte[] b=new byte[count];in.readFully(b);if(stop)break;link=Link.CONNECTED;out.write(b);samples+=count/2;lastAudio=SystemClock.elapsedRealtime();if(input instanceof BleStream){JSONArray lost=((BleStream)input).takeGaps();for(int i=0;i<lost.length();i++){JSONObject gap=lost.getJSONObject(i);gap.put("start",connectionBase/16000.0+gap.getDouble("start"));gaps.put(gap);}}status=String.format(Locale.US,"Записываю · %d:%02d",samples/16000/60,samples/16000%60);if(SystemClock.elapsedRealtime()-lastSync>2000){out.getFD().sync();Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android").put("started_ms",started).put("gaps",gaps));lastSync=SystemClock.elapsedRealtime();}if(out.length()>4_200_000_000L||Store.root(this).getUsableSpace()<30*1024*1024)throw new StorageException("Память заканчивается — запись сохранена");}
+    }catch(StorageException e){throw e;}catch(Exception e){if(stop)break;link=Link.ERROR;if(samples>0&&gapAt<0)gapAt=lastAudio>0?lastAudio:SystemClock.elapsedRealtime();status="Связь потеряна — переподключаюсь…";for(int i=0;i<20&&!stop;i++)Thread.sleep(100);}}
     if(gapAt>=0)gaps.put(new JSONObject().put("start",samples/16000.0).put("seconds",(SystemClock.elapsedRealtime()-gapAt)/1000.0).put("unrecorded_tail",true));out.getFD().sync();
    }
   }catch(Exception e){error=e.getMessage()==null?"Не удалось записать звук ESP":e.getMessage();}finally{try{if(part!=null&&part.exists()){Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android").put("started_ms",started).put("gaps",gaps).put("error",error));Store.seal(part);}}catch(Exception e){error="Сохранение: "+e.getMessage();}

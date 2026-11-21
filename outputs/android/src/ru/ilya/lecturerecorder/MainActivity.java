@@ -6,12 +6,21 @@ import android.content.*;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.media.AudioManager;
 import android.view.*;
 import android.widget.*;
 import java.util.*;
 
 public class MainActivity extends Activity {
  private TextView state,duration;
+ private GradientDrawable linkDot;
+ private CaptureService.Link displayedLink;
+ private CaptureService.Link idleLink=CaptureService.Link.OFF;
+ private Thread presenceCheck;
+ private String presenceSource="",presenceError="";
+ private long nextPresenceCheck;
+ private boolean lastRecording;
+ private boolean microphonePermissionDenied;
  private Button start,stop;
  private ChoiceDropdown transport;
  private final Handler timer=new Handler();
@@ -33,7 +42,7 @@ public class MainActivity extends Activity {
  private Button button(String label,Runnable action,boolean primary){Button b=new Button(this);b.setText(label);b.setTextSize(15);b.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));b.setAllCaps(false);b.setTextColor(primary?Color.rgb(33,19,14):fg);b.setMinHeight(dp(50));b.setMinimumHeight(dp(50));b.setPadding(dp(12),dp(12),dp(12),dp(12));GradientDrawable d=surface(primary?orange:Color.rgb(36,38,44),12);if(!primary)d.setStroke(dp(1),line);b.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(primary?0x3321130e:0x22ffffff),d,null));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,dp(8),0,dp(4));b.setLayoutParams(lp);b.setOnClickListener(v->action.run());return b;}
  private LinearLayout page(FrameLayout host,int index,String title){ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setClipToPadding(false);scroll.setVerticalScrollBarEnabled(false);LinearLayout content=column();content.setPadding(dp(20),dp(22),dp(20),dp(24));LinearLayout titleRow=new LinearLayout(this);titleRow.setGravity(android.view.Gravity.CENTER_VERTICAL);View mark=new View(this);mark.setBackground(surface(orange,2));LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(dp(4),dp(24));mp.setMargins(0,0,dp(12),0);titleRow.addView(mark,mp);TextView h=heading(title,28);titleRow.addView(h);LinearLayout.LayoutParams titleLayout=new LinearLayout.LayoutParams(-1,-2);titleLayout.bottomMargin=dp(16);content.addView(titleRow,titleLayout);scroll.addView(content);pages[index]=scroll;host.addView(scroll,new FrameLayout.LayoutParams(-1,-1));return content;}
  private void showPage(int index){
-  if(index!=0)transport.close();
+  if(index!=0){transport.close();stopPresenceCheck();}
   selectedPage=index;
   for(int i=0;i<pages.length;i++){
    boolean active=i==index;
@@ -43,6 +52,7 @@ public class MainActivity extends Activity {
    tabs[i].setBackground(surface(active?Color.rgb(48,33,30):Color.TRANSPARENT,12));
   }
   audioPage.setActive(resumed&&index==AUDIO_PAGE);
+  if(index==0&&resumed)refreshConnection();
  }
  @Override public void onCreate(Bundle saved){
   super.onCreate(saved);if(saved!=null){pendingPhoto=saved.getString("pending_photo");selectedPage=saved.getInt("page",0);if(selectedPage==3)selectedPage=AUDIO_PAGE;}try{CaptureService.provision(this);}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
@@ -51,7 +61,7 @@ public class MainActivity extends Activity {
   root.setOnApplyWindowInsetsListener((view,insets)->{view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});root.requestApplyInsets();
   FrameLayout host=new FrameLayout(this);root.addView(host,new LinearLayout.LayoutParams(-1,0,1));
   LinearLayout record=page(host,0,"Новая запись");
-  LinearLayout hero=card(record);state=heading("Готово к записи",14);state.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);hero.addView(state);hero.addView(note("ДЛИТЕЛЬНОСТЬ ЗАПИСИ"));duration=text("00:00:00",42);duration.setTypeface(Typeface.create("monospace",Typeface.NORMAL));duration.setPadding(0,dp(12),0,dp(18));hero.addView(duration);
+  LinearLayout hero=card(record);addConnectionRow(hero);hero.addView(note("ДЛИТЕЛЬНОСТЬ ЗАПИСИ"));duration=text("00:00:00",42);duration.setTypeface(Typeface.create("monospace",Typeface.NORMAL));duration.setPadding(0,dp(12),0,dp(18));hero.addView(duration);
   hero.addView(note("Источник звука"));
   List<ChoiceDropdown.Option> sources=Arrays.asList(
    new ChoiceDropdown.Option("phone","Микрофон телефона",""),
@@ -62,7 +72,12 @@ public class MainActivity extends Activity {
   ChoiceDropdown.Option selectedSource=sources.get(source.equals("ble")?1:source.equals("wifi")?2:0);
   if(!source.equals(selectedSource.value))sourceSettings.edit().putString("transport",selectedSource.value).apply();
   transport=new ChoiceDropdown(this,"Источник звука","Нет доступных источников",()->sources,
-   option->sourceSettings.edit().putString("transport",option.value).apply());
+   option->{
+    sourceSettings.edit().putString("transport",option.value).apply();
+    stopPresenceCheck();
+    presenceSource="";
+    refreshConnection();
+   });
   transport.setSelected(selectedSource);
   hero.addView(transport.button,new LinearLayout.LayoutParams(-1,-2));
   LinearLayout.LayoutParams sourceList=new LinearLayout.LayoutParams(-1,-2);
@@ -148,6 +163,7 @@ public class MainActivity extends Activity {
  }
  private void begin(){
   if(firmwareQuery!=null)return;
+  stopPresenceCheck();
   if(getSharedPreferences("settings",0).getString("transport","phone").equals("phone")){if(checkSelfPermission("android.permission.RECORD_AUDIO")!=0){requestPermissions(new String[]{"android.permission.RECORD_AUDIO"},8);return;}startForegroundService(CaptureService.command(this,"START_PHONE"));return;}
   if(getSharedPreferences("settings",0).getString("sync_token","").isEmpty()){pairPhone();return;}
   if(getSharedPreferences("settings",0).getString("token","").isEmpty()){Toast.makeText(this,"Mac уже подключён. Для записи сначала подключи ESP к Mac и настрой микрофон",1).show();return;}
@@ -158,7 +174,7 @@ public class MainActivity extends Activity {
   }
   startForegroundService(CaptureService.command(this,"START"));
  }
- @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grant){super.onRequestPermissionsResult(code,permissions,grant);if(code==9){for(int result:grant)if(result!=0)return;if(grant.length>0)checkFirmware();return;}if(code==8){if(grant.length>0&&grant[0]==0)begin();else Toast.makeText(this,"Для записи разреши доступ к микрофону",1).show();return;}if(code==5&&grant.length>0){for(int g:grant)if(g!=0){startForegroundService(CaptureService.command(this,"SYNC"));return;}transfer();}if(code==3&&grant.length>0){for(int g:grant)if(g!=0)return;begin();}}
+ @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grant){super.onRequestPermissionsResult(code,permissions,grant);if(code==9){for(int result:grant)if(result!=0)return;if(grant.length>0)checkFirmware();return;}if(code==8){microphonePermissionDenied=grant.length>0&&grant[0]!=0;if(grant.length>0&&grant[0]==0)begin();else refreshConnection();return;}if(code==5&&grant.length>0){for(int g:grant)if(g!=0){startForegroundService(CaptureService.command(this,"SYNC"));return;}transfer();}if(code==3&&grant.length>0){for(int g:grant)if(g!=0)return;begin();}}
  @Override protected void onActivityResult(int code,int result,Intent data){super.onActivityResult(code,result,data);if(code==7&&result==RESULT_OK&&data!=null&&data.getData()!=null){android.net.Uri uri=data.getData();try{getContentResolver().takePersistableUriPermission(uri,data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}AudioImport.start(this,uri);return;}if(code==4&&result==RESULT_OK)begin();if(code==6&&result==RESULT_OK){final String id=pendingPhoto;pendingPhoto=null;new Thread(()->{try{BoardPhotos.markReady(this,id);BoardPhotos.finish(this,id);runOnUiThread(()->{Toast.makeText(this,"Фото сохранено · будет перенесено и разобрано на Mac",1).show();transfer();});}catch(Exception e){runOnUiThread(()->Toast.makeText(this,e.getMessage(),1).show());}},"Save board photo").start();}else if(code==6){BoardPhotos.cancel(this,pendingPhoto);pendingPhoto=null;}}
  @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putString("pending_photo",pendingPhoto);out.putInt("page",selectedPage);out.putBundle("audio_page",audioPage.snapshot());}
  private void takeBoardPhoto(){try{pendingPhoto=BoardPhotos.prepare(this);android.net.Uri uri=android.net.Uri.parse("content://"+getPackageName()+".photos/"+pendingPhoto+".jpg");Intent camera=new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);camera.putExtra(android.provider.MediaStore.EXTRA_OUTPUT,uri);camera.setClipData(ClipData.newRawUri("Фото доски",uri));camera.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivityForResult(camera,6);}catch(Exception e){Toast.makeText(this,"Не удалось открыть камеру: "+e.getMessage(),1).show();}}
@@ -169,9 +185,126 @@ public class MainActivity extends Activity {
    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
   startActivityForResult(pick,7);
  }
+ private void addConnectionRow(LinearLayout hero){
+  LinearLayout row=new LinearLayout(this);
+  row.setGravity(Gravity.CENTER_VERTICAL);
+  View indicator=new View(this);
+  indicator.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+  linkDot=new GradientDrawable();
+  linkDot.setShape(GradientDrawable.OVAL);
+  indicator.setBackground(linkDot);
+  LinearLayout.LayoutParams marker=new LinearLayout.LayoutParams(dp(10),dp(10));
+  marker.setMarginEnd(dp(10));
+  row.addView(indicator,marker);
+  state=heading("",14);
+  state.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+  row.addView(state,new LinearLayout.LayoutParams(0,-2,1));
+  hero.addView(row);
+  showConnection(CaptureService.Link.OFF,"Микрофон выключен");
+ }
+ private void showConnection(CaptureService.Link link,String message){
+  if(displayedLink!=link){
+   int color;
+   switch(link){
+    case CONNECTED:color=0xff57ce87;break;
+    case CONNECTING:color=0xff629cff;break;
+    case ERROR:color=0xffe8bc53;break;
+    default:color=0xff767981;break;
+   }
+   linkDot.setColor(color);
+   displayedLink=link;
+  }
+  if(!message.contentEquals(state.getText()))state.setText(message);
+ }
+ private void refreshConnection(){
+  String source=getSharedPreferences("settings",0).getString("transport","phone");
+  boolean phone=source.equals("phone");
+  if(CaptureService.recording){
+   lastRecording=true;
+   stopPresenceCheck();
+   CaptureService.Link link=CaptureService.link;
+   AudioManager audio=getSystemService(AudioManager.class);
+   if(phone&&audio!=null&&audio.isMicrophoneMute())link=CaptureService.Link.OFF;
+   paintConnection(link,phone,"");
+   return;
+  }
+  if(lastRecording&&!CaptureService.status.isEmpty()){
+   Toast.makeText(this,CaptureService.status,Toast.LENGTH_SHORT).show();
+  }
+  if(lastRecording||!source.equals(presenceSource)){
+   lastRecording=false;
+   stopPresenceCheck();
+   presenceSource=source;
+   idleLink=CaptureService.Link.OFF;
+   presenceError="";
+  }
+  if(phone){
+   if(microphonePermissionDenied&&checkSelfPermission("android.permission.RECORD_AUDIO")!=0){
+    paintConnection(CaptureService.Link.ERROR,true,"Нет доступа к микрофону");
+   }else if(CaptureService.link==CaptureService.Link.ERROR&&"phone".equals(CaptureService.linkSource)){
+    paintConnection(CaptureService.Link.ERROR,true,CaptureService.status);
+   }else{
+    paintConnection(CaptureService.Link.OFF,true,"");
+   }
+   return;
+  }
+  if(resumed&&firmwareQuery==null&&presenceCheck==null&&SystemClock.elapsedRealtime()>=nextPresenceCheck){
+   if(nextPresenceCheck==0)idleLink=CaptureService.Link.CONNECTING;
+   checkPresence(source.equals("ble"));
+  }
+  paintConnection(idleLink,false,presenceError);
+ }
+ private void paintConnection(CaptureService.Link link,boolean phone,String detail){
+  String message;
+  switch(link){
+   case CONNECTED:message=phone?"Микрофон подключён":"ESP-микрофон на связи";break;
+   case CONNECTING:message=phone?"Подключаю микрофон…":"Подключаюсь к ESP…";break;
+   case ERROR:message=detail.isEmpty()?"Ошибка подключения микрофона":detail;break;
+   default:message=phone?"Микрофон выключен":"ESP-микрофон не обнаружен";break;
+  }
+  showConnection(link,message);
+ }
+ private void checkPresence(boolean bluetooth){
+  if(bluetooth){
+   boolean permission=Build.VERSION.SDK_INT>=31
+    ?checkSelfPermission("android.permission.BLUETOOTH_SCAN")==0&&checkSelfPermission("android.permission.BLUETOOTH_CONNECT")==0
+    :checkSelfPermission("android.permission.ACCESS_FINE_LOCATION")==0;
+   if(!permission){
+    idleLink=CaptureService.Link.ERROR;
+    presenceError="Нет доступа к Bluetooth";
+    nextPresenceCheck=SystemClock.elapsedRealtime()+8000;
+    return;
+   }
+  }
+  Context app=getApplicationContext();
+  presenceCheck=new Thread(()->{
+   CaptureService.Link link;
+   String detail="";
+   try{EspFirmwareVersion.checkPresence(app,bluetooth);link=CaptureService.Link.CONNECTED;}
+   catch(EspFirmwareVersion.NotFound error){link=CaptureService.Link.OFF;}
+   catch(InterruptedException error){Thread.currentThread().interrupt();return;}
+   catch(Exception error){link=CaptureService.Link.ERROR;detail=error instanceof java.io.IOException?error.getMessage():"";}
+   CaptureService.Link result=link;
+   String message=detail==null?"":detail;
+   Thread completed=Thread.currentThread();
+   runOnUiThread(()->{
+    if(presenceCheck!=completed)return;
+    presenceCheck=null;
+    idleLink=result;
+    presenceError=message;
+    nextPresenceCheck=SystemClock.elapsedRealtime()+8000;
+    if(resumed&&selectedPage==0&&!CaptureService.recording)paintConnection(result,false,message);
+   });
+  },"ESP presence");
+  presenceCheck.start();
+ }
+ private void stopPresenceCheck(){
+  if(presenceCheck!=null){presenceCheck.interrupt();presenceCheck=null;}
+  nextPresenceCheck=0;
+ }
  private void refresh(){
-  boolean active=CaptureService.recording;String message=CaptureService.status;
-  state.setText(message.startsWith("Записываю ·")?"● Идёт запись":message);state.setTextColor(active?orange:fg);
+  boolean active=CaptureService.recording;
+  if(selectedPage==0)refreshConnection();
   long seconds=active?CaptureService.samples/16000:0;duration.setText(String.format(Locale.US,"%02d:%02d:%02d",seconds/3600,seconds/60%60,seconds%60));
   firmwareButton.setEnabled(!active&&firmwareQuery==null);start.setEnabled(!active&&firmwareQuery==null);stop.setEnabled(active);transport.setEnabled(!active);start.setAlpha(active?.45f:1f);stop.setAlpha(active?1f:.45f);
   AppUpdates.check(this,false);
@@ -179,7 +312,7 @@ public class MainActivity extends Activity {
   timer.postDelayed(()->refresh(),1000);
  }
  @Override public void onResume(){super.onResume();resumed=true;audioPage.setActive(selectedPage==AUDIO_PAGE);timer.removeCallbacksAndMessages(null);if(!getSharedPreferences("settings",0).getString("sync_token","").isEmpty())startForegroundService(CaptureService.command(this,"SYNC"));refresh();}
- @Override public void onPause(){resumed=false;transport.close();audioPage.setActive(false);timer.removeCallbacksAndMessages(null);super.onPause();}
+ @Override public void onPause(){resumed=false;stopPresenceCheck();transport.close();audioPage.setActive(false);timer.removeCallbacksAndMessages(null);super.onPause();}
  @Override public void onBackPressed(){
   if(selectedPage==AUDIO_PAGE&&audioPage.closeDropdown()||selectedPage==0&&transport.close())return;
   super.onBackPressed();

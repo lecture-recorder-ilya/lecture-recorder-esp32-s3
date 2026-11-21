@@ -24,7 +24,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.net.ProtocolException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,15 +44,34 @@ final class EspFirmwareVersion {
     private static final Pattern VERSION = Pattern.compile("[0-9]{1,4}\\.[0-9]{1,4}\\.[0-9]{1,4}(?:-[A-Za-z0-9.-]{1,20})?");
     private static final String UNAVAILABLE = "Микрофон не сообщает версию прошивки";
 
+    static final class NotFound extends IOException {
+        NotFound(String message) { super(message); }
+    }
+
+    static void checkPresence(Context context, boolean bluetooth) throws Exception {
+        if (!bluetooth) {
+            wifi(context);
+            return;
+        }
+        BluetoothManager manager = context.getSystemService(BluetoothManager.class);
+        BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
+        if (adapter == null || !adapter.isEnabled()) throw new IOException("Bluetooth выключен");
+        String address = context.getSharedPreferences("settings", 0).getString("ble_address", "");
+        findBluetooth(adapter, address);
+    }
+
     static String wifi(Context context) throws Exception {
         SharedPreferences settings = context.getSharedPreferences("settings", 0);
         LinkedHashSet<String> hosts = new LinkedHashSet<>(Arrays.asList(settings.getString("ip", "").trim(),
                 settings.getString("hostname", "").trim(), "192.168.4.1"));
+        ProtocolException badResponse = null;
         for (String host : hosts) {
             if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
             if (!host.isEmpty()) {
                 try {
                     return queryWifiHost(host);
+                } catch (ProtocolException error) {
+                    badResponse = error;
                 } catch (IOException ignored) {
                     // Try the next address or the advertised service.
                 }
@@ -60,11 +81,14 @@ final class EspFirmwareVersion {
         if (discovered != null && !hosts.contains(discovered)) {
             try {
                 return queryWifiHost(discovered);
+            } catch (ProtocolException error) {
+                badResponse = error;
             } catch (IOException ignored) {
                 // The service may have disconnected since discovery.
             }
         }
-        throw new IOException("ESP-микрофон не найден по Wi-Fi");
+        if (badResponse != null) throw badResponse;
+        throw new NotFound("ESP-микрофон не найден по Wi-Fi");
     }
 
     static String queryWifiHost(String host) throws IOException {
@@ -74,13 +98,17 @@ final class EspFirmwareVersion {
             socket.getOutputStream().write("VERSION\n".getBytes(StandardCharsets.US_ASCII));
             InputStream input = socket.getInputStream();
             ByteArrayOutputStream response = new ByteArrayOutputStream();
-            for (int value; (value = input.read()) != -1 && value != '\n'; ) {
-                if (response.size() == 64) throw new IOException("Неизвестный ответ ESP");
-                response.write(value);
+            try {
+                for (int value; (value = input.read()) != -1 && value != '\n'; ) {
+                    if (response.size() == 64) throw new ProtocolException("Неизвестный ответ ESP");
+                    response.write(value);
+                }
+            } catch (SocketTimeoutException error) {
+                throw new ProtocolException("ESP не ответила");
             }
             String line = new String(response.toByteArray(), StandardCharsets.US_ASCII).trim();
             if ("DENIED".equals(line)) return UNAVAILABLE;
-            if (!line.startsWith("VERSION ")) throw new IOException("Неизвестный ответ ESP");
+            if (!line.startsWith("VERSION ")) throw new ProtocolException("Неизвестный ответ ESP");
             return format(line.substring("VERSION ".length()));
         }
     }
@@ -134,7 +162,7 @@ final class EspFirmwareVersion {
         if (adapter == null || !adapter.isEnabled()) throw new IOException("Bluetooth выключен");
         String address = context.getSharedPreferences("settings", 0).getString("ble_address", "");
         BluetoothDevice device = BluetoothAdapter.checkBluetoothAddress(address)
-                ? adapter.getRemoteDevice(address) : findBluetooth(adapter);
+                ? adapter.getRemoteDevice(address) : findBluetooth(adapter, "");
         CompletableFuture<String> result = new CompletableFuture<>();
         BluetoothGatt gatt = device.connectGatt(context, false, new BluetoothGattCallback() {
             @Override public void onConnectionStateChange(BluetoothGatt connection, int status, int state) {
@@ -177,13 +205,13 @@ final class EspFirmwareVersion {
         }, BluetoothDevice.TRANSPORT_LE);
         if (gatt == null) throw new IOException("Не удалось подключиться к ESP по Bluetooth");
         try {
-            return await(result, "ESP-микрофон не ответил по Bluetooth");
+            return await(result, new IOException("ESP-микрофон не ответил по Bluetooth"));
         } finally {
             gatt.close();
         }
     }
 
-    private static BluetoothDevice findBluetooth(BluetoothAdapter adapter) throws Exception {
+    private static BluetoothDevice findBluetooth(BluetoothAdapter adapter, String address) throws Exception {
         BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
         if (scanner == null) throw new IOException("Поиск Bluetooth недоступен");
         CompletableFuture<BluetoothDevice> device = new CompletableFuture<>();
@@ -194,21 +222,22 @@ final class EspFirmwareVersion {
                 device.completeExceptionally(new IOException("Не удалось найти ESP по Bluetooth"));
             }
         };
-        ScanFilter filter = new ScanFilter.Builder().setServiceUuid(new ParcelUuid(BleStream.SERVICE)).build();
-        scanner.startScan(Collections.singletonList(filter), new ScanSettings.Builder().build(), callback);
+        ScanFilter.Builder filter = new ScanFilter.Builder().setServiceUuid(new ParcelUuid(BleStream.SERVICE));
+        if (BluetoothAdapter.checkBluetoothAddress(address)) filter.setDeviceAddress(address);
+        scanner.startScan(Collections.singletonList(filter.build()), new ScanSettings.Builder().build(), callback);
         try {
-            return await(device, "ESP-микрофон не найден по Bluetooth");
+            return await(device, new NotFound("ESP-микрофон не найден по Bluetooth"));
         } finally {
             scanner.stopScan(callback);
         }
     }
 
-    private static <T> T await(CompletableFuture<T> result, String timeout)
+    private static <T> T await(CompletableFuture<T> result, IOException timeout)
             throws IOException, InterruptedException {
         try {
             return result.get(8, TimeUnit.SECONDS);
         } catch (TimeoutException error) {
-            throw new IOException(timeout);
+            throw timeout;
         } catch (ExecutionException error) {
             if (error.getCause() instanceof IOException) throw (IOException) error.getCause();
             throw new IOException("Не удалось проверить версию прошивки", error);
@@ -216,7 +245,7 @@ final class EspFirmwareVersion {
     }
 
     private static String format(String version) throws IOException {
-        if (!VERSION.matcher(version).matches()) throw new IOException("Некорректная версия прошивки");
+        if (!VERSION.matcher(version).matches()) throw new ProtocolException("Некорректная версия прошивки");
         return "Версия прошивки · " + version;
     }
 
