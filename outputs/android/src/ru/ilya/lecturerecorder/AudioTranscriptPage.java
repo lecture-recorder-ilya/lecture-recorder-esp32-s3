@@ -82,9 +82,8 @@ final class AudioTranscriptPage extends LinearLayout {
     private TextView transcriptStatus;
     private TextView editHint;
     private Dialog wordEditor;
-    private LinearLayout details;
-    private FrameLayout body;
-    private View dropdownDismiss;
+    private final LinearLayout audioPanel;
+    private final LinearLayout transcriptPanel;
     private ProgressBar transcriptSpinner;
     private TranscriptAdapter transcript;
     private Waveform waveform;
@@ -96,26 +95,53 @@ final class AudioTranscriptPage extends LinearLayout {
         setBackgroundColor(BACKGROUND);
         setPadding(dp(16), dp(14), dp(16), dp(10));
 
-        TextView heading = text("Аудио и текст", 23, TEXT);
-        heading.setTypeface(Typeface.DEFAULT_BOLD);
-        addView(heading);
+        boolean landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        LinearLayout playback = this;
+        LinearLayout columns = null;
+        if (landscape) {
+            columns = new LinearLayout(activity);
+            addView(columns, new LinearLayout.LayoutParams(-1, 0, 1));
+            playback = column();
+            columns.addView(playback, new LinearLayout.LayoutParams(0, -1, 1));
+        } else {
+            TextView heading = text("Аудио и текст", 23, TEXT);
+            heading.setTypeface(Typeface.DEFAULT_BOLD);
+            addView(heading);
+        }
 
         recordingDropdown = new ChoiceDropdown(activity, "Выбрать запись", "Сохранённых записей пока нет",
                 this::recordingOptions, option -> {
                     if (!option.value.equals(selected)) select(option.value, 0, true);
                 });
-        addView(recordingDropdown.button, spaced(-1, dp(52), 10));
+        playback.addView(recordingDropdown.button, spaced(-1, dp(52), landscape ? 0 : 10));
 
-        body = new FrameLayout(activity);
-        addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
-        boolean landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
-        details = new LinearLayout(activity);
-        details.setOrientation(landscape ? HORIZONTAL : VERTICAL);
-        details.setVisibility(View.GONE);
+        FrameLayout body = new FrameLayout(activity);
+        playback.addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
+        LinearLayout details = column();
         body.addView(details, new FrameLayout.LayoutParams(-1, -1));
-        addAudioPanel(landscape);
-        addTranscriptPanel(landscape);
-        addRecordingDropdown();
+
+        audioPanel = card();
+        audioPanel.setVisibility(View.GONE);
+        details.addView(audioPanel, spaced(-1, -2, 12));
+        addAudioPanel(audioPanel, landscape);
+
+        transcriptPanel = card();
+        transcriptPanel.setVisibility(View.GONE);
+        View transcriptDismiss = null;
+        if (landscape) {
+            FrameLayout transcriptHost = new FrameLayout(activity);
+            LinearLayout.LayoutParams panel = new LinearLayout.LayoutParams(0, -1, 2);
+            panel.setMarginStart(dp(12));
+            columns.addView(transcriptHost, panel);
+            transcriptHost.addView(transcriptPanel, new FrameLayout.LayoutParams(-1, -1));
+            transcriptDismiss = addDropdownDismiss(transcriptHost);
+        } else {
+            LinearLayout.LayoutParams panel = new LinearLayout.LayoutParams(-1, 0, 1);
+            panel.topMargin = dp(12);
+            details.addView(transcriptPanel, panel);
+        }
+        addTranscriptPanel(transcriptPanel, landscape);
+        addRecordingDropdown(body, transcriptDismiss);
 
         if (state != null) {
             String name = state.getString("recording");
@@ -123,12 +149,7 @@ final class AudioTranscriptPage extends LinearLayout {
         }
     }
 
-    private void addAudioPanel(boolean landscape) {
-        LinearLayout audio = card();
-        LinearLayout.LayoutParams panel = landscape ? new LinearLayout.LayoutParams(0, -2, 2)
-                : new LinearLayout.LayoutParams(-1, -2);
-        panel.topMargin = dp(12);
-        details.addView(audio, panel);
+    private void addAudioPanel(LinearLayout audio, boolean landscape) {
         waveform = new Waveform(activity);
         audio.addView(waveform, new LinearLayout.LayoutParams(-1, dp(landscape ? 54 : 94)));
         waveStatus = text("", 13, MUTED);
@@ -144,19 +165,20 @@ final class AudioTranscriptPage extends LinearLayout {
         audio.addView(controls, spaced(-1, dp(48), 4));
     }
 
-    private void addTranscriptPanel(boolean landscape) {
-        LinearLayout box = card();
-        LinearLayout.LayoutParams panel = landscape ? new LinearLayout.LayoutParams(0, -1, 3)
-                : new LinearLayout.LayoutParams(-1, 0, 1);
-        panel.topMargin = dp(12);
-        if (landscape) panel.setMarginStart(dp(12));
-        details.addView(box, panel);
-
+    private void addTranscriptPanel(LinearLayout box, boolean landscape) {
         LinearLayout header = new LinearLayout(activity);
         header.setGravity(Gravity.CENTER_VERTICAL);
         TextView heading = text("Расшифровка", 18, TEXT);
         heading.setTypeface(Typeface.DEFAULT_BOLD);
         header.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
+        editHint = text("Нажми на слово, чтобы исправить", 13, MUTED);
+        editHint.setVisibility(View.GONE);
+        if (landscape) {
+            editHint.setGravity(Gravity.END);
+            LinearLayout.LayoutParams hint = new LinearLayout.LayoutParams(0, -2, 1);
+            hint.setMarginStart(dp(8));
+            header.addView(editHint, hint);
+        }
         transcriptSpinner = new ProgressBar(activity);
         transcriptSpinner.setIndeterminateTintList(ColorStateList.valueOf(ACCENT));
         transcriptSpinner.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -171,31 +193,42 @@ final class AudioTranscriptPage extends LinearLayout {
                 PhoneAnalysisService.request(activity, selected, Store.recordingTitle(selected)));
         box.addView(transcribe, spaced(-1, dp(48), 6));
 
-        editHint = text("Нажми на слово, чтобы исправить", 13, MUTED);
-        editHint.setVisibility(View.GONE);
-        box.addView(editHint, spaced(-1, -2, 4));
+        if (!landscape) box.addView(editHint, spaced(-1, -2, 4));
 
         ListView lines = new ListView(activity);
         transcript = new TranscriptAdapter(activity);
         lines.setAdapter(transcript);
         lines.setDivider(new android.graphics.drawable.ColorDrawable(0xff2b2d33));
         lines.setDividerHeight(dp(1));
+        if (landscape) lines.setScrollbarFadingEnabled(false);
         box.addView(lines, new LinearLayout.LayoutParams(-1, 0, 1));
     }
 
-    private void addRecordingDropdown() {
-        dropdownDismiss = new View(activity);
-        dropdownDismiss.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        dropdownDismiss.setOnClickListener(view -> closeDropdown());
-        dropdownDismiss.setVisibility(View.GONE);
-        body.addView(dropdownDismiss, new FrameLayout.LayoutParams(-1, -1));
+    private View addDropdownDismiss(FrameLayout host) {
+        View dismiss = new View(activity);
+        dismiss.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        dismiss.setOnClickListener(view -> closeDropdown());
+        dismiss.setVisibility(View.GONE);
+        host.addView(dismiss, new FrameLayout.LayoutParams(-1, -1));
+        return dismiss;
+    }
 
+    private void addRecordingDropdown(FrameLayout body, View transcriptDismiss) {
+        View audioDismiss = addDropdownDismiss(body);
         recordingDropdown.setHeightLimit(() -> body.getHeight() - dp(12));
         recordingDropdown.setExpansionListener(open -> {
-            details.setImportantForAccessibility(open ? View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
-                    : View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
-            dropdownDismiss.setBackgroundColor(selected == null ? 0 : 0x44000000);
-            dropdownDismiss.setVisibility(open ? View.VISIBLE : View.GONE);
+            int accessibility = open ? View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+                    : View.IMPORTANT_FOR_ACCESSIBILITY_AUTO;
+            audioPanel.setImportantForAccessibility(accessibility);
+            transcriptPanel.setImportantForAccessibility(accessibility);
+            int scrim = selected == null ? 0 : 0x44000000;
+            int visibility = open ? View.VISIBLE : View.GONE;
+            audioDismiss.setBackgroundColor(scrim);
+            audioDismiss.setVisibility(visibility);
+            if (transcriptDismiss != null) {
+                transcriptDismiss.setBackgroundColor(scrim);
+                transcriptDismiss.setVisibility(visibility);
+            }
         });
         FrameLayout.LayoutParams layout = new FrameLayout.LayoutParams(-1, -2);
         layout.topMargin = dp(6);
@@ -227,7 +260,8 @@ final class AudioTranscriptPage extends LinearLayout {
         recordingDropdown.setSelected(new ChoiceDropdown.Option(name, Store.recordingTitle(name), ""));
         waveform.setEnvelope(null);
         showWaveStatus("Строю звуковую дорожку…");
-        details.setVisibility(View.VISIBLE);
+        audioPanel.setVisibility(View.VISIBLE);
+        transcriptPanel.setVisibility(View.VISIBLE);
         play.setEnabled(false);
         preparePlayer(name);
         scan = audioScan.submit(() -> {
@@ -622,6 +656,8 @@ final class AudioTranscriptPage extends LinearLayout {
 
         TranscriptRow() {
             super(activity);
+            setLayoutParams(new android.widget.AbsListView.LayoutParams(-1, -2));
+            setBaselineAligned(false);
             setGravity(Gravity.TOP);
             setPadding(0, dp(10), 0, dp(10));
             time.setTextSize(13);
