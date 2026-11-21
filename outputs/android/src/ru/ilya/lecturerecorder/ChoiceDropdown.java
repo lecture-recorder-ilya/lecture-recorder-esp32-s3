@@ -24,9 +24,9 @@ import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 final class ChoiceDropdown {
-    private static final int TEXT = 0xfff5f3f1;
-    private static final int MUTED = 0xffa7a9b2;
-    private static final int ACCENT = 0xffff593b;
+    private static final int TEXT = StudioStyle.TEXT;
+    private static final int MUTED = StudioStyle.MUTED;
+    private static final int ACCENT = StudioStyle.ACCENT;
     private final Context context;
     private final String label;
     private final String empty;
@@ -58,14 +58,14 @@ final class ChoiceDropdown {
         button.setPadding(dp(12), 0, dp(12), 0);
         button.setSingleLine();
         button.setEllipsize(TextUtils.TruncateAt.END);
-        button.setBackground(new RippleDrawable(ColorStateList.valueOf(0x28ffffff), surface(0xff2b2d33), null));
+        button.setBackground(new RippleDrawable(ColorStateList.valueOf(0x28ffffff), surface(StudioStyle.CONTROL), null));
         button.setOnClickListener(view -> { if (!close()) open(); });
 
         list = new ListView(context);
-        GradientDrawable background = surface(0xff24262c);
-        background.setStroke(dp(1), 0xff41454f);
+        GradientDrawable background = surface(StudioStyle.PANEL);
+        background.setStroke(dp(1), StudioStyle.LINE);
         list.setBackground(background);
-        list.setDivider(new ColorDrawable(0xff353841));
+        list.setDivider(new ColorDrawable(StudioStyle.LINE));
         list.setDividerHeight(dp(1));
         list.setPadding(0, dp(3), 0, dp(3));
         list.setClipToOutline(true);

@@ -8,9 +8,10 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.RippleDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -56,11 +57,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 final class AudioTranscriptPage extends LinearLayout {
-    private static final int BACKGROUND = 0xff101113;
-    private static final int PANEL = 0xff191b1f;
-    private static final int TEXT = 0xfff5f3f1;
-    private static final int MUTED = 0xffa7a9b2;
-    private static final int ACCENT = 0xffff593b;
+    private static final int BACKGROUND = StudioStyle.BACKGROUND;
+    private static final int TEXT = StudioStyle.TEXT;
+    private static final int MUTED = StudioStyle.MUTED;
+    private static final int ACCENT = StudioStyle.ACCENT;
 
     private final Activity activity;
     private final boolean landscape;
@@ -110,8 +110,10 @@ final class AudioTranscriptPage extends LinearLayout {
             playback = column();
             columns.addView(playback, new LinearLayout.LayoutParams(0, -1, 1));
         } else {
-            TextView heading = text("Аудио и текст", 23, TEXT);
+            TextView heading = text("Аудио и текст", 28, TEXT);
             heading.setTypeface(Typeface.DEFAULT_BOLD);
+            heading.setLetterSpacing(-.025f);
+            if (android.os.Build.VERSION.SDK_INT >= 28) heading.setAccessibilityHeading(true);
             addView(heading);
         }
 
@@ -179,7 +181,8 @@ final class AudioTranscriptPage extends LinearLayout {
         controls.setGravity(Gravity.CENTER_VERTICAL);
         play = button("Слушать", this::togglePlayback);
         controls.addView(play, new LinearLayout.LayoutParams(-2, dp(48)));
-        times = text("", 14, MUTED);
+        times = text("", 13, MUTED);
+        times.setTypeface(Typeface.MONOSPACE);
         times.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         controls.addView(times, new LinearLayout.LayoutParams(0, -1, 1));
         if (!landscape) addSummaryButton(controls);
@@ -248,7 +251,7 @@ final class AudioTranscriptPage extends LinearLayout {
         ListView lines = new ListView(activity);
         transcript = new TranscriptAdapter(activity);
         lines.setAdapter(transcript);
-        lines.setDivider(new android.graphics.drawable.ColorDrawable(0xff2b2d33));
+        lines.setDivider(new android.graphics.drawable.ColorDrawable(StudioStyle.LINE));
         lines.setDividerHeight(dp(1));
         if (landscape) lines.setScrollbarFadingEnabled(false);
         box.addView(lines, new LinearLayout.LayoutParams(-1, 0, 1));
@@ -547,7 +550,7 @@ final class AudioTranscriptPage extends LinearLayout {
         };
         Button save = button("Сохранить", commit);
         save.setTextColor(0xff21130e);
-        save.setBackground(new RippleDrawable(ColorStateList.valueOf(0x3321130e), surface(ACCENT, 10), null));
+        save.setBackground(StudioStyle.control(activity, ACCENT, 12));
         LinearLayout.LayoutParams saveLayout = new LinearLayout.LayoutParams(0, dp(48), 1);
         saveLayout.leftMargin = dp(8);
         actions.addView(save, saveLayout);
@@ -636,7 +639,7 @@ final class AudioTranscriptPage extends LinearLayout {
 
     private LinearLayout card() {
         LinearLayout view = column();
-        view.setBackground(surface(PANEL, 14));
+        view.setBackground(StudioStyle.card(activity, 20));
         view.setPadding(dp(12), dp(12), dp(12), dp(12));
         return view;
     }
@@ -661,7 +664,7 @@ final class AudioTranscriptPage extends LinearLayout {
         button.setAllCaps(false);
         button.setTextColor(TEXT);
         button.setPadding(dp(12), 0, dp(12), 0);
-        button.setBackground(new RippleDrawable(ColorStateList.valueOf(0x28ffffff), surface(0xff2b2d33, 10), null));
+        button.setBackground(StudioStyle.control(activity, StudioStyle.CONTROL, 12));
         button.setOnClickListener(view -> action.run());
         return button;
     }
@@ -735,7 +738,9 @@ final class AudioTranscriptPage extends LinearLayout {
             setGravity(Gravity.TOP);
             setPadding(0, dp(10), 0, dp(10));
             time.setTextSize(13);
-            time.setTextColor(MUTED);
+            time.setTextColor(ACCENT);
+            time.setTypeface(Typeface.MONOSPACE);
+            time.setBackground(StudioStyle.control(activity, StudioStyle.ACTIVE, 12));
             time.setPadding(dp(6), 0, dp(6), 0);
             time.setMinWidth(dp(54));
             time.setMinimumWidth(dp(54));
@@ -744,7 +749,7 @@ final class AudioTranscriptPage extends LinearLayout {
             addView(time, badge);
             words.setLineSpacing(dp(3), 1);
             words.setMovementMethod(LinkMovementMethod.getInstance());
-            words.setHighlightColor(0x55ff593b);
+            words.setHighlightColor(0x55c5b5ff);
             addView(words, new LinearLayout.LayoutParams(0, -2, 1));
         }
     }
@@ -752,10 +757,11 @@ final class AudioTranscriptPage extends LinearLayout {
     private final class Waveform extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private PcmWave.Envelope envelope;
+        private Shader spectrum;
 
         Waveform(Context context) {
             super(context);
-            setBackground(surface(0xff131519, 10));
+            setBackground(surface(BACKGROUND, 14));
             setContentDescription("Звуковая дорожка");
             setFocusable(true);
             setClickable(true);
@@ -766,29 +772,44 @@ final class AudioTranscriptPage extends LinearLayout {
             invalidate();
         }
 
+        @Override protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+            super.onSizeChanged(width, height, oldWidth, oldHeight);
+            spectrum = new LinearGradient(0, 0, Math.max(1, width), 0,
+                    StudioStyle.SPECTRUM, null, Shader.TileMode.CLAMP);
+        }
+
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
             float left = dp(8);
             float width = getWidth() - 2 * left;
             float midpoint = getHeight() / 2f;
-            paint.setColor(0xff353943);
-            paint.setStrokeWidth(dp(1));
-            canvas.drawLine(left, midpoint, left + width, midpoint, paint);
-            if (envelope == null || envelope.peaks.length == 0 || width <= 0) return;
+            if (width <= 0) return;
 
-            float progress = duration == 0 ? 0 : (float) position / duration;
+            paint.setColor(StudioStyle.LINE);
+            paint.setStrokeWidth(dp(1));
+            for (int index = 1; index < 8; index++) {
+                float x = left + index * width / 8;
+                canvas.drawLine(x, dp(6), x, getHeight() - dp(6), paint);
+            }
+            canvas.drawLine(left, midpoint, left + width, midpoint, paint);
+            if (envelope == null || envelope.peaks.length == 0) return;
+
+            float progress = duration == 0 ? 0 : Math.max(0, Math.min(1, (float) position / duration));
+            float marker = left + progress * width;
             float step = width / envelope.peaks.length;
-            paint.setStrokeWidth(Math.max(1f, step * 0.68f));
+            paint.setStrokeWidth(Math.max(1f, step * 0.66f));
             for (int i = 0; i < envelope.peaks.length; i++) {
-                float proportion = (i + 0.5f) / envelope.peaks.length;
-                float x = left + (i + 0.5f) * step;
-                float height = Math.max(0.45f, envelope.peaks[i] * (midpoint - dp(7)));
-                paint.setColor(proportion <= progress ? ACCENT : 0xff858b9b);
+                float x = left + (i + .5f) * step;
+                float peak = envelope.peaks[i];
+                float height = Math.max(.5f, peak * (midpoint - dp(7)));
+                boolean played = x <= marker;
+                paint.setColor(played ? StudioStyle.TEXT : peak > .6f ? 0xffaaa0cf : 0xff77728e);
+                paint.setShader(played ? spectrum : null);
                 canvas.drawLine(x, midpoint - height, x, midpoint + height, paint);
             }
+            paint.setShader(null);
             paint.setStrokeWidth(dp(1));
             paint.setColor(ACCENT);
-            float marker = left + progress * width;
             canvas.drawLine(marker, dp(5), marker, getHeight() - dp(5), paint);
         }
 

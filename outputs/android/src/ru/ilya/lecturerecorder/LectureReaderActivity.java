@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
 import android.media.MediaPlayer;
@@ -26,14 +27,13 @@ import java.io.File;
 import java.util.Locale;
 
 public class LectureReaderActivity extends Activity {
-    private static final int BACKGROUND = 0xff101113;
-    private static final int PANEL = 0xff191b1f;
-    private static final int CONTROL = 0xff292b31;
-    private static final int DIVIDER = 0xff2b2d33;
-    private static final int TEXT = 0xfff5f3f1;
-    private static final int MUTED = 0xffa7a9b2;
-    private static final int ACCENT = 0xffff593b;
-    private static final int ACTIVE = 0xff322321;
+    private static final int BACKGROUND = StudioStyle.BACKGROUND;
+    private static final int CONTROL = StudioStyle.CONTROL;
+    private static final int DIVIDER = StudioStyle.LINE;
+    private static final int TEXT = StudioStyle.TEXT;
+    private static final int MUTED = StudioStyle.MUTED;
+    private static final int ACCENT = StudioStyle.ACCENT;
+    private static final int ACTIVE = StudioStyle.ACTIVE;
     private static final String[] TABS = {"summary", "text", "review"};
     private static final String[] TAB_LABELS = {"Конспект", "Текст", "Проверить"};
 
@@ -123,7 +123,7 @@ public class LectureReaderActivity extends Activity {
         }
         page.addView(navigation);
         LinearLayout tabs = new LinearLayout(this);
-        tabs.setBackground(surface(PANEL, 12));
+        tabs.setBackground(StudioStyle.card(this, 15));
         tabs.setPadding(dp(3), dp(3), dp(3), dp(3));
         for (int index = 0; index < TABS.length; index++) {
             String target = TABS[index];
@@ -154,7 +154,7 @@ public class LectureReaderActivity extends Activity {
             Button button = tabButtons[index];
             button.setSelected(active);
             button.setTextColor(active ? ACCENT : MUTED);
-            button.setBackground(control(active ? ACTIVE : PANEL));
+            button.setBackground(control(active ? ACTIVE : Color.TRANSPARENT));
         }
     }
 
@@ -162,7 +162,7 @@ public class LectureReaderActivity extends Activity {
         LinearLayout controls = new LinearLayout(this);
         controls.setGravity(Gravity.CENTER_VERTICAL);
         controls.setPadding(dp(8), dp(4), dp(10), dp(4));
-        controls.setBackground(surface(PANEL, 12));
+        controls.setBackground(StudioStyle.card(this, 16));
         toggle = button("Слушать", () -> {
             if (ready && player.isPlaying()) {
                 player.pause();
@@ -222,7 +222,13 @@ public class LectureReaderActivity extends Activity {
         String overview = report.optString("overview");
         JSONArray points = report.optJSONArray("summary");
         boolean hasPoints = points != null && points.length() > 0;
-        if (!overview.isEmpty()) body.addView(text(overview, 16, TEXT), spaced(-1, -2, 10));
+        if (!overview.isEmpty()) {
+            TextView lead = text(overview, 16, 0xff27231f);
+            lead.setLineSpacing(dp(5), 1);
+            lead.setPadding(dp(16), dp(14), dp(16), dp(14));
+            lead.setBackground(surface(0xffeee4d3, 18));
+            body.addView(lead, spaced(-1, -2, 10));
+        }
         if (hasPoints) {
             LinearLayout list = card();
             for (int index = 0; index < points.length(); index++) {
@@ -289,7 +295,13 @@ public class LectureReaderActivity extends Activity {
                 phrase.setFocusable(true);
                 phrase.setContentDescription("Слушать с " + clock(start / 1000.0) + ". " + phrase.getText());
             }
-            block.addView(text(timed ? clock(start / 1000.0) : "Без таймкода", 13, MUTED));
+            TextView timestamp = text(timed ? clock(start / 1000.0) : "Без таймкода", 13, timed ? ACCENT : MUTED);
+            if (timed) {
+                timestamp.setTypeface(Typeface.MONOSPACE);
+                timestamp.setPadding(dp(8), dp(3), dp(8), dp(3));
+                timestamp.setBackground(surface(ACTIVE, 8));
+            }
+            block.addView(timestamp, new LinearLayout.LayoutParams(-2, -2));
             block.addView(phrase, spaced(-1, -2, 5));
             if (row.optBoolean("needs_review")) {
                 boolean checked = reviewed(row);
@@ -450,8 +462,8 @@ public class LectureReaderActivity extends Activity {
 
     private LinearLayout card() {
         LinearLayout card = column();
-        card.setPadding(dp(12), dp(10), dp(12), dp(10));
-        card.setBackground(surface(PANEL, 14));
+        card.setPadding(dp(14), dp(12), dp(14), dp(12));
+        card.setBackground(StudioStyle.card(this, 18));
         return card;
     }
 
@@ -496,7 +508,7 @@ public class LectureReaderActivity extends Activity {
     }
 
     private RippleDrawable control(int color) {
-        return new RippleDrawable(ColorStateList.valueOf(0x28ff593b), surface(color, 10), null);
+        return new RippleDrawable(ColorStateList.valueOf(0x28c5b5ff), surface(color, 12), null);
     }
 
     private LinearLayout.LayoutParams spaced(int width, int height, int gap) {

@@ -34,9 +34,9 @@ import java.util.function.IntConsumer;
 final class EspPairing {
     static final int BLUETOOTH_PERMISSION = 10;
     static final int ENABLE_BLUETOOTH = 11;
-    private static final int TEXT = 0xfff5f3f1;
-    private static final int MUTED = 0xffa7a9b2;
-    private static final int ACCENT = 0xffff593b;
+    private static final int TEXT = StudioStyle.TEXT;
+    private static final int MUTED = StudioStyle.MUTED;
+    private static final int ACCENT = StudioStyle.ACCENT;
 
     private final Activity activity;
     private final IntConsumer onPaired;
@@ -61,7 +61,7 @@ final class EspPairing {
         sheet.setOrientation(LinearLayout.VERTICAL);
         sheet.setGravity(Gravity.CENTER_HORIZONTAL);
         sheet.setPadding(dp(22), dp(24), dp(22), dp(24));
-        sheet.setBackground(surface(0xff191b1f, 22));
+        sheet.setBackground(StudioStyle.card(activity, 24));
         sheet.setFocusableInTouchMode(true);
 
         TextView title = text("Подключение", 23, TEXT);
@@ -81,7 +81,7 @@ final class EspPairing {
         action.setAllCaps(false);
         action.setTextSize(15);
         action.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        action.setTextColor(0xff181211);
+        action.setTextColor(StudioStyle.INK);
         action.setBackground(new RippleDrawable(ColorStateList.valueOf(0x25000000), surface(ACCENT, 12), null));
         action.setVisibility(View.GONE);
         sheet.addView(action, spaced(-1, dp(50), 12));

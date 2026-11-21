@@ -17,6 +17,7 @@ import java.util.*;
 
 public class MainActivity extends Activity {
  private TextView state,duration,deviceBattery;
+ private RecordingMeter meter;
  private FrameLayout deviceReveal,deviceGrip;
  private ValueAnimator deviceExpansion;
  private LinearLayout deviceDetails,pairedDevice;
@@ -46,17 +47,59 @@ public class MainActivity extends Activity {
  private final Button[] tabs=new Button[3];
  private AudioTranscriptPage audioPage;
  private boolean resumed;
- private final int orange=Color.rgb(255,89,59),fg=Color.rgb(245,243,241),muted=Color.rgb(167,169,178),bg=Color.rgb(16,17,19),panel=Color.rgb(25,27,31),line=Color.rgb(43,45,51);
+ private static final int accent=StudioStyle.ACCENT,fg=StudioStyle.TEXT,muted=StudioStyle.MUTED,bg=StudioStyle.BACKGROUND,line=StudioStyle.LINE;
  private int dp(int n){return Math.round(getResources().getDisplayMetrics().density*n);}
  private GradientDrawable surface(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));return d;}
  private TextView text(String value,int size){TextView t=new TextView(this);t.setText(value);t.setTextSize(size);t.setTextColor(fg);t.setPadding(0,dp(5),0,dp(5));t.setLineSpacing(dp(3),1);return t;}
  private TextView note(String value){TextView t=text(value,13);t.setTextColor(muted);return t;}
  private TextView heading(String value,int size){TextView t=text(value,size);t.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));return t;}
  private LinearLayout column(){LinearLayout v=new LinearLayout(this);v.setOrientation(LinearLayout.VERTICAL);return v;}
- private LinearLayout card(LinearLayout parent){LinearLayout c=column();c.setPadding(dp(18),dp(18),dp(18),dp(18));GradientDrawable d=surface(panel,18);d.setStroke(dp(1),line);c.setBackground(d);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,0,0,dp(16));parent.addView(c,lp);return c;}
+ private LinearLayout card(LinearLayout parent){
+  LinearLayout card=column();
+  card.setPadding(dp(16),dp(16),dp(16),dp(16));
+  card.setBackground(StudioStyle.card(this,22));
+  LinearLayout.LayoutParams layout=new LinearLayout.LayoutParams(-1,-2);
+  layout.bottomMargin=dp(12);
+  parent.addView(card,layout);
+  return card;
+ }
  private Button button(String label,Runnable action){return button(label,action,false);}
- private Button button(String label,Runnable action,boolean primary){Button b=new Button(this);b.setText(label);b.setTextSize(15);b.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));b.setAllCaps(false);b.setTextColor(primary?Color.rgb(33,19,14):fg);b.setMinHeight(dp(50));b.setMinimumHeight(dp(50));b.setPadding(dp(12),dp(12),dp(12),dp(12));GradientDrawable d=surface(primary?orange:Color.rgb(36,38,44),12);if(!primary)d.setStroke(dp(1),line);b.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(primary?0x3321130e:0x22ffffff),d,null));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,dp(8),0,dp(4));b.setLayoutParams(lp);b.setOnClickListener(v->action.run());return b;}
- private LinearLayout page(FrameLayout host,int index,String title){ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setClipToPadding(false);scroll.setVerticalScrollBarEnabled(false);LinearLayout content=column();content.setPadding(dp(20),dp(22),dp(20),dp(24));LinearLayout titleRow=new LinearLayout(this);titleRow.setGravity(android.view.Gravity.CENTER_VERTICAL);View mark=new View(this);mark.setBackground(surface(orange,2));LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(dp(4),dp(24));mp.setMargins(0,0,dp(12),0);titleRow.addView(mark,mp);TextView h=heading(title,28);titleRow.addView(h);LinearLayout.LayoutParams titleLayout=new LinearLayout.LayoutParams(-1,-2);titleLayout.bottomMargin=dp(16);content.addView(titleRow,titleLayout);scroll.addView(content);pages[index]=scroll;host.addView(scroll,new FrameLayout.LayoutParams(-1,-1));return content;}
+ private Button button(String label,Runnable action,boolean primary){
+  Button button=new Button(this);
+  button.setText(label);
+  button.setTextSize(15);
+  button.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));
+  button.setAllCaps(false);
+  button.setTextColor(primary?StudioStyle.INK:fg);
+  button.setMinHeight(dp(48));
+  button.setMinimumHeight(dp(48));
+  button.setPadding(dp(12),dp(12),dp(12),dp(12));
+  button.setBackground(StudioStyle.control(this,primary?StudioStyle.LIME:StudioStyle.CONTROL,14));
+  LinearLayout.LayoutParams layout=new LinearLayout.LayoutParams(-1,-2);
+  layout.topMargin=dp(8);
+  button.setLayoutParams(layout);
+  button.setOnClickListener(view->action.run());
+  return button;
+ }
+ private LinearLayout page(FrameLayout host,int index,String title){
+  ScrollView scroll=new ScrollView(this);
+  scroll.setFillViewport(true);
+  scroll.setClipToPadding(false);
+  scroll.setVerticalScrollBarEnabled(false);
+  LinearLayout content=column();
+  content.setPadding(dp(18),dp(16),dp(18),dp(16));
+  TextView heading=heading(title,28);
+  heading.setTypeface(Typeface.create("sans-serif",Typeface.BOLD));
+  if(Build.VERSION.SDK_INT>=28)heading.setAccessibilityHeading(true);
+  heading.setLetterSpacing(-.025f);
+  LinearLayout.LayoutParams titleLayout=new LinearLayout.LayoutParams(-1,-2);
+  titleLayout.bottomMargin=dp(10);
+  content.addView(heading,titleLayout);
+  scroll.addView(content);
+  pages[index]=scroll;
+  host.addView(scroll,new FrameLayout.LayoutParams(-1,-1));
+  return content;
+ }
  private void showPage(int index){
   if(index!=0){transport.close();stopPresenceCheck();}
   selectedPage=index;
@@ -64,9 +107,12 @@ public class MainActivity extends Activity {
    boolean active=i==index;
    pages[i].setVisibility(active?View.VISIBLE:View.GONE);
    tabs[i].setSelected(active);
-   tabs[i].setTextColor(active?orange:muted);
-   tabs[i].setBackground(surface(active?Color.rgb(48,33,30):Color.TRANSPARENT,12));
+   int color=active?accent:muted;
+   tabs[i].setTextColor(color);
+   tabs[i].setBackground(StudioStyle.control(this,active?StudioStyle.ACTIVE:Color.TRANSPARENT,16));
+   StudioStyle.tabIcon(tabs[i],i,color);
   }
+  meter.setRecording(index==0&&CaptureService.recording);
   audioPage.setActive(resumed&&index==AUDIO_PAGE);
   if(index==0&&resumed)refreshConnection();
  }
@@ -79,7 +125,37 @@ public class MainActivity extends Activity {
   LinearLayout record=page(host,0,"Новая запись");
   addConnectionPanel(record);
   if(saved!=null)deviceModel.setYaw(saved.getFloat("device_rotation",-.30f));
-  LinearLayout hero=card(record);hero.addView(note("ДЛИТЕЛЬНОСТЬ ЗАПИСИ"));duration=text("00:00:00",42);duration.setTypeface(Typeface.create("monospace",Typeface.NORMAL));duration.setPadding(0,dp(12),0,dp(18));hero.addView(duration);
+  LinearLayout hero=card(record);
+  GradientDrawable console=new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+   new int[]{0xff1e202b,0xff14161e,0xff171420});
+  console.setCornerRadius(dp(22));
+  console.setStroke(dp(1),line);
+  hero.setBackground(console);
+
+  TextView timerLabel=note("Длительность");
+  hero.addView(timerLabel);
+  duration=text("00:00:00",52);
+  duration.setTypeface(Typeface.create("sans-serif-condensed",Typeface.NORMAL));
+  duration.setFontFeatureSettings("tnum");
+  duration.setLetterSpacing(-.015f);
+  duration.setIncludeFontPadding(false);
+  duration.setSingleLine(true);
+  duration.setAutoSizeTextTypeUniformWithConfiguration(26,52,1,android.util.TypedValue.COMPLEX_UNIT_SP);
+  duration.setPadding(0,dp(4),0,dp(10));
+  hero.addView(duration,new LinearLayout.LayoutParams(-1,dp(74)));
+
+  TextView meterLabel=note("Уровень сигнала");
+  hero.addView(meterLabel);
+  meter=new RecordingMeter(this);
+  hero.addView(meter,new LinearLayout.LayoutParams(-1,dp(68)));
+  View highlight=new View(this);
+  highlight.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+  GradientDrawable prism=new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+   new int[]{0x003d355a,0xffa99afa,0xffeec2dc,0xffffcb9e,0x003d355a});
+  highlight.setBackground(prism);
+  LinearLayout.LayoutParams reflection=new LinearLayout.LayoutParams(-1,dp(1));
+  reflection.setMargins(dp(12),0,dp(12),dp(10));
+  hero.addView(highlight,reflection);
   hero.addView(note("Источник звука"));
   SharedPreferences sourceSettings=getSharedPreferences("settings",0);
   String source=sourceSettings.getString("transport","phone");
@@ -97,8 +173,16 @@ public class MainActivity extends Activity {
   LinearLayout.LayoutParams sourceList=new LinearLayout.LayoutParams(-1,-2);
   sourceList.topMargin=dp(6);
   hero.addView(transport.list,sourceList);
-  start=button("Начать запись",()->begin(),true);hero.addView(start);stop=button("Завершить и сохранить",()->startForegroundService(CaptureService.command(this,"STOP")));hero.addView(stop);
-  LinearLayout photo=card(record);photo.addView(heading("Фото доски",18));photo.addView(button("Сфотографировать доску",()->takeBoardPhoto()));
+  start=button("Начать запись",()->begin(),true);
+  hero.addView(start);
+  stop=button("Завершить и сохранить",()->startForegroundService(CaptureService.command(this,"STOP")));
+  stop.setTextColor(StudioStyle.INK);
+  stop.setBackground(StudioStyle.control(this,0xffffa3be,14));
+  stop.setVisibility(View.GONE);
+  hero.addView(stop);
+
+  Button photo=button("Сфотографировать доску",this::takeBoardPhoto);
+  record.addView(photo);
   LinearLayout settingsPage=page(host,2,"Настройки");
   LinearLayout connection=card(settingsPage);
   connection.addView(heading("Микрофон ESP",18));
@@ -119,23 +203,23 @@ public class MainActivity extends Activity {
   host.addView(audioPage,new FrameLayout.LayoutParams(-1,-1));
 
   LinearLayout nav=new LinearLayout(this);
-  nav.setPadding(dp(8),dp(10),dp(8),dp(10));
-  GradientDrawable nd=surface(Color.rgb(21,22,26),0);
-  nd.setStroke(dp(1),line);
-  nav.setBackground(nd);
+  nav.setPadding(dp(5),dp(5),dp(5),dp(5));
+  nav.setBackground(StudioStyle.card(this,22));
   String[] labels={"Запись","Аудио","Настройки"};
   for(int index=0;index<labels.length;index++){
    int pageIndex=index;
    Button tab=button(labels[index],()->showPage(pageIndex));
    tab.setTextSize(12);
    tab.setMaxLines(1);
-   tab.setPadding(dp(2),dp(12),dp(2),dp(12));
+   tab.setPadding(dp(2),dp(5),dp(2),dp(5));
    LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);
    lp.setMargins(dp(2),0,dp(2),0);
    nav.addView(tab,lp);
    tabs[index]=tab;
   }
-  root.addView(nav,new LinearLayout.LayoutParams(-1,-2));
+  LinearLayout.LayoutParams navigation=new LinearLayout.LayoutParams(-1,-2);
+  navigation.setMargins(dp(12),0,dp(12),dp(8));
+  root.addView(nav,navigation);
   showPage(Math.max(0,Math.min(pages.length-1,selectedPage)));
   if(Build.VERSION.SDK_INT>=33&&checkSelfPermission("android.permission.POST_NOTIFICATIONS")!=0)requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},2);
  }
@@ -226,7 +310,7 @@ public class MainActivity extends Activity {
   deviceDetails.setPadding(0,dp(6),0,dp(8));
   pairedDevice=column();
   deviceModel=new RecorderModelView(this);
-  deviceModel.setBackground(surface(0xff151619,14));
+  deviceModel.setBackground(surface(StudioStyle.BACKGROUND,16));
   deviceModel.setClipToOutline(true);
   pairedDevice.addView(deviceModel,new LinearLayout.LayoutParams(-1,dp(222)));
   deviceBattery=note("");
@@ -254,7 +338,7 @@ public class MainActivity extends Activity {
   deviceGrip.setFocusable(true);
   deviceGrip.setOnClickListener(view->toggleDevicePanel());
   View pill=new View(this);
-  pill.setBackground(surface(0xff5c606b,4));
+  pill.setBackground(surface(0xff626578,4));
   pill.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   deviceGrip.addView(pill,new FrameLayout.LayoutParams(dp(46),dp(5),Gravity.CENTER));
   panel.addView(deviceGrip,new LinearLayout.LayoutParams(-1,dp(29)));
@@ -273,10 +357,10 @@ public class MainActivity extends Activity {
     super.onMeasure(exact,exact);
    }
   };
-  GradientDrawable tile=surface(0xff232529,14);
+  GradientDrawable tile=surface(StudioStyle.CONTROL,18);
   tile.setStroke(dp(1),line);
   square.setBackground(new android.graphics.drawable.RippleDrawable(
-   android.content.res.ColorStateList.valueOf(0x26ff593b),tile,null));
+   android.content.res.ColorStateList.valueOf(0x26c5b5ff),tile,null));
   square.setContentDescription("Добавить устройство");
   square.setFocusable(true);
   square.setOnClickListener(view->openDevicePairing());
@@ -287,7 +371,7 @@ public class MainActivity extends Activity {
   top.topMargin=dp(19);
   square.addView(title,top);
   TextView plus=text("+",62);
-  plus.setTextColor(orange);
+  plus.setTextColor(accent);
   plus.setTypeface(Typeface.create("sans-serif-light",Typeface.NORMAL));
   plus.setGravity(Gravity.CENTER);
   plus.setPadding(0,0,0,0);
@@ -483,7 +567,11 @@ public class MainActivity extends Activity {
   boolean pairingAvailable=!active&&firmwareQuery==null&&devicePairing==null;
   addDevice.setEnabled(pairingAvailable);
   reconnectDevice.setEnabled(pairingAvailable);
-  firmwareButton.setEnabled(!active&&firmwareQuery==null);start.setEnabled(!active&&firmwareQuery==null);stop.setEnabled(active);transport.setEnabled(!active);start.setAlpha(active?.45f:1f);stop.setAlpha(active?1f:.45f);
+  firmwareButton.setEnabled(!active&&firmwareQuery==null);
+  start.setEnabled(!active&&firmwareQuery==null);start.setVisibility(active?View.GONE:View.VISIBLE);
+  stop.setEnabled(active);stop.setVisibility(active?View.VISIBLE:View.GONE);
+  transport.setEnabled(!active);
+  meter.setRecording(active&&selectedPage==0);
   AppUpdates.check(this,false);
   installUpdate.setVisibility(AppUpdates.ready(this)?View.VISIBLE:View.GONE);installUpdate.setEnabled(!active);
   timer.postDelayed(()->refresh(),1000);
