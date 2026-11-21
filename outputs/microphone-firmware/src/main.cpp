@@ -5,12 +5,19 @@
 #include <ESPmDNS.h>
 #include <math.h>
 #include <NimBLEDevice.h>
+#include <nimble/nimble/host/include/host/ble_store.h>
 
-static const char FIRMWARE_VERSION[] = "1.1.0";
+static const char FIRMWARE_VERSION[] = "1.2.0";
 static const char* BLE_SERVICE = "b8a10001-51e9-4a0b-8e27-047c45f78210";
 static const char* BLE_CONTROL = "b8a10002-51e9-4a0b-8e27-047c45f78210";
 static const char* BLE_AUDIO = "b8a10003-51e9-4a0b-8e27-047c45f78210";
 static const char* BLE_VERSION = "b8a10004-51e9-4a0b-8e27-047c45f78210";
+static const char* BLE_SECURE_CONTROL = "b8a10005-51e9-4a0b-8e27-047c45f78210";
+static constexpr uint8_t BOOT_PIN = 0;
+static constexpr uint32_t PAIRING_WINDOW_MS = 60000;
+static volatile uint32_t pairingUntil = 0;
+static uint8_t trustedBondKey[16];
+static bool hasTrustedBond = false;
 static NimBLECharacteristic* bleAudio;
 static volatile bool bleActive=false, otherStream=false;
 static volatile uint16_t bleMtu=23, bleStreamOwner=BLE_HS_CONN_HANDLE_NONE;
@@ -32,36 +39,131 @@ class RecorderBleCallbacks: public NimBLEServerCallbacks {
   }
   void onMTUChange(uint16_t mtu,NimBLEConnInfo& info) override { if(bleStreamOwner==info.getConnHandle())bleMtu=mtu; }
 };
+bool startBleStream(NimBLEConnInfo& info) {
+  if (!ok || otherStream || bleActive || info.getMTU() < 247) return false;
+  bleSequence = 0;
+  bleFrames = 0;
+  bleStreamOwner = info.getConnHandle();
+  bleMtu = info.getMTU();
+  bleActive = true;
+  return true;
+}
+
+bool stopBleStream(NimBLEConnInfo& info) {
+  if (bleStreamOwner != info.getConnHandle()) return false;
+  bleActive = false;
+  bleStreamOwner = BLE_HS_CONN_HANDLE_NONE;
+  return true;
+}
+
 class RecorderControlCallbacks: public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* c,NimBLEConnInfo& info) override {
     String request(c->getValue().c_str());
-    if(request==String("START ")+accessToken && ok && !otherStream && !bleActive && info.getMTU()>=247) {
-      bleSequence=0;bleFrames=0;bleStreamOwner=info.getConnHandle();bleMtu=info.getMTU();bleActive=true;c->setValue("READY 16000 PCM16");
-    } else if(request==String("PING ")+accessToken) { c->setValue(ok?"READY 16000 mic=1":"READY 16000 mic=0"); }
-    else if(request==String("STOP ")+accessToken && bleStreamOwner==info.getConnHandle()) {
-      bleActive=false;bleStreamOwner=BLE_HS_CONN_HANDLE_NONE;c->setValue("STOPPED");
-    }
+    if (request == String("START ") + accessToken && startBleStream(info)) c->setValue("READY 16000 PCM16");
+    else if (request == String("PING ") + accessToken) c->setValue(ok ? "READY 16000 mic=1" : "READY 16000 mic=0");
+    else if (request == String("STOP ") + accessToken && stopBleStream(info)) c->setValue("STOPPED");
     else c->setValue("DENIED");
   }
 };
+
+bool pairingOpen() {
+  uint32_t deadline = pairingUntil;
+  return deadline != 0 && (int32_t)(deadline - millis()) > 0;
+}
+
+bool allowBond(NimBLEConnInfo& info, bool enroll = false) {
+  if (!info.isEncrypted() || !info.isBonded()) return false;
+  ble_store_key_sec lookup = {};
+  lookup.peer_addr = *info.getIdAddress().getBase();
+  ble_store_value_sec bond = {};
+  if (ble_store_read_our_sec(&lookup, &bond) != 0 || !bond.ltk_present || !bond.sc) return false;
+
+  // Re-pairing can replace NimBLE's saved bond for a peer address. Trust the enrolled key.
+  if (hasTrustedBond && memcmp(trustedBondKey, bond.ltk, sizeof(trustedBondKey)) == 0) return true;
+  if (!enroll || !pairingOpen() || bleActive || otherStream) return false;
+  Preferences prefs;
+  if (!prefs.begin("recorder", false)
+      || prefs.putBytes("bleBond", bond.ltk, sizeof(trustedBondKey)) != sizeof(trustedBondKey)) return false;
+  memcpy(trustedBondKey, bond.ltk, sizeof(trustedBondKey));
+  hasTrustedBond = true;
+  pairingUntil = 0;
+  return true;
+}
+
+class SecureRecorderControlCallbacks : public NimBLECharacteristicCallbacks {
+  const char* reply = "DENIED";
+  uint16_t replyFor = BLE_HS_CONN_HANDLE_NONE;
+
+  void onWrite(NimBLECharacteristic* c, NimBLEConnInfo& info) override {
+    String request(c->getValue().c_str());
+    if (!allowBond(info, request == "STATUS")) return;
+
+    replyFor = info.getConnHandle();
+    if (request == "STATUS") reply = ok ? "READY 16000 mic=1" : "READY 16000 mic=0";
+    else if (request == "START" && startBleStream(info)) reply = "READY 16000 PCM16";
+    else if (request == "STOP" && stopBleStream(info)) reply = "STOPPED";
+    else reply = "DENIED";
+  }
+
+  void onRead(NimBLECharacteristic* c, NimBLEConnInfo& info) override {
+    if (!allowBond(info)) c->setValue("PAIRING_CLOSED");
+    else c->setValue(replyFor == info.getConnHandle() ? reply : "DENIED");
+  }
+};
+
+void updatePairingButton() {
+  static uint32_t pressedAt = 0;
+  static bool pressed = false;
+  static bool handled = false;
+  uint32_t now = millis();
+  if (pairingUntil != 0 && !pairingOpen()) pairingUntil = 0;
+  if (digitalRead(BOOT_PIN) == HIGH) {
+    pressed = false;
+    handled = false;
+    return;
+  }
+  if (!pressed) {
+    pressed = true;
+    pressedAt = now;
+  }
+  if (!handled && now - pressedAt >= 700) {
+    pairingUntil = now + PAIRING_WINDOW_MS;
+    handled = true;
+    Serial.println("BLE_PAIRING_OPEN");
+  }
+}
+
 void setupBle(){
   NimBLEDevice::init("ESP Lectures");NimBLEDevice::setMTU(517);
+  NimBLEDevice::setSecurityAuth(true, false, true);
+  NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
+  NimBLEDevice::setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
+  NimBLEDevice::setSecurityRespKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
   auto s=NimBLEDevice::createServer();s->setCallbacks(new RecorderBleCallbacks());
   auto service=s->createService(BLE_SERVICE);
   auto control=service->createCharacteristic(BLE_CONTROL,NIMBLE_PROPERTY::READ|NIMBLE_PROPERTY::WRITE);
   control->setCallbacks(new RecorderControlCallbacks());control->setValue("READY");
+  auto secure = service->createCharacteristic(BLE_SECURE_CONTROL,
+      NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
+  secure->setCallbacks(new SecureRecorderControlCallbacks());
+  secure->setValue("DENIED");
   bleAudio=service->createCharacteristic(BLE_AUDIO,NIMBLE_PROPERTY::NOTIFY);
   service->createCharacteristic(BLE_VERSION,NIMBLE_PROPERTY::READ)->setValue(FIRMWARE_VERSION);
   service->start();
   auto advertising=NimBLEDevice::getAdvertising();advertising->setName("ESP Lectures");advertising->addServiceUUID(BLE_SERVICE);advertising->enableScanResponse(true);advertising->start();
 }
 void sendBle(size_t count){
+  const uint16_t owner = bleStreamOwner;
+  if (owner == BLE_HS_CONN_HANDLE_NONE) return;
   const size_t maximum=min((size_t)bleMtu-11,(size_t)500)/2;
   uint8_t packet[508];
   for(size_t offset=0;offset<count&&bleActive;offset+=maximum){
     size_t frames=min(maximum,count-offset);memcpy(packet,&bleSequence,4);memcpy(packet+4,&bleFrames,4);memcpy(packet+8,pcm+offset,frames*2);
     bool sent=false;uint32_t deadline=millis()+30;
-    while(bleActive&&!sent&&(int32_t)(deadline-millis())>0){sent=bleAudio->notify(packet,8+frames*2);if(!sent)delay(1);}
+    while (bleActive && bleStreamOwner == owner && !sent && (int32_t)(deadline - millis()) > 0) {
+      sent = bleAudio->notify(packet, 8 + frames * 2, owner);
+      if (!sent) delay(1);
+    }
     ++bleSequence;bleFrames+=frames;
   }
 }
@@ -110,6 +212,7 @@ void streamAudio(Stream &output, WiFiClient *client = nullptr) {
 }
 
 void setup() {
+  pinMode(BOOT_PIN, INPUT_PULLUP);
   Serial.begin(921600);
   Serial.setTimeout(1000);
   delay(300);
@@ -138,6 +241,8 @@ void setup() {
   accessToken = prefs.getString("token", "");
   stationName = prefs.getString("staSSID", "");
   stationPassword = prefs.getString("staPass", "");
+  hasTrustedBond = prefs.getBytesLength("bleBond") == sizeof(trustedBondKey)
+      && prefs.getBytes("bleBond", trustedBondKey, sizeof(trustedBondKey)) == sizeof(trustedBondKey);
   if (apName.isEmpty() || apPassword.isEmpty() || accessToken.isEmpty()) {
     char suffix[9], password[17], token[33];
     snprintf(suffix, sizeof(suffix), "%08lx", (unsigned long)(ESP.getEfuseMac() & 0xffffffff));
@@ -169,6 +274,7 @@ void setup() {
 }
 
 void loop() {
+  updatePairingButton();
   int command = Serial.available() ? Serial.read() : -1;
   if(command=='b')Serial.printf("BLE_ADDRESS %s\n",NimBLEDevice::getAddress().toString().c_str());
   if (command == 'p') {

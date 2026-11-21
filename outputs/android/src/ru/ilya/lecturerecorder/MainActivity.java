@@ -1,5 +1,8 @@
 package ru.ilya.lecturerecorder;
 import android.app.*;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.bluetooth.*;
 import android.os.*;
 import android.content.*;
@@ -8,11 +11,14 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.media.AudioManager;
 import android.view.*;
+import android.view.animation.PathInterpolator;
 import android.widget.*;
 import java.util.*;
 
 public class MainActivity extends Activity {
- private TextView state,duration,deviceChevron,deviceBattery;
+ private TextView state,duration,deviceBattery;
+ private FrameLayout deviceReveal,deviceGrip;
+ private ValueAnimator deviceExpansion;
  private LinearLayout deviceDetails,pairedDevice;
  private RecorderModelView deviceModel;
  private View addDevice;
@@ -167,18 +173,24 @@ public class MainActivity extends Activity {
   if(firmwareQuery!=null)return;
   stopPresenceCheck();
   if(getSharedPreferences("settings",0).getString("transport","phone").equals("phone")){if(checkSelfPermission("android.permission.RECORD_AUDIO")!=0){requestPermissions(new String[]{"android.permission.RECORD_AUDIO"},8);return;}startForegroundService(CaptureService.command(this,"START_PHONE"));return;}
-  if(getSharedPreferences("settings",0).getString("token","").isEmpty()){
-   deviceExpanded=true;updateDevicePanel();openDevicePairing();return;
+  android.content.SharedPreferences settings=getSharedPreferences("settings",0);
+  boolean bonded=EspDeviceConnection.BONDED.equals(settings.getString(EspDeviceConnection.PAIRING_MODE,""));
+  if(!bonded&&settings.getString("token","").isEmpty()){
+   setDeviceExpanded(true);openDevicePairing();return;
   }
-  if(getSharedPreferences("settings",0).getString("transport","ble").equals("ble")){
+  if(settings.getString("transport","ble").equals("ble")){
    String[] permissions=Build.VERSION.SDK_INT>=31?new String[]{"android.permission.BLUETOOTH_SCAN","android.permission.BLUETOOTH_CONNECT"}:new String[]{"android.permission.ACCESS_FINE_LOCATION"};
    for(String p:permissions)if(checkSelfPermission(p)!=0){requestPermissions(permissions,3);return;}
    BluetoothAdapter a=getSystemService(BluetoothManager.class).getAdapter();if(a==null){Toast.makeText(this,"На телефоне нет Bluetooth",1).show();return;}if(!a.isEnabled()){startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE),4);return;}
+   String address=settings.getString("ble_address","");
+   if(bonded&&(!BluetoothAdapter.checkBluetoothAddress(address)||a.getRemoteDevice(address).getBondState()!=BluetoothDevice.BOND_BONDED)){
+    setDeviceExpanded(true);openDevicePairing();return;
+   }
   }
   startForegroundService(CaptureService.command(this,"START"));
  }
  @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grant){super.onRequestPermissionsResult(code,permissions,grant);if(code==EspPairing.BLUETOOTH_PERMISSION){if(devicePairing!=null)devicePairing.permissionResult(grant);return;}if(code==9){for(int result:grant)if(result!=0)return;if(grant.length>0)checkFirmware();return;}if(code==8){microphonePermissionDenied=grant.length>0&&grant[0]!=0;if(grant.length>0&&grant[0]==0)begin();else refreshConnection();return;}if(code==5&&grant.length>0){for(int g:grant)if(g!=0){startForegroundService(CaptureService.command(this,"SYNC"));return;}transfer();}if(code==3&&grant.length>0){for(int g:grant)if(g!=0)return;begin();}}
- @Override protected void onActivityResult(int code,int result,Intent data){super.onActivityResult(code,result,data);if(code==7&&result==RESULT_OK&&data!=null&&data.getData()!=null){android.net.Uri uri=data.getData();try{getContentResolver().takePersistableUriPermission(uri,data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}AudioImport.start(this,uri);return;}if(code==4&&result==RESULT_OK)begin();if(code==6&&result==RESULT_OK){final String id=pendingPhoto;pendingPhoto=null;new Thread(()->{try{BoardPhotos.markReady(this,id);BoardPhotos.finish(this,id);runOnUiThread(()->{Toast.makeText(this,"Фото сохранено · будет перенесено и разобрано на Mac",1).show();transfer();});}catch(Exception e){runOnUiThread(()->Toast.makeText(this,e.getMessage(),1).show());}},"Save board photo").start();}else if(code==6){BoardPhotos.cancel(this,pendingPhoto);pendingPhoto=null;}}
+ @Override protected void onActivityResult(int code,int result,Intent data){super.onActivityResult(code,result,data);if(code==EspPairing.ENABLE_BLUETOOTH){if(devicePairing!=null)devicePairing.bluetoothEnableResult(result);return;}if(code==7&&result==RESULT_OK&&data!=null&&data.getData()!=null){android.net.Uri uri=data.getData();try{getContentResolver().takePersistableUriPermission(uri,data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}AudioImport.start(this,uri);return;}if(code==4&&result==RESULT_OK)begin();if(code==6&&result==RESULT_OK){final String id=pendingPhoto;pendingPhoto=null;new Thread(()->{try{BoardPhotos.markReady(this,id);BoardPhotos.finish(this,id);runOnUiThread(()->{Toast.makeText(this,"Фото сохранено · будет перенесено и разобрано на Mac",1).show();transfer();});}catch(Exception e){runOnUiThread(()->Toast.makeText(this,e.getMessage(),1).show());}},"Save board photo").start();}else if(code==6){BoardPhotos.cancel(this,pendingPhoto);pendingPhoto=null;}}
  @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putString("pending_photo",pendingPhoto);out.putInt("page",selectedPage);out.putBundle("audio_page",audioPage.snapshot());out.putBoolean("device_expanded",deviceExpanded);out.putInt("device_charge",deviceCharge);out.putFloat("device_rotation",deviceModel.rotation());}
  private void takeBoardPhoto(){try{pendingPhoto=BoardPhotos.prepare(this);android.net.Uri uri=android.net.Uri.parse("content://"+getPackageName()+".photos/"+pendingPhoto+".jpg");Intent camera=new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);camera.putExtra(android.provider.MediaStore.EXTRA_OUTPUT,uri);camera.setClipData(ClipData.newRawUri("Фото доски",uri));camera.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivityForResult(camera,6);}catch(Exception e){Toast.makeText(this,"Не удалось открыть камеру: "+e.getMessage(),1).show();}}
  private void chooseAudio(){
@@ -191,17 +203,11 @@ public class MainActivity extends Activity {
   panel.setPadding(dp(14),0,dp(14),0);
   LinearLayout row=new LinearLayout(this);
   row.setGravity(Gravity.CENTER_VERTICAL);
-  row.setMinimumHeight(dp(54));
+  row.setMinimumHeight(dp(48));
   row.setFocusable(true);
   row.setBackground(new android.graphics.drawable.RippleDrawable(
    android.content.res.ColorStateList.valueOf(0x22ffffff),null,surface(Color.WHITE,12)));
-  row.setOnClickListener(view->{
-   android.transition.AutoTransition expansion=new android.transition.AutoTransition();
-   expansion.setDuration(180);
-   android.transition.TransitionManager.beginDelayedTransition(panel,expansion);
-   deviceExpanded=!deviceExpanded;
-   updateDevicePanel();
-  });
+  row.setOnClickListener(view->toggleDevicePanel());
   View indicator=new View(this);
   indicator.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   linkDot=new GradientDrawable();
@@ -213,14 +219,11 @@ public class MainActivity extends Activity {
   state=heading("",14);
   state.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
   row.addView(state,new LinearLayout.LayoutParams(0,-2,1));
-  deviceChevron=text("",18);
-  deviceChevron.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-  row.addView(deviceChevron);
   panel.addView(row,new LinearLayout.LayoutParams(-1,-2));
 
   deviceDetails=column();
   deviceDetails.setGravity(Gravity.CENTER_HORIZONTAL);
-  deviceDetails.setPadding(0,dp(12),0,dp(18));
+  deviceDetails.setPadding(0,dp(6),0,dp(8));
   pairedDevice=column();
   deviceModel=new RecorderModelView(this);
   deviceModel.setBackground(surface(0xff151619,14));
@@ -243,9 +246,21 @@ public class MainActivity extends Activity {
   reconnectSquare.gravity=Gravity.CENTER_HORIZONTAL;
   reconnectSquare.topMargin=dp(8);
   deviceDetails.addView(reconnectDevice,reconnectSquare);
-  panel.addView(deviceDetails,new LinearLayout.LayoutParams(-1,-2));
+  deviceReveal=new FrameLayout(this);
+  deviceReveal.setClipChildren(true);
+  deviceReveal.addView(deviceDetails,new FrameLayout.LayoutParams(-1,-2));
+  panel.addView(deviceReveal,new LinearLayout.LayoutParams(-1,-2));
+  deviceGrip=new FrameLayout(this);
+  deviceGrip.setFocusable(true);
+  deviceGrip.setOnClickListener(view->toggleDevicePanel());
+  View pill=new View(this);
+  pill.setBackground(surface(0xff5c606b,4));
+  pill.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+  deviceGrip.addView(pill,new FrameLayout.LayoutParams(dp(46),dp(5),Gravity.CENTER));
+  panel.addView(deviceGrip,new LinearLayout.LayoutParams(-1,dp(29)));
   showConnection(CaptureService.Link.OFF,"Микрофон выключен");
   updateDevicePanel();
+  deviceReveal.setVisibility(deviceExpanded?View.VISIBLE:View.GONE);
  }
  private View addDeviceTile(){
   FrameLayout square=new FrameLayout(this){
@@ -282,14 +297,65 @@ public class MainActivity extends Activity {
   return square;
  }
  private void updateDevicePanel(){
-  deviceDetails.setVisibility(deviceExpanded?View.VISIBLE:View.GONE);
-  deviceChevron.setText(deviceExpanded?"⌃":"⌄");
-  state.setContentDescription(state.getText()+". "+(deviceExpanded?"Свернуть":"Раскрыть")+" панель устройства");
+  deviceGrip.setContentDescription(panelAction());
+  state.setContentDescription(state.getText()+". "+panelAction());
   boolean paired=!getSharedPreferences("settings",0).getString("esp_paired_transport","").isEmpty();
   pairedDevice.setVisibility(paired?View.VISIBLE:View.GONE);
   addDevice.setVisibility(paired?View.GONE:View.VISIBLE);
   reconnectDevice.setVisibility(paired?View.VISIBLE:View.GONE);
   deviceBattery.setText(deviceCharge<0?"Заряд недоступен":"Заряд · "+deviceCharge+"%");
+ }
+ private String panelAction(){
+  return (deviceExpanded?"Свернуть":"Раскрыть")+" панель устройства";
+ }
+ private void toggleDevicePanel(){
+  setDeviceExpanded(!deviceExpanded);
+ }
+ private void setDeviceExpanded(boolean expanded){
+  if(deviceExpanded==expanded)return;
+  deviceExpanded=expanded;
+  updateDevicePanel();
+
+  if(deviceExpansion!=null){
+   ValueAnimator previous=deviceExpansion;
+   deviceExpansion=null;
+   previous.cancel();
+  }
+  int from=deviceReveal.getVisibility()==View.VISIBLE?deviceReveal.getHeight():0;
+  int width=deviceReveal.getWidth();
+  if(width<=0)width=((View)deviceReveal.getParent()).getWidth()-dp(28);
+  if(width<=0){
+   deviceReveal.setVisibility(expanded?View.VISIBLE:View.GONE);
+   return;
+  }
+  int target=0;
+  if(expanded){
+   deviceDetails.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),
+    View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
+   target=deviceDetails.getMeasuredHeight();
+  }
+  ViewGroup.LayoutParams layout=deviceReveal.getLayoutParams();
+  layout.height=from;
+  deviceReveal.setLayoutParams(layout);
+  deviceReveal.setVisibility(View.VISIBLE);
+  ValueAnimator animation=ValueAnimator.ofInt(from,target);
+  deviceExpansion=animation;
+  animation.setDuration(250);
+  animation.setInterpolator(new PathInterpolator(.22f,0f,.2f,1f));
+  animation.addUpdateListener(frame->{
+   layout.height=(Integer)frame.getAnimatedValue();
+   deviceReveal.requestLayout();
+  });
+  animation.addListener(new AnimatorListenerAdapter(){
+   @Override public void onAnimationEnd(Animator ended){
+    if(deviceExpansion!=animation)return;
+    deviceExpansion=null;
+    layout.height=ViewGroup.LayoutParams.WRAP_CONTENT;
+    deviceReveal.setLayoutParams(layout);
+    deviceReveal.setVisibility(deviceExpanded?View.VISIBLE:View.GONE);
+   }
+  });
+  animation.start();
  }
  private void openDevicePairing(){
   if(CaptureService.recording||firmwareQuery!=null||devicePairing!=null)return;
@@ -323,7 +389,7 @@ public class MainActivity extends Activity {
   }
   if(!message.contentEquals(state.getText())){
    state.setText(message);
-   state.setContentDescription(message+". "+(deviceExpanded?"Свернуть":"Раскрыть")+" панель устройства");
+   state.setContentDescription(message+". "+panelAction());
   }
  }
  private void refreshConnection(){
@@ -428,5 +494,5 @@ public class MainActivity extends Activity {
   if(selectedPage==AUDIO_PAGE&&audioPage.closeDropdown()||selectedPage==0&&transport.close())return;
   super.onBackPressed();
  }
- @Override public void onDestroy(){audioPage.dispose();if(devicePairing!=null)devicePairing.close();if(firmwareQuery!=null)firmwareQuery.interrupt();if(pairing!=null)pairing.cancel();super.onDestroy();}
+ @Override public void onDestroy(){audioPage.dispose();if(deviceExpansion!=null)deviceExpansion.cancel();if(devicePairing!=null)devicePairing.close();if(firmwareQuery!=null)firmwareQuery.interrupt();if(pairing!=null)pairing.cancel();super.onDestroy();}
 }
