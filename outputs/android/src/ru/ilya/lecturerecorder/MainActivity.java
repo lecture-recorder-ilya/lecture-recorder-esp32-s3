@@ -12,7 +12,17 @@ import android.widget.*;
 import java.util.*;
 
 public class MainActivity extends Activity {
- private TextView state,duration;
+ private TextView state,duration,deviceChevron,deviceBattery;
+ private LinearLayout deviceDetails,pairedDevice;
+ private RecorderModelView deviceModel;
+ private View addDevice;
+ private Button reconnectDevice;
+ private EspPairing devicePairing;
+ private boolean deviceExpanded;
+ private int deviceCharge=-1;
+ private final List<ChoiceDropdown.Option> sources=Arrays.asList(
+  new ChoiceDropdown.Option("phone","Микрофон телефона",""),
+  new ChoiceDropdown.Option("ble","ESP · Bluetooth",""));
  private GradientDrawable linkDot;
  private CaptureService.Link displayedLink;
  private CaptureService.Link idleLink=CaptureService.Link.OFF;
@@ -55,21 +65,19 @@ public class MainActivity extends Activity {
   if(index==0&&resumed)refreshConnection();
  }
  @Override public void onCreate(Bundle saved){
-  super.onCreate(saved);if(saved!=null){pendingPhoto=saved.getString("pending_photo");selectedPage=saved.getInt("page",0);if(selectedPage==3)selectedPage=AUDIO_PAGE;}try{CaptureService.provision(this);}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
+  super.onCreate(saved);if(saved!=null){pendingPhoto=saved.getString("pending_photo");selectedPage=saved.getInt("page",0);if(selectedPage==3)selectedPage=AUDIO_PAGE;deviceExpanded=saved.getBoolean("device_expanded");deviceCharge=saved.getInt("device_charge",-1);}try{CaptureService.provision(this);}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
   getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(bg);getWindow().getDecorView().setSystemUiVisibility(0);
   LinearLayout root=column();root.setBackgroundColor(bg);setContentView(root);
   root.setOnApplyWindowInsetsListener((view,insets)->{view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});root.requestApplyInsets();
   FrameLayout host=new FrameLayout(this);root.addView(host,new LinearLayout.LayoutParams(-1,0,1));
   LinearLayout record=page(host,0,"Новая запись");
-  LinearLayout hero=card(record);addConnectionRow(hero);hero.addView(note("ДЛИТЕЛЬНОСТЬ ЗАПИСИ"));duration=text("00:00:00",42);duration.setTypeface(Typeface.create("monospace",Typeface.NORMAL));duration.setPadding(0,dp(12),0,dp(18));hero.addView(duration);
+  addConnectionPanel(record);
+  if(saved!=null)deviceModel.setYaw(saved.getFloat("device_rotation",-.30f));
+  LinearLayout hero=card(record);hero.addView(note("ДЛИТЕЛЬНОСТЬ ЗАПИСИ"));duration=text("00:00:00",42);duration.setTypeface(Typeface.create("monospace",Typeface.NORMAL));duration.setPadding(0,dp(12),0,dp(18));hero.addView(duration);
   hero.addView(note("Источник звука"));
-  List<ChoiceDropdown.Option> sources=Arrays.asList(
-   new ChoiceDropdown.Option("phone","Микрофон телефона",""),
-   new ChoiceDropdown.Option("ble","ESP · Bluetooth",""),
-   new ChoiceDropdown.Option("wifi","ESP · Wi-Fi",""));
   SharedPreferences sourceSettings=getSharedPreferences("settings",0);
   String source=sourceSettings.getString("transport","phone");
-  ChoiceDropdown.Option selectedSource=sources.get(source.equals("ble")?1:source.equals("wifi")?2:0);
+  ChoiceDropdown.Option selectedSource=sources.get(source.equals("ble")||source.equals("wifi")?1:0);
   if(!source.equals(selectedSource.value))sourceSettings.edit().putString("transport",selectedSource.value).apply();
   transport=new ChoiceDropdown(this,"Источник звука","Нет доступных источников",()->sources,
    option->{
@@ -88,7 +96,6 @@ public class MainActivity extends Activity {
   LinearLayout settingsPage=page(host,2,"Настройки");
   LinearLayout connection=card(settingsPage);
   connection.addView(heading("Микрофон ESP",18));
-  connection.addView(button("Адрес ESP для Wi-Fi",this::espAddress));
   firmwareButton=button("Проверить версию прошивки",this::checkFirmware);
   connection.addView(firmwareButton);
   firmwareStatus=note("");
@@ -134,20 +141,15 @@ public class MainActivity extends Activity {
  private void pairPhone(){if(CaptureService.recording){Toast.makeText(this,"Заверши запись перед сменой Mac",1).show();return;}if(pairing!=null)pairing.cancel();pairing=new MacPairing(this,()->{startForegroundService(CaptureService.command(this,"SYNC"));SyncServer.status="Mac подключён · ожидаю перенос";Toast.makeText(this,"Mac подключён. Записи и тексты будут переноситься автоматически.",1).show();});pairing.open();}
  private void checkFirmware(){
   if(CaptureService.recording||firmwareQuery!=null)return;
-  SharedPreferences settings=getSharedPreferences("settings",0);
-  String source=settings.getString("transport","phone");
-  boolean bluetooth=source.equals("ble")||source.equals("phone")&&!settings.getString("ble_address","").isEmpty();
-  if(bluetooth){
-   String[] permissions=Build.VERSION.SDK_INT>=31?new String[]{"android.permission.BLUETOOTH_SCAN","android.permission.BLUETOOTH_CONNECT"}:new String[]{"android.permission.ACCESS_FINE_LOCATION"};
-   for(String permission:permissions)if(checkSelfPermission(permission)!=0){requestPermissions(permissions,9);return;}
-  }
+  String[] permissions=Build.VERSION.SDK_INT>=31?new String[]{"android.permission.BLUETOOTH_SCAN","android.permission.BLUETOOTH_CONNECT"}:new String[]{"android.permission.ACCESS_FINE_LOCATION"};
+  for(String permission:permissions)if(checkSelfPermission(permission)!=0){requestPermissions(permissions,9);return;}
   firmwareStatus.setText("Проверяю версию прошивки…");
   firmwareStatus.setVisibility(View.VISIBLE);
   firmwareButton.setEnabled(false);
   Context app=getApplicationContext();
   firmwareQuery=new Thread(()->{
    String result;
-   try{result=bluetooth?EspFirmwareVersion.bluetooth(app):EspFirmwareVersion.wifi(app);}
+   try{result=EspFirmwareVersion.bluetooth(app);}
    catch(InterruptedException error){Thread.currentThread().interrupt();return;}
    catch(java.io.IOException error){result=error.getMessage();}
    catch(Exception error){result="Не удалось проверить версию прошивки";}
@@ -165,8 +167,9 @@ public class MainActivity extends Activity {
   if(firmwareQuery!=null)return;
   stopPresenceCheck();
   if(getSharedPreferences("settings",0).getString("transport","phone").equals("phone")){if(checkSelfPermission("android.permission.RECORD_AUDIO")!=0){requestPermissions(new String[]{"android.permission.RECORD_AUDIO"},8);return;}startForegroundService(CaptureService.command(this,"START_PHONE"));return;}
-  if(getSharedPreferences("settings",0).getString("sync_token","").isEmpty()){pairPhone();return;}
-  if(getSharedPreferences("settings",0).getString("token","").isEmpty()){Toast.makeText(this,"Mac уже подключён. Для записи сначала подключи ESP к Mac и настрой микрофон",1).show();return;}
+  if(getSharedPreferences("settings",0).getString("token","").isEmpty()){
+   deviceExpanded=true;updateDevicePanel();openDevicePairing();return;
+  }
   if(getSharedPreferences("settings",0).getString("transport","ble").equals("ble")){
    String[] permissions=Build.VERSION.SDK_INT>=31?new String[]{"android.permission.BLUETOOTH_SCAN","android.permission.BLUETOOTH_CONNECT"}:new String[]{"android.permission.ACCESS_FINE_LOCATION"};
    for(String p:permissions)if(checkSelfPermission(p)!=0){requestPermissions(permissions,3);return;}
@@ -174,20 +177,31 @@ public class MainActivity extends Activity {
   }
   startForegroundService(CaptureService.command(this,"START"));
  }
- @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grant){super.onRequestPermissionsResult(code,permissions,grant);if(code==9){for(int result:grant)if(result!=0)return;if(grant.length>0)checkFirmware();return;}if(code==8){microphonePermissionDenied=grant.length>0&&grant[0]!=0;if(grant.length>0&&grant[0]==0)begin();else refreshConnection();return;}if(code==5&&grant.length>0){for(int g:grant)if(g!=0){startForegroundService(CaptureService.command(this,"SYNC"));return;}transfer();}if(code==3&&grant.length>0){for(int g:grant)if(g!=0)return;begin();}}
+ @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grant){super.onRequestPermissionsResult(code,permissions,grant);if(code==EspPairing.BLUETOOTH_PERMISSION){if(devicePairing!=null)devicePairing.permissionResult(grant);return;}if(code==9){for(int result:grant)if(result!=0)return;if(grant.length>0)checkFirmware();return;}if(code==8){microphonePermissionDenied=grant.length>0&&grant[0]!=0;if(grant.length>0&&grant[0]==0)begin();else refreshConnection();return;}if(code==5&&grant.length>0){for(int g:grant)if(g!=0){startForegroundService(CaptureService.command(this,"SYNC"));return;}transfer();}if(code==3&&grant.length>0){for(int g:grant)if(g!=0)return;begin();}}
  @Override protected void onActivityResult(int code,int result,Intent data){super.onActivityResult(code,result,data);if(code==7&&result==RESULT_OK&&data!=null&&data.getData()!=null){android.net.Uri uri=data.getData();try{getContentResolver().takePersistableUriPermission(uri,data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}AudioImport.start(this,uri);return;}if(code==4&&result==RESULT_OK)begin();if(code==6&&result==RESULT_OK){final String id=pendingPhoto;pendingPhoto=null;new Thread(()->{try{BoardPhotos.markReady(this,id);BoardPhotos.finish(this,id);runOnUiThread(()->{Toast.makeText(this,"Фото сохранено · будет перенесено и разобрано на Mac",1).show();transfer();});}catch(Exception e){runOnUiThread(()->Toast.makeText(this,e.getMessage(),1).show());}},"Save board photo").start();}else if(code==6){BoardPhotos.cancel(this,pendingPhoto);pendingPhoto=null;}}
- @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putString("pending_photo",pendingPhoto);out.putInt("page",selectedPage);out.putBundle("audio_page",audioPage.snapshot());}
+ @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putString("pending_photo",pendingPhoto);out.putInt("page",selectedPage);out.putBundle("audio_page",audioPage.snapshot());out.putBoolean("device_expanded",deviceExpanded);out.putInt("device_charge",deviceCharge);out.putFloat("device_rotation",deviceModel.rotation());}
  private void takeBoardPhoto(){try{pendingPhoto=BoardPhotos.prepare(this);android.net.Uri uri=android.net.Uri.parse("content://"+getPackageName()+".photos/"+pendingPhoto+".jpg");Intent camera=new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);camera.putExtra(android.provider.MediaStore.EXTRA_OUTPUT,uri);camera.setClipData(ClipData.newRawUri("Фото доски",uri));camera.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivityForResult(camera,6);}catch(Exception e){Toast.makeText(this,"Не удалось открыть камеру: "+e.getMessage(),1).show();}}
- private void espAddress(){EditText ip=new EditText(this);ip.setTextColor(fg);ip.setTextSize(16);ip.setSingleLine(true);ip.setPadding(dp(24),dp(16),dp(24),dp(16));ip.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_VARIATION_URI);ip.setText(getSharedPreferences("settings",0).getString("ip",""));ip.setHint("Адрес ESP");new AlertDialog.Builder(this).setTitle("Адрес ESP").setView(ip).setPositiveButton("Сохранить",(d,w)->getSharedPreferences("settings",0).edit().putString("ip",ip.getText().toString().trim()).apply()).setNegativeButton("Отмена",null).show();}
-
  private void chooseAudio(){
   Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("audio/*").addCategory(Intent.CATEGORY_OPENABLE)
    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
   startActivityForResult(pick,7);
  }
- private void addConnectionRow(LinearLayout hero){
+ private void addConnectionPanel(LinearLayout record){
+  LinearLayout panel=card(record);
+  panel.setPadding(dp(14),0,dp(14),0);
   LinearLayout row=new LinearLayout(this);
   row.setGravity(Gravity.CENTER_VERTICAL);
+  row.setMinimumHeight(dp(54));
+  row.setFocusable(true);
+  row.setBackground(new android.graphics.drawable.RippleDrawable(
+   android.content.res.ColorStateList.valueOf(0x22ffffff),null,surface(Color.WHITE,12)));
+  row.setOnClickListener(view->{
+   android.transition.AutoTransition expansion=new android.transition.AutoTransition();
+   expansion.setDuration(180);
+   android.transition.TransitionManager.beginDelayedTransition(panel,expansion);
+   deviceExpanded=!deviceExpanded;
+   updateDevicePanel();
+  });
   View indicator=new View(this);
   indicator.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   linkDot=new GradientDrawable();
@@ -199,8 +213,101 @@ public class MainActivity extends Activity {
   state=heading("",14);
   state.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
   row.addView(state,new LinearLayout.LayoutParams(0,-2,1));
-  hero.addView(row);
+  deviceChevron=text("",18);
+  deviceChevron.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+  row.addView(deviceChevron);
+  panel.addView(row,new LinearLayout.LayoutParams(-1,-2));
+
+  deviceDetails=column();
+  deviceDetails.setGravity(Gravity.CENTER_HORIZONTAL);
+  deviceDetails.setPadding(0,dp(12),0,dp(18));
+  pairedDevice=column();
+  deviceModel=new RecorderModelView(this);
+  deviceModel.setBackground(surface(0xff151619,14));
+  deviceModel.setClipToOutline(true);
+  pairedDevice.addView(deviceModel,new LinearLayout.LayoutParams(-1,dp(222)));
+  deviceBattery=note("");
+  deviceBattery.setGravity(Gravity.CENTER);
+  LinearLayout.LayoutParams batteryRow=new LinearLayout.LayoutParams(-1,-2);
+  batteryRow.topMargin=dp(6);
+  pairedDevice.addView(deviceBattery,batteryRow);
+  deviceDetails.addView(pairedDevice,new LinearLayout.LayoutParams(-1,-2));
+  addDevice=addDeviceTile();
+  deviceDetails.addView(addDevice,new LinearLayout.LayoutParams(-1,-2));
+  reconnectDevice=button("Подключить\nзаново",this::openDevicePairing);
+  reconnectDevice.setTextSize(13);
+  reconnectDevice.setPadding(dp(8),dp(8),dp(8),dp(8));
+  reconnectDevice.setSingleLine(false);
+  reconnectDevice.setMaxLines(2);
+  LinearLayout.LayoutParams reconnectSquare=new LinearLayout.LayoutParams(dp(94),dp(94));
+  reconnectSquare.gravity=Gravity.CENTER_HORIZONTAL;
+  reconnectSquare.topMargin=dp(8);
+  deviceDetails.addView(reconnectDevice,reconnectSquare);
+  panel.addView(deviceDetails,new LinearLayout.LayoutParams(-1,-2));
   showConnection(CaptureService.Link.OFF,"Микрофон выключен");
+  updateDevicePanel();
+ }
+ private View addDeviceTile(){
+  FrameLayout square=new FrameLayout(this){
+   @Override protected void onMeasure(int width,int height){
+    int side=View.MeasureSpec.getSize(width);
+    if(getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE){
+     side=Math.min(side,dp(230));
+    }
+    int exact=View.MeasureSpec.makeMeasureSpec(side,View.MeasureSpec.EXACTLY);
+    super.onMeasure(exact,exact);
+   }
+  };
+  GradientDrawable tile=surface(0xff232529,14);
+  tile.setStroke(dp(1),line);
+  square.setBackground(new android.graphics.drawable.RippleDrawable(
+   android.content.res.ColorStateList.valueOf(0x26ff593b),tile,null));
+  square.setContentDescription("Добавить устройство");
+  square.setFocusable(true);
+  square.setOnClickListener(view->openDevicePairing());
+  TextView title=heading("Добавить устройство",16);
+  title.setGravity(Gravity.CENTER);
+  title.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+  FrameLayout.LayoutParams top=new FrameLayout.LayoutParams(-1,-2,Gravity.TOP);
+  top.topMargin=dp(19);
+  square.addView(title,top);
+  TextView plus=text("+",62);
+  plus.setTextColor(orange);
+  plus.setTypeface(Typeface.create("sans-serif-light",Typeface.NORMAL));
+  plus.setGravity(Gravity.CENTER);
+  plus.setPadding(0,0,0,0);
+  plus.setIncludeFontPadding(false);
+  plus.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+  square.addView(plus,new FrameLayout.LayoutParams(dp(96),dp(96),Gravity.CENTER));
+  return square;
+ }
+ private void updateDevicePanel(){
+  deviceDetails.setVisibility(deviceExpanded?View.VISIBLE:View.GONE);
+  deviceChevron.setText(deviceExpanded?"⌃":"⌄");
+  state.setContentDescription(state.getText()+". "+(deviceExpanded?"Свернуть":"Раскрыть")+" панель устройства");
+  boolean paired=!getSharedPreferences("settings",0).getString("esp_paired_transport","").isEmpty();
+  pairedDevice.setVisibility(paired?View.VISIBLE:View.GONE);
+  addDevice.setVisibility(paired?View.GONE:View.VISIBLE);
+  reconnectDevice.setVisibility(paired?View.VISIBLE:View.GONE);
+  deviceBattery.setText(deviceCharge<0?"Заряд недоступен":"Заряд · "+deviceCharge+"%");
+ }
+ private void openDevicePairing(){
+  if(CaptureService.recording||firmwareQuery!=null||devicePairing!=null)return;
+  stopPresenceCheck();
+  devicePairing=new EspPairing(this,charge->{
+   deviceCharge=charge;
+   transport.setSelected(sources.get(1));
+   presenceSource="ble";
+   presenceError="";
+   idleLink=CaptureService.Link.CONNECTED;
+   nextPresenceCheck=SystemClock.elapsedRealtime()+8000;
+   paintConnection(idleLink,false,"");
+   updateDevicePanel();
+  },()->{
+   devicePairing=null;
+   if(resumed&&selectedPage==0)refreshConnection();
+  });
+  devicePairing.open();
  }
  private void showConnection(CaptureService.Link link,String message){
   if(displayedLink!=link){
@@ -214,7 +321,10 @@ public class MainActivity extends Activity {
    linkDot.setColor(color);
    displayedLink=link;
   }
-  if(!message.contentEquals(state.getText()))state.setText(message);
+  if(!message.contentEquals(state.getText())){
+   state.setText(message);
+   state.setContentDescription(message+". "+(deviceExpanded?"Свернуть":"Раскрыть")+" панель устройства");
+  }
  }
  private void refreshConnection(){
   String source=getSharedPreferences("settings",0).getString("transport","phone");
@@ -248,9 +358,9 @@ public class MainActivity extends Activity {
    }
    return;
   }
-  if(resumed&&firmwareQuery==null&&presenceCheck==null&&SystemClock.elapsedRealtime()>=nextPresenceCheck){
+  if(resumed&&firmwareQuery==null&&devicePairing==null&&presenceCheck==null&&SystemClock.elapsedRealtime()>=nextPresenceCheck){
    if(nextPresenceCheck==0)idleLink=CaptureService.Link.CONNECTING;
-   checkPresence(source.equals("ble"));
+   checkPresence();
   }
   paintConnection(idleLink,false,presenceError);
  }
@@ -264,8 +374,7 @@ public class MainActivity extends Activity {
   }
   showConnection(link,message);
  }
- private void checkPresence(boolean bluetooth){
-  if(bluetooth){
+ private void checkPresence(){
    boolean permission=Build.VERSION.SDK_INT>=31
     ?checkSelfPermission("android.permission.BLUETOOTH_SCAN")==0&&checkSelfPermission("android.permission.BLUETOOTH_CONNECT")==0
     :checkSelfPermission("android.permission.ACCESS_FINE_LOCATION")==0;
@@ -275,12 +384,11 @@ public class MainActivity extends Activity {
     nextPresenceCheck=SystemClock.elapsedRealtime()+8000;
     return;
    }
-  }
   Context app=getApplicationContext();
   presenceCheck=new Thread(()->{
    CaptureService.Link link;
    String detail="";
-   try{EspFirmwareVersion.checkPresence(app,bluetooth);link=CaptureService.Link.CONNECTED;}
+   try{EspFirmwareVersion.checkPresence(app);link=CaptureService.Link.CONNECTED;}
    catch(EspFirmwareVersion.NotFound error){link=CaptureService.Link.OFF;}
    catch(InterruptedException error){Thread.currentThread().interrupt();return;}
    catch(Exception error){link=CaptureService.Link.ERROR;detail=error instanceof java.io.IOException?error.getMessage():"";}
@@ -306,6 +414,9 @@ public class MainActivity extends Activity {
   boolean active=CaptureService.recording;
   if(selectedPage==0)refreshConnection();
   long seconds=active?CaptureService.samples/16000:0;duration.setText(String.format(Locale.US,"%02d:%02d:%02d",seconds/3600,seconds/60%60,seconds%60));
+  boolean pairingAvailable=!active&&firmwareQuery==null&&devicePairing==null;
+  addDevice.setEnabled(pairingAvailable);
+  reconnectDevice.setEnabled(pairingAvailable);
   firmwareButton.setEnabled(!active&&firmwareQuery==null);start.setEnabled(!active&&firmwareQuery==null);stop.setEnabled(active);transport.setEnabled(!active);start.setAlpha(active?.45f:1f);stop.setAlpha(active?1f:.45f);
   AppUpdates.check(this,false);
   installUpdate.setVisibility(AppUpdates.ready(this)?View.VISIBLE:View.GONE);installUpdate.setEnabled(!active);
@@ -317,5 +428,5 @@ public class MainActivity extends Activity {
   if(selectedPage==AUDIO_PAGE&&audioPage.closeDropdown()||selectedPage==0&&transport.close())return;
   super.onBackPressed();
  }
- @Override public void onDestroy(){audioPage.dispose();if(firmwareQuery!=null)firmwareQuery.interrupt();if(pairing!=null)pairing.cancel();super.onDestroy();}
+ @Override public void onDestroy(){audioPage.dispose();if(devicePairing!=null)devicePairing.close();if(firmwareQuery!=null)firmwareQuery.interrupt();if(pairing!=null)pairing.cancel();super.onDestroy();}
 }

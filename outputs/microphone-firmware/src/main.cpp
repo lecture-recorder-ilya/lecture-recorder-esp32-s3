@@ -6,14 +6,14 @@
 #include <math.h>
 #include <NimBLEDevice.h>
 
-static const char FIRMWARE_VERSION[] = "1.0.0";
+static const char FIRMWARE_VERSION[] = "1.1.0";
 static const char* BLE_SERVICE = "b8a10001-51e9-4a0b-8e27-047c45f78210";
 static const char* BLE_CONTROL = "b8a10002-51e9-4a0b-8e27-047c45f78210";
 static const char* BLE_AUDIO = "b8a10003-51e9-4a0b-8e27-047c45f78210";
 static const char* BLE_VERSION = "b8a10004-51e9-4a0b-8e27-047c45f78210";
 static NimBLECharacteristic* bleAudio;
 static volatile bool bleActive=false, otherStream=false;
-static volatile uint16_t bleMtu=23;
+static volatile uint16_t bleMtu=23, bleStreamOwner=BLE_HS_CONN_HANDLE_NONE;
 static uint32_t bleSequence=0, bleFrames=0;
 
 static int32_t samples[256];
@@ -25,16 +25,22 @@ static String stationName, stationPassword, hostName;
 static WiFiServer server(8766);
 
 class RecorderBleCallbacks: public NimBLEServerCallbacks {
-  void onConnect(NimBLEServer* s, NimBLEConnInfo& info) override { bleMtu=info.getMTU(); s->updateConnParams(info.getConnHandle(),12,12,0,200); }
-  void onDisconnect(NimBLEServer*,NimBLEConnInfo&,int) override { bleActive=false;NimBLEDevice::startAdvertising(); }
-  void onMTUChange(uint16_t mtu,NimBLEConnInfo&) override { bleMtu=mtu; }
+  void onConnect(NimBLEServer* s, NimBLEConnInfo& info) override { s->updateConnParams(info.getConnHandle(),12,12,0,200); }
+  void onDisconnect(NimBLEServer*,NimBLEConnInfo& info,int) override {
+    if(bleStreamOwner==info.getConnHandle()){bleActive=false;bleStreamOwner=BLE_HS_CONN_HANDLE_NONE;}
+    NimBLEDevice::startAdvertising();
+  }
+  void onMTUChange(uint16_t mtu,NimBLEConnInfo& info) override { if(bleStreamOwner==info.getConnHandle())bleMtu=mtu; }
 };
 class RecorderControlCallbacks: public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic* c,NimBLEConnInfo&) override {
+  void onWrite(NimBLECharacteristic* c,NimBLEConnInfo& info) override {
     String request(c->getValue().c_str());
-    if(request==String("START ")+accessToken && ok && !otherStream && bleMtu>=247) {
-      bleSequence=0;bleFrames=0;bleActive=true;c->setValue("READY 16000 PCM16");
-    } else if(request==String("STOP ")+accessToken) { bleActive=false;c->setValue("STOPPED"); }
+    if(request==String("START ")+accessToken && ok && !otherStream && !bleActive && info.getMTU()>=247) {
+      bleSequence=0;bleFrames=0;bleStreamOwner=info.getConnHandle();bleMtu=info.getMTU();bleActive=true;c->setValue("READY 16000 PCM16");
+    } else if(request==String("PING ")+accessToken) { c->setValue(ok?"READY 16000 mic=1":"READY 16000 mic=0"); }
+    else if(request==String("STOP ")+accessToken && bleStreamOwner==info.getConnHandle()) {
+      bleActive=false;bleStreamOwner=BLE_HS_CONN_HANDLE_NONE;c->setValue("STOPPED");
+    }
     else c->setValue("DENIED");
   }
 };
