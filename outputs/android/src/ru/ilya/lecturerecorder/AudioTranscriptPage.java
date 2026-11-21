@@ -1,6 +1,7 @@
 package ru.ilya.lecturerecorder;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -47,7 +48,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -60,6 +63,7 @@ final class AudioTranscriptPage extends LinearLayout {
     private static final int ACCENT = 0xffff593b;
 
     private final Activity activity;
+    private final boolean landscape;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService audioScan = Executors.newSingleThreadExecutor();
     private final Runnable playbackTick = this::refreshPlayback;
@@ -77,10 +81,12 @@ final class AudioTranscriptPage extends LinearLayout {
     private ChoiceDropdown recordingDropdown;
     private Button play;
     private Button transcribe;
+    private Button summary;
+    private final Button importButton;
+    private final TextView importStatus;
     private TextView times;
     private TextView waveStatus;
     private TextView transcriptStatus;
-    private TextView editHint;
     private Dialog wordEditor;
     private final LinearLayout audioPanel;
     private final LinearLayout transcriptPanel;
@@ -88,14 +94,14 @@ final class AudioTranscriptPage extends LinearLayout {
     private TranscriptAdapter transcript;
     private Waveform waveform;
 
-    AudioTranscriptPage(Activity activity, Bundle state) {
+    AudioTranscriptPage(Activity activity, Bundle state, Runnable importAudio) {
         super(activity);
         this.activity = activity;
         setOrientation(VERTICAL);
         setBackgroundColor(BACKGROUND);
         setPadding(dp(16), dp(14), dp(16), dp(10));
 
-        boolean landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
         LinearLayout playback = this;
         LinearLayout columns = null;
         if (landscape) {
@@ -113,7 +119,21 @@ final class AudioTranscriptPage extends LinearLayout {
                 this::recordingOptions, option -> {
                     if (!option.value.equals(selected)) select(option.value, 0, true);
                 });
-        playback.addView(recordingDropdown.button, spaced(-1, dp(52), landscape ? 0 : 10));
+        LinearLayout picker = new LinearLayout(activity);
+        picker.addView(recordingDropdown.button, new LinearLayout.LayoutParams(0, -1, 1));
+        importButton = button("Импорт", () -> {
+            closeDropdown();
+            importAudio.run();
+        });
+        importButton.setContentDescription("Импорт аудиозаписи");
+        LinearLayout.LayoutParams importAction = new LinearLayout.LayoutParams(-2, -1);
+        importAction.setMarginStart(dp(8));
+        picker.addView(importButton, importAction);
+        playback.addView(picker, spaced(-1, dp(52), landscape ? 0 : 10));
+        importStatus = text("", 13, MUTED);
+        importStatus.setVisibility(View.GONE);
+        importStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        playback.addView(importStatus, spaced(-1, -2, 4));
 
         FrameLayout body = new FrameLayout(activity);
         playback.addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
@@ -123,7 +143,7 @@ final class AudioTranscriptPage extends LinearLayout {
         audioPanel = card();
         audioPanel.setVisibility(View.GONE);
         details.addView(audioPanel, spaced(-1, -2, 12));
-        addAudioPanel(audioPanel, landscape);
+        addAudioPanel(audioPanel);
 
         transcriptPanel = card();
         transcriptPanel.setVisibility(View.GONE);
@@ -140,7 +160,7 @@ final class AudioTranscriptPage extends LinearLayout {
             panel.topMargin = dp(12);
             details.addView(transcriptPanel, panel);
         }
-        addTranscriptPanel(transcriptPanel, landscape);
+        addTranscriptPanel(transcriptPanel);
         addRecordingDropdown(body, transcriptDismiss);
 
         if (state != null) {
@@ -149,7 +169,7 @@ final class AudioTranscriptPage extends LinearLayout {
         }
     }
 
-    private void addAudioPanel(LinearLayout audio, boolean landscape) {
+    private void addAudioPanel(LinearLayout audio) {
         waveform = new Waveform(activity);
         audio.addView(waveform, new LinearLayout.LayoutParams(-1, dp(landscape ? 54 : 94)));
         waveStatus = text("", 13, MUTED);
@@ -162,15 +182,35 @@ final class AudioTranscriptPage extends LinearLayout {
         times = text("", 14, MUTED);
         times.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         controls.addView(times, new LinearLayout.LayoutParams(0, -1, 1));
+        if (!landscape) addSummaryButton(controls);
         audio.addView(controls, spaced(-1, dp(48), 4));
         if (landscape) {
             addTranscribeButton(audio, spaced(-1, dp(48), 8));
         }
     }
 
+    private void addSummaryButton(LinearLayout host) {
+        summary = button("Конспект", this::openSummary);
+        summary.setVisibility(View.GONE);
+        LinearLayout.LayoutParams action = new LinearLayout.LayoutParams(-2, dp(48));
+        action.setMarginStart(dp(8));
+        host.addView(summary, action);
+    }
+
+    private void openSummary() {
+        if (selected == null) return;
+        boolean local = LectureNotes.file(activity, selected, true).isFile();
+        if (!local && !LectureNotes.file(activity, selected, false).isFile()) return;
+        activity.startActivity(new Intent(activity, LectureReaderActivity.class)
+                .putExtra("file", selected + ".json").putExtra("local", local).putExtra("tab", "summary"));
+    }
+
     private void addTranscribeButton(LinearLayout host, LinearLayout.LayoutParams layout) {
         transcribe = button("Расшифровать", () -> {
-            if (selected != null) {
+            if (TextUtils.equals(transcribe.getText(), "Отменить")) {
+                activity.startService(PhoneAnalysisService.cancel(activity));
+            }
+            else if (selected != null && Store.audio(activity, selected).isFile()) {
                 PhoneAnalysisService.request(activity, selected, Store.recordingTitle(selected), true);
             }
         });
@@ -183,20 +223,12 @@ final class AudioTranscriptPage extends LinearLayout {
         host.addView(transcriptStatus, spaced(-1, -2, 4));
     }
 
-    private void addTranscriptPanel(LinearLayout box, boolean landscape) {
+    private void addTranscriptPanel(LinearLayout box) {
         LinearLayout header = new LinearLayout(activity);
         header.setGravity(Gravity.CENTER_VERTICAL);
         TextView heading = text("Расшифровка", 18, TEXT);
         heading.setTypeface(Typeface.DEFAULT_BOLD);
         header.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
-        editHint = text("Нажми на слово, чтобы исправить", 13, MUTED);
-        editHint.setVisibility(View.GONE);
-        if (landscape) {
-            editHint.setGravity(Gravity.END);
-            LinearLayout.LayoutParams hint = new LinearLayout.LayoutParams(0, -2, 1);
-            hint.setMarginStart(dp(8));
-            header.addView(editHint, hint);
-        }
         transcriptSpinner = new ProgressBar(activity);
         transcriptSpinner.setIndeterminateTintList(ColorStateList.valueOf(ACCENT));
         transcriptSpinner.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -208,9 +240,10 @@ final class AudioTranscriptPage extends LinearLayout {
             LinearLayout.LayoutParams action = new LinearLayout.LayoutParams(-2, dp(48));
             action.setMarginStart(dp(8));
             addTranscribeButton(header, action);
+        } else {
+            addSummaryButton(header);
         }
         addTranscriptStatus(box);
-        if (!landscape) box.addView(editHint, spaced(-1, -2, 4));
 
         ListView lines = new ListView(activity);
         transcript = new TranscriptAdapter(activity);
@@ -253,13 +286,22 @@ final class AudioTranscriptPage extends LinearLayout {
     }
 
     private List<ChoiceDropdown.Option> recordingOptions() {
-        List<ChoiceDropdown.Option> options = new ArrayList<>();
+        TreeMap<String, ChoiceDropdown.Option> options = new TreeMap<>(Collections.reverseOrder());
         for (File file : Store.audioFiles(activity)) {
             long seconds = Math.max(0, file.length() - 44) / (PcmWave.SAMPLE_RATE * 2);
-            options.add(new ChoiceDropdown.Option(file.getName(), Store.recordingTitle(file.getName()),
+            String name = file.getName();
+            options.put(name, new ChoiceDropdown.Option(name, Store.recordingTitle(name),
                     LectureReaderActivity.clock(seconds)));
         }
-        return options;
+        for (boolean local : new boolean[]{true, false}) {
+            for (File file : LectureNotes.files(activity, local)) {
+                String name = file.getName().substring(0, file.getName().length() - 5);
+                if (LectureNotes.valid(name)) {
+                    options.putIfAbsent(name, new ChoiceDropdown.Option(name, Store.recordingTitle(name), "Только текст"));
+                }
+            }
+        }
+        return new ArrayList<>(options.values());
     }
 
     boolean closeDropdown() {
@@ -276,10 +318,18 @@ final class AudioTranscriptPage extends LinearLayout {
         duration = 0;
         recordingDropdown.setSelected(new ChoiceDropdown.Option(name, Store.recordingTitle(name), ""));
         waveform.setEnvelope(null);
-        showWaveStatus("Строю звуковую дорожку…");
-        audioPanel.setVisibility(View.VISIBLE);
+        boolean hasAudio = Store.audio(activity, name).isFile();
         transcriptPanel.setVisibility(View.VISIBLE);
+        waveform.setVisibility(hasAudio ? View.VISIBLE : View.GONE);
+        play.setVisibility(hasAudio ? View.VISIBLE : View.GONE);
+        times.setVisibility(hasAudio ? View.VISIBLE : View.GONE);
         play.setEnabled(false);
+        if (!hasAudio) {
+            showWaveStatus("");
+            refreshTranscriptState();
+            return;
+        }
+        showWaveStatus("Строю звуковую дорожку…");
         preparePlayer(name);
         scan = audioScan.submit(() -> {
             try (RandomAccessFile audio = Store.openAudio(activity, name)) {
@@ -384,6 +434,10 @@ final class AudioTranscriptPage extends LinearLayout {
     }
 
     private void refreshTranscript() {
+        String importMessage = AudioImport.status;
+        if (!TextUtils.equals(importStatus.getText(), importMessage)) importStatus.setText(importMessage);
+        importStatus.setVisibility(importMessage.isEmpty() ? View.GONE : View.VISIBLE);
+        importButton.setEnabled(!AudioImport.busy);
         if (selected != null) refreshTranscriptState();
         if (visible) ui.postDelayed(transcriptTick, 700);
     }
@@ -405,26 +459,28 @@ final class AudioTranscriptPage extends LinearLayout {
             List<TranscriptEdits.Line> rows = readSegments(local, true, corrections);
             if (rows.isEmpty()) rows = readSegments(mac, false, corrections);
             transcript.replace(rows);
-            editHint.setVisibility(rows.isEmpty() ? View.GONE : View.VISIBLE);
             noteRevision = revision;
         }
 
+        summary.setVisibility(local.isFile() || mac.isFile() ? View.VISIBLE : View.GONE);
         boolean loading = PhoneAnalysisService.busyFor(selected);
         boolean supported = android.os.Process.is64Bit();
+        boolean busy = PhoneAnalysisService.busy();
+        boolean hasAudio = Store.audio(activity, selected).isFile();
+        audioPanel.setVisibility(hasAudio || !landscape || busy ? View.VISIBLE : View.GONE);
         transcriptSpinner.setVisibility(loading ? View.VISIBLE : View.GONE);
         String message = PhoneAnalysisService.statusFor(selected);
-        if (message.isEmpty() && transcript.isEmpty()) {
-            if (PhoneAnalysisService.busy()) message = "Сейчас обрабатывается другая запись.";
-            else if (!supported) message = "Расшифровка появится после обработки на Mac.";
+        if (busy && !loading) message = "Обрабатывается другая запись";
+        else if (message.isEmpty() && transcript.isEmpty()) {
+            if (!supported) message = "Расшифровка появится после обработки на Mac.";
             else message = "У этой записи пока нет расшифровки.";
         }
         if (!TextUtils.equals(transcriptStatus.getText(), message)) transcriptStatus.setText(message);
         transcriptStatus.setVisibility(message.isEmpty() ? View.GONE : View.VISIBLE);
-        transcribe.setVisibility(supported ? View.VISIBLE : View.GONE);
-        boolean idle = !PhoneAnalysisService.busy();
-        transcribe.setEnabled(idle);
-        transcribe.setAlpha(idle ? 1f : 0.45f);
-        String action = transcript.isEmpty() ? "Расшифровать" : "Расшифровать заново";
+        transcribe.setVisibility(supported && (hasAudio || busy) ? View.VISIBLE : View.GONE);
+        String label = busy ? "Отменить" : "Расшифровать";
+        if (!TextUtils.equals(transcribe.getText(), label)) transcribe.setText(label);
+        String action = !busy && !transcript.isEmpty() ? "Расшифровать заново" : label;
         if (!TextUtils.equals(transcribe.getContentDescription(), action)) transcribe.setContentDescription(action);
     }
 

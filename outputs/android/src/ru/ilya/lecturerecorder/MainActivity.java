@@ -6,41 +6,33 @@ import android.content.*;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.media.MediaPlayer;
 import android.view.*;
 import android.widget.*;
-import java.io.*;
 import java.util.*;
-import org.json.*;
 
 public class MainActivity extends Activity {
- private LinearLayout list;
- private TextView state,syncState,duration,libraryCount,playingLabel;
- private Button start,stop,stopListening;
+ private TextView state,duration;
+ private Button start,stop;
  private ChoiceDropdown transport;
  private final Handler timer=new Handler();
- private MediaPlayer player;
- private String previous=null;
  private int selectedPage=0;
- private static final int AUDIO_PAGE=3;
- private final View[] pages=new View[4];
- private final Button[] tabs=new Button[4];
+ private static final int AUDIO_PAGE=1;
+ private final View[] pages=new View[3];
+ private final Button[] tabs=new Button[3];
  private AudioTranscriptPage audioPage;
  private boolean resumed;
  private final int orange=Color.rgb(255,89,59),fg=Color.rgb(245,243,241),muted=Color.rgb(167,169,178),bg=Color.rgb(16,17,19),panel=Color.rgb(25,27,31),line=Color.rgb(43,45,51);
  private int dp(int n){return Math.round(getResources().getDisplayMetrics().density*n);}
  private GradientDrawable surface(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));return d;}
  private TextView text(String value,int size){TextView t=new TextView(this);t.setText(value);t.setTextSize(size);t.setTextColor(fg);t.setPadding(0,dp(5),0,dp(5));t.setLineSpacing(dp(3),1);return t;}
- private String feedback(String value,String fallback){if(value==null||value.isEmpty())return fallback;return value.matches("(?is).*(HTTP|SSL|Exception|Errno|Connection refused|timed out|Offline|certificate).*" )?fallback:value;}
  private TextView note(String value){TextView t=text(value,13);t.setTextColor(muted);return t;}
  private TextView heading(String value,int size){TextView t=text(value,size);t.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));return t;}
  private LinearLayout column(){LinearLayout v=new LinearLayout(this);v.setOrientation(LinearLayout.VERTICAL);return v;}
  private LinearLayout card(LinearLayout parent){LinearLayout c=column();c.setPadding(dp(18),dp(18),dp(18),dp(18));GradientDrawable d=surface(panel,18);d.setStroke(dp(1),line);c.setBackground(d);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,0,0,dp(16));parent.addView(c,lp);return c;}
  private Button button(String label,Runnable action){return button(label,action,false);}
  private Button button(String label,Runnable action,boolean primary){Button b=new Button(this);b.setText(label);b.setTextSize(15);b.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));b.setAllCaps(false);b.setTextColor(primary?Color.rgb(33,19,14):fg);b.setMinHeight(dp(50));b.setMinimumHeight(dp(50));b.setPadding(dp(12),dp(12),dp(12),dp(12));GradientDrawable d=surface(primary?orange:Color.rgb(36,38,44),12);if(!primary)d.setStroke(dp(1),line);b.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(primary?0x3321130e:0x22ffffff),d,null));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,dp(8),0,dp(4));b.setLayoutParams(lp);b.setOnClickListener(v->action.run());return b;}
- private LinearLayout page(FrameLayout host,int index,String title,String subtitle){ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setClipToPadding(false);scroll.setVerticalScrollBarEnabled(false);LinearLayout content=column();content.setPadding(dp(20),dp(22),dp(20),dp(24));LinearLayout titleRow=new LinearLayout(this);titleRow.setGravity(android.view.Gravity.CENTER_VERTICAL);View mark=new View(this);mark.setBackground(surface(orange,2));LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(dp(4),dp(24));mp.setMargins(0,0,dp(12),0);titleRow.addView(mark,mp);TextView h=heading(title,28);titleRow.addView(h);content.addView(titleRow);TextView hint=note(subtitle);LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(-1,-2);hp.setMargins(0,0,0,dp(24));content.addView(hint,hp);scroll.addView(content);pages[index]=scroll;host.addView(scroll,new FrameLayout.LayoutParams(-1,-1));return content;}
+ private LinearLayout page(FrameLayout host,int index,String title){ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setClipToPadding(false);scroll.setVerticalScrollBarEnabled(false);LinearLayout content=column();content.setPadding(dp(20),dp(22),dp(20),dp(24));LinearLayout titleRow=new LinearLayout(this);titleRow.setGravity(android.view.Gravity.CENTER_VERTICAL);View mark=new View(this);mark.setBackground(surface(orange,2));LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(dp(4),dp(24));mp.setMargins(0,0,dp(12),0);titleRow.addView(mark,mp);TextView h=heading(title,28);titleRow.addView(h);LinearLayout.LayoutParams titleLayout=new LinearLayout.LayoutParams(-1,-2);titleLayout.bottomMargin=dp(16);content.addView(titleRow,titleLayout);scroll.addView(content);pages[index]=scroll;host.addView(scroll,new FrameLayout.LayoutParams(-1,-1));return content;}
  private void showPage(int index){
-  if(index==AUDIO_PAGE&&selectedPage!=AUDIO_PAGE)stopPlayback();
   if(index!=0)transport.close();
   selectedPage=index;
   for(int i=0;i<pages.length;i++){
@@ -53,12 +45,12 @@ public class MainActivity extends Activity {
   audioPage.setActive(resumed&&index==AUDIO_PAGE);
  }
  @Override public void onCreate(Bundle saved){
-  super.onCreate(saved);if(saved!=null){pendingPhoto=saved.getString("pending_photo");selectedPage=saved.getInt("page",0);}try{CaptureService.provision(this);}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
+  super.onCreate(saved);if(saved!=null){pendingPhoto=saved.getString("pending_photo");selectedPage=saved.getInt("page",0);if(selectedPage==3)selectedPage=AUDIO_PAGE;}try{CaptureService.provision(this);}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
   getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(bg);getWindow().getDecorView().setSystemUiVisibility(0);
   LinearLayout root=column();root.setBackgroundColor(bg);setContentView(root);
   root.setOnApplyWindowInsetsListener((view,insets)->{view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});root.requestApplyInsets();
   FrameLayout host=new FrameLayout(this);root.addView(host,new LinearLayout.LayoutParams(-1,0,1));
-  LinearLayout record=page(host,0,"Новая запись","Сохрани лекцию. Вернись к главному.");
+  LinearLayout record=page(host,0,"Новая запись");
   LinearLayout hero=card(record);state=heading("Готово к записи",14);state.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);hero.addView(state);hero.addView(note("ДЛИТЕЛЬНОСТЬ ЗАПИСИ"));duration=text("00:00:00",42);duration.setTypeface(Typeface.create("monospace",Typeface.NORMAL));duration.setPadding(0,dp(12),0,dp(18));hero.addView(duration);
   hero.addView(note("Источник звука"));
   List<ChoiceDropdown.Option> sources=Arrays.asList(
@@ -76,29 +68,25 @@ public class MainActivity extends Activity {
   LinearLayout.LayoutParams sourceList=new LinearLayout.LayoutParams(-1,-2);
   sourceList.topMargin=dp(6);
   hero.addView(transport.list,sourceList);
-  start=button("Начать запись",()->begin(),true);hero.addView(start);stop=button("Завершить и сохранить",()->startForegroundService(CaptureService.command(this,"STOP")));hero.addView(stop);hero.addView(note("Записывай микрофоном телефона или подключи ESP. Экран можно заблокировать."));
-  LinearLayout photo=card(record);photo.addView(heading("Фото доски",18));photo.addView(note("Формула, график или слайд — сохрани снимок вместе с лекцией. Mac найдёт место в тексте после переноса."));photo.addView(button("Сфотографировать доску",()->takeBoardPhoto()));
-  record.addView(note("Запись сохраняется на телефоне. "+(android.os.Process.is64Bit()?"Готовую запись можно разобрать в разделе «Файлы».":"Разбор доступен после переноса на Mac.")));
-  LinearLayout library=page(host,1,"На телефоне","Записи, фото и тексты твоих лекций.");
-  LinearLayout importCard=card(library);importCard.addView(heading("Загрузить запись пары",18));importCard.addView(note("Выбери аудио с телефона или диктофона."));importButton=button("Выбрать аудиозапись",()->{Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("audio/*").addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);startActivityForResult(pick,7);},true);importCard.addView(importButton);importStatus=note(AudioImport.status);importCard.addView(importStatus);
-  CheckBox keep=new CheckBox(this);keep.setText("Хранить аудиокопии для прослушивания по тексту");keep.setTextColor(fg);keep.setChecked(getSharedPreferences("settings",0).getBoolean("keep_audio_copy",true));keep.setOnCheckedChangeListener((v,checked)->getSharedPreferences("settings",0).edit().putBoolean("keep_audio_copy",checked).apply());importCard.addView(keep);
-
-  if (android.os.Process.is64Bit()) {
-   analysisState=note("");analysisState.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-   analysisState.setVisibility(View.GONE);library.addView(analysisState);
-   cancelAnalysis=button("Отменить разбор",()->startService(PhoneAnalysisService.cancel(this)));
-   cancelAnalysis.setVisibility(View.GONE);library.addView(cancelAnalysis);
-  }
-  libraryCount=heading("Сохранённые записи",18);library.addView(libraryCount);list=column();library.addView(list);
-  LinearLayout notesCard=card(library);notesCard.addView(heading("Тексты лекций",18));notesCard.addView(note("Здесь сохраняются разборы с телефона и Mac."));notesList=column();notesCard.addView(notesList);
-  LinearLayout playback=card(library);playback.addView(heading("Прослушивание",18));playingLabel=note("Выбери запись, чтобы послушать её.");playback.addView(playingLabel);stopListening=button("Отключить прослушивание",()->stopPlayback());stopListening.setEnabled(false);stopListening.setAlpha(.45f);playback.addView(stopListening);
-  LinearLayout sync=card(library);sync.addView(heading("Перенос на Mac",18));syncState=note(SyncServer.status);syncState.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);sync.addView(syncState);sync.addView(button("Перенести сейчас",()->transfer(),true));sync.addView(note("Перенос включается автоматически, когда Mac доступен по общей Wi-Fi сети, Bluetooth или USB. Очередь переноса очищается после проверки копии на Mac. Аудио для прослушивания по тексту сохраняется, если включено хранение копий."));
-  LinearLayout settingsPage=page(host,2,"Настройки","Подключение и работа приложения.");
-  LinearLayout macCard=card(settingsPage);macCard.addView(heading("Телефон и Mac",18));pairedMac=note("Mac ещё не подключён");macCard.addView(pairedMac);pairMac=button("Подключить Mac",()->pairPhone());macCard.addView(pairMac);macCard.addView(button("Отключить Mac",()->disconnectMac()));macCard.addView(note("Для первого подключения открой на Mac «Настройки → Телефон и Mac». Устройства должны быть в одной Wi-Fi сети."));
-  LinearLayout updates=card(settingsPage);updates.addView(heading("Обновления",18));updateState=note(AppUpdates.status);updates.addView(updateState);updates.addView(button("Проверить новую версию",()->AppUpdates.check(this,true)));installUpdate=button("Установить обновление",()->AppUpdates.install(this),true);installUpdate.setVisibility(View.GONE);updates.addView(installUpdate);
-  LinearLayout connection=card(settingsPage);connection.addView(heading("Микрофон ESP",18));connection.addView(note("Способ соединения выбирается на экране записи. Для Wi-Fi телефон и ESP должны быть в одной сети: можно включить точку доступа телефона."));connection.addView(button("Адрес ESP для Wi-Fi",()->espAddress()));
-  LinearLayout storage=card(settingsPage);storage.addView(heading("Где лежат записи",18));storage.addView(note("Готовые записи доступны в разделе «Файлы». При переносе на Mac аудиокопия на телефоне сохраняется по настройке библиотеки."));storage.addView(note("Во время переноса текущая запись продолжается. Чтобы отключить ESP, сначала заверши запись и дождись сохранения."));
-  audioPage=new AudioTranscriptPage(this,saved==null?null:saved.getBundle("audio_page"));
+  start=button("Начать запись",()->begin(),true);hero.addView(start);stop=button("Завершить и сохранить",()->startForegroundService(CaptureService.command(this,"STOP")));hero.addView(stop);
+  LinearLayout photo=card(record);photo.addView(heading("Фото доски",18));photo.addView(button("Сфотографировать доску",()->takeBoardPhoto()));
+  LinearLayout settingsPage=page(host,2,"Настройки");
+  LinearLayout connection=card(settingsPage);
+  connection.addView(heading("Микрофон ESP",18));
+  connection.addView(button("Адрес ESP для Wi-Fi",this::espAddress));
+  firmwareButton=button("Проверить версию прошивки",this::checkFirmware);
+  connection.addView(firmwareButton);
+  firmwareStatus=note("");
+  firmwareStatus.setVisibility(View.GONE);
+  firmwareStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+  connection.addView(firmwareStatus);
+  LinearLayout updates=card(settingsPage);
+  try { updates.addView(heading("Версия приложения · "+getPackageManager().getPackageInfo(getPackageName(),0).versionName,18)); }
+  catch (android.content.pm.PackageManager.NameNotFoundException ignored) {}
+  installUpdate=button("Установить обновление",()->AppUpdates.install(this),true);
+  installUpdate.setVisibility(View.GONE);
+  updates.addView(installUpdate);
+  audioPage=new AudioTranscriptPage(this,saved==null?null:saved.getBundle("audio_page"),this::chooseAudio);
   pages[AUDIO_PAGE]=audioPage;
   host.addView(audioPage,new FrameLayout.LayoutParams(-1,-1));
 
@@ -107,9 +95,10 @@ public class MainActivity extends Activity {
   GradientDrawable nd=surface(Color.rgb(21,22,26),0);
   nd.setStroke(dp(1),line);
   nav.setBackground(nd);
-  String[] labels={"Запись","Файлы","Настройки","Аудио"};
-  for(int index:new int[]{0,1,AUDIO_PAGE,2}){
-   Button tab=button(labels[index],()->showPage(index));
+  String[] labels={"Запись","Аудио","Настройки"};
+  for(int index=0;index<labels.length;index++){
+   int pageIndex=index;
+   Button tab=button(labels[index],()->showPage(pageIndex));
    tab.setTextSize(12);
    tab.setMaxLines(1);
    tab.setPadding(dp(2),dp(12),dp(2),dp(12));
@@ -122,17 +111,44 @@ public class MainActivity extends Activity {
   showPage(Math.max(0,Math.min(pages.length-1,selectedPage)));
   if(Build.VERSION.SDK_INT>=33&&checkSelfPermission("android.permission.POST_NOTIFICATIONS")!=0)requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},2);
  }
- private TextView analysisState;private Button cancelAnalysis;
- private LinearLayout notesList;private String notesSignature=null;private TextView updateState;private Button installUpdate;
- private Button importButton;private TextView importStatus;
+ private TextView firmwareStatus;private Button firmwareButton,installUpdate;
+ private Thread firmwareQuery;
  private String pendingPhoto;
- private TextView pairedMac;private Button pairMac;private MacPairing pairing;
- private boolean transferring=false;
- private void transfer(){if(getSharedPreferences("settings",0).getString("sync_token","").isEmpty()){pairPhone();return;}transferring=true;if(Build.VERSION.SDK_INT>=31){String[] perms={"android.permission.BLUETOOTH_CONNECT","android.permission.BLUETOOTH_ADVERTISE"};for(String p:perms)if(checkSelfPermission(p)!=0){requestPermissions(perms,5);return;}}startForegroundService(CaptureService.command(this,"SYNC"));SyncServer.status="Ищу Mac · Wi-Fi / Bluetooth / USB";Toast.makeText(this,"Mac должен быть включён. Перенос начнётся автоматически.",1).show();}
+ private MacPairing pairing;
+ private void transfer(){if(getSharedPreferences("settings",0).getString("sync_token","").isEmpty()){pairPhone();return;}if(Build.VERSION.SDK_INT>=31){String[] perms={"android.permission.BLUETOOTH_CONNECT","android.permission.BLUETOOTH_ADVERTISE"};for(String p:perms)if(checkSelfPermission(p)!=0){requestPermissions(perms,5);return;}}startForegroundService(CaptureService.command(this,"SYNC"));SyncServer.status="Ищу Mac · Wi-Fi / Bluetooth / USB";Toast.makeText(this,"Mac должен быть включён. Перенос начнётся автоматически.",1).show();}
  private void pairPhone(){if(CaptureService.recording){Toast.makeText(this,"Заверши запись перед сменой Mac",1).show();return;}if(pairing!=null)pairing.cancel();pairing=new MacPairing(this,()->{startForegroundService(CaptureService.command(this,"SYNC"));SyncServer.status="Mac подключён · ожидаю перенос";Toast.makeText(this,"Mac подключён. Записи и тексты будут переноситься автоматически.",1).show();});pairing.open();}
- private void disconnectMac(){if(CaptureService.recording){Toast.makeText(this,"Заверши запись перед отключением Mac",1).show();return;}new AlertDialog.Builder(this).setTitle("Отключить Mac?").setMessage("Записи и тексты останутся на телефоне. Для переноса потребуется новое сопряжение.").setPositiveButton("Отключить",(d,w)->{if(pairing!=null)pairing.cancel();stopService(new Intent(this,CaptureService.class));getSharedPreferences("settings",0).edit().remove("sync_token").remove("paired_mac").remove("paired_mac_address").commit();SyncServer.status="Подключи Mac для переноса записей";}).setNegativeButton("Отмена",null).show();}
+ private void checkFirmware(){
+  if(CaptureService.recording||firmwareQuery!=null)return;
+  SharedPreferences settings=getSharedPreferences("settings",0);
+  String source=settings.getString("transport","phone");
+  boolean bluetooth=source.equals("ble")||source.equals("phone")&&!settings.getString("ble_address","").isEmpty();
+  if(bluetooth){
+   String[] permissions=Build.VERSION.SDK_INT>=31?new String[]{"android.permission.BLUETOOTH_SCAN","android.permission.BLUETOOTH_CONNECT"}:new String[]{"android.permission.ACCESS_FINE_LOCATION"};
+   for(String permission:permissions)if(checkSelfPermission(permission)!=0){requestPermissions(permissions,9);return;}
+  }
+  firmwareStatus.setText("Проверяю версию прошивки…");
+  firmwareStatus.setVisibility(View.VISIBLE);
+  firmwareButton.setEnabled(false);
+  Context app=getApplicationContext();
+  firmwareQuery=new Thread(()->{
+   String result;
+   try{result=bluetooth?EspFirmwareVersion.bluetooth(app):EspFirmwareVersion.wifi(app);}
+   catch(InterruptedException error){Thread.currentThread().interrupt();return;}
+   catch(java.io.IOException error){result=error.getMessage();}
+   catch(Exception error){result="Не удалось проверить версию прошивки";}
+   String message=result;
+   runOnUiThread(()->{
+    firmwareQuery=null;
+    if(isDestroyed())return;
+    firmwareStatus.setText(message);
+    firmwareButton.setEnabled(!CaptureService.recording);
+   });
+  },"ESP firmware version");
+  firmwareQuery.start();
+ }
  private void begin(){
-  if(getSharedPreferences("settings",0).getString("transport","phone").equals("phone")){if(checkSelfPermission("android.permission.RECORD_AUDIO")!=0){requestPermissions(new String[]{"android.permission.RECORD_AUDIO"},8);return;}stopPlayback();startForegroundService(CaptureService.command(this,"START_PHONE"));return;}
+  if(firmwareQuery!=null)return;
+  if(getSharedPreferences("settings",0).getString("transport","phone").equals("phone")){if(checkSelfPermission("android.permission.RECORD_AUDIO")!=0){requestPermissions(new String[]{"android.permission.RECORD_AUDIO"},8);return;}startForegroundService(CaptureService.command(this,"START_PHONE"));return;}
   if(getSharedPreferences("settings",0).getString("sync_token","").isEmpty()){pairPhone();return;}
   if(getSharedPreferences("settings",0).getString("token","").isEmpty()){Toast.makeText(this,"Mac уже подключён. Для записи сначала подключи ESP к Mac и настрой микрофон",1).show();return;}
   if(getSharedPreferences("settings",0).getString("transport","ble").equals("ble")){
@@ -142,87 +158,31 @@ public class MainActivity extends Activity {
   }
   startForegroundService(CaptureService.command(this,"START"));
  }
- @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grant){super.onRequestPermissionsResult(code,permissions,grant);if(code==8){if(grant.length>0&&grant[0]==0)begin();else Toast.makeText(this,"Для записи разреши доступ к микрофону",1).show();return;}if(code==5&&grant.length>0){for(int g:grant)if(g!=0){startForegroundService(CaptureService.command(this,"SYNC"));return;}transfer();}if(code==3&&grant.length>0){for(int g:grant)if(g!=0)return;begin();}}
+ @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grant){super.onRequestPermissionsResult(code,permissions,grant);if(code==9){for(int result:grant)if(result!=0)return;if(grant.length>0)checkFirmware();return;}if(code==8){if(grant.length>0&&grant[0]==0)begin();else Toast.makeText(this,"Для записи разреши доступ к микрофону",1).show();return;}if(code==5&&grant.length>0){for(int g:grant)if(g!=0){startForegroundService(CaptureService.command(this,"SYNC"));return;}transfer();}if(code==3&&grant.length>0){for(int g:grant)if(g!=0)return;begin();}}
  @Override protected void onActivityResult(int code,int result,Intent data){super.onActivityResult(code,result,data);if(code==7&&result==RESULT_OK&&data!=null&&data.getData()!=null){android.net.Uri uri=data.getData();try{getContentResolver().takePersistableUriPermission(uri,data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}AudioImport.start(this,uri);return;}if(code==4&&result==RESULT_OK)begin();if(code==6&&result==RESULT_OK){final String id=pendingPhoto;pendingPhoto=null;new Thread(()->{try{BoardPhotos.markReady(this,id);BoardPhotos.finish(this,id);runOnUiThread(()->{Toast.makeText(this,"Фото сохранено · будет перенесено и разобрано на Mac",1).show();transfer();});}catch(Exception e){runOnUiThread(()->Toast.makeText(this,e.getMessage(),1).show());}},"Save board photo").start();}else if(code==6){BoardPhotos.cancel(this,pendingPhoto);pendingPhoto=null;}}
  @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putString("pending_photo",pendingPhoto);out.putInt("page",selectedPage);out.putBundle("audio_page",audioPage.snapshot());}
  private void takeBoardPhoto(){try{pendingPhoto=BoardPhotos.prepare(this);android.net.Uri uri=android.net.Uri.parse("content://"+getPackageName()+".photos/"+pendingPhoto+".jpg");Intent camera=new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);camera.putExtra(android.provider.MediaStore.EXTRA_OUTPUT,uri);camera.setClipData(ClipData.newRawUri("Фото доски",uri));camera.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivityForResult(camera,6);}catch(Exception e){Toast.makeText(this,"Не удалось открыть камеру: "+e.getMessage(),1).show();}}
- private void espAddress(){EditText ip=new EditText(this);ip.setTextColor(fg);ip.setTextSize(16);ip.setSingleLine(true);ip.setPadding(dp(24),dp(16),dp(24),dp(16));ip.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_VARIATION_URI);ip.setText(getSharedPreferences("settings",0).getString("ip",""));ip.setHint("Адрес ESP");new AlertDialog.Builder(this).setTitle("Адрес ESP").setView(ip).setMessage("ESP может подключаться к точке доступа телефона. Адрес также определяется автоматически по локальной сети.").setPositiveButton("Сохранить",(d,w)->getSharedPreferences("settings",0).edit().putString("ip",ip.getText().toString().trim()).apply()).setNegativeButton("Отмена",null).show();}
+ private void espAddress(){EditText ip=new EditText(this);ip.setTextColor(fg);ip.setTextSize(16);ip.setSingleLine(true);ip.setPadding(dp(24),dp(16),dp(24),dp(16));ip.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_VARIATION_URI);ip.setText(getSharedPreferences("settings",0).getString("ip",""));ip.setHint("Адрес ESP");new AlertDialog.Builder(this).setTitle("Адрес ESP").setView(ip).setPositiveButton("Сохранить",(d,w)->getSharedPreferences("settings",0).edit().putString("ip",ip.getText().toString().trim()).apply()).setNegativeButton("Отмена",null).show();}
 
+ private void chooseAudio(){
+  Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("audio/*").addCategory(Intent.CATEGORY_OPENABLE)
+   .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+  startActivityForResult(pick,7);
+ }
  private void refresh(){
-  if (analysisState != null) {
-   String analysis = PhoneAnalysisService.status;
-   if (!android.text.TextUtils.equals(analysisState.getText(),analysis)) analysisState.setText(analysis);
-   analysisState.setVisibility(analysis.isEmpty()?View.GONE:View.VISIBLE);
-   cancelAnalysis.setVisibility(PhoneAnalysisService.busy()?View.VISIBLE:View.GONE);
-  }
-  if(importStatus!=null){importStatus.setText(AudioImport.status);importButton.setEnabled(!AudioImport.busy);}
   boolean active=CaptureService.recording;String message=CaptureService.status;
-  String mac=getSharedPreferences("settings",0).getString("paired_mac","");boolean hasMac=!getSharedPreferences("settings",0).getString("sync_token","").isEmpty();pairedMac.setText(hasMac?(mac.isEmpty()?"Mac настроен":"Подключён к «"+mac+"»"):"Mac ещё не подключён");pairMac.setText(hasMac?"Подключить другой Mac":"Подключить Mac");pairMac.setEnabled(!active);pairMac.setAlpha(active?.45f:1f);
   state.setText(message.startsWith("Записываю ·")?"● Идёт запись":message);state.setTextColor(active?orange:fg);
   long seconds=active?CaptureService.samples/16000:0;duration.setText(String.format(Locale.US,"%02d:%02d:%02d",seconds/3600,seconds/60%60,seconds%60));
-  syncState.setText(feedback(SyncServer.status,"Не удаётся связаться с Mac. Проверь общую сеть или USB."));start.setEnabled(!active);stop.setEnabled(active);transport.setEnabled(!active);start.setAlpha(active?.45f:1f);stop.setAlpha(active?1f:.45f);
-  File queue=Store.root(this);
-  Collection<File> files=Store.audioFiles(this);
-  File[] images=Store.root(this).listFiles(f->f.getName().startsWith("board-")&&f.getName().endsWith(".jpg"));StringBuilder signature=new StringBuilder();if(images!=null)for(File f:images)signature.append(f.getName()).append(f.length());for(File f:files)signature.append(f.getPath()).append(f.length());
-  if(!signature.toString().equals(previous)){previous=signature.toString();list.removeAllViews();libraryCount.setText("Сохранённые записи"+(!files.isEmpty()?" · "+files.size():""));
-   if(images!=null&&images.length>0){LinearLayout photos=card(list);photos.addView(heading("Фото доски · "+images.length,16));photos.addView(note("Сохранены на телефоне и ожидают переноса."));}
-   if(files.isEmpty()){LinearLayout empty=card(list);empty.addView(heading("Пока нет записей",16));empty.addView(note("На телефоне нет готовых записей. Новая появится здесь после завершения; перенесённые ищи в библиотеке на Mac."));}
-   for(File file:files){LinearLayout row=card(list);row.addView(heading(Store.recordingTitle(file.getName()),17));long sec=Math.max(0,file.length()-44)/32000;row.addView(note(String.format(new Locale("ru"),"%d:%02d · %.1f МБ%s",sec/60,sec%60,file.length()/1000000.0,queue.equals(file.getParentFile())?" · ожидает переноса":"")));row.addView(button("Послушать запись",()->play(Store.audio(this,file.getName()))));if(android.os.Process.is64Bit())row.addView(button("Разобрать на телефоне",()->analyze(file.getName(),Store.recordingTitle(file.getName()))));}
-  }
-  refreshNotes();AppUpdates.check(this,false);updateState.setText(feedback(AppUpdates.status,"Не удалось проверить обновления. Попробуй позже."));installUpdate.setVisibility(AppUpdates.ready(this)?View.VISIBLE:View.GONE);installUpdate.setEnabled(!active);
+  firmwareButton.setEnabled(!active&&firmwareQuery==null);start.setEnabled(!active&&firmwareQuery==null);stop.setEnabled(active);transport.setEnabled(!active);start.setAlpha(active?.45f:1f);stop.setAlpha(active?1f:.45f);
+  AppUpdates.check(this,false);
+  installUpdate.setVisibility(AppUpdates.ready(this)?View.VISIBLE:View.GONE);installUpdate.setEnabled(!active);
   timer.postDelayed(()->refresh(),1000);
  }
- private void analyze(String name,String title){
-  if (PhoneAnalysisService.busy()) {Toast.makeText(this,"Сейчас идёт разбор",Toast.LENGTH_SHORT).show();return;}
-  File note=LectureNotes.file(this,name,true);
-  if (note.isFile()) {
-   try {
-    JSONObject report=new JSONObject(Store.read(note)).getJSONObject("report");
-    if (!report.optBoolean("local_summary_pending")) {openNote(note,true);return;}
-   } catch (Exception error) {
-    Toast.makeText(this,"Сохранённый текст недоступен",Toast.LENGTH_SHORT).show();return;
-   }
-  }
-  PhoneAnalysisService.request(this,name,title);
- }
- private void refreshNotes(){
-  try {
-   File[] local=LectureNotes.files(this,true), mac=LectureNotes.files(this,false);
-   StringBuilder stamp=new StringBuilder();
-   for (File[] notes:new File[][]{local,mac}) {
-    stamp.append('|');
-    for (File file:notes) stamp.append(file.getName()).append(file.lastModified()).append(file.length());
-   }
-   if (stamp.toString().equals(notesSignature)) return;
-   notesSignature=stamp.toString();
-   notesList.removeAllViews();
-   if (local.length+mac.length==0) notesList.addView(text("Разбери запись, чтобы здесь появился текст",15));
-   addNotes(local,true);
-   addNotes(mac,false);
-  } catch(Exception error) {
-   CaptureService.status="Текст: "+error.getMessage();
-  }
- }
- private void addNotes(File[] files,boolean local)throws Exception{
-  for (File file:files) {
-   JSONObject value=new JSONObject(Store.read(file));
-   String title=LectureNotes.title(value);
-   notesList.addView(button((local?"На телефоне · ":"Mac · ")+title,()->openNote(file,local)));
-   if (local&&value.getJSONObject("report").optBoolean("local_summary_pending")) {
-    notesList.addView(button("Завершить конспект",()->analyze(value.optString("file"),title)));
-   }
-  }
- }
- private void openNote(File file,boolean local){
-  startActivity(new Intent(this,LectureReaderActivity.class).putExtra("file",file.getName()).putExtra("local",local));
- }
- private void stopPlayback(){if(playingLabel!=null)playingLabel.setText("Выбери запись ниже, чтобы послушать её.");if(player!=null){try{player.stop();}catch(Exception ignored){}player.release();player=null;}if(stopListening!=null){stopListening.setEnabled(false);stopListening.setAlpha(.45f);}}
- private void play(File f){try{stopPlayback();player=new MediaPlayer();player.setDataSource(f.getPath());player.setOnCompletionListener(p->stopPlayback());player.prepare();player.start();playingLabel.setText("Сейчас играет · "+Store.recordingTitle(f.getName()));stopListening.setEnabled(true);stopListening.setAlpha(1f);}catch(Exception e){stopPlayback();Toast.makeText(this,"Не удалось воспроизвести",1).show();}}
  @Override public void onResume(){super.onResume();resumed=true;audioPage.setActive(selectedPage==AUDIO_PAGE);timer.removeCallbacksAndMessages(null);if(!getSharedPreferences("settings",0).getString("sync_token","").isEmpty())startForegroundService(CaptureService.command(this,"SYNC"));refresh();}
  @Override public void onPause(){resumed=false;transport.close();audioPage.setActive(false);timer.removeCallbacksAndMessages(null);super.onPause();}
  @Override public void onBackPressed(){
   if(selectedPage==AUDIO_PAGE&&audioPage.closeDropdown()||selectedPage==0&&transport.close())return;
   super.onBackPressed();
  }
- @Override public void onDestroy(){audioPage.dispose();if(pairing!=null)pairing.cancel();stopPlayback();super.onDestroy();}
+ @Override public void onDestroy(){audioPage.dispose();if(firmwareQuery!=null)firmwareQuery.interrupt();if(pairing!=null)pairing.cancel();super.onDestroy();}
 }

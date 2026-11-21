@@ -6,9 +6,11 @@
 #include <math.h>
 #include <NimBLEDevice.h>
 
+static const char FIRMWARE_VERSION[] = "1.0.0";
 static const char* BLE_SERVICE = "b8a10001-51e9-4a0b-8e27-047c45f78210";
 static const char* BLE_CONTROL = "b8a10002-51e9-4a0b-8e27-047c45f78210";
 static const char* BLE_AUDIO = "b8a10003-51e9-4a0b-8e27-047c45f78210";
+static const char* BLE_VERSION = "b8a10004-51e9-4a0b-8e27-047c45f78210";
 static NimBLECharacteristic* bleAudio;
 static volatile bool bleActive=false, otherStream=false;
 static volatile uint16_t bleMtu=23;
@@ -42,7 +44,9 @@ void setupBle(){
   auto service=s->createService(BLE_SERVICE);
   auto control=service->createCharacteristic(BLE_CONTROL,NIMBLE_PROPERTY::READ|NIMBLE_PROPERTY::WRITE);
   control->setCallbacks(new RecorderControlCallbacks());control->setValue("READY");
-  bleAudio=service->createCharacteristic(BLE_AUDIO,NIMBLE_PROPERTY::NOTIFY);service->start();
+  bleAudio=service->createCharacteristic(BLE_AUDIO,NIMBLE_PROPERTY::NOTIFY);
+  service->createCharacteristic(BLE_VERSION,NIMBLE_PROPERTY::READ)->setValue(FIRMWARE_VERSION);
+  service->start();
   auto advertising=NimBLEDevice::getAdvertising();advertising->setName("ESP Lectures");advertising->addServiceUUID(BLE_SERVICE);advertising->enableScanResponse(true);advertising->start();
 }
 void sendBle(size_t count){
@@ -200,7 +204,9 @@ void loop() {
     client.setNoDelay(true);
     String request = client.readStringUntil('\n');
     request.trim();
-    if (request == String("PING ") + accessToken) {
+    if (request == "VERSION") {
+      client.printf("VERSION %s\n", FIRMWARE_VERSION);
+    } else if (request == String("PING ") + accessToken) {
       client.printf("READY rate=16000 uptime=%lu clients=%d mic=%d\n", (unsigned long)(millis()/1000), WiFi.softAPgetStationNum(), ok);
     } else if (ok && !bleActive && request == String("START ") + accessToken) {
       streamAudio(client, &client);

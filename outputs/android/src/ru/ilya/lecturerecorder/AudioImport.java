@@ -16,7 +16,7 @@ import org.json.JSONObject;
 
 final class AudioImport {
  static volatile boolean busy=false;
- static volatile String status="Можно загрузить запись с телефона или диктофона";
+ static volatile String status="";
  static String name(Context c,Uri uri){String result="Запись пары";try(android.database.Cursor cursor=c.getContentResolver().query(uri,new String[]{OpenableColumns.DISPLAY_NAME},null,null,null)){if(cursor!=null&&cursor.moveToFirst())result=cursor.getString(0);}catch(Exception ignored){}return result;}
  static synchronized void start(Context context,Uri uri){
   if(busy)return;busy=true;status="Подготавливаю аудио…";Context app=context.getApplicationContext();
@@ -27,7 +27,7 @@ final class AudioImport {
    File part=new File(Store.root(app),base+".part");if(!importing.renameTo(part))throw new IOException("Не удалось сохранить подготовленную запись");
    JSONObject meta=new JSONObject().put("imported",true).put("original_name",title).put("title",title.replaceFirst("\\.[^.]+$","")).put("started_ms",now);
    Store.write(new File(part.getPath()+".json"),meta);Store.seal(part);
-   status="Запись сохранена · подключи Mac для расшифровки и конспекта";
+   status="Запись импортирована";
    if(!app.getSharedPreferences("settings",0).getString("sync_token","").isEmpty())app.startForegroundService(CaptureService.command(app,"SYNC"));
   }catch(Exception e){status="Не удалось открыть запись: "+(e.getMessage()==null?"попробуй WAV, MP3 или M4A":e.getMessage());if(importing!=null)importing.delete();}finally{busy=false;}},"Импорт записи пары").start();
  }
