@@ -64,6 +64,6 @@ final class AppUpdates {
   if(CaptureService.recording)throw new IOException("Сначала останови и сохрани запись");
   File file=apk(activity);if(!Store.hash(file).equals(activity.getSharedPreferences("updates",0).getString("sha256","")))throw new IOException("APK изменился; проверь обновление повторно");verify(activity,file);
   if(!activity.getPackageManager().canRequestPackageInstalls()){activity.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+activity.getPackageName())));status="Разреши установку для приложения, затем нажми «Установить»";return;}
-  Intent intent=new Intent(Intent.ACTION_VIEW);intent.setDataAndType(Uri.parse("content://ru.ilya.lecturerecorder.updates/update.apk"),"application/vnd.android.package-archive");intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);activity.startActivity(intent);
+  Intent intent=new Intent(Intent.ACTION_VIEW);intent.setDataAndType(Uri.parse("content://"+activity.getPackageName()+".updates/update.apk"),"application/vnd.android.package-archive");intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);activity.startActivity(intent);
  }catch(Exception e){status=e.getMessage();}}
 }

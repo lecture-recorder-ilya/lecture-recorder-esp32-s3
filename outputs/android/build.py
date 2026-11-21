@@ -1,33 +1,179 @@
-"""Build without third-party Android runtime dependencies; local SDK + JDK 17."""
-import os,subprocess,zipfile,shutil,json
+"""Build the Android APK with the local SDK and JDK 21 or newer."""
+
+import argparse
+import hashlib
+import json
+import os
 from pathlib import Path
-ROOT=Path(__file__).resolve().parent; PROJECT=ROOT.parent.parent
-VERSION=json.loads((PROJECT/'release.json').read_text())
-TOOLS=PROJECT/'work/android-tools';BUILD=PROJECT/'work/android-build';BUILD.mkdir(parents=True,exist_ok=True);TOOLS.mkdir(parents=True,exist_ok=True)
-JDK=Path(os.environ['JAVA_HOME']) if os.environ.get('JAVA_HOME') else next((TOOLS/'jdk').glob('*/Contents/Home'))
-sdk_root=Path(os.environ['ANDROID_SDK_ROOT']) if os.environ.get('ANDROID_SDK_ROOT') else None
-SDK=sdk_root/'platforms/android-36/android.jar' if sdk_root else TOOLS/'platform/android-36/android.jar'
-BT=Path(os.environ['ANDROID_BUILD_TOOLS']) if os.environ.get('ANDROID_BUILD_TOOLS') else sorted((sdk_root/'build-tools').iterdir())[-1] if sdk_root else TOOLS/'build-tools/android-16'
-env=dict(os.environ,JAVA_HOME=str(JDK),PATH=str(JDK/'bin')+os.pathsep+os.environ['PATH'])
-def run(args):subprocess.run([str(x) for x in args],env=env,check=True)
-for f in ['aapt2','zipalign','apksigner','d8']:(BT/f).chmod(0o755)
-res=ROOT/'res/drawable';res.mkdir(parents=True,exist_ok=True)
-shutil.copyfile(PROJECT/'outputs/recorder-icon.png',res/'icon.png')
-run([BT/'aapt2','compile','--dir',ROOT/'res','-o',BUILD/'res.zip'])
-generated=BUILD/'generated';generated.mkdir(exist_ok=True)
-run([BT/'aapt2','link','-o',BUILD/'base.apk','-I',SDK,'--manifest',ROOT/'AndroidManifest.xml','--java',generated,'--version-code',str(VERSION['code']),'--version-name',VERSION['version'],BUILD/'res.zip'])
-classes=BUILD/'classes';classes.mkdir(exist_ok=True)
-run([JDK/'bin/javac','-encoding','UTF-8','-source','8','-target','8','-classpath',SDK,'-d',classes,*ROOT.glob('src/**/*.java'),*generated.glob('**/*.java')])
-with zipfile.ZipFile(BUILD/'classes.jar','w') as z:
- for f in classes.glob('**/*.class'):z.write(f,f.relative_to(classes))
-run([BT/'d8','--release','--min-api','26','--lib',SDK,'--output',BUILD,BUILD/'classes.jar'])
-with zipfile.ZipFile(BUILD/'base.apk','a') as z:z.write(BUILD/'classes.dex','classes.dex')
-run([BT/'zipalign','-f','4',BUILD/'base.apk',BUILD/'aligned.apk'])
-key=Path(os.environ.get('LECTURE_KEYSTORE',str(TOOLS/'lectures.keystore')))
-env.setdefault('LECTURE_KEY_PASSWORD','android')
-if not key.exists() and 'LECTURE_KEYSTORE' in os.environ:raise SystemExit('Указанный ключ подписи не найден')
-if not key.exists():run([JDK/'bin/keytool','-genkeypair','-keystore',key,'-storepass:env','LECTURE_KEY_PASSWORD','-keypass:env','LECTURE_KEY_PASSWORD','-alias','lectures','-dname','CN=Ilya Lecture Recorder','-keyalg','RSA','-validity','10000'])
-key.chmod(0o600)
-run([BT/'apksigner','sign','--ks',key,'--ks-pass','env:LECTURE_KEY_PASSWORD','--out',ROOT/'Запись лекций.apk',BUILD/'aligned.apk'])
-run([BT/'apksigner','verify',ROOT/'Запись лекций.apk'])
-print('APK ready')
+import shutil
+import subprocess
+import tempfile
+import urllib.request
+from xml.etree import ElementTree
+import zipfile
+
+
+ROOT = Path(__file__).resolve().parent
+PROJECT = ROOT.parent.parent
+TOOLS = PROJECT / "work/android-tools"
+CACHE = PROJECT / "work/android-deps"
+PACKAGE = "ru.ilya.lecturerecorder"
+ANDROID = "{http://schemas.android.com/apk/res/android}"
+ABIS = {"arm64-v8a", "armeabi-v7a", "x86", "x86_64"}
+
+
+def download(dependency):
+    target = CACHE / dependency["file"]
+    temp = target.with_suffix(target.suffix + ".part")
+    for candidate in (target, temp):
+        if candidate == temp:
+            with urllib.request.urlopen(dependency["url"], timeout=90) as response:
+                with temp.open("wb") as output:
+                    shutil.copyfileobj(response, output)
+        if candidate.is_file() and hashlib.sha256(candidate.read_bytes()).hexdigest() == dependency["sha256"]:
+            if candidate == temp:
+                temp.replace(target)
+            return target
+    raise SystemExit(f"Контрольная сумма отличается: {target.name}")
+
+
+def prepare_dependencies(build):
+    CACHE.mkdir(parents=True, exist_ok=True)
+    native = {}
+    jars = []
+    dexer = None
+    for dependency in json.loads((ROOT / "dependencies.json").read_text()):
+        archive = download(dependency)
+        if dependency.get("scope") == "build":
+            dexer = archive
+            continue
+        if archive.suffix != ".aar":
+            jars.append(archive)
+            continue
+        abis = ABIS.intersection(dependency.get("abis", ABIS))
+        with zipfile.ZipFile(archive) as package:
+            jar = build / f"{archive.stem}.jar"
+            jar.write_bytes(package.read("classes.jar"))
+            jars.append(jar)
+            for name in package.namelist():
+                parts = name.split("/")
+                if len(parts) == 3 and parts[0] == "jni" and parts[1] in abis and name.endswith(".so"):
+                    entry = "lib/" + "/".join(parts[1:])
+                    if entry in native:
+                        raise SystemExit(f"Дублирующаяся библиотека: {entry}")
+                    native[entry] = package.read(name)
+    return dexer, jars, native
+
+
+def manifest_for_preview(build):
+    ElementTree.register_namespace("android", ANDROID[1:-1])
+    tree = ElementTree.parse(ROOT / "AndroidManifest.xml")
+    manifest = tree.getroot()
+    manifest.set("package", PACKAGE + ".preview")
+    app = manifest.find("application")
+    app.set(ANDROID + "label", "Запись лекций · ИИ")
+    for component in app:
+        name = component.get(ANDROID + "name", "")
+        if name.startswith("."):
+            component.set(ANDROID + "name", PACKAGE + name)
+        authority = component.get(ANDROID + "authorities")
+        if authority:
+            component.set(ANDROID + "authorities", authority.replace(PACKAGE + ".", PACKAGE + ".preview.", 1))
+    target = build / "AndroidManifest.xml"
+    tree.write(target, encoding="utf-8", xml_declaration=True)
+    return target
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--preview", action="store_true", help="Собрать отдельное приложение для проверки")
+    args = parser.parse_args()
+    version = json.loads((PROJECT / "release.json").read_text())
+    TOOLS.mkdir(parents=True, exist_ok=True)
+    jdk = Path(os.environ["JAVA_HOME"]) if os.environ.get("JAVA_HOME") else next((TOOLS / "jdk").glob("*/Contents/Home"))
+    sdk_root = Path(os.environ["ANDROID_SDK_ROOT"]) if os.environ.get("ANDROID_SDK_ROOT") else None
+    default_platform = (sdk_root / "platforms" if sdk_root else TOOLS / "platform") / "android-36/android.jar"
+    platform = Path(os.environ.get("ANDROID_PLATFORM_JAR", default_platform))
+    build_tools = os.environ.get("ANDROID_BUILD_TOOLS")
+    if build_tools:
+        tools = Path(build_tools)
+    elif sdk_root:
+        tools = sorted((sdk_root / "build-tools").iterdir())[-1]
+    else:
+        tools = TOOLS / "build-tools/android-16"
+    env = dict(os.environ, JAVA_HOME=str(jdk), PATH=str(jdk / "bin") + os.pathsep + os.environ["PATH"])
+
+    def run(*command):
+        subprocess.run([str(part) for part in command], env=env, check=True)
+
+    with tempfile.TemporaryDirectory(prefix="android-build-", dir=PROJECT / "work") as directory:
+        build = Path(directory)
+        dexer, jars, native = prepare_dependencies(build)
+        resources = build / "res"
+        shutil.copytree(ROOT / "res", resources)
+        shutil.copyfile(PROJECT / "outputs/recorder-icon.png", resources / "drawable/icon.png")
+        run(tools / "aapt2", "compile", "--dir", resources, "-o", build / "res.zip")
+        generated = build / "generated"
+        generated.mkdir()
+        manifest = manifest_for_preview(build) if args.preview else ROOT / "AndroidManifest.xml"
+        if args.preview:
+            version = version["android_preview"]
+        apk = build / "base.apk"
+        run(tools / "aapt2", "link", "-o", apk, "-I", platform, "--manifest", manifest,
+            "--java", generated, "-A", ROOT / "assets", "--custom-package", PACKAGE, "--version-code", version["code"],
+            "--version-name", version["version"], build / "res.zip")
+
+        classes = build / "classes"
+        classes.mkdir()
+        classpath = os.pathsep.join(map(str, [platform, *jars]))
+        run(jdk / "bin/javac", "-encoding", "UTF-8", "--release", "8", "-classpath", classpath,
+            "-d", classes, *sorted(ROOT.glob("src/**/*.java")), *generated.glob("**/*.java"))
+        classes_jar = build / "classes.jar"
+        with zipfile.ZipFile(classes_jar, "w") as package:
+            for path in sorted(classes.rglob("*.class")):
+                package.write(path, path.relative_to(classes))
+        run(jdk / "bin/java", "-cp", dexer, "com.android.tools.r8.D8",
+            "--release", "--min-api", "26", "--lib", platform,
+            "--output", build, classes_jar, *jars)
+        with zipfile.ZipFile(apk, "a", compression=zipfile.ZIP_DEFLATED) as package:
+            for path in sorted(build.glob("classes*.dex")):
+                package.write(path, path.name)
+            for name, data in native.items():
+                package.writestr(name, data)
+            added = set(package.namelist())
+            for jar in jars:
+                with zipfile.ZipFile(jar) as dependency:
+                    for name in dependency.namelist():
+                        if name in added or name.endswith(("/", ".class")) or name.startswith("META-INF/versions/"):
+                            continue
+                        if name.startswith(("kotlin/", "META-INF/services/")):
+                            package.writestr(name, dependency.read(name))
+                            added.add(name)
+                    for name in dependency.namelist():
+                        if name.rsplit("/", 1)[-1].upper().startswith(("LICENSE", "NOTICE", "COPYING")):
+                            package.writestr(f"assets/licenses/{jar.stem}/{name}", dependency.read(name))
+        aligned = build / "aligned.apk"
+        run(tools / "zipalign", "-P", "16", "-f", "4", apk, aligned)
+
+        key = TOOLS / "preview.keystore" if args.preview else Path(
+            os.environ.get("LECTURE_KEYSTORE", TOOLS / "lectures.keystore")
+        )
+        if args.preview:
+            env["LECTURE_KEY_PASSWORD"] = "android"
+        else:
+            env.setdefault("LECTURE_KEY_PASSWORD", "android")
+        if not key.exists():
+            if not args.preview and "LECTURE_KEYSTORE" in os.environ:
+                raise SystemExit("Указанный ключ подписи не найден")
+            run(jdk / "bin/keytool", "-genkeypair", "-keystore", key, "-storepass:env", "LECTURE_KEY_PASSWORD",
+                "-keypass:env", "LECTURE_KEY_PASSWORD", "-alias", "lectures", "-dname", "CN=Ilya Lecture Recorder",
+                "-keyalg", "RSA", "-validity", "10000")
+            key.chmod(0o600)
+        output = ROOT / ("Запись лекций · ИИ.apk" if args.preview else "Запись лекций.apk")
+        run(tools / "apksigner", "sign", "--ks", key, "--ks-pass", "env:LECTURE_KEY_PASSWORD", "--out", output, aligned)
+        run(tools / "apksigner", "verify", output)
+        print(f"APK ready: {output}")
+
+
+if __name__ == "__main__":
+    main()

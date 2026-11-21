@@ -8,6 +8,30 @@ import java.util.*;
 final class Store {
  static File root(Context c){File f=new File(c.getFilesDir(),"recordings");f.mkdirs();return f;}
  static File library(Context c){File f=new File(c.getFilesDir(),"library-audio");f.mkdirs();return f;}
+ static File audio(Context c,String name){File pending=new File(root(c),name);return pending.isFile()?pending:new File(library(c),name);}
+ static Collection<File> audioFiles(Context c){
+  SortedMap<String,File> audio=new TreeMap<>(Collections.reverseOrder());
+  for(File folder:new File[]{library(c),root(c)}){
+   File[] found=folder.listFiles(f->LectureNotes.valid(f.getName())&&f.isFile());
+   if(found!=null)for(File file:found)audio.put(file.getName(),file);
+  }
+  return audio.values();
+ }
+ static String recordingTitle(String file){
+  String name=file.substring("lecture-".length(),file.length()-".wav".length());
+  try {
+   java.text.SimpleDateFormat parser=new java.text.SimpleDateFormat("yyyy-MM-dd-HH-mm-ss",Locale.US);
+   parser.setLenient(false);
+   Date date=parser.parse(name.substring(0,19));
+   return new java.text.SimpleDateFormat("d MMMM · HH:mm",new Locale("ru")).format(date);
+  }catch(Exception error){return name;}
+ }
+ static synchronized RandomAccessFile openAudio(Context c,String name)throws IOException{
+  if(!LectureNotes.valid(name))throw new IOException("Некорректное имя записи");
+  File source=audio(c,name);
+  if(!source.isFile())throw new IOException("Аудиокопия на телефоне недоступна");
+  return new RandomAccessFile(source,"r");
+ }
  static void header(RandomAccessFile f,long bytes)throws IOException{
   f.seek(0);f.writeBytes("RIFF");le(f,bytes+36,4);f.writeBytes("WAVEfmt ");le(f,16,4);le(f,1,2);le(f,1,2);le(f,16000,4);le(f,32000,4);le(f,2,2);le(f,16,2);f.writeBytes("data");le(f,bytes,4);
  }

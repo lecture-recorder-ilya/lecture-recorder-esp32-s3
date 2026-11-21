@@ -5,7 +5,11 @@ import android.content.*;
 import android.graphics.Color;
 import android.net.wifi.WifiManager;
 import android.os.*;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
+import android.view.KeyEvent;
+import android.view.View;
 import android.widget.*;
 import java.io.*;
 import java.net.*;
@@ -18,7 +22,10 @@ import org.json.*;
 final class MacPairing {
  private final Activity activity;private final Runnable connected;private final Handler ui=new Handler(Looper.getMainLooper());
  private final String nonce=UUID.randomUUID().toString().replace("-","");private final AtomicBoolean cancelled=new AtomicBoolean();private volatile boolean working=false;private volatile DatagramSocket discovery;
- private volatile String requestId="",host="",code="";private AlertDialog dialog;private TextView message;private EditText address,pin;private Button connect;private LinearLayout computers;
+ private volatile String requestId="",host="",code="";private AlertDialog dialog;private TextView message;private EditText address,pin;private Button connect;
+ private LinearLayout computers;
+ private ChoiceDropdown computerChoice;
+ private final List<ChoiceDropdown.Option> discovered=new ArrayList<>();
  MacPairing(Activity activity,Runnable connected){this.activity=activity;this.connected=connected;}
  private int dp(int value){return (int)(activity.getResources().getDisplayMetrics().density*value);}
  private TextView text(String value){TextView view=new TextView(activity);view.setText(value);view.setTextColor(Color.rgb(238,238,238));view.setTextSize(16);view.setPadding(0,dp(8),0,dp(8));return view;}
@@ -26,11 +33,34 @@ final class MacPairing {
  void open(){
   LinearLayout content=new LinearLayout(activity);content.setOrientation(1);content.setPadding(dp(20),dp(8),dp(20),dp(8));
   content.addView(text("На Mac открой «Настройки → Телефон и Mac → Подключить телефон». Оба устройства должны быть в одной Wi-Fi сети."));
-  message=text("Ищу Mac в сети…");content.addView(message);computers=new LinearLayout(activity);computers.setOrientation(1);content.addView(computers);
+  message=text("Ищу Mac в сети…");content.addView(message);
+  computers=new LinearLayout(activity);
+  computers.setOrientation(LinearLayout.VERTICAL);
+  computers.setVisibility(View.GONE);
+  computerChoice=new ChoiceDropdown(activity,"Выбрать Mac","Нет доступных компьютеров",()->discovered,
+   option->{
+    address.setText(option.value);
+    message.setText("Выбран «"+option.title+"». Введи код с его экрана.");
+    pin.requestFocus();
+   });
+  computers.addView(computerChoice.button,new LinearLayout.LayoutParams(-1,-2));
+  LinearLayout.LayoutParams computerList=new LinearLayout.LayoutParams(-1,-2);
+  computerList.topMargin=dp(6);
+  computers.addView(computerChoice.list,computerList);
+  content.addView(computers);
   address=new EditText(activity);address.setSingleLine(true);address.setTextColor(Color.WHITE);address.setHintTextColor(Color.LTGRAY);address.setHint("Адрес Mac, если он не найден");address.setContentDescription("Адрес Mac");address.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);content.addView(address);
+  address.addTextChangedListener(new TextWatcher(){
+   @Override public void beforeTextChanged(CharSequence value,int start,int count,int after){}
+   @Override public void onTextChanged(CharSequence value,int start,int previous,int count){
+    showSelectedComputer(value.toString().trim());
+   }
+   @Override public void afterTextChanged(Editable value){}
+  });
   pin=new EditText(activity);pin.setSingleLine(true);pin.setTextColor(Color.WHITE);pin.setHintTextColor(Color.LTGRAY);pin.setHint("Код Mac · 12 символов");pin.setContentDescription("Код Mac");pin.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);content.addView(pin);
   ScrollView scroll=new ScrollView(activity);scroll.addView(content);
   dialog=new AlertDialog.Builder(activity).setTitle("Подключить Mac").setView(scroll).setPositiveButton("Продолжить",null).setNegativeButton("Отмена",(d,w)->cancel()).create();
+  dialog.setOnKeyListener((active,key,event)->key==KeyEvent.KEYCODE_BACK
+   &&event.getAction()==KeyEvent.ACTION_UP&&computerChoice.close());
   dialog.setOnCancelListener(d->cancel());dialog.setOnDismissListener(d->{if(!cancelled.get())cancel();});dialog.show();connect=dialog.getButton(AlertDialog.BUTTON_POSITIVE);connect.setOnClickListener(v->begin());
   new Thread(()->discover(),"Find Mac").start();
  }
@@ -50,13 +80,27 @@ final class MacPairing {
      try{DatagramPacket packet=new DatagramPacket(buffer,buffer.length);udp.receive(packet);JSONObject reply=new JSONObject(new String(packet.getData(),0,packet.getLength(),StandardCharsets.UTF_8));
       if(!reply.optString("protocol").equals("LECTUREPAIR1")||!reply.optString("nonce").equals(nonce)||reply.optInt("port")!=8784||!(packet.getAddress() instanceof Inet4Address))continue;
       String ip=packet.getAddress().getHostAddress(),name=reply.optString("name","Mac");if(name.length()>80||!seen.add(ip))continue;
-      show(()->{if(working)return;Button found=new Button(activity);found.setAllCaps(false);found.setText(name+" · "+ip);found.setOnClickListener(v->{address.setText(ip);message.setText("Выбран «"+name+"». Введи код с его экрана.");pin.requestFocus();});computers.addView(found);if(address.getText().toString().isEmpty())address.setText(ip);message.setText("Mac найден. Выбери компьютер и введи его код.");});
+      show(()->{
+       if(working)return;
+       discovered.add(new ChoiceDropdown.Option(ip,name,ip));
+       computers.setVisibility(View.VISIBLE);
+       if(address.getText().toString().isEmpty())address.setText(ip);
+       else showSelectedComputer(address.getText().toString().trim());
+       computerChoice.refreshOptions();
+       message.setText("Mac найден. Выбери компьютер и введи его код.");
+      });
      }catch(SocketTimeoutException ignored){}catch(JSONException ignored){}
     }
    }
    if(seen.isEmpty())show(()->{if(!working)message.setText("Mac пока не найден. Открой сопряжение на Mac, проверь Wi-Fi или введи адрес с экрана Mac.");});
   }catch(Exception e){if(!cancelled.get()&&!working)show(()->message.setText("Не удалось найти Mac. Можно ввести его адрес вручную. Проверь доступ приложения к локальной сети."));}
   finally{discovery=null;if(multicast!=null&&multicast.isHeld())multicast.release();}
+ }
+ private void showSelectedComputer(String ip){
+  for(ChoiceDropdown.Option computer:discovered){
+   if(computer.value.equals(ip)){computerChoice.setSelected(computer);return;}
+  }
+  computerChoice.setSelected(null);
  }
  private JSONObject post(String route,JSONObject value)throws Exception{
   try{return new JSONObject(PairingProtocol.post(host,8784,code,route,value.toString()));}
@@ -66,7 +110,7 @@ final class MacPairing {
   if(working)return;host=address.getText().toString().trim();code=PairingProtocol.normalize(pin.getText().toString());
   if(!code.matches("[A-Z2-7]{12}")){message.setText("Введи все 12 символов кода с экрана Mac.");return;}
   if(!host.matches("[A-Za-z0-9.-]{1,253}")){message.setText("Выбери найденный Mac или введи его адрес.");return;}
-  working=true;computers.setVisibility(android.view.View.GONE);connect.setEnabled(false);address.setEnabled(false);pin.setEnabled(false);message.setText("Подключаюсь к Mac…");if(discovery!=null)discovery.close();
+  working=true;computerChoice.close();computers.setVisibility(View.GONE);connect.setEnabled(false);address.setEnabled(false);pin.setEnabled(false);message.setText("Подключаюсь к Mac…");if(discovery!=null)discovery.close();
   new Thread(()->pair(),"Pair with Mac").start();
  }
  private void pair(){
@@ -96,11 +140,11 @@ final class MacPairing {
    if(!cancelled.get())throw new IOException("Код истёк. Открой сопряжение на Mac заново.");
   }catch(Exception e){
    String detail=e instanceof SSLException?"Код Mac не совпадает или истёк. Проверь код и дату на телефоне.":e instanceof RemoteError?e.getMessage():"Не удалось подключиться. Проверь общую Wi-Fi сеть и повтори.";
-   show(()->{message.setText(detail);working=false;computers.setVisibility(android.view.View.VISIBLE);connect.setEnabled(true);address.setEnabled(true);pin.setEnabled(true);});
+   show(()->{message.setText(detail);working=false;computers.setVisibility(discovered.isEmpty()?View.GONE:View.VISIBLE);connect.setEnabled(true);address.setEnabled(true);pin.setEnabled(true);});
   }
  }
  void cancel(){
-  if(cancelled.getAndSet(true))return;if(discovery!=null)discovery.close();String id=requestId;
+  if(cancelled.getAndSet(true))return;if(computerChoice!=null)computerChoice.close();if(discovery!=null)discovery.close();String id=requestId;
   if(!id.isEmpty())new Thread(()->{try{post("/pair/cancel",new JSONObject().put("request_id",id));}catch(Exception ignored){}},"Cancel Mac pairing").start();
   if(dialog!=null&&dialog.isShowing())dialog.dismiss();
  }

@@ -8,6 +8,13 @@ import java.util.*;
 
 final class LectureNotes {
  static File root(Context c){File f=new File(c.getFilesDir(),"notes");f.mkdirs();return f;}
+ static File file(Context c,String name,boolean local){return new File(local?localRoot(c):root(c),name+".json");}
+ private static File localRoot(Context c){File f=new File(c.getFilesDir(),"phone-notes");f.mkdirs();return f;}
+ static synchronized void saveLocal(Context c,JSONObject document)throws Exception{
+  String name=document.getString("file");
+  if(!valid(name))throw new IOException("Некорректное имя записи");
+  Store.write(file(c,name,true),document);
+ }
  static boolean valid(String n){return n!=null&&n.matches("lecture-[0-9-]+\\.wav");}
  static synchronized JSONObject index(Context c)throws Exception{
   JSONObject j=new JSONObject();File[] fs=root(c).listFiles(f->f.getName().endsWith(".wav.json"));
@@ -21,7 +28,7 @@ final class LectureNotes {
   try(FileOutputStream out=new FileOutputStream(tmp)){out.write(body);out.getFD().sync();}
   if(!tmp.renameTo(target))throw new IOException("Текст не сохранён");return Store.hash(target);
  }
- static File[] files(Context c){File[] fs=root(c).listFiles(f->f.getName().endsWith(".wav.json"));if(fs==null)return new File[0];Arrays.sort(fs,Collections.reverseOrder());return fs;}
+ static File[] files(Context c,boolean local){File[] fs=(local?localRoot(c):root(c)).listFiles(f->f.getName().endsWith(".wav.json"));if(fs==null)return new File[0];Arrays.sort(fs,Collections.reverseOrder());return fs;}
  static String title(JSONObject value){JSONObject r=value.optJSONObject("report"),m=value.optJSONObject("lesson");String subject=r.optString("subject",m==null?"":m.optString("subject"));String date=m==null?"":m.optString("date");return subject.isEmpty()?value.optString("file"):subject+(date.isEmpty()?"":" · "+date);}
  static String text(JSONObject v)throws Exception{return text(v,true);}
  static String summary(JSONObject v)throws Exception{return text(v,false);}
