@@ -108,11 +108,13 @@ final class AudioTranscriptPage extends LinearLayout {
 
         body = new FrameLayout(activity);
         addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
-        details = column();
+        boolean landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        details = new LinearLayout(activity);
+        details.setOrientation(landscape ? HORIZONTAL : VERTICAL);
         details.setVisibility(View.GONE);
         body.addView(details, new FrameLayout.LayoutParams(-1, -1));
-        addAudioPanel();
-        addTranscriptPanel();
+        addAudioPanel(landscape);
+        addTranscriptPanel(landscape);
         addRecordingDropdown();
 
         if (state != null) {
@@ -121,13 +123,14 @@ final class AudioTranscriptPage extends LinearLayout {
         }
     }
 
-    private void addAudioPanel() {
+    private void addAudioPanel(boolean landscape) {
         LinearLayout audio = card();
-        details.addView(audio, spaced(-1, -2, 12));
+        LinearLayout.LayoutParams panel = landscape ? new LinearLayout.LayoutParams(0, -2, 2)
+                : new LinearLayout.LayoutParams(-1, -2);
+        panel.topMargin = dp(12);
+        details.addView(audio, panel);
         waveform = new Waveform(activity);
-        int orientation = getResources().getConfiguration().orientation;
-        audio.addView(waveform, new LinearLayout.LayoutParams(-1,
-                dp(orientation == Configuration.ORIENTATION_LANDSCAPE ? 54 : 94)));
+        audio.addView(waveform, new LinearLayout.LayoutParams(-1, dp(landscape ? 54 : 94)));
         waveStatus = text("", 13, MUTED);
         audio.addView(waveStatus);
 
@@ -141,11 +144,13 @@ final class AudioTranscriptPage extends LinearLayout {
         audio.addView(controls, spaced(-1, dp(48), 4));
     }
 
-    private void addTranscriptPanel() {
+    private void addTranscriptPanel(boolean landscape) {
         LinearLayout box = card();
-        LinearLayout.LayoutParams available = new LinearLayout.LayoutParams(-1, 0, 1);
-        available.topMargin = dp(12);
-        details.addView(box, available);
+        LinearLayout.LayoutParams panel = landscape ? new LinearLayout.LayoutParams(0, -1, 3)
+                : new LinearLayout.LayoutParams(-1, 0, 1);
+        panel.topMargin = dp(12);
+        if (landscape) panel.setMarginStart(dp(12));
+        details.addView(box, panel);
 
         LinearLayout header = new LinearLayout(activity);
         header.setGravity(Gravity.CENTER_VERTICAL);
