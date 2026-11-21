@@ -35,18 +35,19 @@ public final class PhoneAnalysisService extends Service {
     }
 
     static void request(Activity screen, String name, String title) {
-        if (busy()) return;
-        Runnable start = () -> screen.startForegroundService(start(screen, name, title));
+        request(screen, name, title, false);
+    }
+
+    static void request(Activity screen, String name, String title, boolean retranscribe) {
+        if (busy() || !LectureNotes.valid(name)) return;
+        Runnable start = () -> screen.startForegroundService(new Intent(screen, PhoneAnalysisService.class)
+                .setAction("analyze").putExtra("name", name).putExtra("title", title)
+                .putExtra("retranscribe", retranscribe));
         if (PhoneModels.ready(screen)) start.run();
         else new AlertDialog.Builder(screen).setTitle("Модели для разбора")
                 .setMessage("Первый запуск скачает до 570 МБ. После этого разбор работает офлайн.")
                 .setPositiveButton("Скачать и разобрать", (dialog, which) -> start.run())
                 .setNegativeButton("Отмена", null).show();
-    }
-
-    static Intent start(Context context, String name, String title) {
-        return new Intent(context, PhoneAnalysisService.class)
-                .setAction("analyze").putExtra("name", name).putExtra("title", title);
     }
 
     static Intent cancel(Context context) {
@@ -85,17 +86,19 @@ public final class PhoneAnalysisService extends Service {
         manager.createNotificationChannel(new NotificationChannel(CHANNEL, "Разбор лекций", NotificationManager.IMPORTANCE_LOW));
         status = "Подготавливаю разбор";
         startForeground(NOTIFICATION, notification(status));
-        new Thread(() -> process(job, name, intent.getStringExtra("title")), "Lecture analysis").start();
+        String title = intent.getStringExtra("title");
+        boolean retranscribe = intent.getBooleanExtra("retranscribe", false);
+        new Thread(() -> process(job, name, title, retranscribe), "Lecture analysis").start();
         return START_NOT_STICKY;
     }
 
-    private void process(Job job, String name, String title) {
+    private void process(Job job, String name, String title, boolean retranscribe) {
         PowerManager.WakeLock wakeLock = getSystemService(PowerManager.class)
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "lectures:phone-analysis");
         wakeLock.acquire(2 * 60 * 60 * 1000L);
         try {
-            PhoneLectureAnalysis.run(getApplicationContext(), job, name, title);
-            status = "Разбор готов";
+            PhoneLectureAnalysis.run(getApplicationContext(), job, name, title, retranscribe);
+            status = retranscribe ? "Расшифровка готова" : "Разбор готов";
         } catch (Exception | LinkageError error) {
             if (job.cancelled) {
                 status = "Разбор отменён";

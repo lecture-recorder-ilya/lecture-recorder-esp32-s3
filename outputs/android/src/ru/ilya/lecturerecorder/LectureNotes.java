@@ -4,16 +4,38 @@ import android.content.Context;
 import org.json.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 final class LectureNotes {
  static File root(Context c){File f=new File(c.getFilesDir(),"notes");f.mkdirs();return f;}
  static File file(Context c,String name,boolean local){return new File(local?localRoot(c):root(c),name+".json");}
  private static File localRoot(Context c){File f=new File(c.getFilesDir(),"phone-notes");f.mkdirs();return f;}
- static synchronized void saveLocal(Context c,JSONObject document)throws Exception{
+ static void saveLocal(Context c,JSONObject document)throws Exception{
+  saveLocal(c,document,false);
+ }
+ static synchronized void saveLocal(Context c,JSONObject document,boolean archivePrevious)throws Exception{
   String name=document.getString("file");
   if(!valid(name))throw new IOException("Некорректное имя записи");
-  Store.write(file(c,name,true),document);
+  File target=file(c,name,true);
+  if(archivePrevious&&target.isFile()){
+   File history=new File(new File(c.getFilesDir(),"phone-note-history"),name);
+   if(!history.isDirectory()&&!history.mkdirs())throw new IOException("Не удалось сохранить предыдущую расшифровку");
+   File archived=new File(history,UUID.randomUUID()+".json");
+   File part=new File(archived.getPath()+".tmp");
+   try{
+    try(FileInputStream input=new FileInputStream(target);FileOutputStream output=new FileOutputStream(part)){
+     byte[] buffer=new byte[65536];
+     for(int size;(size=input.read(buffer))!=-1;)output.write(buffer,0,size);
+     output.getFD().sync();
+    }
+    Files.move(part.toPath(),archived.toPath(),StandardCopyOption.ATOMIC_MOVE);
+   }finally{
+    part.delete();
+   }
+  }
+  Store.write(target,document);
  }
  static boolean valid(String n){return n!=null&&n.matches("lecture-[0-9-]+\\.wav");}
  static synchronized JSONObject index(Context c)throws Exception{

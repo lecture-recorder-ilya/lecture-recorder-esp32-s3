@@ -163,6 +163,24 @@ final class AudioTranscriptPage extends LinearLayout {
         times.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         controls.addView(times, new LinearLayout.LayoutParams(0, -1, 1));
         audio.addView(controls, spaced(-1, dp(48), 4));
+        if (landscape) {
+            addTranscribeButton(audio, spaced(-1, dp(48), 8));
+        }
+    }
+
+    private void addTranscribeButton(LinearLayout host, LinearLayout.LayoutParams layout) {
+        transcribe = button("Расшифровать", () -> {
+            if (selected != null) {
+                PhoneAnalysisService.request(activity, selected, Store.recordingTitle(selected), true);
+            }
+        });
+        host.addView(transcribe, layout);
+    }
+
+    private void addTranscriptStatus(LinearLayout host) {
+        transcriptStatus = text("", 14, MUTED);
+        transcriptStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        host.addView(transcriptStatus, spaced(-1, -2, 4));
     }
 
     private void addTranscriptPanel(LinearLayout box, boolean landscape) {
@@ -186,13 +204,12 @@ final class AudioTranscriptPage extends LinearLayout {
         header.addView(transcriptSpinner, new LinearLayout.LayoutParams(dp(22), dp(22)));
         box.addView(header);
 
-        transcriptStatus = text("", 14, MUTED);
-        transcriptStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        box.addView(transcriptStatus, spaced(-1, -2, 4));
-        transcribe = button("Расшифровать", () ->
-                PhoneAnalysisService.request(activity, selected, Store.recordingTitle(selected)));
-        box.addView(transcribe, spaced(-1, dp(48), 6));
-
+        if (!landscape) {
+            LinearLayout.LayoutParams action = new LinearLayout.LayoutParams(-2, dp(48));
+            action.setMarginStart(dp(8));
+            addTranscribeButton(header, action);
+        }
+        addTranscriptStatus(box);
         if (!landscape) box.addView(editHint, spaced(-1, -2, 4));
 
         ListView lines = new ListView(activity);
@@ -392,22 +409,23 @@ final class AudioTranscriptPage extends LinearLayout {
             noteRevision = revision;
         }
 
-        boolean loading = transcript.isEmpty() && PhoneAnalysisService.busyFor(selected);
+        boolean loading = PhoneAnalysisService.busyFor(selected);
+        boolean supported = android.os.Process.is64Bit();
         transcriptSpinner.setVisibility(loading ? View.VISIBLE : View.GONE);
-        String message = "";
-        boolean canTranscribe = transcript.isEmpty() && android.os.Process.is64Bit() && !PhoneAnalysisService.busy();
-        if (transcript.isEmpty()) {
-            if (loading) message = PhoneAnalysisService.statusFor(selected);
-            else if (PhoneAnalysisService.busy()) message = "Сейчас обрабатывается другая запись.";
-            else if (!android.os.Process.is64Bit()) message = "Расшифровка появится после обработки на Mac.";
-            else {
-                message = PhoneAnalysisService.statusFor(selected);
-                if (message.isEmpty()) message = "У этой записи пока нет расшифровки.";
-            }
+        String message = PhoneAnalysisService.statusFor(selected);
+        if (message.isEmpty() && transcript.isEmpty()) {
+            if (PhoneAnalysisService.busy()) message = "Сейчас обрабатывается другая запись.";
+            else if (!supported) message = "Расшифровка появится после обработки на Mac.";
+            else message = "У этой записи пока нет расшифровки.";
         }
         if (!TextUtils.equals(transcriptStatus.getText(), message)) transcriptStatus.setText(message);
         transcriptStatus.setVisibility(message.isEmpty() ? View.GONE : View.VISIBLE);
-        transcribe.setVisibility(canTranscribe ? View.VISIBLE : View.GONE);
+        transcribe.setVisibility(supported ? View.VISIBLE : View.GONE);
+        boolean idle = !PhoneAnalysisService.busy();
+        transcribe.setEnabled(idle);
+        transcribe.setAlpha(idle ? 1f : 0.45f);
+        String action = transcript.isEmpty() ? "Расшифровать" : "Расшифровать заново";
+        if (!TextUtils.equals(transcribe.getContentDescription(), action)) transcribe.setContentDescription(action);
     }
 
     private List<TranscriptEdits.Line> readSegments(File note, boolean local, JSONObject corrections) {

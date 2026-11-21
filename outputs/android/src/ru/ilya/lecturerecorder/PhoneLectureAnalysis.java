@@ -12,6 +12,7 @@ import com.google.ai.edge.litertlm.Message;
 import com.google.ai.edge.litertlm.SamplerConfig;
 import com.google.ai.edge.litertlm.ThinkingConfig;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.vosk.Model;
 import org.vosk.Recognizer;
@@ -30,12 +31,20 @@ final class PhoneLectureAnalysis {
             "на дом|домашн|задани|к следующ|подготовь|подготовит|прочита|решите|сдайте|запиши",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
-    static void run(Context context, PhoneAnalysisService.Job job, String name, String title) throws Exception {
+    static void run(Context context, PhoneAnalysisService.Job job, String name, String title,
+                    boolean retranscribe) throws Exception {
         File existing = LectureNotes.file(context, name, true);
-        JSONObject document;
+        JSONObject document = null;
         if (existing.isFile()) {
-            document = new JSONObject(Store.read(existing));
-        } else {
+            try {
+                JSONObject saved = new JSONObject(Store.read(existing));
+                saved.getJSONObject("report");
+                document = saved;
+            } catch (JSONException error) {
+                if (!retranscribe) throw error;
+            }
+        }
+        if (document == null || retranscribe) {
             JSONArray segments;
             String recognizer;
             try {
@@ -60,13 +69,14 @@ final class PhoneLectureAnalysis {
                 recognizer = "vosk-small-ru";
             }
             if (segments.length() == 0) throw new IOException("В записи не удалось распознать русскую речь");
-            JSONObject report = new JSONObject()
-                    .put("subject", title).put("topic", title).put("segments", segments)
-                    .put("asr_engine", recognizer)
-                    .put("local_summary_pending", true);
-            document = new JSONObject().put("file", name).put("report", report);
+            if (document == null) {
+                JSONObject report = new JSONObject().put("subject", title).put("topic", title)
+                        .put("local_summary_pending", true);
+                document = new JSONObject().put("file", name).put("report", report);
+            }
+            document.put("file", name).getJSONObject("report").put("segments", segments).put("asr_engine", recognizer);
             job.check();
-            LectureNotes.saveLocal(context, document);
+            LectureNotes.saveLocal(context, document, retranscribe);
         }
 
         JSONObject report = document.getJSONObject("report");
