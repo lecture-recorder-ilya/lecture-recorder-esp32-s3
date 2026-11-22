@@ -29,7 +29,7 @@ def read_document(root, name, paths, errors):
                 raise ValueError('Некорректные строки расшифровки')
             clean = {k: report[k] for k in ('subject', 'topic', 'teacher', 'overview')
                      if isinstance(report.get(k), str) and report[k].strip()}
-            clean.update({k: report[k] for k in ('summary', 'summary_evidence', 'homework', 'formulas', 'formula_review', 'warnings', 'sections')
+            clean.update({k: report[k] for k in ('summary', 'summary_evidence', 'homework', 'homework_review', 'formulas', 'formula_review', 'warnings', 'sections')
                           if isinstance(report.get(k), list)})
             clean['segments'] = []
             for row in rows:

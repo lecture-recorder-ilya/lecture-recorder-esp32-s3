@@ -33,7 +33,7 @@ final class PhoneSummaryEvidence {
             "(?<![\\p{L}])(?:не|ни|но|или|если|при|для|без|из|к|на|в|с|до|по|о|об|некой|такого|равен|равна|равно|плюс|минус)[ .,!?:;…]*$",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
     private static final Pattern CANCELLED = Pattern.compile(
-            "задани[ея]\\s+отмен(?:ено|яется)|отменяю\\s+(?:задани[ея]|домашн[\\p{L}]*\\s+работ[\\p{L}]*)",
+            "задани[ея]\\s+отмен(?:ено|яется)|отменяю\\s+(?:задани[ея]|домашн[\\p{L}]*\\s+работ[\\p{L}]*)|на дом\\s+(?:ничего\\s+)?не\\s+задаю",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
     private static final Pattern CORRECTION = Pattern.compile(
             "^(?:нет(?:[, :]|$)|(?:срок|дат[ау])\\s|задани[ея]\\s+отмен|отменяю\\s+задани[ея])",
@@ -41,6 +41,12 @@ final class PhoneSummaryEvidence {
 
     static void add(String response, int first, int next, JSONArray segments, JSONArray summary,
                     JSONArray sources, JSONArray homework, Set<String> points, Set<String> tasks)
+            throws JSONException {
+        add(response,first,next,segments,summary,sources,homework,new JSONArray(),points,tasks);
+    }
+
+    static void add(String response, int first, int next, JSONArray segments, JSONArray summary,
+                    JSONArray sources, JSONArray homework, JSONArray homeworkReview, Set<String> points, Set<String> tasks)
             throws JSONException {
         Set<Integer> keys = new TreeSet<>();
         Set<Integer> exercises = new TreeSet<>();
@@ -77,8 +83,14 @@ final class PhoneSummaryEvidence {
             // Ignore only the rejected date before an explicit replacement;
             // keep every word, including the negation, in the stored task.
             String taskContext = REPLACED_DEADLINE.matcher(quote).replaceAll("$1");
-            if (uncertain || CANCELLED.matcher(quote).find() || !AFTER_CLASS.matcher(quote).find()
-                    || !ASSIGNMENT.matcher(quote).find() || EXCLUDED_TASK.matcher(taskContext).find()
+            if (uncertain || CANCELLED.matcher(quote).find())continue;
+            String kind=HomeworkEvidence.kind(quote,row);
+            if(!kind.equals("assignment")) {
+                homeworkReview.put(anchor(row,index,quote).put("end",end).put("verification_status","needs_review")
+                        .put("utterance_kind",kind).put("review_note",HomeworkEvidence.note(kind)));
+                continue;
+            }
+            if (EXCLUDED_TASK.matcher(taskContext).find()
                     || !tasks.add(quote)) continue;
             homework.put(anchor(row, index, quote).put("end", end).put("task", quote));
         }

@@ -69,6 +69,7 @@ public final class SummaryStateTest {
         if (args[1].equals("replace")) {
             checkEvidence();
             checkSourceBinding();
+            checkHomeworkKinds(new JSONArray(new String(Files.readAllBytes(new File(args[2]).toPath()), java.nio.charset.StandardCharsets.UTF_8)));
             checkEditedDerivedData(new Context(new File(root, "derived-data")));
             checkPhrases();
             JSONArray oldSegments = segments(OLD_TEXT);
@@ -491,6 +492,21 @@ public final class SummaryStateTest {
         System.out.println("PASS: сдвиг, новая нарезка, неоднозначность, восстановление и общий отпечаток источника");
     }
 
+    private static void checkHomeworkKinds(JSONArray cases) throws Exception {
+        for(int i=0;i<cases.length();i++) {
+            JSONObject item=cases.getJSONObject(i);JSONArray rows=item.getJSONArray("rows");
+            JSONArray homework=new JSONArray(),review=new JSONArray();
+            PhoneSummaryEvidence.add(item.getString("android_response"),0,rows.length(),rows,new JSONArray(),new JSONArray(),
+                    homework,review,new HashSet<>(),new HashSet<>());
+            String kind=item.getString("expected_kind");
+            require(homework.length()==(kind.equals("assignment")?1:0),"Реплика стала неверным ДЗ: "+item.getString("name"));
+            if(!kind.equals("assignment")&&!kind.equals("cancelled"))require(review.length()==1
+                    &&kind.equals(review.getJSONObject(0).getString("utterance_kind"))
+                    &&review.getJSONObject(0).getInt("start")==1,"Потеряны вид реплики и её источник");
+        }
+        System.out.println("PASS: вопрос, пример, переспрос, чужое «надо» и явное ДЗ");
+    }
+
     private static JSONArray segments(String text) throws Exception {
         return new JSONArray().put(new JSONObject().put("text", text).put("start", 5).put("end", 9)
                 .put("needs_review", true));
@@ -543,7 +559,7 @@ def main():
         subprocess.run(
             [java_bin / "javac", "-encoding", "UTF-8", "-cp", jar, "-d", root,
              SOURCE / "LectureNotes.java", SOURCE / "Store.java", SOURCE / "PhoneSummaryEvidence.java",
-             SOURCE / "PhonePhrases.java", SOURCE / "TranscriptEdits.java", SOURCE / "SummarySources.java",
+             SOURCE / "PhonePhrases.java", SOURCE / "TranscriptEdits.java", SOURCE / "SummarySources.java", SOURCE / "HomeworkEvidence.java",
              *(root / name for name in sources)],
             check=True,
         )
@@ -552,7 +568,7 @@ def main():
         for phase in ("replace", "resume"):
             subprocess.run(
                 [java_bin / "java", "-cp", os.pathsep.join((str(root), str(jar))),
-                 f"{PACKAGE}.SummaryStateTest", data, phase],
+                 f"{PACKAGE}.SummaryStateTest", data, phase, Path(__file__).resolve().parents[1]/'tests/fixtures/summary/homework.json'],
                 check=True,
             )
 

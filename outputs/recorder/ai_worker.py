@@ -22,6 +22,7 @@ from math_formulas import merge as merge_formulas
 from formula_evidence import check as check_formula, REASONS as FORMULA_REASONS, finalize as finalize_formulas
 from transcript_quality import annotate, assess
 from summary_sources import reconcile as reconcile_sources
+from homework_evidence import classify as homework_kind, LABELS as HOMEWORK_LABELS
 
 ROOT = Path(__file__).resolve().parent
 MODELS = ROOT.parent.parent / 'work' / 'models'
@@ -63,6 +64,7 @@ def analysis_rows(segments):
         row['needs_review'] = assess(segment)['needs_review']
         for key in ('presentation', 'teacher_remark'):
             if segment.get(key): row[key] = True
+        if segment.get('speaker_role') in ('teacher','student','audience'):row['speaker_role']=segment['speaker_role']
         rows.append(row)
     return rows
 
@@ -165,7 +167,7 @@ TENTATIVE_DEADLINE = re.compile(r'\b' + TENTATIVE_WORD + r'\b|^не\s+(?:к|до
 REPLACED_DEADLINE = re.compile(
     r'(\b(?:к|до)\s+[\w./:-]+(?:\s+\w+)?\s+)не\s+(?:надо|нужно)'
     r'(?=\s*,\s*(?:а\s+)?(?:сдайте|сдать)\s+(?:к|до)\s+)')
-CANCELLED_HOMEWORK = re.compile(r'\b(?:задани[ея]\s+отмен(?:ено|яется)|отменяю\s+(?:задани[ея]|домашн\w*\s+работ\w*))\b')
+CANCELLED_HOMEWORK = re.compile(r'\b(?:задани[ея]\s+отмен(?:ено|яется)|отменяю\s+(?:задани[ея]|домашн\w*\s+работ\w*)|на дом\s+(?:ничего\s+)?не\s+задаю)\b')
 HOMEWORK_CORRECTION = re.compile(r'^(?:нет(?:[, :]|$)|(?:срок|дат[ау])\s|задани[ея]\s+отмен|отменяю\s+задани[ея])')
 DEADLINE_CHANGE = re.compile(r'\bсрок\s+(?:переносится|переносим|перенес[её]н|теперь)\b')
 
@@ -229,7 +231,7 @@ def validate_part(part, segments):
     blocked={s['id'] for s in excluded};texts={k:v for k,v in texts.items() if k not in blocked}
     trusted_texts = {key: row for key, row in texts.items() if not row.get('needs_review')}
     combined = normalized(' '.join(s['text'] for s in trusted_texts.values()))
-    result = {'subject': None, 'teacher': None, 'summary': [], 'summary_evidence': [], 'homework': [], 'highlights': [], 'formulas': [], 'formula_review': [], 'moments': [], 'evidence': {}, 'topic': part.get('topic','')[:120] if isinstance(part.get('topic'),str) else '', 'topics': [], 'excluded_asides': excluded}
+    result = {'subject': None, 'teacher': None, 'summary': [], 'summary_evidence': [], 'homework': [], 'homework_review': [], 'highlights': [], 'formulas': [], 'formula_review': [], 'moments': [], 'evidence': {}, 'topic': part.get('topic','')[:120] if isinstance(part.get('topic'),str) else '', 'topics': [], 'excluded_asides': excluded}
     for topic in part.get('topics',[]) if isinstance(part.get('topics'),list) else []:
         if isinstance(topic,dict) and topic.get('segment_id') in texts and isinstance(topic.get('title'),str) and topic['title'].strip():
             result['topics'].append({'start':texts[topic['segment_id']]['start'],'title':topic['title'][:120]})
@@ -264,9 +266,10 @@ def validate_part(part, segments):
         quote = normalized(anchor['quote'])
         if CANCELLED_HOMEWORK.search(quote):
             continue
-        if not re.search(r'домаш|на дом\b|(?:на|к) следующ|после (?:пары|занятия|урока)', quote):
-            continue
-        if not re.search(r'подготовьте|прочитайте|решите|выучите|изучите|сдайте|напишите|повторите|сделайте|выполните|нужно (?:решить|прочитать|подготовить|написать|сдать|выучить|сделать)', quote):
+        roles=[row.get('speaker_role') for row in texts.values() if row['start']<anchor['end'] and row['end']>anchor['start']]
+        kind=homework_kind(anchor['quote'],roles)
+        if kind!='assignment':
+            result['homework_review'].append(dict(anchor,verification_status='needs_review',utterance_kind=kind,review_note=HOMEWORK_LABELS[kind]))
             continue
         task_context = REPLACED_DEADLINE.sub(r'\1', quote)
         if re.search(r'\?|например|допустим|в качестве примера|не (?:нужно|надо|будет|реш|дел|сда)|задани[ея] нет', task_context):
@@ -322,6 +325,7 @@ needs_review=true означает сомнительное распознава
 Предмет можно определить по теме, но приведи точную цитату основания. Если записи недостаточно, subject=null.
 Имя преподавателя указывай только если говорящий явно представился или назван как преподаватель. Обращение студента по имени/отчеству с вопросом по теме, после которого адресат отвечает как преподаватель, также подтверждает имя преподавателя. Например «Сергей Петрович, как решать? Да, сейчас объясню» подтверждает имя Сергей Петрович. teacher_quote должен дословно включать обращение и ответ. Не требуй слов «я преподаватель» в таком диалоге. Простое упоминание третьего лица не подходит; иначе teacher=null. Не определяй имя человека по звучанию голоса.
 Домашнее задание — только явно заданная самостоятельная работа после занятия. Упоминание примера, текущей задачи или оборудования не означает ДЗ.
+Вопрос, переспрос «я правильно понял», личное «нам надо» и пересказ чужих слов не подтверждают выдачу ДЗ. Учитывай имеющуюся разметку speaker_role: реплика student/audience сама по себе не является поручением преподавателя. Не угадывай роль по голосу или имени.
 Если нет явного указания выполнить работу после занятия, homework=[]. Проверка микрофона, счёт метров и технические тесты не являются ДЗ. Для каждого ДЗ дай дословную цитату с формулировкой задания из одного или соседних сегментов и целочисленный id первого сегмента. Срок — только если назван; иначе null.
 Выбирай короткие цитаты без повторов, не более двух предложений на пункт. Для шума, приветствия или теста микрофона оставь конспект пустым, если учебного содержания нет.
 Отдельно выделяй highlights — учебные моменты, на которых преподаватель акцентирует внимание: что важно запомнить, правильный способ действий, типичные ошибки, предостережения и требования на экзамене. Учитывай смысл, а не только ключевые слова. Риторические советы «если человек умный, то он будет делать так», «кто понимает, сначала проверит...», «разумнее сделать...», «я бы на вашем месте...» тоже являются акцентами, если из них понятно, какой учебный совет даёт преподаватель. Сохраняй конкретное правило или действие и условия его применения, не превращай условный совет в безусловное требование.
@@ -472,6 +476,8 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
              'original_transcript':transcript_path.name})
         talks=presentations(segments,duration)
         role_map=roles(segments,talks)
+        segments=[dict(s,speaker_role=role_map[str(s['id'])]['role']) if str(s['id']) in role_map else s for s in segments]
+        segments=[dict(s,speaker_role=role_map[str(s['id'])]['role']) if str(s['id']) in role_map else s for s in segments]
         remark_ids={v['segment_id'] for v in remarks(segments,role_map)}
         segments=[dict(s,teacher_remark=True) if s['id'] in remark_ids else s for s in segments]
         segments=[dict(s,presentation=True) if any(p['start']<=s['start']<p['end'] for p in talks) else s for s in segments]
@@ -530,7 +536,7 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
         displayed_segments=list(segments)
         result = {'subject':subjects[0] if len(subjects)==1 else None,
                   'teacher':teachers[0] if len(teachers)==1 else None,
-                  'summary':notes, 'summary_evidence':[summary_evidence[normalized(note)] for note in notes if normalized(note) in summary_evidence], 'teacher_remarks':remarks(displayed_segments,role_map), 'homework':homework, 'highlights':merge_highlights(parts), 'segments':displayed_segments, 'excluded_asides':list(excluded.values()),
+                  'summary':notes, 'summary_evidence':[summary_evidence[normalized(note)] for note in notes if normalized(note) in summary_evidence], 'teacher_remarks':remarks(displayed_segments,role_map), 'homework':homework, 'homework_review':list({(v['segment_id'],normalized(v['quote']),v['utterance_kind']):v for p in parts for v in p['homework_review']}.values()), 'highlights':merge_highlights(parts), 'segments':displayed_segments, 'excluded_asides':list(excluded.values()),
                   'topic':overview.get('topic')[:200] if isinstance(overview.get('topic'),str) else None,
                   'overview':' '.join(notes[:3])[:1500],
                   'formulas':merge_formulas(list({(v['segment_id'],normalized(v['quote'])):v for p in parts for v in p['formulas']}.values()),context_audit.get('formulas',[])),

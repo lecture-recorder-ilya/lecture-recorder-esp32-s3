@@ -1,0 +1,377 @@
+[
+  {
+    "name": "assignment",
+    "origin": "искусственный диалог; роль задана в тесте, не определена по голосу",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "На дом надо решить задачу 15.",
+        "speaker_role": "teacher"
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "На дом надо решить задачу 15.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "assignment",
+    "expected_mac": {
+      "homework_count": 1
+    },
+    "expected_android": {
+      "homework_count": 1
+    }
+  },
+  {
+    "name": "question",
+    "origin": "искусственный диалог; роль задана в тесте, не определена по голосу",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "На дом нужно решить задачу 15?",
+        "speaker_role": "student"
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "На дом нужно решить задачу 15?",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "question",
+    "expected_mac": {
+      "homework_count": 0
+    },
+    "expected_android": {
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "clarification",
+    "origin": "искусственный диалог; роль задана в тесте, не определена по голосу",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Я правильно понял, на дом нужно решить задачу 15.",
+        "speaker_role": "student"
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "Я правильно понял, на дом нужно решить задачу 15.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "clarification",
+    "expected_mac": {
+      "homework_count": 0
+    },
+    "expected_android": {
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "audience",
+    "origin": "искусственный диалог; роль задана в тесте, не определена по голосу",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "На дом нужно решить задачу 15.",
+        "speaker_role": "audience"
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "На дом нужно решить задачу 15.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "audience",
+    "expected_mac": {
+      "homework_count": 0
+    },
+    "expected_android": {
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "neighbor",
+    "origin": "искусственный диалог; роль задана в тесте, не определена по голосу",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Сосед сказал, на дом надо решить задачу 15."
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "Сосед сказал, на дом надо решить задачу 15.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "audience",
+    "expected_mac": {
+      "homework_count": 0
+    },
+    "expected_android": {
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "personal",
+    "origin": "искусственный диалог; роль задана в тесте, не определена по голосу",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Нам надо на дом решить задачу 15."
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "Нам надо на дом решить задачу 15.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "audience",
+    "expected_mac": {
+      "homework_count": 0
+    },
+    "expected_android": {
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "example",
+    "origin": "искусственный диалог; роль задана в тесте, не определена по голосу",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Представьте, на дом нужно решить задачу 15.",
+        "speaker_role": "teacher"
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "Представьте, на дом нужно решить задачу 15.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "example",
+    "expected_mac": {
+      "homework_count": 0
+    },
+    "expected_android": {
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "classwork",
+    "origin": "искусственный диалог; роль задана в тесте, не определена по голосу",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Сейчас надо решить задачу 15.",
+        "speaker_role": "teacher"
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "Сейчас надо решить задачу 15.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "classwork",
+    "expected_mac": {
+      "homework_count": 0
+    },
+    "expected_android": {
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "example_object",
+    "origin": "искусственный диалог; роль задана в тесте, не определена по голосу",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "На дом решите пример 15.",
+        "speaker_role": "teacher"
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "На дом решите пример 15.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "assignment",
+    "expected_mac": {
+      "homework_count": 1
+    },
+    "expected_android": {
+      "homework_count": 1
+    }
+  },
+  {
+    "name": "not_assignment_word",
+    "origin": "искусственный диалог; роль задана в тесте, не определена по голосу",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Домашний пример нужно прочитать.",
+        "speaker_role": "teacher"
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "Домашний пример нужно прочитать.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "classwork",
+    "expected_mac": {
+      "homework_count": 0
+    },
+    "expected_android": {
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "cancelled_classwork",
+    "origin": "искусственный диалог; роль задана в тесте, не определена по голосу",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "На дом ничего не задаю. Сейчас решите задачу 15.",
+        "speaker_role": "teacher"
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "На дом ничего не задаю. Сейчас решите задачу 15.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "cancelled",
+    "expected_mac": {
+      "homework_count": 0
+    },
+    "expected_android": {
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "future_modal",
+    "origin": "искусственная формулировка преподавателя; реального аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "К следующей паре нужно будет прочитать главу пять.",
+        "speaker_role": "teacher"
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "К следующей паре нужно будет прочитать главу пять.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "assignment",
+    "expected_mac": {
+      "homework_count": 1
+    },
+    "expected_android": {
+      "homework_count": 1
+    }
+  },
+  {
+    "name": "assignment_label",
+    "origin": "искусственная формулировка преподавателя; реального аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Домашнее задание — задача пятнадцать.",
+        "speaker_role": "teacher"
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "Домашнее задание — задача пятнадцать.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_kind": "assignment",
+    "expected_mac": {
+      "homework_count": 1
+    },
+    "expected_android": {
+      "homework_count": 1
+    }
+  }
+]

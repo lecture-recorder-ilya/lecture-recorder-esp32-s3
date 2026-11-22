@@ -58,9 +58,14 @@ def android(ref,items,jdk,jar):
             source(ref,'outputs/android/src/ru/ilya/lecturerecorder/PhoneSummaryEvidence.java') if ref else
             (ROOT/'outputs/android/src/ru/ilya/lecturerecorder/PhoneSummaryEvidence.java').read_text(),encoding='utf-8')
         (root/'EvidenceReplay.java').write_text(HARNESS,encoding='utf-8')
+        current=ROOT/'outputs/android/src/ru/ilya/lecturerecorder/HomeworkEvidence.java'
+        if ref:
+            exists=subprocess.run(['git','cat-file','-e',ref+':outputs/android/src/ru/ilya/lecturerecorder/HomeworkEvidence.java'],cwd=ROOT,capture_output=True).returncode==0
+            if exists:(root/'HomeworkEvidence.java').write_text(source(ref,'outputs/android/src/ru/ilya/lecturerecorder/HomeworkEvidence.java'),encoding='utf-8')
+        elif current.exists():(root/'HomeworkEvidence.java').write_text(current.read_text(),encoding='utf-8')
         (root/'inputs.json').write_text(json.dumps(items,ensure_ascii=False),encoding='utf-8')
         subprocess.run([jdk/'bin/javac','--release','8','-encoding','UTF-8','-cp',jar,'-d',root,
-                        root/'PhoneSummaryEvidence.java',root/'EvidenceReplay.java'],check=True,capture_output=True)
+                        *root.glob('*.java')],check=True,capture_output=True)
         result=subprocess.check_output([jdk/'bin/java','-cp',os.pathsep.join((str(root),str(jar))),
                                         'ru.ilya.lecturerecorder.EvidenceReplay',root/'inputs.json'],text=True)
         return json.loads(result)

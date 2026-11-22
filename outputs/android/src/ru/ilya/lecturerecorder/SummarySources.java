@@ -110,7 +110,7 @@ final class SummarySources {
             report.put("summary_evidence",updated);
             if(overviewDerived&&report.has("overview"))report.put("overview",TranscriptEdits.summaryOverview(points));
         }
-        for(String field:new String[]{"homework","formulas","formula_review","highlights"}) {
+        for(String field:new String[]{"homework","homework_review","formulas","formula_review","highlights"}) {
             JSONArray items=report.optJSONArray(field);if(items==null)continue;
             for(int i=0;i<items.length();i++) {
                 JSONObject anchor=items.optJSONObject(i);if(anchor==null)continue;
