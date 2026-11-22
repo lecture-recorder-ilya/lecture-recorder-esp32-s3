@@ -1,0 +1,1127 @@
+{
+  "baseline": "d31128982ce2af1ea9267bbf07751da6d6e06235",
+  "mac_asr": "aa6e01a",
+  "mac_live": "f9b87e7",
+  "environment": {
+    "hardware": "Apple M2",
+    "macos": "27.2.1",
+    "economical": false,
+    "process": "новый процесс и пустой кэш на каждый запуск"
+  },
+  "public_fixture_files_verified": 139,
+  "unique_mac_inputs": 246,
+  "scoring": "Слова сравниваются после приведения регистра, ё к е и удаления пунктуации. Цифры и пропись различаются.",
+  "mac": {
+    "controls": {
+      "before": {
+        "clips": 92,
+        "words": 1001,
+        "errors": 175,
+        "substitutions": 55,
+        "deletions": 67,
+        "insertions": 53
+      },
+      "after": {
+        "clips": 92,
+        "words": 1001,
+        "errors": 175,
+        "substitutions": 55,
+        "deletions": 67,
+        "insertions": 53
+      },
+      "changed_texts": 0,
+      "worse_cases": []
+    },
+    "units": {
+      "before": {
+        "clips": 15,
+        "words": 122,
+        "errors": 15,
+        "substitutions": 12,
+        "deletions": 2,
+        "insertions": 1
+      },
+      "after": {
+        "clips": 15,
+        "words": 122,
+        "errors": 15,
+        "substitutions": 12,
+        "deletions": 2,
+        "insertions": 1
+      },
+      "changed_texts": 0,
+      "worse_cases": []
+    },
+    "short": {
+      "before": {
+        "clips": 52,
+        "words": 123,
+        "errors": 66,
+        "substitutions": 5,
+        "deletions": 53,
+        "insertions": 8
+      },
+      "after": {
+        "clips": 52,
+        "words": 123,
+        "errors": 59,
+        "substitutions": 5,
+        "deletions": 46,
+        "insertions": 8
+      },
+      "changed_texts": 7,
+      "worse_cases": []
+    },
+    "short_originals": {
+      "before": {
+        "clips": 12,
+        "words": 83,
+        "errors": 26,
+        "substitutions": 5,
+        "deletions": 13,
+        "insertions": 8
+      },
+      "after": {
+        "clips": 12,
+        "words": 83,
+        "errors": 26,
+        "substitutions": 5,
+        "deletions": 13,
+        "insertions": 8
+      },
+      "changed_texts": 0,
+      "worse_cases": []
+    },
+    "short_crops": {
+      "before": {
+        "clips": 40,
+        "words": 40,
+        "errors": 40,
+        "substitutions": 0,
+        "deletions": 40,
+        "insertions": 0
+      },
+      "after": {
+        "clips": 40,
+        "words": 40,
+        "errors": 33,
+        "substitutions": 0,
+        "deletions": 33,
+        "insertions": 0
+      },
+      "changed_texts": 7,
+      "worse_cases": []
+    },
+    "fresh_talks": {
+      "before": {
+        "clips": 23,
+        "words": 39,
+        "errors": 8,
+        "substitutions": 5,
+        "deletions": 1,
+        "insertions": 2
+      },
+      "after": {
+        "clips": 23,
+        "words": 39,
+        "errors": 8,
+        "substitutions": 5,
+        "deletions": 1,
+        "insertions": 2
+      },
+      "changed_texts": 0,
+      "worse_cases": []
+    },
+    "fresh_farfield": {
+      "before": {
+        "clips": 24,
+        "words": 48,
+        "errors": 5,
+        "substitutions": 3,
+        "deletions": 2,
+        "insertions": 0
+      },
+      "after": {
+        "clips": 24,
+        "words": 48,
+        "errors": 5,
+        "substitutions": 3,
+        "deletions": 2,
+        "insertions": 0
+      },
+      "changed_texts": 0,
+      "worse_cases": []
+    },
+    "environmental": {
+      "before": {
+        "clips": 40,
+        "words": 0,
+        "errors": 0,
+        "substitutions": 0,
+        "deletions": 0,
+        "insertions": 0
+      },
+      "after": {
+        "clips": 40,
+        "words": 0,
+        "errors": 0,
+        "substitutions": 0,
+        "deletions": 0,
+        "insertions": 0
+      },
+      "changed_texts": 0,
+      "worse_cases": []
+    }
+  },
+  "short_word_changes": [
+    {
+      "id": "cPhc8OVB2Rk_0078-три-isolated",
+      "before": "",
+      "after": "Три."
+    },
+    {
+      "id": "cPhc8OVB2Rk_0078-три-start-5s",
+      "before": "",
+      "after": "Три."
+    },
+    {
+      "id": "cPhc8OVB2Rk_0078-три-end-5s",
+      "before": "",
+      "after": "Три."
+    },
+    {
+      "id": "dll-jtmrD70_0111-три-isolated",
+      "before": "",
+      "after": "Три."
+    },
+    {
+      "id": "dll-jtmrD70_0111-три-center-5s",
+      "before": "",
+      "after": "Три."
+    },
+    {
+      "id": "dll-jtmrD70_0111-три-quiet-center-5s",
+      "before": "",
+      "after": "Три."
+    },
+    {
+      "id": "dll-jtmrD70_0111-три-start-5s",
+      "before": "",
+      "after": "Три."
+    }
+  ],
+  "mixed_window_checks": {
+    "before": [
+      {
+        "input_sha256": "a7d7986c4dfa05b61ac9c18c9c89cbc83b99ff2559c846b006724d4ad15c303a",
+        "name": "cross-19.85",
+        "triples": []
+      },
+      {
+        "input_sha256": "319a7b18681c6d510c15c01a83e1806ed68da8671bc9951d8166f80543fc4f47",
+        "name": "cross-20.10",
+        "triples": []
+      },
+      {
+        "input_sha256": "c442f3ca305fc35b2cf51c9017f68c3d587ac27a66d63c855bf7687d958321c0",
+        "name": "cross-3.00",
+        "triples": []
+      }
+    ],
+    "after": [
+      {
+        "input_sha256": "a7d7986c4dfa05b61ac9c18c9c89cbc83b99ff2559c846b006724d4ad15c303a",
+        "name": "cross-19.85",
+        "triples": [
+          [
+            19.89,
+            20.0,
+            true
+          ]
+        ]
+      },
+      {
+        "input_sha256": "319a7b18681c6d510c15c01a83e1806ed68da8671bc9951d8166f80543fc4f47",
+        "name": "cross-20.10",
+        "triples": [
+          [
+            20.138,
+            20.298,
+            true
+          ]
+        ]
+      },
+      {
+        "input_sha256": "c442f3ca305fc35b2cf51c9017f68c3d587ac27a66d63c855bf7687d958321c0",
+        "name": "cross-3.00",
+        "triples": [
+          [
+            3.042,
+            3.202,
+            true
+          ]
+        ]
+      }
+    ]
+  },
+  "timing": {
+    "short_utterance": {
+      "audio_seconds": 0.6,
+      "input_sha256": "155c1ac7f6d32d6ed3c110428d290e7754ea60f7f57119d277e4cd27fcb7b2bc",
+      "runs": [
+        {
+          "version": "before",
+          "pair": 1,
+          "seconds": 3.314,
+          "first_phrase_seconds": 3.287,
+          "segments": 1,
+          "segments_sha256": "fa417c21a52e32da53c08921581a254dd476ba20d706e215bc392cc3e21084a4"
+        },
+        {
+          "version": "after",
+          "pair": 1,
+          "seconds": 2.537,
+          "first_phrase_seconds": 2.519,
+          "segments": 1,
+          "segments_sha256": "fa417c21a52e32da53c08921581a254dd476ba20d706e215bc392cc3e21084a4"
+        },
+        {
+          "version": "after",
+          "pair": 2,
+          "seconds": 2.541,
+          "first_phrase_seconds": 2.52,
+          "segments": 1,
+          "segments_sha256": "fa417c21a52e32da53c08921581a254dd476ba20d706e215bc392cc3e21084a4"
+        },
+        {
+          "version": "before",
+          "pair": 2,
+          "seconds": 3.314,
+          "first_phrase_seconds": 3.283,
+          "segments": 1,
+          "segments_sha256": "fa417c21a52e32da53c08921581a254dd476ba20d706e215bc392cc3e21084a4"
+        },
+        {
+          "version": "before",
+          "pair": 3,
+          "seconds": 3.266,
+          "first_phrase_seconds": 3.238,
+          "segments": 1,
+          "segments_sha256": "fa417c21a52e32da53c08921581a254dd476ba20d706e215bc392cc3e21084a4"
+        },
+        {
+          "version": "after",
+          "pair": 3,
+          "seconds": 2.45,
+          "first_phrase_seconds": 2.432,
+          "segments": 1,
+          "segments_sha256": "fa417c21a52e32da53c08921581a254dd476ba20d706e215bc392cc3e21084a4"
+        }
+      ],
+      "median_seconds": {
+        "before": 3.314,
+        "after": 2.537
+      }
+    },
+    "digital_silence": {
+      "audio_seconds": 120.0,
+      "input_sha256": "4395f2569b32c91407f267c835a96159b9d03c7a2303907ee10d716713ae1e0a",
+      "runs": [
+        {
+          "version": "before",
+          "pair": 1,
+          "seconds": 0.927,
+          "first_phrase_seconds": null,
+          "segments": 0,
+          "segments_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        {
+          "version": "after",
+          "pair": 1,
+          "seconds": 0.042,
+          "first_phrase_seconds": null,
+          "segments": 0,
+          "segments_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        {
+          "version": "after",
+          "pair": 2,
+          "seconds": 0.044,
+          "first_phrase_seconds": null,
+          "segments": 0,
+          "segments_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        {
+          "version": "before",
+          "pair": 2,
+          "seconds": 0.884,
+          "first_phrase_seconds": null,
+          "segments": 0,
+          "segments_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        {
+          "version": "before",
+          "pair": 3,
+          "seconds": 0.885,
+          "first_phrase_seconds": null,
+          "segments": 0,
+          "segments_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        {
+          "version": "after",
+          "pair": 3,
+          "seconds": 0.042,
+          "first_phrase_seconds": null,
+          "segments": 0,
+          "segments_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      ],
+      "median_seconds": {
+        "before": 0.885,
+        "after": 0.042
+      }
+    },
+    "dense_with_concurrent_builds": {
+      "audio_seconds": 41.592,
+      "input_sha256": "e4a3fc518a9fd39c4f6c0430d4af1b4ed7cce2024ce8b16ea7a6f808b76487d0",
+      "runs": [
+        {
+          "version": "before",
+          "pair": 1,
+          "seconds": 9.515,
+          "first_phrase_seconds": 5.968,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "after",
+          "pair": 1,
+          "seconds": 10.112,
+          "first_phrase_seconds": 6.046,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "after",
+          "pair": 2,
+          "seconds": 11.702,
+          "first_phrase_seconds": 7.014,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "before",
+          "pair": 2,
+          "seconds": 12.175,
+          "first_phrase_seconds": 7.622,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "before",
+          "pair": 3,
+          "seconds": 11.473,
+          "first_phrase_seconds": 6.972,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "after",
+          "pair": 3,
+          "seconds": 12.144,
+          "first_phrase_seconds": 6.985,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "after",
+          "pair": 4,
+          "seconds": 11.95,
+          "first_phrase_seconds": 7.256,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "before",
+          "pair": 4,
+          "seconds": 9.945,
+          "first_phrase_seconds": 6.492,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        }
+      ],
+      "median_seconds": {
+        "before": 10.709,
+        "after": 11.826
+      }
+    },
+    "dense": {
+      "audio_seconds": 41.592,
+      "input_sha256": "e4a3fc518a9fd39c4f6c0430d4af1b4ed7cce2024ce8b16ea7a6f808b76487d0",
+      "runs": [
+        {
+          "version": "before",
+          "pair": 1,
+          "seconds": 9.093,
+          "first_phrase_seconds": 6.217,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "after",
+          "pair": 1,
+          "seconds": 8.054,
+          "first_phrase_seconds": 5.271,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "after",
+          "pair": 2,
+          "seconds": 8.003,
+          "first_phrase_seconds": 5.166,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "before",
+          "pair": 2,
+          "seconds": 8.123,
+          "first_phrase_seconds": 5.331,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "before",
+          "pair": 3,
+          "seconds": 7.946,
+          "first_phrase_seconds": 5.169,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "after",
+          "pair": 3,
+          "seconds": 7.969,
+          "first_phrase_seconds": 5.15,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "after",
+          "pair": 4,
+          "seconds": 8.135,
+          "first_phrase_seconds": 5.363,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        },
+        {
+          "version": "before",
+          "pair": 4,
+          "seconds": 8.096,
+          "first_phrase_seconds": 5.316,
+          "segments": 10,
+          "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994"
+        }
+      ],
+      "median_seconds": {
+        "before": 8.1095,
+        "after": 8.028500000000001
+      }
+    }
+  },
+  "checkpoint_replay": {
+    "segments": 1202,
+    "timed_words": 6096,
+    "input_sha256": "4c58262246ce460884b16d8407b7cd39fdb0ef6737a53fe523babf3718a79f4a",
+    "runs": [
+      {
+        "version": "before",
+        "pair": 1,
+        "seconds": 9.0694,
+        "writes": 271,
+        "bytes": 392559789
+      },
+      {
+        "version": "after",
+        "pair": 1,
+        "seconds": 2.0894,
+        "writes": 270,
+        "bytes": 214319444
+      },
+      {
+        "version": "after",
+        "pair": 2,
+        "seconds": 2.1264,
+        "writes": 270,
+        "bytes": 214319444
+      },
+      {
+        "version": "before",
+        "pair": 2,
+        "seconds": 9.4897,
+        "writes": 271,
+        "bytes": 392559789
+      },
+      {
+        "version": "before",
+        "pair": 3,
+        "seconds": 9.6592,
+        "writes": 271,
+        "bytes": 392559789
+      },
+      {
+        "version": "after",
+        "pair": 3,
+        "seconds": 2.0937,
+        "writes": 270,
+        "bytes": 214319444
+      }
+    ]
+  },
+  "recovery": [
+    {
+      "mode": "resume",
+      "calls": [
+        377472,
+        57472
+      ],
+      "first_saved": 3,
+      "segments": 10,
+      "frames": 665472,
+      "seconds": 6.5206
+    },
+    {
+      "mode": "reuse",
+      "calls": [],
+      "first_saved": 3,
+      "segments": 10,
+      "frames": 665472,
+      "seconds": 0.0334
+    }
+  ],
+  "android_emulator": {
+    "api": 34,
+    "abi": "arm64-v8a",
+    "inputs": {
+      "model.onnx": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "seam.wav": "3a287b85ea3e7dc9a4f5b6686bde5421638fe15b3b940cce1e78a2ad31601b9e",
+      "vowel.wav": "094b32b32c08560ff2f310230087df40ce7dd1b5001e2e29a36e13981caae6b4",
+      "speechclassic.wav": "c389793c12c012a7d0cd9612ed2e6d237e285d34c21a9b873b386c5a32477253",
+      "speech.wav": "155c1ac7f6d32d6ed3c110428d290e7754ea60f7f57119d277e4cd27fcb7b2bc",
+      "typing.wav": "f72dc926f75b55a39b87ef2987f88613981c253bde641f3165dc8932f4840b72",
+      "rain.wav": "1e6956ae83df3901fd603010cb5a0bbe8a788765875eb879522a999c680dac8f"
+    },
+    "rows": {
+      "before": {
+        "seam": [
+          {
+            "text": "Три.",
+            "start": 0,
+            "end": 19.52,
+            "needs_review": false
+          },
+          {
+            "text": "Три.",
+            "start": 15.52,
+            "end": 25,
+            "needs_review": false
+          }
+        ],
+        "vowel": [
+          {
+            "text": "Небо.",
+            "start": 0.04,
+            "end": 20.46,
+            "needs_review": true
+          },
+          {
+            "text": "Небо.",
+            "start": 16.5,
+            "end": 25,
+            "needs_review": true
+          }
+        ],
+        "speechclassic": [
+          {
+            "text": "Спасибо.",
+            "start": 0,
+            "end": 0.6,
+            "needs_review": false
+          }
+        ],
+        "typing": [],
+        "rain": []
+      },
+      "after": {
+        "seam": [
+          {
+            "text": "Три.",
+            "start": 18,
+            "end": 18.240000000000002,
+            "needs_review": false
+          }
+        ],
+        "vowel": [
+          {
+            "text": "Небо.",
+            "start": 17.68,
+            "end": 17.92,
+            "needs_review": true
+          }
+        ],
+        "speech": [
+          {
+            "text": "Спасибо.",
+            "start": 0,
+            "end": 0.4,
+            "needs_review": false
+          }
+        ],
+        "speechclassic": [
+          {
+            "text": "Спасибо.",
+            "start": 0,
+            "end": 0.4,
+            "needs_review": false
+          }
+        ],
+        "typing": [],
+        "rain": []
+      }
+    },
+    "errors_before": {
+      "speech": "java.io.IOException: Нужна моно запись PCM 16 кГц"
+    },
+    "errors_after": {},
+    "timeline_commit": "63b5d10",
+    "pcm_commit": "817f61f"
+  },
+  "android_jvm": {
+    "seams": {
+      "summary_before": {
+        "clips": 18,
+        "reference_words": 126,
+        "word_errors": 18,
+        "wer": 0.14285714285714285,
+        "hallucinated_words": 0,
+        "noise_cases": 0,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 7,
+          "deletions": 0,
+          "insertions": 11
+        },
+        "duration_seconds": 450.0,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 3
+        },
+        "negations": {
+          "missed": 6,
+          "extra": 0
+        }
+      },
+      "summary_after": {
+        "clips": 18,
+        "reference_words": 126,
+        "word_errors": 11,
+        "wer": 0.0873015873015873,
+        "hallucinated_words": 0,
+        "noise_cases": 0,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 7,
+          "deletions": 0,
+          "insertions": 4
+        },
+        "duration_seconds": 450.0,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 6,
+          "extra": 0
+        }
+      },
+      "changed_text": 7,
+      "changed_timestamps": 18,
+      "changed_flags_or_groups": 16,
+      "regressions": [],
+      "review_membership": {
+        "unchanged_words_compared": 130,
+        "newly_marked": 3,
+        "no_longer_marked": 0,
+        "flagged_phrases_before": 9,
+        "flagged_phrases_after": 10
+      },
+      "passes_before": {
+        "primary_calls": 36,
+        "clean_calls": 0,
+        "onset_calls": 0
+      },
+      "passes_after": {
+        "primary_calls": 36,
+        "clean_calls": 0,
+        "onset_calls": 0
+      }
+    },
+    "short": {
+      "summary_before": {
+        "clips": 52,
+        "reference_words": 123,
+        "word_errors": 47,
+        "wer": 0.3821138211382114,
+        "hallucinated_words": 0,
+        "noise_cases": 0,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 27,
+          "deletions": 7,
+          "insertions": 13
+        },
+        "duration_seconds": 200.06,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 1
+        },
+        "negations": {
+          "missed": 11,
+          "extra": 0
+        }
+      },
+      "summary_after": {
+        "clips": 52,
+        "reference_words": 123,
+        "word_errors": 47,
+        "wer": 0.3821138211382114,
+        "hallucinated_words": 0,
+        "noise_cases": 0,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 27,
+          "deletions": 7,
+          "insertions": 13
+        },
+        "duration_seconds": 200.06,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 1
+        },
+        "negations": {
+          "missed": 11,
+          "extra": 0
+        }
+      },
+      "changed_text": 0,
+      "changed_timestamps": 48,
+      "changed_flags_or_groups": 2,
+      "regressions": [],
+      "review_membership": {
+        "unchanged_words_compared": 129,
+        "newly_marked": 0,
+        "no_longer_marked": 0,
+        "flagged_phrases_before": 23,
+        "flagged_phrases_after": 24
+      },
+      "passes_before": {
+        "primary_calls": 52,
+        "clean_calls": 9,
+        "onset_calls": 0
+      },
+      "passes_after": {
+        "primary_calls": 52,
+        "clean_calls": 9,
+        "onset_calls": 0
+      }
+    },
+    "control99": {
+      "summary_before": {
+        "clips": 99,
+        "reference_words": 1110,
+        "word_errors": 171,
+        "wer": 0.15405405405405406,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 66,
+          "deletions": 35,
+          "insertions": 70
+        },
+        "duration_seconds": 567.061,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 10,
+          "extra": 8
+        },
+        "negations": {
+          "missed": 4,
+          "extra": 1
+        }
+      },
+      "summary_after": {
+        "clips": 99,
+        "reference_words": 1110,
+        "word_errors": 171,
+        "wer": 0.15405405405405406,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 66,
+          "deletions": 35,
+          "insertions": 70
+        },
+        "duration_seconds": 567.061,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 10,
+          "extra": 8
+        },
+        "negations": {
+          "missed": 4,
+          "extra": 1
+        }
+      },
+      "changed_text": 0,
+      "changed_timestamps": 91,
+      "changed_flags_or_groups": 17,
+      "regressions": [],
+      "review_membership": {
+        "unchanged_words_compared": 1145,
+        "newly_marked": 0,
+        "no_longer_marked": 2,
+        "flagged_phrases_before": 22,
+        "flagged_phrases_after": 22
+      },
+      "passes_before": {
+        "primary_calls": 101,
+        "clean_calls": 53,
+        "onset_calls": 0
+      },
+      "passes_after": {
+        "primary_calls": 101,
+        "clean_calls": 53,
+        "onset_calls": 0
+      }
+    },
+    "noise24": {
+      "summary_before": {
+        "clips": 24,
+        "reference_words": 0,
+        "word_errors": 0,
+        "wer": null,
+        "hallucinated_words": 2,
+        "noise_cases": 24,
+        "failed_noise_cases": 2,
+        "word_error_breakdown": {
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0
+        },
+        "duration_seconds": 120.0,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "summary_after": {
+        "clips": 24,
+        "reference_words": 0,
+        "word_errors": 0,
+        "wer": null,
+        "hallucinated_words": 2,
+        "noise_cases": 24,
+        "failed_noise_cases": 2,
+        "word_error_breakdown": {
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0
+        },
+        "duration_seconds": 120.0,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "changed_text": 0,
+      "changed_timestamps": 2,
+      "changed_flags_or_groups": 0,
+      "regressions": [],
+      "review_membership": {
+        "unchanged_words_compared": 2,
+        "newly_marked": 0,
+        "no_longer_marked": 0,
+        "flagged_phrases_before": 2,
+        "flagged_phrases_after": 2
+      },
+      "passes_before": {
+        "primary_calls": 24,
+        "clean_calls": 0,
+        "onset_calls": 5
+      },
+      "passes_after": {
+        "primary_calls": 24,
+        "clean_calls": 0,
+        "onset_calls": 5
+      }
+    }
+  },
+  "tests": {
+    "count": 161,
+    "failed": [],
+    "files": [
+      {
+        "file": "test_power_budget.py",
+        "code": 0,
+        "tests": 5
+      },
+      {
+        "file": "test_speech_gate.py",
+        "code": 0,
+        "tests": 6
+      },
+      {
+        "file": "test_asr_pipeline.py",
+        "code": 0,
+        "tests": 9
+      },
+      {
+        "file": "test_qwen_pipeline.py",
+        "code": 0,
+        "tests": 7
+      },
+      {
+        "file": "test_asr_guard.py",
+        "code": 0,
+        "tests": 10
+      },
+      {
+        "file": "test_asr_improvements.py",
+        "code": 0,
+        "tests": 23
+      },
+      {
+        "file": "test_beam_alignment.py",
+        "code": 0,
+        "tests": 6
+      },
+      {
+        "file": "test_quality_refinement.py",
+        "code": 0,
+        "tests": 8
+      },
+      {
+        "file": "test_asr_units.py",
+        "code": 0,
+        "tests": 3
+      },
+      {
+        "file": "test_term_hints.py",
+        "code": 0,
+        "tests": 6
+      },
+      {
+        "file": "test_asr_evaluation.py",
+        "code": 0,
+        "tests": 7
+      },
+      {
+        "file": "test_context_review.py",
+        "code": 0,
+        "tests": 13
+      },
+      {
+        "file": "test_stock_speech.py",
+        "code": 0,
+        "tests": 5
+      },
+      {
+        "file": "test_brief_speech.py",
+        "code": 0,
+        "tests": 8
+      },
+      {
+        "file": "test_audio_enhancement.py",
+        "code": 0,
+        "tests": 14
+      },
+      {
+        "file": "test_live_draft.py",
+        "code": 0,
+        "tests": 2
+      },
+      {
+        "file": "test_android_pcm_wave.py",
+        "code": 0,
+        "tests": 3
+      },
+      {
+        "file": "test_android_token_times.py",
+        "code": 0,
+        "tests": 9
+      },
+      {
+        "file": "test_android_token_report.py",
+        "code": 0,
+        "tests": 4
+      },
+      {
+        "file": "test_pcm_resampler.py",
+        "code": 0,
+        "tests": 0
+      },
+      {
+        "file": "test_speech_context.py",
+        "code": 0,
+        "tests": 8
+      },
+      {
+        "file": "test_transcript_corrector.py",
+        "code": 0,
+        "tests": 5
+      }
+    ]
+  },
+  "apk_sha256": "bb3885a6fbc1ea2bc881133f7780fc06dad44d9ba341c297649542f32ca3c960"
+}
