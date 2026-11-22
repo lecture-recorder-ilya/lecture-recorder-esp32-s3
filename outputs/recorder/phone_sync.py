@@ -44,15 +44,17 @@ def request(base,token,route,data=None,extra=None,timeout=None):
  body=json.dumps(data).encode() if data is not None else None
  headers=auth_headers(token,'POST' if body is not None else 'GET',route,body or b'',extra)
  return urlopen(Request(base+route,data=body,headers=headers),timeout=timeout if timeout is not None else 300 if route == '/notes' else 60)
-def request_file(base,token,route,path):
+def request_file(base,token,route,path,expected_digest=None):
  if token in REVOKED:raise PermissionError('Сопряжение с телефоном удалено')
  with path.open('rb') as body:
   size=os.fstat(body.fileno()).st_size;sha=hashlib.sha256()
   if not 0<size<=80*1024*1024:raise ValueError('Недопустимый размер APK')
   for block in iter(lambda:body.read(65536),b''):sha.update(block)
+  digest=sha.hexdigest()
+  if expected_digest is not None and digest!=expected_digest:raise ValueError('APK в кэше изменился')
   body.seek(0)
-  headers=auth_headers(token,'POST',route,body_digest=sha.hexdigest())
-  headers.update({'Content-Type':'application/vnd.android.package-archive','Content-Length':str(size),'X-Lecture-Body-SHA256':sha.hexdigest()})
+  headers=auth_headers(token,'POST',route,body_digest=digest)
+  headers.update({'Content-Type':'application/vnd.android.package-archive','Content-Length':str(size),'X-Lecture-Body-SHA256':digest})
   with urlopen(Request(base+route,data=body,headers=headers,method='POST'),timeout=90) as response:
    return json.loads(response.read(8192))
 def discover_wifi(token):

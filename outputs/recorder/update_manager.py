@@ -11,10 +11,13 @@ import ssl
 import threading
 import time
 import zipfile
+from http.client import HTTPException
 from pathlib import Path, PurePosixPath
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen, build_opener, HTTPSHandler, HTTPRedirectHandler
 from urllib.parse import urlsplit
+from android_packages import ASSETS, STABLE, apk_identity, cache_folder
+from phone_sync import digest as file_digest
 from update_auth import AUTH
 
 PROJECT = Path(__file__).resolve().parents[2]
@@ -112,15 +115,25 @@ def headers():
     return value
 
 
-def download_asset(asset, target):
-    expected = asset.get('digest', '')
-    if not re.fullmatch(r'sha256:[a-f0-9]{64}', expected) or not 0 < asset.get('size', 0) <= MAX_BYTES:
+def asset_digest(asset):
+    digest, size = asset.get('digest'), asset.get('size')
+    if (not isinstance(digest, str) or not re.fullmatch(r'sha256:[a-f0-9]{64}', digest)
+            or type(size) is not int or not 0 < size <= MAX_BYTES):
         raise ValueError('Нет проверяемой контрольной суммы обновления')
+    return digest[7:]
+
+
+def download_asset(asset, target):
+    expected = asset_digest(asset)
     target.parent.mkdir(parents=True, exist_ok=True)
     temp = target.with_suffix('.part')
     values = headers()
     values['Accept'] = 'application/octet-stream'
-    url = f'https://api.github.com/repos/{REPOSITORY}/releases/assets/{int(asset["id"])}'
+    try:
+        asset_id = int(asset['id'])
+    except (KeyError, ValueError, TypeError) as error:
+        raise ValueError('Некорректный идентификатор файла релиза') from error
+    url = f'https://api.github.com/repos/{REPOSITORY}/releases/assets/{asset_id}'
     digest, size = hashlib.sha256(), 0
     try:
         with fetch(Request(url, headers=values), timeout=60) as response, temp.open('wb') as out:
@@ -131,7 +144,7 @@ def download_asset(asset, target):
                 out.write(block)
             out.flush()
             os.fsync(out.fileno())
-        if size != asset['size'] or digest.hexdigest() != expected[7:]:
+        if size != asset['size'] or digest.hexdigest() != expected:
             raise ValueError('Контрольная сумма обновления не совпала')
         os.replace(temp, target)
     finally:
@@ -139,21 +152,50 @@ def download_asset(asset, target):
     return digest.hexdigest()
 
 
+def cache_android_asset(asset, tag, package, folder):
+    expected = asset_digest(asset)
+    target = folder / 'update.apk'
+    staged = folder / 'candidate.apk'
+    cached = target.is_file() and target.stat().st_size == asset['size'] and file_digest(target) == expected
+    try:
+        if not cached:
+            download_asset(asset, staged)
+        actual, code = apk_identity(target if cached else staged)
+        if actual != package:
+            raise ValueError('Имя пакета в APK отличается от канала обновления')
+        if not cached:
+            staged.replace(target)
+        meta = dict(tag=tag, package=package, code=code, digest=asset['digest'], size=asset['size'])
+        if read(folder / 'ready.json') != meta:
+            atomic(folder / 'ready.json', meta)
+    finally:
+        staged.unlink(missing_ok=True)
+
+
 def cache_android(release, project=PROJECT):
-    asset = next((a for a in release.get('assets', []) if a.get('name') == 'lecture-recorder.apk'), None)
-    if not asset: return
-    folder = project/'work/updates/android'
-    target = folder/'update.apk'
-    cached = read(folder/'ready.json')
-    expected = asset.get('digest', '')
-    if (cached.get('digest') == expected and target.is_file()
-            and hashlib.sha256(target.read_bytes()).hexdigest() == expected.removeprefix('sha256:')): return
-    download_asset(asset, target)
-    with zipfile.ZipFile(target) as apk:
-        if 'AndroidManifest.xml' not in apk.namelist():
-            target.unlink(missing_ok=True)
-            raise ValueError('Получен некорректный APK')
-    atomic(folder/'ready.json', dict(tag=release.get('tag_name'), digest=expected, size=asset['size']))
+    assets = {a.get('name'): a for a in release.get('assets', []) if isinstance(a, dict)}
+    work = project / 'work'
+    root = cache_folder(work, STABLE)
+    root.mkdir(parents=True, exist_ok=True)
+    available = False
+    failed = []
+    with (root / 'refresh.lock').open('a') as guard:
+        fcntl.flock(guard, fcntl.LOCK_EX)
+        for package, name in ASSETS.items():
+            folder = cache_folder(work, package)
+            try:
+                if name not in assets:
+                    (folder / 'ready.json').unlink(missing_ok=True)
+                    (folder / 'update.apk').unlink(missing_ok=True)
+                    continue
+                cache_android_asset(assets[name], release.get('tag_name'), package, folder)
+                available = True
+            except (ValueError, OSError, HTTPException):
+                failed.append(name)
+    messages = ['APK доступен сопряжённому телефону'] if available else []
+    if failed:
+        messages.append('Не удалось проверить ' + ', '.join(failed))
+    return ' · '.join(messages) or 'В релизе нет APK для телефона'
 
 
 def download_release(project=PROJECT):
@@ -165,10 +207,10 @@ def download_release(project=PROJECT):
         release = json.loads(response.read(2 * 1024 * 1024))
     if release.get('draft') or release.get('prerelease'):
         return
-    cache_android(release, project)
+    apk_status = cache_android(release, project)
     tag = release.get('tag_name', '')
     if tag == 'v' + read(project / 'release.json').get('version', ''):
-        STATE.update(message='На Mac последняя версия · APK доступен сопряжённому телефону')
+        STATE.update(message='На Mac последняя версия · ' + apk_status)
         return
     asset = next((a for a in release.get('assets', []) if a['name'] == 'lecture-mac-update.zip'), None)
     if not asset:
@@ -183,7 +225,8 @@ def download_release(project=PROJECT):
         raise ValueError('Версия пакета отличается от тега релиза')
     os.replace(downloaded, archive)
     atomic(folder / 'pending.json', dict(meta, sha256=digest))
-    STATE.update(pending=True, version=meta['version'], message='Обновление скачано · установлю после записи и обработки')
+    STATE.update(pending=True, version=meta['version'],
+                 message='Обновление скачано · установлю после записи и обработки · ' + apk_status)
 
 
 def idle(service_url):

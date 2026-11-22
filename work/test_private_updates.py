@@ -2,16 +2,47 @@ import hashlib
 import hmac
 import io
 import json
+import struct
 import sys
 import tempfile
 import time
 import threading
 import unittest
+import zipfile
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import patch, Mock
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'outputs/recorder'))
 import update_auth, update_manager, phone_sync, phone_updates
+from android_packages import ASSETS, PREVIEW, STABLE, apk_identity, cache_folder, installed_package
+
+
+def apk_fixture(package=STABLE, code=12, utf8=False):
+    """Build a ZIP containing a binary Android manifest with two root attributes."""
+    strings = ('manifest', 'package', package, 'versionCode', 'http://schemas.android.com/apk/res/android')
+    offsets, data = [], bytearray()
+    for value in strings:
+        offsets.append(len(data))
+        if utf8:
+            encoded = value.encode('utf-8')
+            data.extend(bytes((len(value), len(encoded))) + encoded + b'\0')
+        else:
+            data.extend(struct.pack('<H', len(value)) + value.encode('utf-16le') + b'\0\0')
+    data.extend(b'\0' * (-len(data) % 4))
+    start = 28 + 4 * len(strings)
+    pool = struct.pack('<HHIIIIII', 1, 28, start + len(data), len(strings), 0, 0x100 if utf8 else 0, start, 0)
+    pool += struct.pack('<5I', *offsets) + data
+    none = 0xffffffff
+    attrs = struct.pack('<IIIHBBI', none, 1, 2, 8, 0, 3, 2)
+    attrs += struct.pack('<IIIHBBI', 4, 3, none, 8, 0, 0x10, code)
+    root = struct.pack('<HHIII', 0x102, 16, 36 + len(attrs), 1, none)
+    root += struct.pack('<IIHHHHHH', none, 0, 20, 20, 2, 0, 0, 0) + attrs
+    end = struct.pack('<HHIIIII', 0x103, 16, 24, 1, none, none, 0)
+    manifest = struct.pack('<HHI', 3, 8, 8 + len(pool + root + end)) + pool + root + end
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, 'w') as apk:
+        apk.writestr('AndroidManifest.xml', manifest)
+    return out.getvalue()
 
 class Vault:
  def __init__(self):self.value={}
@@ -81,7 +112,7 @@ class Transfer(unittest.TestCase):
   finally:server.shutdown();server.server_close()
  def test_phone_skip_current_busy_rejected_and_already_received(self):
   with tempfile.TemporaryDirectory() as d:
-   root=Path(d);folder=root/'updates/android';folder.mkdir(parents=True);data=b'fixture';sha=hashlib.sha256(data).hexdigest()
+   root=Path(d);folder=root/'updates/android';folder.mkdir(parents=True);data=apk_fixture();sha=hashlib.sha256(data).hexdigest()
    (folder/'update.apk').write_bytes(data);(folder/'ready.json').write_text(json.dumps({'tag':'v0.5.1','digest':'sha256:'+sha}))
    for status in ({'installed_tag':'v0.5.1'},{'recording':True},{'sha256':sha},{'rejected_digest':sha}):
     phone_updates.LAST.clear()
@@ -93,5 +124,151 @@ class Transfer(unittest.TestCase):
  def test_anonymous_private_check_requests_login(self):
   with patch.object(update_manager,'headers',return_value={}),patch.object(update_manager,'fetch') as fetch:
    update_manager.download_release();fetch.assert_not_called();self.assertIn('GitHub',update_manager.STATE['message'])
+
+class AndroidChannels(unittest.TestCase):
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.project = Path(temp.name)
+        self.work = self.project / 'work'
+        self.stable = apk_fixture()
+        self.preview = apk_fixture(PREVIEW, 23, utf8=True)
+        self.assets = {ASSETS[STABLE]: self.stable, ASSETS[PREVIEW]: self.preview}
+        self.addCleanup(phone_updates.LAST.clear)
+
+    def refresh(self, assets, tag='v0.5.5'):
+        rows, bodies = [], {}
+        for index, (name, body) in enumerate(assets.items(), 1):
+            sha = hashlib.sha256(body).hexdigest()
+            rows.append(dict(id=index, name=name, size=len(body), digest='sha256:' + sha))
+            bodies[str(index)] = body
+        def fetch(req, **kwargs):
+            return io.BytesIO(bodies[req.full_url.rsplit('/', 1)[1]])
+        with patch.object(update_manager, 'headers', return_value={}), patch.object(update_manager, 'fetch', side_effect=fetch) as network:
+            message = update_manager.cache_android(dict(assets=rows, tag_name=tag), self.project)
+            return message, network.call_count
+
+    def transfer(self, status):
+        self.posted = []
+        def respond(req, **kwargs):
+            self.assertEqual(req.full_url, 'http://fixture/app-update')
+            if req.get_method() == 'GET':
+                return io.BytesIO(json.dumps(status).encode())
+            body = req.data.read()
+            self.posted.append(body)
+            sha = hashlib.sha256(body).hexdigest()
+            self.assertEqual(req.get_header('X-lecture-body-sha256'), sha)
+            return io.BytesIO(json.dumps(dict(sha256=sha)).encode())
+        phone_updates.LAST.clear()
+        with patch.object(phone_sync, 'urlopen', side_effect=respond), patch.dict(phone_sync.state):
+            phone_updates.push('http://fixture', 'fixture', self.work)
+        return self.posted
+
+    def test_matches_explicit_packages_and_known_legacy_builds(self):
+        self.refresh(self.assets)
+        for status, expected in [
+            ({'installed_package': STABLE}, self.stable),
+            ({'installed_package': PREVIEW}, self.preview),
+            ({}, self.stable),
+            ({'installed_tag': 'v0.5.3', 'installed_code': 10}, self.stable),
+            ({'installed_tag': 'v0.5.4', 'installed_code': 11}, self.stable),
+            ({'installed_tag': 'v0.5.4', 'installed_code': 22}, self.preview),
+            ({'installed_tag': 'v0.5.3-ai.1', 'installed_code': 11}, self.preview),
+            ({'installed_tag': 'v0.5.3-ai.11', 'installed_code': 21}, self.preview),
+        ]:
+            with self.subTest(status=status):
+                self.assertEqual(self.transfer(status), [expected])
+        self.assertEqual(installed_package(dict(installed_tag='v0.5.3-ai.1', installed_code=10)), STABLE)
+        self.assertEqual(installed_package(dict(installed_package=STABLE, installed_tag='v0.5.4', installed_code=22)), STABLE)
+
+    def test_unknown_explicit_package_never_falls_back(self):
+        self.refresh(self.assets)
+        for package in ('', None, [], STABLE + '.other', '../preview', STABLE.upper()):
+            with self.subTest(package=package):
+                self.assertEqual(self.transfer(dict(installed_package=package, installed_tag='v0.5.4', installed_code=22)), [])
+
+    def test_stable_cache_from_old_mac_works_offline(self):
+        folder = self.work / 'updates/android'
+        folder.mkdir(parents=True)
+        for body, expected in [(self.stable, [self.stable]), (self.preview, []), (b'bad APK', [])]:
+            (folder / 'update.apk').write_bytes(body)
+            sha = hashlib.sha256(body).hexdigest()
+            (folder / 'ready.json').write_text(json.dumps(dict(tag='v0.5.5', digest='sha256:' + sha)))
+            self.assertEqual(self.transfer({}), expected)
+            self.assertEqual(self.transfer(dict(installed_package=PREVIEW)), [])
+
+    def test_absent_channel_is_withdrawn_without_substitution(self):
+        self.refresh(self.assets)
+        self.refresh({ASSETS[STABLE]: self.stable})
+        self.assertEqual(self.transfer(dict(installed_tag='v0.5.4', installed_code=22)), [])
+        self.assertEqual(self.transfer(dict(installed_package=PREVIEW)), [])
+        self.assertEqual(self.transfer({}), [self.stable])
+        self.refresh({ASSETS[PREVIEW]: self.preview})
+        self.assertEqual(self.transfer({}), [])
+        self.assertEqual(self.transfer(dict(installed_package=PREVIEW)), [self.preview])
+
+    def test_mislabeled_assets_never_replace_verified_apks(self):
+        self.refresh({ASSETS[STABLE]: self.stable})
+        message, _ = self.refresh({ASSETS[STABLE]: self.preview, ASSETS[PREVIEW]: self.stable}, tag='v0.5.6')
+        self.assertIn(ASSETS[STABLE], message)
+        self.assertIn(ASSETS[PREVIEW], message)
+        self.assertEqual(self.transfer({}), [self.stable])
+        self.assertEqual(self.transfer(dict(installed_package=PREVIEW)), [])
+        stable = cache_folder(self.work, STABLE)
+        self.assertEqual(json.loads((stable / 'ready.json').read_text())['tag'], 'v0.5.5')
+        self.assertFalse((stable / 'candidate.apk').exists())
+
+    def test_refresh_reuses_valid_files_and_repairs_corruption(self):
+        self.assertEqual(self.refresh(self.assets)[1], 2)
+        self.assertEqual(self.refresh(self.assets, tag='v0.5.6')[1], 0)
+        for package, code in [(STABLE, 12), (PREVIEW, 23)]:
+            folder = cache_folder(self.work, package)
+            meta = json.loads((folder / 'ready.json').read_text())
+            self.assertEqual((meta['package'], meta['code'], meta['tag']), (package, code, 'v0.5.6'))
+            self.assertEqual(apk_identity(folder / 'update.apk'), (package, code))
+        (cache_folder(self.work, PREVIEW) / 'update.apk').write_bytes(bytes(len(self.preview)))
+        self.assertEqual(self.refresh(self.assets)[1], 1)
+        self.assertEqual(self.transfer(dict(installed_package=PREVIEW)), [self.preview])
+
+    def test_version_code_compared_with_actual_apk(self):
+        self.refresh(self.assets)
+        self.assertEqual(self.transfer(dict(installed_package=STABLE, installed_tag='v0.5.5', installed_code=11)), [self.stable])
+        for code in (12, 13):
+            self.assertEqual(self.transfer(dict(installed_package=STABLE, installed_code=code)), [])
+
+    def test_replacement_between_selection_and_post_is_never_sent(self):
+        self.refresh(self.assets)
+        original = phone_sync.request_file
+        def replace_file(base, token, route, path, **kwargs):
+            path.write_bytes(self.preview)
+            return original(base, token, route, path, **kwargs)
+        with patch.object(phone_sync, 'request_file', side_effect=replace_file):
+            with self.assertRaisesRegex(ValueError, 'APK в кэше изменился'):
+                self.transfer(dict(installed_package=STABLE))
+        self.assertEqual(self.posted, [])
+
+    def test_interrupted_cache_publication_recovers_on_next_check(self):
+        self.refresh({ASSETS[STABLE]: self.stable})
+        newer = apk_fixture(STABLE, 13)
+        assets = {ASSETS[STABLE]: newer}
+        with patch.object(update_manager, 'atomic', side_effect=OSError('disk full')):
+            self.assertIn(ASSETS[STABLE], self.refresh(assets, tag='v0.5.6')[0])
+        with self.assertRaisesRegex(ValueError, 'APK в кэше изменился'):
+            self.transfer({})
+        self.assertEqual(self.posted, [])
+        self.assertEqual(self.refresh(assets, tag='v0.5.6')[1], 0)
+        self.assertEqual(self.transfer({}), [newer])
+
+    def test_invalid_compiled_manifest_is_never_cached(self):
+        with zipfile.ZipFile(io.BytesIO(self.stable)) as apk:
+            valid = apk.read('AndroidManifest.xml')
+        for manifest in (b'', b'<manifest package="ru.ilya.lecturerecorder"/>',
+                         valid[:-1], valid[:12] + b'\0\0\0\0' + valid[16:]):
+            body = io.BytesIO()
+            with zipfile.ZipFile(body, 'w') as apk:
+                apk.writestr('AndroidManifest.xml', manifest)
+            self.assertIn(ASSETS[STABLE], self.refresh({ASSETS[STABLE]: body.getvalue()})[0])
+            self.assertEqual(self.transfer({}), [])
+
 
 if __name__=='__main__':unittest.main()

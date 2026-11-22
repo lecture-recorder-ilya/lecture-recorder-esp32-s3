@@ -27,7 +27,8 @@ final class AppUpdates {
  static JSONObject info(Context c)throws Exception{
   android.content.SharedPreferences p=c.getSharedPreferences("updates",0);
   PackageInfo installed=c.getPackageManager().getPackageInfo(c.getPackageName(),0);
-  return new JSONObject().put("installed_tag","v"+installed.versionName).put("installed_code",installed.versionCode)
+  return new JSONObject().put("installed_package",c.getPackageName())
+   .put("installed_tag","v"+installed.versionName).put("installed_code",installed.versionCode)
    .put("sha256",ready(c)?p.getString("sha256",""):"").put("recording",CaptureService.recording)
    .put("rejected_digest",p.getString("rejected_digest","")).put("message",status);
  }

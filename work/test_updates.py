@@ -42,6 +42,17 @@ class Updates(unittest.TestCase):
   with u.install_lock(self.root):
    thread=threading.Thread(target=startup);thread.start();self.assertTrue(attempted.wait(1));self.assertFalse(done.wait(.1))
   thread.join(2);self.assertTrue(done.is_set())
+ def test_bad_optional_android_asset_does_not_hold_mac_update(self):
+  archive=self.package().read_bytes();folder=self.root/'work/updates';(folder/'pending.json').unlink()
+  broken=b'not an APK'
+  assets=[dict(id=i,name=name,size=len(body),digest='sha256:'+hashlib.sha256(body).hexdigest())
+          for i,(name,body) in enumerate([('lecture-recorder-android.apk',broken),('lecture-mac-update.zip',archive)],1)]
+  release=json.dumps(dict(tag_name='v2.0',assets=assets)).encode()
+  with patch.object(u,'headers',return_value={'Authorization':'Bearer fixture'}),patch.object(u,'fetch',side_effect=map(io.BytesIO,(release,broken,archive))):
+   u.download_release(self.root)
+  self.assertEqual(u.read(folder/'pending.json')['sha256'],hashlib.sha256(archive).hexdigest())
+  self.assertFalse((folder/'android/preview/ready.json').exists())
+  self.assertIn('lecture-recorder-android.apk',u.STATE['message'])
  def test_update_waits_for_pairing_before_restarting(self):
   for active in (True,False):
    server=SimpleNamespace(service_url='http://fixture',pairing=SimpleNamespace(public=lambda:{'active':active}),install_requested=False,shutdown=Mock())
