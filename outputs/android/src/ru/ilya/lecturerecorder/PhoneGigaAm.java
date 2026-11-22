@@ -73,7 +73,7 @@ final class PhoneGigaAm {
                         double first = start / (double) RATE, last = end / (double) RATE;
                         double offset = left / (double) RATE;
                         JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);
-                        if (level < .05f || weak(words)) {
+                        if (shouldRefine(level, words)) {
                             job.check();
                             float[] clean = PhoneSpeechWindow.clean(raw);
                             JSONArray alternate = recognize(environment, frontend, acoustic, clean, tokens, offset, first, last, true);
@@ -172,6 +172,12 @@ final class PhoneGigaAm {
             wave[i] = sample / 32768f;
         }
         return wave;
+    }
+
+    static boolean shouldRefine(float level, JSONArray words) throws Exception {
+        // С одним словом нет соседнего якоря: reconcile не может ни заменить,
+        // ни пометить его. Пустой проход также не получает слов из alternate.
+        return words.length() >= 2 && (level < .05f || weak(words));
     }
 
     private static boolean weak(JSONArray words) throws Exception {
