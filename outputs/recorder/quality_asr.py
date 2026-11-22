@@ -9,6 +9,19 @@ ENGINE='GigaAM-v3-3pass-phrases-v14-quiet'
 def ready():
  return all(p.exists() for p in [MODEL/'v3_e2e_ctc.int8.onnx',MODEL/'v3_e2e_ctc_vocab.txt',PROJECT/'work/models/gigaam-manifest.json',RNNT/'v3_e2e_rnnt_encoder.onnx',RNNT/'v3_e2e_rnnt_decoder.onnx',RNNT/'v3_e2e_rnnt_joint.onnx',RNNT/'v3_e2e_rnnt_vocab.txt',PROJECT/'work/models/gigaam-rnnt-manifest.json',CHAR/'v3_ctc.onnx',CHAR/'v3_vocab.txt',PROJECT/'work/models/gigaam-beam-manifest.json'])
 
+def needs_character_check(words, terms, ctc, rnnt, one_window):
+    from asr_units import NUMBER, shared_unit_marks
+    from context_review import accepts_alternatives
+
+    if terms or any(word['confidence'] < .8 for word in words):
+        return True
+    if not one_window:
+        return any(word['confidence'] < .9 or NUMBER.fullmatch(word['text']) for word in words)
+    if len(words) > 1 and any(accepts_alternatives(word) for word in words):
+        return True
+    return any(NUMBER.fullmatch(word['text']) for word in words) and shared_unit_marks(ctc, rnnt)
+
+
 class Decoder:
  def __init__(self, threads=None):
   from power_budget import decoder_threads
@@ -44,7 +57,7 @@ class Decoder:
   from speech_gate import SpeechProfile, anchored_speech_ranges, speech_profile
   from asr_guard import prepare,supported_words,join_words,choose_candidate,refine_words,speech_windows,lexical,unrecognized_voice
   from asr_terms import apply_terms
-  from asr_units import NUMBER, restore_spoken_units
+  from asr_units import restore_spoken_units
   from brief_speech import confirmed_brief_words
   from context_review import acoustic_evidence
   from quiet_speech import confirmed_quiet_words
@@ -87,10 +100,8 @@ class Decoder:
      selected=self._retry_original(samples[begin:finish],audio,local,emit_start-left,emit_end-left)
      if selected:kind='original'
     character=[]
-    single = len(windows) == 1 and len(selected) == 1 and not brief
-    check_characters = (terms or any(w['confidence'] < (.8 if single else .9) or NUMBER.fullmatch(w['text'])
-                                     for w in selected))
-    if selected and kind!='original' and confidence>=.85 and check_characters:
+    if (selected and kind!='original' and confidence>=.85
+        and needs_character_check(selected,terms,ctc_result,rnnt_result,len(windows)==1 and not brief)):
      result=self._load('char').recognize(audio,sample_rate=16000)
      character=supported_words(result,local,emit_start-left,emit_end-left)
     raw=[dict(word) for word in selected]

@@ -76,12 +76,17 @@ def known(word):
         return False  # Without dictionary, permit only independently repeated terms.
 
 
+def accepts_alternatives(word):
+    key = lexical(word['text'])
+    return word['confidence'] < .9 and len(key) >= 3 and not protected(key)
+
+
 def acoustic_evidence(primary, alternatives):
     """Keep small, aligned alternatives, including confident context anchors."""
     evidence = []
     for i, word in enumerate(primary):
         options = []
-        for source, words in alternatives:
+        for source, words in (alternatives if accepts_alternatives(word) else ()):
             nearby = [(j, w) for j, w in enumerate(words)
                       if abs(w['start'] - word['start']) <= .35]
             if not nearby:
@@ -94,9 +99,8 @@ def acoustic_evidence(primary, alternatives):
                            for d in (-1, 1))
             before, after = lexical(word['text']), lexical(other['text'])
             delta = distance(before, after)
-            if (anchored and word['confidence'] < .9 and other['confidence'] >= .6
-                    and not protected(before) and not protected(after)
-                    and min(len(before), len(after)) >= 3
+            if (anchored and other['confidence'] >= .6 and not protected(after)
+                    and len(after) >= 3
                     and 0 < delta <= 3 and delta / max(len(before), len(after)) <= .5):
                 options.append({'text': other['text'], 'source': source,
                                 'confidence': round(other['confidence'], 3)})

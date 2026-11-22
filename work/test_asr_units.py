@@ -33,6 +33,21 @@ class SpokenUnits(unittest.TestCase):
                 self.assertEqual(changes[0]['source'], 'spoken-unit-consensus')
                 self.assertEqual(self.primary, [word('700', .20, .68)])
 
+    def test_character_pass_keeps_weak_words_terms_and_confirmed_units(self):
+        from quality_asr import needs_character_check
+
+        def check(words, right='₽', terms=(), one_window=True):
+            return needs_character_check(words, terms, symbol('₽'), symbol(right), one_window)
+
+        self.assertTrue(check(self.primary))
+        self.assertFalse(check(self.primary, right='%'))
+        self.assertTrue(check(self.primary, right='%', one_window=False))
+        self.assertTrue(check([word('не', 0, .1, .79)]))
+        self.assertFalse(check([word('не', 0, .1, .84), word('к', .2, .3, .86)]))
+        self.assertTrue(check([word('не', 0, .1, .84)], terms=['предел']))
+        self.assertTrue(check([word('вероятность', 0, .4, .89), word('равна', .5, .7)]))
+        self.assertFalse(check([word('вероятность', 0, .4, .89)]))
+
     def test_disagreement_low_scores_and_other_time(self):
         for second, heard in [(symbol('$'), self.heard), (symbol('₽', 1.5), self.heard),
                               (symbol('₽', score=-1), self.heard), (symbol(' ₽'), []),

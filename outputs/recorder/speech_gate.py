@@ -26,21 +26,19 @@ def _probabilities(samples):
     values = np.asarray(samples)
     if values.ndim == 1 and not np.any(values):
         return []
-    from silero_vad import load_silero_vad
+    from vad_onnx import VoiceDetector
     audio = normalize_audio(samples)
     with _LOCK:
         if _MODEL is None:
-            _MODEL = load_silero_vad(sequence=True)
+            _MODEL = VoiceDetector()
         return _MODEL.audio_forward(audio).tolist()
 
 
 def _ranges(probabilities, length, settings):
     if not len(probabilities):
         return []
-    from silero_vad import get_speech_timestamps_from_probs
-    rows = get_speech_timestamps_from_probs(probabilities, sampling_rate=16000,
-                                            audio_length_samples=length, **settings)
-    return [(row['start']/16000, row['end']/16000) for row in rows]
+    from vad_onnx import speech_intervals
+    return speech_intervals(probabilities, length, **settings)
 
 
 def _anchored(core, weak):

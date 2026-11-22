@@ -91,9 +91,17 @@ class BriefSpeechTests(unittest.TestCase):
         with patch.object(self.decoder, '_load', side_effect=models.__getitem__):
             self.assertEqual(self.decoder.transcribe(samples, speech=profile), '')
 
+    def test_character_pass_keeps_spoken_currency_after_a_number(self):
+        profile = SpeechProfile([(0., 1.)], [(0., 1.)], [(0., 1.)])
+        signs = result(['15', ' ₽'], [.22, .60])
+        models = model_set(ctc=signs, rnnt=signs, char=result(['15', ' рублей'], [.22, .60]))
+        with patch.object(self.decoder, '_load', side_effect=models.__getitem__):
+            self.assertEqual(self.decoder.transcribe(self.audio, speech=profile), '15 рублей')
+        self.assertEqual(models['char'].recognize.call_count, 1)
+
     def test_skip_character_model_only_when_review_and_units_cannot_use_it(self):
         profile = SpeechProfile([(0., 1.)], [(0., 1.)], [(0., 1.)])
-        for token, terms, confidence, calls in [('Мир.', [], .88, 0), ('15', [], .96, 1),
+        for token, terms, confidence, calls in [('Мир.', [], .88, 0), ('15', [], .96, 0),
                                                ('Мир.', ['предел'], .96, 1), ('Мир.', [], .74, 1)]:
             models = model_set(ctc=result([token], [.22]), rnnt=result([token], [.22], confidence),
                                char=result([token], [.22]))

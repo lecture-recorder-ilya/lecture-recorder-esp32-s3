@@ -64,6 +64,19 @@ class SignalTests(unittest.TestCase):
         result = enhance_audio(audio, [(0, 3)], level=False)
         self.assertGreater(rms(result[16000:32000]) / rms(audio[16000:32000]), .98)
 
+    def test_spectrum_is_computed_only_with_enough_background_frames(self):
+        from scipy.signal import stft
+        samples = np.random.default_rng(9).normal(0, .02, 16003)
+        times = stft(samples, fs=16000, nperseg=512, noverlap=384)[1]
+        for count in (24, 25):
+            boundary = times[times < len(samples) / 16000 - .032][-count] - .004
+            for level in (True, False):
+                with self.subTest(count=count, level=level), patch('scipy.signal.stft', wraps=stft) as transform:
+                    result = enhance_audio(samples, [(0, boundary - .16)], level=level)
+                    self.assertEqual(transform.call_count, int(count >= 25))
+                    self.assertEqual(len(result), len(samples))
+                    self.assertTrue(np.isfinite(result).all())
+
     def test_strong_profile_is_bounded_and_reduces_more_noise(self):
         audio = self.fixture()
         gentle = enhance_audio(audio, [(1, 3), (4, 7)], level=False)

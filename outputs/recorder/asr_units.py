@@ -32,6 +32,11 @@ def _marks(result):
     return marks
 
 
+def shared_unit_marks(ctc, rnnt):
+    first = {sign for sign, _, _ in _marks(ctc)}
+    return bool(first) and any(sign in first for sign, _, _ in _marks(rnnt))
+
+
 def restore_spoken_units(words, ctc, rnnt, character):
     heard = [(w, FORMS[key]) for w in character if w['confidence'] >= .85
              and (key := lexical(w['text'])) in FORMS]
