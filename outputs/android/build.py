@@ -154,15 +154,14 @@ def main():
         aligned = build / "aligned.apk"
         run(tools / "zipalign", "-P", "16", "-f", "4", apk, aligned)
 
-        key = TOOLS / "preview.keystore" if args.preview else Path(
-            os.environ.get("LECTURE_KEYSTORE", TOOLS / "lectures.keystore")
-        )
-        if args.preview:
-            env["LECTURE_KEY_PASSWORD"] = "android"
-        else:
-            env.setdefault("LECTURE_KEY_PASSWORD", "android")
+        key_variable = "LECTURE_PREVIEW_KEYSTORE" if args.preview else "LECTURE_KEYSTORE"
+        key_default = "preview.keystore" if args.preview else "lectures.keystore"
+        key = Path(os.environ.get(key_variable, TOOLS / key_default))
+        if args.preview and "LECTURE_PREVIEW_KEY_PASSWORD" in env:
+            env["LECTURE_KEY_PASSWORD"] = env["LECTURE_PREVIEW_KEY_PASSWORD"]
+        env.setdefault("LECTURE_KEY_PASSWORD", "android")
         if not key.exists():
-            if not args.preview and "LECTURE_KEYSTORE" in os.environ:
+            if key_variable in os.environ:
                 raise SystemExit("Указанный ключ подписи не найден")
             run(jdk / "bin/keytool", "-genkeypair", "-keystore", key, "-storepass:env", "LECTURE_KEY_PASSWORD",
                 "-keypass:env", "LECTURE_KEY_PASSWORD", "-alias", "lectures", "-dname", "CN=Ilya Lecture Recorder",

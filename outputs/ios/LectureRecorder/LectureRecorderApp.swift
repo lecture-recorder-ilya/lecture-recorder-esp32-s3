@@ -133,7 +133,8 @@ struct SettingsScreen: View {
                     Text("Открой приложение рядом с Mac. Новые записи и расшифровки переносятся по Wi-Fi автоматически. После подтверждения Mac аудиокопия остаётся в библиотеке телефона.")
                     Text("В фоне iOS может приостановить перенос. Продолжающаяся запись сохраняется локально.")
                     Text("Версии приложения для iPhone устанавливаются через TestFlight или App Store. APK для Android сюда не подходит.")
-                    Text("Версия 0.5.3 · iOS / iPadOS 16+").font(.footnote).foregroundStyle(.secondary)
+                    let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+                    Text("Версия \(version) · iOS / iPadOS 16+").font(.footnote).foregroundStyle(.secondary)
                 }
             }.navigationTitle("Настройки")
             .confirmationDialog("Отключить Mac? Записи и тексты останутся на телефоне.", isPresented: $disconnect) { Button("Отключить Mac", role: .destructive) { model.disconnect() } }
