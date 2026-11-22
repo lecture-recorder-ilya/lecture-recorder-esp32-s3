@@ -532,7 +532,7 @@ final class AudioTranscriptPage extends LinearLayout {
         replacement.setTextColor(TEXT);
         replacement.setTextSize(18);
         replacement.setPadding(dp(12), dp(6), dp(12), dp(6));
-        replacement.setBackground(surface(0xff2b2d33, 10));
+        replacement.setBackground(surface(StudioStyle.CONTROL, 10));
         replacement.setText(word.value);
         replacement.setSelectAllOnFocus(true);
         sheet.addView(replacement, spaced(-1, dp(50), 12));
@@ -551,7 +551,7 @@ final class AudioTranscriptPage extends LinearLayout {
             else saveWord(editor, recording, line, index, value);
         };
         Button save = button("Сохранить", commit);
-        save.setTextColor(0xff21130e);
+        save.setTextColor(StudioStyle.INK);
         save.setBackground(StudioStyle.control(activity, ACCENT, 12));
         LinearLayout.LayoutParams saveLayout = new LinearLayout.LayoutParams(0, dp(48), 1);
         saveLayout.leftMargin = dp(8);

@@ -1,6 +1,7 @@
 package ru.ilya.lecturerecorder;
 
 import android.content.Context;
+import android.animation.ValueAnimator;
 import android.content.res.ColorStateList;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
@@ -10,20 +11,24 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
+import android.view.View;
+import android.view.animation.PathInterpolator;
 import android.widget.TextView;
 
 final class StudioStyle {
-    static final int BACKGROUND = 0xff0c0d12;
-    static final int PANEL = 0xff161821;
-    static final int CONTROL = 0xff232633;
-    static final int LINE = 0xff303343;
-    static final int TEXT = 0xfff5f3f8;
-    static final int MUTED = 0xffadafc2;
-    static final int ACCENT = 0xffc5b5ff;
-    static final int ACTIVE = 0xff2c2441;
-    static final int LIME = 0xffd9fb83;
-    static final int INK = 0xff171b12;
-    static final int[] SPECTRUM = {0xff7867ee, 0xffb188ff, 0xffed72bc, 0xffffaa79, 0xffffdb96};
+    static final int BACKGROUND = 0xff10131c;
+    static final int PANEL = 0xff191e2b;
+    static final int CONTROL = 0xff222939;
+    static final int LINE = 0xff343d52;
+    static final int TEXT = 0xfff4f6fc;
+    static final int MUTED = 0xffa9b3c9;
+    static final int ACCENT = 0xffc4c6ff;
+    static final int ACTIVE = 0xff303653;
+    static final int RECORDING = 0xffffb2a5;
+    static final int GOOD = 0xff9fdfc6;
+    static final int WARNING = 0xfff3c287;
+    static final int INK = 0xff1d2040;
+    static final int[] SPECTRUM = {0xff747ed2, 0xffa9afff, 0xffc4c6ff, 0xffffb2a5, 0xfff3c287};
 
     private StudioStyle() {}
 
@@ -42,6 +47,29 @@ final class StudioStyle {
         GradientDrawable drawable = surface(context, PANEL, radius);
         drawable.setStroke(dp(context, 1), LINE);
         return drawable;
+    }
+
+    static GradientDrawable recorderCard(Context context) {
+        GradientDrawable drawable = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[] {0xff252c43, PANEL, PANEL});
+        drawable.setCornerRadius(dp(context, 22));
+        drawable.setStroke(dp(context, 1), LINE);
+        return drawable;
+    }
+
+    static void settle(View view) {
+        view.animate().cancel();
+        view.setAlpha(1f);
+        view.setTranslationY(0);
+    }
+
+    static void enter(View view, boolean opening) {
+        settle(view);
+        if (!ValueAnimator.areAnimatorsEnabled()) return;
+        view.setAlpha(.86f);
+        view.setTranslationY(dp(view.getContext(), opening ? 8 : 4));
+        view.animate().alpha(1f).translationY(0).setDuration(opening ? 210 : 155)
+                .setInterpolator(new PathInterpolator(.22f, .75f, .24f, 1f)).start();
     }
 
     static Drawable control(Context context, int color, int radius) {

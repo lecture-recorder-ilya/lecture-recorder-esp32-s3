@@ -16,6 +16,7 @@ def main():
         'CFBundleName': '$(PRODUCT_NAME)', 'CFBundlePackageType': 'APPL',
         'CFBundleShortVersionString': version['version'], 'CFBundleVersion': str(version['code']),
         'LSRequiresIPhoneOS': True, 'UILaunchScreen': {}, 'UIBackgroundModes': ['audio'],
+        'UIUserInterfaceStyle': 'Dark',
         'NSMicrophoneUsageDescription': 'Запись лекций микрофоном телефона. Аудио сохраняется на устройстве.',
         'NSLocalNetworkUsageDescription': 'Подключение к твоему Mac для переноса записей, расшифровок и конспектов.',
         'NSAppTransportSecurity': {'NSAllowsLocalNetworking': True},

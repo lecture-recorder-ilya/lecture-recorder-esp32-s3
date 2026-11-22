@@ -42,6 +42,7 @@ public class MainActivity extends Activity {
  private ChoiceDropdown transport;
  private final Handler timer=new Handler();
  private int selectedPage=0;
+ private boolean pageShown;
  private static final int AUDIO_PAGE=1;
  private final View[] pages=new View[3];
  private final Button[] tabs=new Button[3];
@@ -75,7 +76,7 @@ public class MainActivity extends Activity {
   button.setMinHeight(dp(48));
   button.setMinimumHeight(dp(48));
   button.setPadding(dp(12),dp(12),dp(12),dp(12));
-  button.setBackground(StudioStyle.control(this,primary?StudioStyle.LIME:StudioStyle.CONTROL,14));
+  button.setBackground(StudioStyle.control(this,primary?accent:StudioStyle.CONTROL,14));
   LinearLayout.LayoutParams layout=new LinearLayout.LayoutParams(-1,-2);
   layout.topMargin=dp(8);
   button.setLayoutParams(layout);
@@ -103,9 +104,11 @@ public class MainActivity extends Activity {
  }
  private void showPage(int index){
   if(index!=0){transport.close();stopPresenceCheck();}
+  boolean entering=!pageShown||selectedPage!=index;
   selectedPage=index;
   for(int i=0;i<pages.length;i++){
    boolean active=i==index;
+   if(!active&&pages[i].getVisibility()==View.VISIBLE)StudioStyle.settle(pages[i]);
    pages[i].setVisibility(active?View.VISIBLE:View.GONE);
    tabs[i].setSelected(active);
    int color=active?accent:muted;
@@ -116,6 +119,8 @@ public class MainActivity extends Activity {
   meter.setRecording(index==0&&CaptureService.recording);
   audioPage.setActive(resumed&&index==AUDIO_PAGE);
   if(index==0&&resumed)refreshConnection();
+  if(entering)StudioStyle.enter(pages[index],!pageShown);
+  pageShown=true;
  }
  @Override public void onCreate(Bundle saved){
   super.onCreate(saved);if(saved!=null){pendingPhoto=saved.getString("pending_photo");selectedPage=saved.getInt("page",0);if(selectedPage==3)selectedPage=AUDIO_PAGE;deviceExpanded=saved.getBoolean("device_expanded");deviceCharge=saved.getInt("device_charge",-1);}try{CaptureService.provision(this);}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
@@ -127,6 +132,7 @@ public class MainActivity extends Activity {
   addConnectionPanel(record);
   if(saved!=null)deviceModel.setYaw(saved.getFloat("device_rotation",-.30f));
   LinearLayout hero=card(record);
+  hero.setBackground(StudioStyle.recorderCard(this));
 
   TextView timerLabel=note("Длительность");
   hero.addView(timerLabel);
@@ -165,7 +171,7 @@ public class MainActivity extends Activity {
   hero.addView(start);
   stop=button("Завершить и сохранить",()->startForegroundService(CaptureService.command(this,"STOP")));
   stop.setTextColor(StudioStyle.INK);
-  stop.setBackground(StudioStyle.control(this,0xffffa3be,14));
+  stop.setBackground(StudioStyle.control(this,StudioStyle.RECORDING,14));
   stop.setVisibility(View.GONE);
   hero.addView(stop);
 
@@ -208,7 +214,9 @@ public class MainActivity extends Activity {
   LinearLayout.LayoutParams navigation=new LinearLayout.LayoutParams(-1,-2);
   navigation.setMargins(dp(12),0,dp(12),dp(8));
   root.addView(nav,navigation);
+  if(saved!=null)pageShown=true;
   showPage(Math.max(0,Math.min(pages.length-1,selectedPage)));
+  if(saved==null)StudioStyle.enter(nav,true);
   if(Build.VERSION.SDK_INT>=33){
    android.window.OnBackInvokedCallback callback=()->{
     if(!handleBack()&&(!isTaskRoot()||!moveTaskToBack(false)))finish();
@@ -403,7 +411,10 @@ public class MainActivity extends Activity {
   int from=deviceReveal.getVisibility()==View.VISIBLE?deviceReveal.getHeight():0;
   int width=deviceReveal.getWidth();
   if(width<=0)width=((View)deviceReveal.getParent()).getWidth()-dp(28);
-  if(width<=0){
+  if(width<=0||!ValueAnimator.areAnimatorsEnabled()){
+   ViewGroup.LayoutParams layout=deviceReveal.getLayoutParams();
+   layout.height=ViewGroup.LayoutParams.WRAP_CONTENT;
+   deviceReveal.setLayoutParams(layout);
    deviceReveal.setVisibility(expanded?View.VISIBLE:View.GONE);
    return;
   }
@@ -458,10 +469,10 @@ public class MainActivity extends Activity {
   if(displayedLink!=link){
    int color;
    switch(link){
-    case CONNECTED:color=0xff57ce87;break;
-    case CONNECTING:color=0xff629cff;break;
-    case ERROR:color=0xffe8bc53;break;
-    default:color=0xff767981;break;
+    case CONNECTED:color=StudioStyle.GOOD;break;
+    case CONNECTING:color=accent;break;
+    case ERROR:color=StudioStyle.WARNING;break;
+    default:color=muted;break;
    }
    linkDot.setColor(color);
    displayedLink=link;

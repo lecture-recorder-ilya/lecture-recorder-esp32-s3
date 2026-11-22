@@ -10,8 +10,65 @@ import UniformTypeIdentifiers
                 LibraryScreen(model: model).tabItem { Label("Библиотека", systemImage: "books.vertical") }
                 SettingsScreen(model: model).tabItem { Label("Настройки", systemImage: "gearshape") }
             }
-            .tint(Color(red: 1, green: 0.35, blue: 0.23)).preferredColorScheme(.dark)
+            .tint(Studio.accent)
+            .preferredColorScheme(.dark)
         }
+    }
+}
+
+private enum Studio {
+    static let background = Color(red: 16 / 255, green: 19 / 255, blue: 28 / 255)
+    static let panel = Color(red: 25 / 255, green: 30 / 255, blue: 43 / 255)
+    static let hero = Color(red: 37 / 255, green: 44 / 255, blue: 67 / 255)
+    static let line = Color(red: 52 / 255, green: 61 / 255, blue: 82 / 255)
+    static let ink = Color(red: 29 / 255, green: 32 / 255, blue: 64 / 255)
+    static let muted = Color(red: 169 / 255, green: 179 / 255, blue: 201 / 255)
+    static let accent = Color(red: 196 / 255, green: 198 / 255, blue: 1)
+    static let recording = Color(red: 1, green: 178 / 255, blue: 165 / 255)
+    static let warning = Color(red: 243 / 255, green: 194 / 255, blue: 135 / 255)
+}
+
+private struct ScreenEntry: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var entered = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(entered || reduceMotion ? 1 : 0.86)
+            .offset(y: entered || reduceMotion ? 0 : 7)
+            .onAppear {
+                guard !entered else { return }
+                withAnimation(reduceMotion ? nil : .timingCurve(0.22, 0.75, 0.24, 1, duration: 0.21)) {
+                    entered = true
+                }
+            }
+    }
+}
+
+private struct RecordButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.isEnabled) private var enabled
+    let color: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .padding(.horizontal, 12)
+            .foregroundStyle(Studio.ink)
+            .background(color, in: RoundedRectangle(cornerRadius: 14))
+            .opacity(enabled ? (configuration.isPressed ? 0.84 : 1) : 0.45)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.985 : 1)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+private extension View {
+    func studioScreen() -> some View {
+        self
+            .background(Studio.background.ignoresSafeArea())
+            .toolbarBackground(Studio.background, for: .navigationBar, .tabBar)
+            .toolbarBackground(.visible, for: .navigationBar, .tabBar)
     }
 }
 
@@ -22,23 +79,59 @@ func clock(_ value: Double) -> String {
 
 struct RecordScreen: View {
     @ObservedObject var model: PhoneModel
+    @ScaledMetric(relativeTo: .largeTitle) private var timerSize = 52.0
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    Text("Сохрани пару. Вернись к главному.").foregroundStyle(.secondary)
-                    VStack(spacing: 20) {
-                        Label(model.recording ? "Идёт запись" : "Микрофон телефона", systemImage: model.recording ? "record.circle.fill" : "mic.fill")
-                        Text(clock(model.seconds)).font(.system(size: 46, weight: .medium, design: .monospaced)).minimumScaleFactor(0.6)
-                        Button(model.recording ? "Завершить и сохранить" : "Начать запись") { if model.recording { model.stopRecording() } else { model.startRecording() } }
-                            .buttonStyle(.borderedProminent).controlSize(.large).disabled(model.busy)
-                        Text("Запись остаётся на телефоне. Mac и ESP для записи не нужны.").font(.footnote).foregroundStyle(.secondary)
-                    }.frame(maxWidth: .infinity).padding(24).background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 22))
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Label(model.recording ? "Идёт запись" : "Микрофон телефона",
+                              systemImage: model.recording ? "record.circle.fill" : "mic.fill")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(model.recording ? Studio.recording : Studio.accent)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Длительность записи").font(.caption).foregroundStyle(Studio.muted)
+                            Text(clock(model.seconds))
+                                .font(.system(size: timerSize, weight: .medium, design: .monospaced))
+                                .minimumScaleFactor(0.55)
+                                .lineLimit(1)
+                                .accessibilityLabel("Длительность записи")
+                                .accessibilityValue(clock(model.seconds))
+                        }
+                        Button(model.recording ? "Завершить и сохранить" : "Начать запись") {
+                            if model.recording { model.stopRecording() } else { model.startRecording() }
+                        }
+                        .buttonStyle(RecordButtonStyle(color: model.recording ? Studio.recording : Studio.accent))
+                        .disabled(model.busy)
+                        Text("Запись сохраняется на телефоне.").font(.footnote).foregroundStyle(Studio.muted)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(24)
+                    .background(
+                        LinearGradient(colors: [Studio.hero, Studio.panel, Studio.panel],
+                                       startPoint: .topLeading, endPoint: .bottomTrailing),
+                        in: RoundedRectangle(cornerRadius: 22)
+                    )
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 22).strokeBorder(Studio.line)
+                            .allowsHitTesting(false)
+                    }
                     Text(model.message).font(.callout).accessibilityAddTraits(.updatesFrequently)
-                    if model.recording { Text("Экран можно заблокировать. Звонок или системное прерывание завершит и сохранит доступный звук.").font(.footnote).foregroundStyle(.secondary) }
-                    Text("Очистка, расшифровка с таймкодами и конспект готовятся на Mac после переноса.").foregroundStyle(.secondary)
-                }.padding(20)
-            }.navigationTitle("Новая запись")
+                    if model.recording {
+                        Text("Экран можно заблокировать. Звонок или системное прерывание завершит запись и сохранит доступный звук.")
+                            .font(.footnote).foregroundStyle(Studio.muted)
+                    }
+                    Text("Очистка, расшифровка с таймкодами и конспект готовятся на Mac после переноса.")
+                        .font(.footnote).foregroundStyle(Studio.muted)
+                }
+                .frame(maxWidth: 620)
+                .padding(20)
+                .frame(maxWidth: .infinity)
+                .modifier(ScreenEntry())
+            }
+            .navigationTitle("Новая запись")
+            .studioScreen()
         }
     }
 }
@@ -52,27 +145,45 @@ struct LibraryScreen: View {
                 Section {
                     Button { importing = true } label: { Label("Загрузить аудио или видео", systemImage: "square.and.arrow.down") }.disabled(model.busy || model.recording)
                     Text(model.message).font(.footnote).foregroundStyle(.secondary)
+                        .listRowBackground(Studio.panel)
                 }
                 if !model.drafts.isEmpty {
                     Section("Незавершённые записи") {
-                        ForEach(model.drafts, id: \.path) { file in Button("Восстановить запись") { model.importAudio(file, removeDraft: true) }.disabled(model.busy || model.recording) }
+                        ForEach(model.drafts, id: \.path) { file in
+                            Button("Восстановить запись") { model.importAudio(file, removeDraft: true) }
+                                .disabled(model.busy || model.recording)
+                                .listRowBackground(Studio.panel)
+                        }
                     }
                 }
                 Section("Расшифровки и конспекты") {
-                    if model.notes.isEmpty { Text("Появятся после обработки на Mac").foregroundStyle(.secondary) }
-                    ForEach(model.notes) { note in NavigationLink(note.report.topic ?? note.report.subject ?? "Занятие") { ReaderScreen(model: model, note: note) } }
+                    if model.notes.isEmpty {
+                        Text("Появятся после обработки на Mac").foregroundStyle(Studio.muted)
+                            .listRowBackground(Studio.panel)
+                    }
+                    ForEach(model.notes) { note in
+                        NavigationLink(note.report.topic ?? note.report.subject ?? "Занятие") {
+                            ReaderScreen(model: model, note: note)
+                        }.listRowBackground(Studio.panel)
+                    }
                 }
                 Section("Аудиозаписи") {
-                    if model.recordings.isEmpty { Text("Пока нет записей").foregroundStyle(.secondary) }
+                    if model.recordings.isEmpty {
+                        Text("Пока нет записей").foregroundStyle(Studio.muted).listRowBackground(Studio.panel)
+                    }
                     ForEach(model.recordings, id: \.path) { file in
                         VStack(alignment: .leading, spacing: 10) {
                             Text(file.lastPathComponent.replacingOccurrences(of: "lecture-", with: "").replacingOccurrences(of: ".wav", with: "")).font(.subheadline)
                             HStack { Button { model.play(file) } label: { Label("Слушать", systemImage: "play.fill") }.buttonStyle(.bordered); ShareLink(item: file) { Image(systemName: "square.and.arrow.up").accessibilityLabel("Поделиться записью") }.buttonStyle(.bordered) }
-                        }.padding(.vertical, 6)
+                        }.padding(.vertical, 6).listRowBackground(Studio.panel)
                     }
-                    Button("Остановить воспроизведение") { model.stopPlayback() }
+                    Button("Остановить воспроизведение") { model.stopPlayback() }.listRowBackground(Studio.panel)
                 }
-            }.navigationTitle("Библиотека")
+            }
+            .scrollContentBackground(.hidden)
+            .modifier(ScreenEntry())
+            .navigationTitle("Библиотека")
+            .studioScreen()
             .fileImporter(isPresented: $importing, allowedContentTypes: [.audio, .movie], allowsMultipleSelection: false) { result in
                 switch result { case .success(let files): if let file = files.first { model.importAudio(file) }; case .failure(let error): model.message = error.localizedDescription }
             }
@@ -97,16 +208,24 @@ struct ReaderScreen: View {
                         VStack(alignment: .leading, spacing: 8) {
                             if let start = segment.start { Text(clock(start)).font(.caption.monospacedDigit()).foregroundStyle(.secondary) }
                             Text(segment.text).foregroundStyle(.primary).multilineTextAlignment(.leading)
-                            if segment.needs_review == true { Label("Проверь по записи", systemImage: "ear.badge.exclamationmark").font(.caption).foregroundStyle(.orange) }
+                            if segment.needs_review == true { Label("Проверь по записи", systemImage: "ear.badge.exclamationmark").font(.caption).foregroundStyle(Studio.warning) }
                         }.padding(.vertical, 6)
                     }.buttonStyle(.plain).disabled(model.files.localAudio(note.file) == nil || model.recording)
+                        .listRowBackground(Studio.panel)
                 }
             } else {
-                if let overview = current.report.overview, !overview.isEmpty { Text(overview) }
-                ForEach(Array((current.report.summary ?? []).enumerated()), id: \.offset) { _, point in Text(point) }
+                if let overview = current.report.overview, !overview.isEmpty { Text(overview).listRowBackground(Studio.panel) }
+                ForEach(Array((current.report.summary ?? []).enumerated()), id: \.offset) { _, point in
+                    Text(point).listRowBackground(Studio.panel)
+                }
             }
             Button("Остановить звук") { model.stopPlayback() }
-        }.navigationTitle(current.report.topic ?? current.report.subject ?? "Занятие").navigationBarTitleDisplayMode(.inline)
+        }
+        .scrollContentBackground(.hidden)
+        .modifier(ScreenEntry())
+        .navigationTitle(current.report.topic ?? current.report.subject ?? "Занятие")
+        .navigationBarTitleDisplayMode(.inline)
+        .studioScreen()
     }
 }
 
@@ -136,7 +255,11 @@ struct SettingsScreen: View {
                     let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
                     Text("Версия \(version) · iOS / iPadOS 16+").font(.footnote).foregroundStyle(.secondary)
                 }
-            }.navigationTitle("Настройки")
+            }
+            .scrollContentBackground(.hidden)
+            .modifier(ScreenEntry())
+            .navigationTitle("Настройки")
+            .studioScreen()
             .confirmationDialog("Отключить Mac? Записи и тексты останутся на телефоне.", isPresented: $disconnect) { Button("Отключить Mac", role: .destructive) { model.disconnect() } }
         }
     }

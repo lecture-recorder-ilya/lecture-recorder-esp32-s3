@@ -109,6 +109,7 @@ public class LectureReaderActivity extends Activity {
         setContentView(page);
         scroll.requestFocus();
         page.requestApplyInsets();
+        if (saved == null) StudioStyle.enter(body, true);
     }
 
     private void addNavigation(LinearLayout page, boolean landscape) {
@@ -136,6 +137,7 @@ public class LectureReaderActivity extends Activity {
                 contentScroll = 0;
                 updateTabs();
                 render();
+                StudioStyle.enter(body, false);
             });
             tabButtons[index] = button;
             tabs.addView(button, new LinearLayout.LayoutParams(0, dp(42), 1));
@@ -235,10 +237,10 @@ public class LectureReaderActivity extends Activity {
         JSONArray sources = report.optJSONArray("summary_evidence");
         boolean hasPoints = points != null && points.length() > 0;
         if (!overview.isEmpty()) {
-            TextView lead = text(overview, 16, 0xff27231f);
+            TextView lead = text(overview, 16, TEXT);
             lead.setLineSpacing(dp(5), 1);
             lead.setPadding(dp(16), dp(14), dp(16), dp(14));
-            lead.setBackground(surface(0xffeee4d3, 18));
+            lead.setBackground(surface(ACTIVE, 18));
             body.addView(lead, spaced(-1, -2, 10));
         }
         if (hasPoints) {

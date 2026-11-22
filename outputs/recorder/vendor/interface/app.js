@@ -13,10 +13,9 @@
  const create=(tag,cls,text)=>{const e=document.createElement(tag);e.className=cls;if(text)e.textContent=text;return e};
  document.body.classList.add('organized');
  header.className='app-header';
- intro.textContent='Слушай на паре. Возвращайся к главному.';
- intro.className='app-subtitle';
+ intro.hidden=true;
  const nav=create('nav','app-nav');nav.setAttribute('aria-label','Разделы приложения');
- const brand=create('div','brand','Пары');const brandNote=create('small','','Личный архив занятий');brand.append(brandNote);nav.append(brand);
+ const brand=create('div','brand','Пары');nav.append(brand);
  const views={};const buttons={};
  const navIcons={record:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',library:'<path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/>',settings:'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/>'};
  const options=[['record','Запись','Микрофон и контроль звука'],['library','Библиотека','Темы и краткие конспекты'],['settings','Настройки','Подключение и разбор']];
@@ -34,7 +33,7 @@
  }
  window.showLectureView=show;
  const heading=(view,title,description)=>{const box=create('div','view-intro');box.append(create('h2','',title),create('p','muted',description));view.append(box)};
- heading(views.record,'Новая запись','Подключи микрофон и начни запись. Аудио сохраняется целиком.');
+ heading(views.record,'Новая запись','Выбери источник звука и начни запись.');
  views.record.append(recording);
  recording.classList.add('recorder-hero');livePanel.classList.remove('card');livePanel.classList.add('monitor-card');
  const previewPanel=create('details','card preview-panel');previewPanel.append(create('summary','','Расшифровка и контроль звука'),livePanel);views.record.append(previewPanel);let previousActive=null;window.syncRecordingPreview=s=>{const active=Boolean(s.recording);if(active!==previousActive){if(active)previewPanel.open=true;else if(previousActive===true)previewPanel.open=false;previousActive=active;}};
@@ -46,7 +45,7 @@
  footnote.textContent='Можно закрыть приложение — запись продолжится. Перед отключением микрофона нажми «Завершить запись».';
  views.record.append(footnote);
  document.querySelector('#start').textContent='Начать запись';document.querySelector('#stop').textContent='Завершить запись';
- const timerCaption=create('div','timer-caption','ДЛИТЕЛЬНОСТЬ ЗАПИСИ');document.querySelector('#timer').before(timerCaption);
+ const timerCaption=create('div','timer-caption','Длительность записи');document.querySelector('#timer').before(timerCaption);
  const heroHelp=create('p','hero-help','Запись ещё не началась');recording.append(heroHelp);
  function state(){
   const text=document.querySelector('#status').textContent;

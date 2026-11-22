@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="LectureTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#10131c</item>
+        <item name="android:colorAccent">#c4c6ff</item>
+        <item name="android:statusBarColor">#10131c</item>
+        <item name="android:navigationBarColor">#10131c</item>
+    </style>
+</resources>

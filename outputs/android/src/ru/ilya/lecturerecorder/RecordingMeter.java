@@ -62,7 +62,7 @@ final class RecordingMeter extends View {
                     canvas.drawRoundRect(x - width / 2, y - width / 2, x + width / 2, y + width / 2,
                             .22f * width, .22f * width, paint);
                 } else {
-                    paint.setColor(row == 0 ? 0xff48425b : 0xff2a283a);
+                    paint.setColor(row == 0 ? StudioStyle.LINE : StudioStyle.CONTROL);
                     canvas.drawCircle(x, y, width * .23f, paint);
                 }
             }
