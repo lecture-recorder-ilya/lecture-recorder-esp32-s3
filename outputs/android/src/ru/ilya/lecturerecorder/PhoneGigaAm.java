@@ -19,13 +19,13 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.regex.Pattern;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 final class PhoneGigaAm {
     private static final int RATE = PcmWave.SAMPLE_RATE;
@@ -69,10 +69,15 @@ final class PhoneGigaAm {
             try (OrtSession frontend = environment.createSession(readFrontend(context), options);
                  OrtSession acoustic = environment.createSession(model.getPath(), options)) {
                 if (workers == 1) {
+                    int completed = -1;
                     for (long start = 0; start < total; ) {
                         job.check();
                         Window window = window(input, data, total, start);
-                        job.update("Распознаю речь · " + (100 * start / total) + "%");
+                        int percent = (int)(100 * start / total);
+                        if (percent != completed) {
+                            completed = percent;
+                            job.update("Распознаю речь · " + percent + "%");
+                        }
                         phrases.accept(decode(job, environment, frontend, acoustic, tokens, window));
                         start = window.end;
                     }
