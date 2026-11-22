@@ -22,6 +22,18 @@ def needs_character_check(words, terms, ctc, rnnt, one_window):
     return any(NUMBER.fullmatch(word['text']) for word in words) and shared_unit_marks(ctc, rnnt)
 
 
+def contains_numeric_units(words):
+    from asr_guard import lexical
+    from asr_units import FORMS
+
+    for word in words:
+        text = word['text']
+        key = lexical(text)
+        if any(char.isdigit() for char in text) or key in FORMS or key.startswith(('рубл', 'доллар', 'процент')):
+            return True
+    return False
+
+
 class Decoder:
  def __init__(self, threads=None):
   from power_budget import decoder_threads
@@ -53,6 +65,16 @@ class Decoder:
    if (lexical(left['text'])!=lexical(right['text']) or right['confidence']<.75
        or abs(left['start']-right['start'])>.30):return []
   return [dict(word,needs_review=True,review_reason='original_audio_retry') for word in ctc]
+ def _character_words(self, audio, speech, start, end, terms, ctc, rnnt, ctc_result, rnnt_result):
+  from asr_guard import supported_words
+  from asr_units import shared_unit_marks
+  if (getattr(self,'fast_character',False) and not terms
+      and not contains_numeric_units(ctc+rnnt) and not shared_unit_marks(ctc_result,rnnt_result)):
+   result=self._load('char_fast').recognize(audio,sample_rate=16000)
+   character=supported_words(result,speech,start,end)
+   if not contains_numeric_units(character):return character
+  result=self._load('char').recognize(audio,sample_rate=16000)
+  return supported_words(result,speech,start,end)
  def transcribe(self,samples,terms=None,speech=None,emit_start=0,emit_end=float('inf')):
   from speech_gate import SpeechProfile, anchored_speech_ranges, speech_profile
   from asr_guard import prepare,supported_words,join_words,choose_candidate,refine_words,speech_windows,lexical,unrecognized_voice
@@ -102,8 +124,7 @@ class Decoder:
     character=[]
     if (selected and kind!='original' and confidence>=.85
         and needs_character_check(selected,terms,ctc_result,rnnt_result,len(windows)==1 and not brief)):
-     result=self._load('char').recognize(audio,sample_rate=16000)
-     character=supported_words(result,local,emit_start-left,emit_end-left)
+     character=self._character_words(audio,local,emit_start-left,emit_end-left,terms,ctc,rnnt,ctc_result,rnnt_result)
     raw=[dict(word) for word in selected]
     selected,refinements,weak=refine_words(selected,ctc if kind=='rnnt' else rnnt,character)
     selected,term_changes=apply_terms(selected,[('ctc',ctc),('rnnt',rnnt),('character',character)],terms)
