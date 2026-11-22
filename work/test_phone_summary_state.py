@@ -169,6 +169,7 @@ public final class SummaryStateTest {
         JSONObject raw = new JSONObject().put("report", new JSONObject()
                 .put("segments", new JSONArray().put(segment).put(next))
                 .put("summary", new JSONArray().put(anchor.getString("quote")).put("Отдельный вывод").put(before))
+                .put("overview", before + " Следует вывод. Отдельный вывод " + before)
                 .put("summary_evidence", new JSONArray().put(anchor))
                 .put("homework", new JSONArray().put(assignment)));
         TranscriptEdits.Line line = new TranscriptEdits.Line(segment, 0, true, new JSONObject());
@@ -181,6 +182,11 @@ public final class SummaryStateTest {
         require((after + " Следует вывод.").equals(report.getJSONArray("summary").getString(0)), "Stale summary after word edit");
         require((after + " Следует вывод.").equals(report.getJSONArray("summary_evidence").getJSONObject(0).getString("quote")), "Stale evidence");
         require("Отдельный вывод".equals(report.getJSONArray("summary").getString(1)) && after.equals(report.getJSONArray("summary").getString(2)), "Legacy exact quote");
+        require((after + " Следует вывод. Отдельный вывод " + after).equals(report.getString("overview")), "Stale derived Mac overview");
+        JSONObject authored = new JSONObject(raw.toString());
+        authored.getJSONObject("report").put("overview", "Авторское вступление. " + before);
+        TranscriptEdits.apply(authored, edits, true);
+        require(("Авторское вступление. " + before).equals(authored.getJSONObject("report").getString("overview")), "Overwrote authored overview");
         require(after.equals(report.getJSONArray("homework").getJSONObject(0).getString("task")), "Stale task after edit");
         require(7 == report.getJSONArray("summary_evidence").getJSONObject(0).getInt("end"), "Lost audio anchor");
         require(LectureNotes.summary(view).contains(after) && !LectureNotes.summary(view).contains(before), "Stale export");

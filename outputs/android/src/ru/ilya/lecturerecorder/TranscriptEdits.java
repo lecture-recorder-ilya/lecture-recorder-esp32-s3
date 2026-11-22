@@ -80,6 +80,8 @@ final class TranscriptEdits {
         if (!changed) return;
         JSONArray points = report.optJSONArray("summary");
         JSONArray sources = report.optJSONArray("summary_evidence");
+        String overview = report.optString("overview");
+        boolean derivedOverview = points != null && !overview.isEmpty() && overview.equals(summaryOverview(points));
         if (points != null) for (int i = 0; i < points.length(); i++) {
             if (!(points.opt(i) instanceof String)) continue;
             String point = points.getString(i);
@@ -90,6 +92,7 @@ final class TranscriptEdits {
             if (source != null) source.put("quote", revised);
             if (quote.equals(point)) points.put(i, revised);
         }
+        if (derivedOverview) report.put("overview", summaryOverview(points));
         JSONArray tasks = report.optJSONArray("homework");
         if (tasks != null) for (int i = 0; i < tasks.length(); i++) {
             JSONObject task = tasks.optJSONObject(i);
@@ -101,6 +104,18 @@ final class TranscriptEdits {
                 if (quote.equals(task.optString("task"))) task.put("task", revised);
             }
         }
+    }
+
+    // The Mac writer derives its overview from the first three points, capped at 1500 Unicode characters.
+    private static String summaryOverview(JSONArray points) {
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < Math.min(points.length(), 3); i++) {
+            if (!(points.opt(i) instanceof String)) return "";
+            if (i > 0) text.append(' ');
+            text.append(points.optString(i));
+        }
+        int length = text.codePointCount(0, text.length());
+        return length <= 1500 ? text.toString() : text.substring(0, text.offsetByCodePoints(0, 1500));
     }
 
     // Project only verbatim evidence. An older note can lack anchors; in that case
