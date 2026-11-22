@@ -101,6 +101,25 @@ import Darwin
             self.request('/list', headers=auth_headers('wrong', 'GET', '/list'))
         self.assertEqual(error.exception.code, 403)
 
+    def test_out_of_order_transcript_and_summary_keep_the_newest_durable_copy(self):
+        with self.request('/notes-index') as response:
+            self.assertEqual(response.headers['X-ClipMic-Note-Revisions'], '1')
+        def packet(rev, text):
+            return dict(file=NAME, sync_revision=str(rev), report=dict(summary=[text], segments=[dict(text=text)]))
+        current = packet(3, 'Исправленный конспект')
+        with self.request('/notes', packet(1, 'Исходный конспект')) as response:
+            self.assertEqual(response.status, 200)
+        with self.request('/notes', current) as response:
+            expected = json.load(response)['sha256']
+        for stale in (packet(2, 'Исправлен только текст'), packet(3, 'Иная редакция'), dict(file=NAME, report={})):
+            with self.assertRaises(HTTPError) as err:
+                self.request('/notes', stale)
+            self.assertEqual(err.exception.code, 409)
+            err.exception.close()
+        self.assertEqual(json.loads((self.root/'notes'/(NAME+'.json')).read_bytes()), current)
+        with self.request('/notes', current) as response:
+            self.assertEqual(json.load(response)['sha256'], expected)
+
     def test_notes_round_trip_uses_exact_body_hash(self):
         note = {'file': NAME, 'report': {'summary': ['Определение'], 'segments': [{'start': .1, 'end': 1, 'text': 'Функция непрерывна.', 'needs_review': True}]}}
         with self.request('/notes', note) as response:

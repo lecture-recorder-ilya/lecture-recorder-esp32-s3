@@ -181,6 +181,23 @@ class Notes(unittest.TestCase):
    with patch('phone_sync.urlopen',return_value=io.BytesIO(b'{}')) as network:
     with self.assertRaisesRegex(ValueError,'Текст слишком большой'):phone_notes.push('http://127.0.0.1','fixture',root)
    self.assertEqual(network.call_count,1)
+ def test_revision_survives_restart_and_tracks_text_and_summary_together(self):
+  with tempfile.TemporaryDirectory() as directory:
+   root=Path(directory);folder=root/'analysis';folder.mkdir()
+   path=folder/'lecture-2026-11-22-15-00-00-111111.json'
+   def write(text,summary):path.write_text(json.dumps(dict(segments=[dict(text=text,start=0,end=1)],summary=[summary])))
+   def snapshot():return next(phone_notes.documents(root,revisioned=True))[0]
+   with patch('phone_notes.time.time_ns',return_value=1000000):
+    write('Старое слово','Первый конспект');first=snapshot()
+    write('Исправленное слово','Первый конспект');second=snapshot()
+    write('Исправленное слово','Исправленный конспект');last=snapshot()
+   self.assertLess(int(first['sync_revision']),int(second['sync_revision']))
+   self.assertLess(int(second['sync_revision']),int(last['sync_revision']))
+   self.assertEqual(snapshot(),last)
+   self.assertNotIn('sync_revision',next(phone_notes.documents(root))[0])
+   path.rename(path.with_suffix('.live.json'))
+   self.assertEqual(list(phone_notes.documents(root,revisioned=True)),[])
+
  def test_newer_draft_cannot_replace_final(self):
   with tempfile.TemporaryDirectory() as d:
    root=Path(d);(root/'analysis').mkdir();stem='lecture-2026-10-12-12-00-00-123000'

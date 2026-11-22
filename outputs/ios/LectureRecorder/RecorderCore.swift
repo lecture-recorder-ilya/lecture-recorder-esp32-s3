@@ -1,6 +1,8 @@
 import Foundation
 import CryptoKit
 
+struct NoteRevisionConflict: Error {}
+
 enum RecorderFailure: LocalizedError {
     case message(String)
     var errorDescription: String? { if case .message(let text) = self { return text }; return nil }
@@ -72,7 +74,25 @@ final class PhoneFiles {
               let value = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let name = value["file"] as? String, validRecording(name), value["report"] is [String: Any]
         else { throw RecorderFailure.message("Некорректная расшифровка") }
-        try data.write(to: folder("notes").appendingPathComponent(name + ".json"), options: .atomic)
+        func revision(_ document: [String: Any]) throws -> Int64 {
+            guard let value = document["sync_revision"] else { return 0 }
+            guard let text = value as? String, text.range(of: "^[1-9][0-9]{0,17}$", options: .regularExpression) != nil,
+                  let number = Int64(text) else { throw RecorderFailure.message("Некорректная версия текста") }
+            return number
+        }
+        let target = folder("notes").appendingPathComponent(name + ".json")
+        let next = try revision(value)
+        if FileManager.default.fileExists(atPath: target.path) {
+            let stored = try Data(contentsOf: target)
+            guard let previous = try JSONSerialization.jsonObject(with: stored) as? [String: Any]
+            else { throw RecorderFailure.message("Некорректный сохранённый текст") }
+            let current = try revision(previous)
+            if current > 0 && next <= current {
+                if next == current && data == stored { return sha256(stored) }
+                throw NoteRevisionConflict()
+            }
+        }
+        try data.write(to: target, options: .atomic)
         return sha256(data)
     }
     func notesIndex() throws -> [String: String] {

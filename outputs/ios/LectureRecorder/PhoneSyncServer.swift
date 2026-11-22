@@ -76,7 +76,7 @@ final class PhoneSyncServer {
     private func handle(_ connection: NWConnection, method: String, route: String, headers: [String: String], body: Data) {
         do {
             if method == "GET" && route == "/list" { reply(connection, 200, try files.list()); return }
-            if method == "GET" && route == "/notes-index" { reply(connection, 200, try files.notesIndex()); return }
+            if method == "GET" && route == "/notes-index" { reply(connection, 200, try files.notesIndex(), headers: "X-ClipMic-Note-Revisions: 1\r\n"); return }
             if method == "POST" && route == "/notes" { reply(connection, 200, ["ok": true, "sha256": try files.saveNote(body)]); return }
             if method == "POST" && route == "/ack" {
                 guard let value = try JSONSerialization.jsonObject(with: body) as? [String: String], let name = value["name"], let digest = value["sha256"] else { reply(connection, 400, [:]); return }
@@ -98,7 +98,8 @@ final class PhoneSyncServer {
                 connection.send(content: header, completion: .contentProcessed { error in if error != nil { try? source.close(); connection.cancel() } else { self.stream(source, connection: connection) } }); return
             }
             reply(connection, 404, [:])
-        } catch { reply(connection, 422, ["error": "Не удалось сохранить или передать файл. Оригинал остаётся на телефоне."]) }
+        } catch is NoteRevisionConflict { reply(connection, 409, [:]) }
+          catch { reply(connection, 422, ["error": "Не удалось сохранить или передать файл. Оригинал остаётся на телефоне."]) }
     }
     private func stream(_ file: FileHandle, connection: NWConnection) {
         do {
@@ -106,9 +107,9 @@ final class PhoneSyncServer {
             connection.send(content: data, completion: .contentProcessed { error in if error != nil { try? file.close(); connection.cancel() } else { self.stream(file, connection: connection) } })
         } catch { try? file.close(); connection.cancel() }
     }
-    private func reply(_ connection: NWConnection, _ status: Int, _ value: Any) {
+    private func reply(_ connection: NWConnection, _ status: Int, _ value: Any, headers: String = "") {
         let data = (try? JSONSerialization.data(withJSONObject: value)) ?? Data("{}".utf8)
-        var response = Data("HTTP/1.1 \(status) Response\r\nContent-Type: application/json\r\nContent-Length: \(data.count)\r\nConnection: close\r\n\r\n".utf8); response.append(data)
+        var response = Data("HTTP/1.1 \(status) Response\r\n\(headers)Content-Type: application/json\r\nContent-Length: \(data.count)\r\nConnection: close\r\n\r\n".utf8); response.append(data)
         connection.send(content: response, completion: .contentProcessed { _ in connection.cancel() })
     }
 }

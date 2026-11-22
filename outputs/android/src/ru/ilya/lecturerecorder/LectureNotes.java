@@ -70,11 +70,30 @@ final class LectureNotes {
   JSONObject j=new JSONObject();File[] fs=root(c).listFiles(f->f.getName().endsWith(".wav.json"));
   if(fs!=null)for(File f:fs)j.put(f.getName().replaceFirst("\\.json$",""),Store.hash(f));return j;
  }
+ static final class RevisionConflict extends IOException {
+  RevisionConflict() { super("На телефоне уже сохранена другая или более новая версия"); }
+ }
+ private static long revision(JSONObject note) throws IOException {
+  if (!note.has("sync_revision")) return 0;
+  Object value = note.opt("sync_revision");
+  if (!(value instanceof String) || !((String)value).matches("[1-9][0-9]{0,17}"))
+   throw new IOException("Некорректная версия текста");
+  return Long.parseLong((String)value);
+ }
  static synchronized String save(Context c,byte[] body)throws Exception{
   if(body.length>2*1024*1024)throw new IOException("Текст слишком большой");
   JSONObject j=new JSONObject(new String(body,StandardCharsets.UTF_8));String name=j.getString("file");
   if(!valid(name)||!j.has("report"))throw new IOException("Некорректный текст лекции");j.getJSONObject("report");
   File target=new File(root(c),name+".json"),tmp=new File(root(c),name+".tmp");
+  long next = revision(j);
+  if (target.isFile()) {
+   byte[] stored = Files.readAllBytes(target.toPath());
+   long current = revision(new JSONObject(new String(stored, StandardCharsets.UTF_8)));
+   if (current > 0 && next <= current) {
+    if (next == current && Arrays.equals(stored, body)) return Store.hash(target);
+    throw new RevisionConflict();
+   }
+  }
   try(FileOutputStream out=new FileOutputStream(tmp)){out.write(body);out.getFD().sync();}
   if(!tmp.renameTo(target))throw new IOException("Текст не сохранён");return Store.hash(target);
  }

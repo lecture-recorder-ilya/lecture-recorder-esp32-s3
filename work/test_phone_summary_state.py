@@ -127,7 +127,8 @@ public final class SummaryStateTest {
             report.put("summary", new JSONArray().put(NEW_TEXT)).put("homework", new JSONArray());
             System.out.println("PASS: replacement guards, pending transcript, lesson metadata, archive and Mac copy");
         } else {
-            checkEditedEvidence(context);
+            checkIncomingOrder(context);
+        checkEditedEvidence(context);
             JSONObject pending = read(target);
             JSONObject report = pending.getJSONObject("report");
             require(report.optBoolean("local_summary_pending") && !report.has("summary"), "Restart lost pending state");
@@ -154,6 +155,38 @@ public final class SummaryStateTest {
             require(archive(history).equals(Store.read(mac)), "Finishing re-archived or altered the previous result");
             System.out.println("PASS: separate JVM resumed summary from disk and preserved the previous result");
         }
+    }
+
+    private static void checkIncomingOrder(Context context) throws Exception {
+        String name="lecture-2026-11-22-12-00-00-887766.wav";
+        JSONObject note=new JSONObject().put("file",name);
+        JSONObject report=new JSONObject();note.put("report",report);
+        String[] texts={"Старое слово","Исправленное слово","Исправленное слово"};
+        byte[][] versions=new byte[3][];
+        for(int i=0;i<3;i++){
+            report.put("segments",new JSONArray().put(new JSONObject().put("text",texts[i])));
+            report.put("summary",new JSONArray().put(i<2?"Старый конспект":"Исправленный конспект"));
+            note.put("sync_revision",Integer.toString(i+1));
+            versions[i]=note.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        }
+        File target=LectureNotes.file(context,name,false);
+        int[][] orders={{0,1,2},{2,0,1},{1,2,0},{0,2,1},{1,0,2},{2,1,0}};
+        for(int[] order:orders){
+            java.nio.file.Files.deleteIfExists(target.toPath());
+            int highest=-1;
+            for(int n:order){
+                try{LectureNotes.save(context,versions[n]);require(n>highest,"Accepted stale content");highest=n;}
+                catch(LectureNotes.RevisionConflict old){require(n<highest,"A newer report was refused");}
+            }
+            require(java.util.Arrays.equals(versions[2],java.nio.file.Files.readAllBytes(target.toPath())),"Mixed revisions");
+            LectureNotes.save(context,versions[2]);
+            for(String rev:new String[]{"3",null}){
+                note.put("sync_revision",rev);report.put("summary",new JSONArray().put("Устаревший конспект"));
+                try{LectureNotes.save(context,note.toString().getBytes("UTF-8"));throw new AssertionError("Stale retry accepted");}
+                catch(LectureNotes.RevisionConflict expected){}
+            }
+        }
+        System.out.println("PASS: шесть порядков доставки, повтор, конфликт номера и прежний отправитель");
     }
 
     private static void checkEditedEvidence(Context context) throws Exception {
