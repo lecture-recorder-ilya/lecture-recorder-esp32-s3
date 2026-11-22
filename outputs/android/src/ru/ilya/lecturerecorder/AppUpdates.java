@@ -1,80 +1,263 @@
 package ru.ilya.lecturerecorder;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.*;
 import android.content.pm.*;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
-import org.json.*;
+import org.json.JSONObject;
 import java.io.*;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.*;
+import java.lang.ref.WeakReference;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 final class AppUpdates {
- private static final String INSTALL_PERMISSION="Разреши установку из этого приложения, затем повтори.";
- private static volatile String installMessage="";
- static File apk(Context c){return new File(new File(c.getFilesDir(),"updates"),"update.apk");}
- static String message(Context c,boolean available){
-  if(available){
-   if(CaptureService.recording)return "Обновление готово. Установи его после записи.";
-   String issue=installMessage;
-   if(!issue.isEmpty()&&(!INSTALL_PERMISSION.equals(issue)||!c.getPackageManager().canRequestPackageInstalls()))return issue;
-   return "Обновление получено с Mac и готово к установке.";
-  }
-  SharedPreferences prefs=c.getSharedPreferences("updates",0);
-  if(prefs.contains("rejected_digest"))return prefs.getString("rejected_message","Телефон отклонил обновление.");
-  if(!CaptureService.paired(c))return "Подключи Mac, чтобы получать новые версии.";
-  return "Жду обновление от Mac. Оно появится здесь автоматически.";
- }
- static synchronized JSONObject info(Context c)throws Exception{
-  android.content.SharedPreferences p=c.getSharedPreferences("updates",0);
-  PackageInfo installed=c.getPackageManager().getPackageInfo(c.getPackageName(),0);
-  boolean available=ready(c);
-  return new JSONObject().put("installed_package",c.getPackageName())
-   .put("installed_tag","v"+installed.versionName).put("installed_code",installed.versionCode)
-   .put("sha256",available?p.getString("sha256",""):"").put("recording",CaptureService.recording)
-   .put("rejected_digest",p.getString("rejected_digest","")).put("message",message(c,available));
- }
- static synchronized int receive(Context c,File temp,String sha)throws Exception{
-  if(CaptureService.recording)throw new IOException("Обновление будет передано после записи");
-  int code;
-  try{code=verify(c,temp);}catch(Exception e){
-   c.getSharedPreferences("updates",0).edit().putString("rejected_digest",sha)
-    .putString("rejected_message",e.getMessage()).commit();
-   throw e;
-  }
-  File target=apk(c);target.getParentFile().mkdirs();
-  if(!temp.renameTo(target))throw new IOException("Не удалось сохранить APK");
-  if(!c.getSharedPreferences("updates",0).edit().putString("sha256",sha).putInt("code",code).remove("rejected_digest").remove("rejected_message").commit())throw new IOException("Не удалось сохранить сведения об APK");
-  installMessage="";
-  return code;
- }
+    private static final String INSTALL_PERMISSION = "Разреши установку из этого приложения, затем повтори.";
+    private static final Handler UI = new Handler(Looper.getMainLooper());
+    private static volatile String message = "";
+    private static volatile GitHubUpdateClient.DeviceCode pending;
+    private static volatile Thread worker;
 
- private static Set<String> signatures(PackageInfo p)throws Exception{
-  Signature[] ss=Build.VERSION.SDK_INT>=28?(p.signingInfo==null?null:p.signingInfo.getApkContentsSigners()):p.signatures;
-  if(ss==null||ss.length==0)throw new IOException("Нет подписи APK");Set<String> result=new HashSet<>();for(Signature s:ss)result.add(SyncServer.hash(s.toByteArray()));return result;
- }
- static int verify(Context c,File file)throws Exception{
-  PackageManager pm=c.getPackageManager();int flags=Build.VERSION.SDK_INT>=28?PackageManager.GET_SIGNING_CERTIFICATES:PackageManager.GET_SIGNATURES;
-  PackageInfo current=pm.getPackageInfo(c.getPackageName(),flags),next=pm.getPackageArchiveInfo(file.getPath(),flags);
-  if(next==null||!c.getPackageName().equals(next.packageName)||next.versionCode<=current.versionCode)throw new IOException("APK не является новой версией этого приложения");
-  if(!signatures(current).equals(signatures(next)))throw new IOException("Подпись обновления отличается · нужен ключ автора");
-  return next.versionCode;
- }
- static synchronized boolean ready(Context c){try{
-  android.content.SharedPreferences prefs=c.getSharedPreferences("updates",0);
-  if(!apk(c).isFile()||!prefs.contains("sha256"))return false;
-  if(prefs.getInt("code",0)<=c.getPackageManager().getPackageInfo(c.getPackageName(),0).versionCode){apk(c).delete();prefs.edit().remove("sha256").remove("code").apply();return false;}
-  return true;
- }catch(Exception e){return false;}}
- static void install(Activity activity){try{
-  installMessage="";
-  if(CaptureService.recording)throw new IOException("Сначала останови и сохрани запись");
-  File file=apk(activity);if(!Store.hash(file).equals(activity.getSharedPreferences("updates",0).getString("sha256","")))throw new IOException("APK изменился; проверь обновление повторно");verify(activity,file);
-  if(!activity.getPackageManager().canRequestPackageInstalls()){activity.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+activity.getPackageName())));installMessage=INSTALL_PERMISSION;return;}
-  Intent intent=new Intent(Intent.ACTION_VIEW);intent.setDataAndType(Uri.parse("content://"+activity.getPackageName()+".updates/update.apk"),"application/vnd.android.package-archive");intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);activity.startActivity(intent);
- }catch(Exception e){installMessage=e.getMessage()==null?"Не удалось открыть установку обновления.":e.getMessage();}}
+    static final class Failure extends IOException {
+        Failure(String text) { super(text); }
+    }
+
+    static File apk(Context context) {
+        return new File(new File(context.getFilesDir(), "updates"), "update.apk");
+    }
+
+    static boolean busy() { return worker != null; }
+    static boolean authorizing() { return pending != null; }
+
+    static boolean signedIn(Context context) {
+        return new GitHubUpdateCredentials(context).exists();
+    }
+
+    static void signOut(Context context) {
+        if (busy()) return;
+        new GitHubUpdateCredentials(context).clear();
+        message = "";
+    }
+
+    static String message(Context context, boolean available) {
+        if (available && !busy()) {
+            if (CaptureService.recording) return "Обновление готово. Установи его после записи.";
+            if (PhoneAnalysisService.busy()) return "Обновление готово. Установи его после обработки аудио.";
+            if (INSTALL_PERMISSION.equals(message) && context.getPackageManager().canRequestPackageInstalls())
+                return "Обновление готово к установке.";
+        }
+        if (!message.isEmpty()) return message;
+        if (available) return "Обновление готово к установке.";
+        return signedIn(context) ? "Проверь, есть ли новая версия."
+                : "Для обновлений войди в GitHub аккаунтом с доступом к проекту.";
+    }
+
+    static void check(Activity activity) {
+        GitHubUpdateClient.DeviceCode code = pending;
+        if (code != null) {
+            showCode(activity, code);
+            return;
+        }
+        if (busy()) return;
+        Context context = activity.getApplicationContext();
+        WeakReference<Activity> screen = new WeakReference<>(activity);
+        begin("Проверяю обновления…", () -> downloadLatest(context, screen));
+    }
+
+    private static void downloadLatest(Context context, WeakReference<Activity> screen) throws Exception {
+        GitHubUpdateClient client = new GitHubUpdateClient(context);
+        GitHubUpdateCredentials credentials = new GitHubUpdateCredentials(context);
+        String token;
+        try {
+            token = accessToken(client, credentials);
+        } catch (GitHubUpdateClient.AuthorizationRequired expired) {
+            credentials.clear();
+            token = null;
+        }
+        if (token == null) {
+            GitHubUpdateClient.DeviceCode request = client.startAuthorization();
+            pending = request;
+            message = "Подтверди вход на GitHub.";
+            UI.post(() -> {
+                Activity activity = screen.get();
+                if (activity != null && pending == request) showCode(activity, request);
+            });
+            JSONObject response = client.awaitAuthorization(request);
+            credentials.save(response);
+            pending = null;
+            token = response.getString("access_token");
+        }
+
+        PackageInfo current = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+        String name = context.getPackageName().endsWith(".preview")
+                ? "lecture-recorder-android.apk" : "lecture-recorder.apk";
+        message = "Проверяю обновления…";
+        GitHubUpdateClient.Asset asset;
+        try {
+            asset = client.latest(token, current.versionName, name);
+        } catch (GitHubUpdateClient.AuthorizationRequired expired) {
+            credentials.clear();
+            throw expired;
+        }
+        if (asset == null) {
+            message = "Для этой сборки новых версий нет.";
+            return;
+        }
+
+        File target = apk(context);
+        File directory = target.getParentFile();
+        if (!directory.isDirectory() && !directory.mkdirs())
+            throw new Failure("Не удалось открыть папку обновлений.");
+        if (ready(context) && asset.sha256.equals(settings(context).getString("sha256", "")) &&
+                asset.sha256.equals(Store.hash(target))) {
+            message = "Версия " + asset.version + " готова к установке.";
+            return;
+        }
+        if (directory.getUsableSpace() < asset.bytes + 32 * 1024 * 1024)
+            throw new Failure("На телефоне мало места для обновления.");
+
+        // Use the same temporary path on retries so an interrupted download cannot accumulate copies.
+        File part = new File(directory, "update.pending.apk");
+        try {
+            client.download(token, asset, part, percent -> message = "Скачиваю версию " + asset.version + " · " + percent + "%");
+            int code = verify(context, part);
+            Files.move(part.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            if (!settings(context).edit().putString("sha256", asset.sha256).putInt("code", code).commit())
+                throw new Failure("Не удалось сохранить сведения об обновлении.");
+            message = "Версия " + asset.version + " готова к установке.";
+        } finally {
+            part.delete();
+        }
+    }
+
+    private static String accessToken(GitHubUpdateClient client, GitHubUpdateCredentials credentials) throws Exception {
+        JSONObject existing = credentials.read();
+        if (existing == null) return null;
+        long now = System.currentTimeMillis();
+        if (now + 120000 < existing.getLong("expires_at")) return existing.getString("access_token");
+        if (now >= existing.optLong("refresh_expires_at")) return null;
+        JSONObject response = client.refresh(existing.getString("refresh_token"));
+        credentials.save(response);
+        return response.getString("access_token");
+    }
+
+    private static void showCode(Activity activity, GitHubUpdateClient.DeviceCode code) {
+        if (code == null || activity.isFinishing() || activity.isDestroyed()) return;
+        new AlertDialog.Builder(activity).setTitle("Вход в GitHub")
+                .setMessage("Введи этот код на GitHub и подтверди доступ к обновлениям.\n\n" + code.userCode)
+                .setPositiveButton("Открыть GitHub", (dialog, which) -> {
+                    if (pending != code) return;
+                    try {
+                        activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(GitHubUpdateClient.DEVICE_URL)));
+                    } catch (ActivityNotFoundException error) {
+                        message = "Открой github.com/login/device в браузере и введи показанный код.";
+                    }
+                }).setNeutralButton("Копировать код", (dialog, which) -> {
+                    if (pending == code) activity.getSystemService(ClipboardManager.class)
+                            .setPrimaryClip(ClipData.newPlainText("Код входа GitHub", code.userCode));
+                }).setNegativeButton("Отменить вход", (dialog, which) -> {
+                    Thread active = worker;
+                    if (pending == code && active != null) active.interrupt();
+                }).show();
+    }
+
+    private interface Operation { void run() throws Exception; }
+
+    private static synchronized void begin(String initial, Operation operation) {
+        if (worker != null) return;
+        message = initial;
+        worker = new Thread(() -> {
+            try {
+                operation.run();
+            } catch (InterruptedException cancelled) {
+                message = "Вход в GitHub отменён.";
+            } catch (Failure | GitHubUpdateClient.AuthorizationRequired error) {
+                message = error.getMessage();
+            } catch (Exception error) {
+                message = "Не удалось завершить обновление. Проверь интернет и повтори.";
+            } finally {
+                pending = null;
+                worker = null;
+            }
+        }, "Android updates");
+        worker.start();
+    }
+
+    private static SharedPreferences settings(Context context) {
+        return context.getSharedPreferences("updates", Context.MODE_PRIVATE);
+    }
+
+    private static Set<Signature> signatures(PackageInfo info) throws Failure {
+        Signature[] signers = Build.VERSION.SDK_INT >= 28
+                ? (info.signingInfo == null ? null : info.signingInfo.getApkContentsSigners()) : info.signatures;
+        if (signers == null || signers.length == 0) throw new Failure("У APK нет подписи.");
+        return new HashSet<>(Arrays.asList(signers));
+    }
+
+    static int verify(Context context, File file) throws Exception {
+        PackageManager manager = context.getPackageManager();
+        int flags = Build.VERSION.SDK_INT >= 28 ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES;
+        PackageInfo current = manager.getPackageInfo(context.getPackageName(), flags);
+        PackageInfo next = manager.getPackageArchiveInfo(file.getPath(), flags);
+        if (next == null || !current.packageName.equals(next.packageName) || next.versionCode <= current.versionCode)
+            throw new Failure("APK не подходит для обновления установленной версии.");
+        if (!signatures(current).equals(signatures(next)))
+            throw new Failure("Подпись обновления отличается от подписи приложения.");
+        return next.versionCode;
+    }
+
+    static boolean ready(Context context) {
+        if (!apk(context).isFile() || !settings(context).contains("sha256")) return false;
+        try {
+            int installed = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionCode;
+            if (settings(context).getInt("code", 0) > installed) return true;
+            if (!busy() && apk(context).delete()) settings(context).edit().remove("code").remove("sha256").apply();
+            return false;
+        } catch (PackageManager.NameNotFoundException error) {
+            return false;
+        }
+    }
+
+    static void install(Activity activity) {
+        if (busy() || CaptureService.recording || PhoneAnalysisService.busy()) return;
+        if (!activity.getPackageManager().canRequestPackageInstalls()) {
+            if (open(activity, new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:" + activity.getPackageName())))) message = INSTALL_PERMISSION;
+            return;
+        }
+        Context context = activity.getApplicationContext();
+        WeakReference<Activity> screen = new WeakReference<>(activity);
+        begin("Проверяю APK…", () -> {
+            File file = apk(context);
+            if (!ready(context) || !Store.hash(file).equals(settings(context).getString("sha256", "")))
+                throw new Failure("APK изменился. Проверь обновления ещё раз.");
+            verify(context, file);
+            UI.post(() -> {
+                Activity owner = screen.get();
+                if (owner == null || owner.isFinishing() || owner.isDestroyed()
+                        || CaptureService.recording || PhoneAnalysisService.busy()) return;
+                Uri uri = Uri.parse("content://" + owner.getPackageName() + ".updates/update.apk");
+                open(owner, new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive")
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
+            });
+            message = "Обновление готово к установке.";
+        });
+    }
+
+    private static boolean open(Activity activity, Intent intent) {
+        try {
+            activity.startActivity(intent);
+            return true;
+        } catch (ActivityNotFoundException | SecurityException unavailable) {
+            message = "Не удалось открыть установку обновления.";
+            return false;
+        }
+    }
 }

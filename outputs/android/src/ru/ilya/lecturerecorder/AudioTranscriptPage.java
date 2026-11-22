@@ -86,7 +86,7 @@ final class AudioTranscriptPage extends LinearLayout {
     private final Button importButton;
     private final TextView importStatus;
     private TextView times;
-    private TextView waveStatus;
+    private TextView waveStatus, recordingDate;
     private TextView transcriptStatus;
     private Dialog wordEditor;
     private final LinearLayout audioPanel;
@@ -136,6 +136,10 @@ final class AudioTranscriptPage extends LinearLayout {
         importAction.setMarginStart(dp(8));
         picker.addView(importButton, importAction);
         playback.addView(picker, spaced(-1, dp(52), landscape ? 0 : 10));
+        recordingDate = text("", 12, MUTED);
+        recordingDate.setVisibility(View.GONE);
+        playback.addView(recordingDate, spaced(-1, -2, 3));
+
         importStatus = text("", 13, MUTED);
         importStatus.setVisibility(View.GONE);
         importStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
@@ -314,8 +318,8 @@ final class AudioTranscriptPage extends LinearLayout {
         for (boolean local : new boolean[]{true, false}) {
             for (File file : LectureNotes.files(activity, local)) {
                 String name = file.getName().substring(0, file.getName().length() - 5);
-                if (LectureNotes.valid(name)) {
-                    options.putIfAbsent(name, new ChoiceDropdown.Option(name, Store.recordingTitle(activity, name), "Только текст"));
+                if (LectureNotes.valid(name) && !options.containsKey(name)) {
+                    options.put(name, new ChoiceDropdown.Option(name, Store.recordingTitle(activity, name), "Только текст"));
                 }
             }
         }
@@ -334,7 +338,7 @@ final class AudioTranscriptPage extends LinearLayout {
         setTranscriptRows(Collections.emptyList());
         position = initialPosition;
         duration = 0;
-        recordingDropdown.setSelected(new ChoiceDropdown.Option(name, Store.recordingTitle(activity, name), ""));
+        updateRecordingTitle();
         waveform.setEnvelope(null);
         boolean hasAudio = Store.audio(activity, name).isFile();
         transcriptPanel.setVisibility(View.VISIBLE);
@@ -371,6 +375,14 @@ final class AudioTranscriptPage extends LinearLayout {
             PhoneAnalysisService.request(activity, name, Store.recordingTitle(activity, name));
         }
         updatePosition();
+    }
+
+    private void updateRecordingTitle() {
+        String name = Store.recordingName(activity, selected);
+        String date = Store.recordingTitle(selected);
+        recordingDropdown.setSelected(new ChoiceDropdown.Option(selected, name.isEmpty() ? date : name, date));
+        recordingDate.setText(date);
+        recordingDate.setVisibility(name.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     private void preparePlayer(String name) {
@@ -467,7 +479,7 @@ final class AudioTranscriptPage extends LinearLayout {
         File mac = LectureNotes.file(activity, selected, false);
         File edits = TranscriptEdits.file(activity, selected);
         String revision = TranscriptEdits.stamp(local) + "/" + TranscriptEdits.stamp(mac)
-                + "/" + TranscriptEdits.stamp(edits);
+                + "/" + TranscriptEdits.stamp(edits) + "/" + TranscriptEdits.stamp(Store.lessonFile(activity, selected));
         if (!revision.equals(noteRevision)) {
             JSONObject corrections;
             try {
@@ -479,6 +491,8 @@ final class AudioTranscriptPage extends LinearLayout {
             List<TranscriptEdits.Line> rows = readSegments(local, true, corrections);
             if (rows.isEmpty()) rows = readSegments(mac, false, corrections);
             setTranscriptRows(rows);
+            updateRecordingTitle();
+            recordingDropdown.refreshOptions();
             noteRevision = revision;
         }
 
@@ -492,7 +506,7 @@ final class AudioTranscriptPage extends LinearLayout {
         String message = PhoneAnalysisService.statusFor(selected);
         if (busy && !loading) message = "Обрабатывается другая запись";
         else if (message.isEmpty() && transcriptRows.isEmpty()) {
-            if (!supported) message = "Расшифровка появится после обработки на Mac.";
+            if (!supported) message = "Для расшифровки на телефоне нужна 64-битная версия Android.";
             else message = "У этой записи пока нет расшифровки.";
         }
         if (!TextUtils.equals(transcriptStatus.getText(), message)) transcriptStatus.setText(message);

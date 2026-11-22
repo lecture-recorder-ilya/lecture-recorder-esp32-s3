@@ -1,118 +1,187 @@
-import os, subprocess, tempfile, unittest
+"""Exercise the Android GitHub client on the JVM with fixture HTTP responses."""
+import os
 from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / 'outputs/android/src/ru/ilya/lecturerecorder'
+
 
 class AndroidTransport(unittest.TestCase):
- def test_real_sync_server_rejects_bad_hmac_replay_truncation_and_corruption(self):
-  root=Path(__file__).resolve().parents[1]
-  jdk=Path(os.environ.get('JAVA_HOME') or subprocess.check_output(['/usr/libexec/java_home','-v','17'],text=True).strip())
-  files={
-   'android/content/Context.java':'''package android.content;
-import java.io.File; import android.content.pm.PackageManager;
+    def test_release_selection_and_download(self):
+        gson = ROOT / 'work/android-deps/gson.jar'
+        if not gson.is_file():
+            self.skipTest('Build the Android APK to fetch its Gson dependency')
+        java = Path(os.environ.get('JAVA_HOME', '')) / 'bin' if os.environ.get('JAVA_HOME') else Path()
+        sources = {
+            'android/content/Context.java': r'''
+package android.content;
+import java.io.*;
 public class Context {
- public File files; public final PackageManager pm=new PackageManager();
- public PackageManager getPackageManager(){return pm;} public String getPackageName(){return pm.current.packageName;}
- public File getFilesDir(){return files;} public void startForegroundService(Intent i){}
- public SharedPreferences getSharedPreferences(String n,int m){return new SharedPreferences();}
-}''',
-   'android/content/SharedPreferences.java':'''package android.content;
-public class SharedPreferences {
- public String getString(String k,String d){return k.equals("sync_token")?"fixture-key":d;}
- public int getInt(String k,int d){return d;} public boolean contains(String k){return false;}
- public Editor edit(){return new Editor();} public static class Editor {
-  public Editor putString(String k,String v){return this;} public Editor putInt(String k,int v){return this;}
-  public Editor remove(String k){return this;} public void apply(){} public boolean commit(){return true;}
+ public Context getAssets() { return this; }
+ public InputStream open(String name) {
+  return new ByteArrayInputStream("{\"client_id\":\"test\",\"repository\":\"org/repo\"}".getBytes());
  }
 }''',
-   'android/content/Intent.java':'''package android.content; import android.net.Uri;
-public class Intent {public static final String ACTION_VIEW="view";public static final int FLAG_GRANT_READ_URI_PERMISSION=1;
- public Intent(String s){} public Intent(String s,Uri u){} public void setDataAndType(Uri u,String t){} public void addFlags(int f){} }''',
-   'android/app/Activity.java':'''package android.app; import android.content.*; public class Activity extends Context {public void startActivity(Intent i){} }''',
-   'android/net/Uri.java':'''package android.net; public class Uri {public static Uri parse(String s){return new Uri();}}''',
-   'android/os/Build.java':'''package android.os; public class Build {public static class VERSION {public static int SDK_INT=33;}}''',
-   'android/provider/Settings.java':'''package android.provider; public class Settings {public static final String ACTION_MANAGE_UNKNOWN_APP_SOURCES="settings";}''',
-   'android/content/pm/PackageManager.java':'''package android.content.pm;
-public class PackageManager {
- public static final int GET_SIGNATURES=64, GET_SIGNING_CERTIFICATES=134217728;
- public PackageInfo current,next; public int inspected;
- public PackageInfo getPackageInfo(String name,int flags){return current;}
- public PackageInfo getPackageArchiveInfo(String path,int flags){inspected++;return next;}
- public boolean canRequestPackageInstalls(){return true;}
+            'android/os/SystemClock.java': '''
+package android.os;
+public class SystemClock {
+ public static long elapsedRealtime() { return System.nanoTime()/1000000; }
 }''',
-   'android/content/pm/PackageInfo.java':'''package android.content.pm; public class PackageInfo {
- public String packageName,versionName;public int versionCode;public Signature[] signatures;public SigningInfo signingInfo;
+            'org/json/JSONObject.java': '''
+package org.json;
+import com.google.gson.*;
+public class JSONObject {
+ final JsonObject data;
+ public JSONObject(String s) { this(JsonParser.parseString(s).getAsJsonObject()); }
+ JSONObject(JsonObject item) { data = item; }
+ public String getString(String key) { return data.get(key).getAsString(); }
+ public long getLong(String key) { return data.get(key).getAsLong(); }
+ public int getInt(String key) { return data.get(key).getAsInt(); }
+ public int optInt(String key, int fallback) { return has(key) ? getInt(key) : fallback; }
+ public boolean optBoolean(String key) { return has(key) && data.get(key).getAsBoolean(); }
+ public String optString(String key) { return has(key) ? getString(key) : ""; }
+ public JSONArray getJSONArray(String key) { return new JSONArray(data.getAsJsonArray(key)); }
+ public boolean has(String key) { return data.has(key) && !data.get(key).isJsonNull(); }
 }''',
-   'android/content/pm/Signature.java':'''package android.content.pm; public class Signature {
- private final byte id;public Signature(int id){this.id=(byte)id;}public byte[] toByteArray(){return new byte[]{id};}
+            'org/json/JSONArray.java': '''
+package org.json;
+import com.google.gson.*;
+public class JSONArray {
+ final JsonArray data;
+ public JSONArray(String s) { this(JsonParser.parseString(s).getAsJsonArray()); }
+ JSONArray(JsonArray items) { data = items; }
+ public int length() { return data.size(); }
+ public JSONObject getJSONObject(int index) { return new JSONObject(data.get(index).getAsJsonObject()); }
 }''',
-   'android/content/pm/SigningInfo.java':'''package android.content.pm; public class SigningInfo {
- private final Signature[] signers;public SigningInfo(Signature[] ss){signers=ss;}public Signature[] getApkContentsSigners(){return signers;}
+            'ru/ilya/lecturerecorder/AppUpdates.java': '''
+package ru.ilya.lecturerecorder;
+class AppUpdates {
+ static class Failure extends java.io.IOException { Failure(String message) { super(message); } }
 }''',
-   'org/json/JSONObject.java':'''package org.json; import java.util.*;
-public class JSONObject {private final Map<String,Object> fields=new HashMap<>();
- public JSONObject(){} public JSONObject(String s){} public JSONObject put(String k,Object v){fields.put(k,v);return this;}
- public String getString(String k){return String.valueOf(fields.get(k));} public String toString(){return "{}";}
-}''',
-   'org/json/JSONArray.java':'''package org.json; public class JSONArray {public int length(){return 0;}public String toString(){return "[]";}}''',
-   'ru/ilya/lecturerecorder/CaptureService.java':'''package ru.ilya.lecturerecorder; import android.content.*; class CaptureService {static boolean recording=false;static boolean paired(Context c){return !c.getSharedPreferences("settings",0).getString("sync_token","").isEmpty();}}''',
-   'ru/ilya/lecturerecorder/Store.java':'''package ru.ilya.lecturerecorder;import java.io.*;import android.content.Context;import org.json.*;class Store{static String hash(File f){return "";}static JSONArray list(Context c){return new JSONArray();}static File file(Context c,String n){return new File(n);}static void acknowledge(Context c,String n,String sha){}}''',
-   'ru/ilya/lecturerecorder/LectureNotes.java':'''package ru.ilya.lecturerecorder;import android.content.Context;import org.json.*;class LectureNotes{static JSONObject index(Context c){return new JSONObject();}static String save(Context c,byte[] b){return "";}}''',
-   'ru/ilya/lecturerecorder/Harness.java':r'''package ru.ilya.lecturerecorder;
-import java.io.*;import java.util.*;import java.nio.charset.StandardCharsets;import java.nio.file.Files;
-import android.content.Context;import android.content.pm.*;import org.json.JSONObject;
-public class Harness{
- static byte[] body="fixture-apk".getBytes(StandardCharsets.UTF_8);
- static String request(SyncServer server,String nonce,byte[] payload,int length,String digest,String key)throws Exception{
-  String t=""+(System.currentTimeMillis()/1000),canonical="POST\n/app-update\n"+t+"\n"+nonce+"\n\n"+digest;
-  String h="POST /app-update HTTP/1.1\r\nContent-Length: "+length+"\r\nX-Lecture-Time: "+t+"\r\nX-Lecture-Nonce: "+nonce+"\r\nX-Lecture-Signature: "+SyncServer.sign(key,canonical)+"\r\nX-Lecture-Body-SHA256: "+digest+"\r\n\r\n";
-  ByteArrayOutputStream input=new ByteArrayOutputStream();input.write(h.getBytes(StandardCharsets.US_ASCII));input.write(payload);ByteArrayOutputStream out=new ByteArrayOutputStream();server.handle(new ByteArrayInputStream(input.toByteArray()),out,false);return out.toString("UTF-8");
+            'ru/ilya/lecturerecorder/Store.java': '''
+package ru.ilya.lecturerecorder;
+import java.io.*;
+import java.nio.file.*;
+import java.security.*;
+import java.util.HexFormat;
+class Store {
+ static String hash(File file) throws Exception {
+  return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(file.toPath())));
  }
- static void require(boolean v)throws Exception{if(!v)throw new Exception("Проверка протокола не пройдена");}
- static PackageInfo build(String name,int code,int signer){
-  PackageInfo info=new PackageInfo();info.packageName=name;info.versionName="0.5.4";info.versionCode=code;
-  info.signatures=new Signature[]{new Signature(signer)};info.signingInfo=new SigningInfo(info.signatures);return info;
+}''',
+            'ru/ilya/lecturerecorder/Harness.java': r'''
+package ru.ilya.lecturerecorder;
+import android.content.Context;
+import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+
+public class Harness {
+ static final String API = "api.github.com";
+ static final String CDN = "release-assets.githubusercontent.com";
+ static final String ASSET = "lecture-recorder-android.apk";
+ static final String BASE = "https://" + API + "/repos/org/repo/releases";
+ static final byte[] PAYLOAD = "test APK".getBytes(StandardCharsets.UTF_8);
+ static String checksum;
+ static String location = "https://" + CDN + "/fixture";
+ static boolean corrupt;
+ static int cdnRequests;
+
+ static String release(String tag, String name, String flags) {
+  return "{\"tag_name\":\"" + tag + "\"," + flags
+   + "\"assets\":[{\"name\":\"" + name + "\",\"state\":\"uploaded\",\"id\":1,\"size\":"
+   + PAYLOAD.length + ",\"digest\":\"sha256:" + checksum + "\"}]}";
  }
- static void rejected(Context c,PackageInfo next)throws Exception{
-  c.pm.next=next;
-  try{AppUpdates.verify(c,new File(c.files,"fixture.apk"));}catch(IOException expected){return;}
-  throw new AssertionError("Несовместимый APK принят");
- }
- static void checkPackages(Context c)throws Exception{
-  String stable="ru.ilya.lecturerecorder",preview=stable+".preview";
-  for(String id:List.of(stable,preview)){
-   int code=id.equals(stable)?11:22;
-   c.pm.current=build(id,code,1);
-   JSONObject status=AppUpdates.info(c);
-   require(id.equals(status.getString("installed_package")));
-   require((""+code).equals(status.getString("installed_code"))&&"v0.5.4".equals(status.getString("installed_tag")));
-   c.pm.next=build(id,code+1,1);require(AppUpdates.verify(c,new File(c.files,"fixture.apk"))==code+1);
-   rejected(c,build(id.equals(stable)?preview:stable,code+1,1));
-   rejected(c,build(id,code+1,2));rejected(c,build(id,code,1));
+
+ static class Response extends HttpURLConnection {
+  Response(URL url) { super(url); }
+  public void connect() {}
+  public void disconnect() {}
+  public boolean usingProxy() { return false; }
+  public int getResponseCode() {
+   if (getURL().getHost().equals(API)) {
+    require("Bearer fixture-token".equals(getRequestProperty("Authorization")), "Missing API authorization");
+    return getURL().getPath().endsWith("/assets/1") ? 302 : 200;
+   }
+   require(getURL().getHost().equals(CDN), "Unexpected redirect");
+   require(getRequestProperty("Authorization") == null, "GitHub token sent to asset CDN");
+   cdnRequests++;
+   return 200;
+  }
+  public String getHeaderField(String name) {
+   if (name.equals("Location")) return location;
+   if (name.equals("Link") && !getURL().getQuery().contains("page=2")) {
+    return "<" + BASE + "?per_page=30&page=2>; rel=\"next\"";
+   }
+   return null;
+  }
+  public InputStream getInputStream() {
+   if (getURL().getHost().equals(CDN)) {
+    byte[] bytes = PAYLOAD.clone();
+    if (corrupt) bytes[0] ^= 1;
+    return new ByteArrayInputStream(bytes);
+   }
+   String body = getURL().getQuery().contains("page=2")
+    ? "[" + release("android-v0.5.10", ASSET, "") + "," + release("android-v0.5.11", ASSET, "") + "]"
+    : "[" + release("android-v0.5.13", ASSET, "\"draft\":true,") + ","
+    + release("android-v0.5.12", ASSET, "\"prerelease\":true,") + ","
+    + release("v0.5.12", "lecture-recorder.apk", "") + ","
+    + release("android-v0.5.9", ASSET, "") + "]";
+   return new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8));
   }
  }
- public static void main(String[] args)throws Exception{
-  Context c=new Context();c.files=new File(args[0]);checkPackages(c);
-  c.pm.current=build("ru.ilya.lecturerecorder",11,1);c.pm.next=build(c.getPackageName(),12,1);c.pm.inspected=0;
-  SyncServer server=new SyncServer(c);server.close();String sha=SyncServer.hash(body);
-  require(request(server,"a".repeat(32),body,body.length,sha,"wrong-key").startsWith("HTTP/1.1 403"));require(c.pm.inspected==0);
-  require(request(server,"b".repeat(32),body,body.length,sha,"fixture-key").startsWith("HTTP/1.1 200"));require(c.pm.inspected==1);
-  require(request(server,"b".repeat(32),body,body.length,sha,"fixture-key").startsWith("HTTP/1.1 403"));require(c.pm.inspected==1);
-  require(request(server,"c".repeat(32),new byte[body.length],body.length,sha,"fixture-key").startsWith("HTTP/1.1 422"));require(c.pm.inspected==1);
-  require(request(server,"d".repeat(32),new byte[1],body.length,sha,"fixture-key").startsWith("HTTP/1.1 422"));require(c.pm.inspected==1);
-  CaptureService.recording=true;require(request(server,"e".repeat(32),body,body.length,sha,"fixture-key").startsWith("HTTP/1.1 409"));require(c.pm.inspected==1);
-  require(request(server,"f".repeat(32),body,80*1024*1024+1,sha,"fixture-key").startsWith("HTTP/1.1 413"));
-  File saved=AppUpdates.apk(c);require(saved.getParentFile().list().length==1&&Arrays.equals(Files.readAllBytes(saved.toPath()),body));
-  System.out.println("7 проверок реального SyncServer пройдены");
- }
-}'''}
-  with tempfile.TemporaryDirectory() as d:
-   temp=Path(d);sources=[]
-   for name,content in files.items():
-    p=temp/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content);sources.append(str(p))
-   android=root/'outputs/android/src/ru/ilya/lecturerecorder'
-   sources.extend(str(android/name) for name in ('SyncServer.java','AppUpdates.java'))
-   subprocess.run([str(jdk/'bin/javac'),'-encoding','UTF-8','-d',d,*sources],check=True,capture_output=True)
-   data=temp/'data';data.mkdir()
-   result=subprocess.run([str(jdk/'bin/java'),'-cp',d,'ru.ilya.lecturerecorder.Harness',str(data)],check=True,capture_output=True,text=True,timeout=15)
-   self.assertIn('7 проверок',result.stdout)
 
-if __name__=='__main__':unittest.main()
+ static void require(boolean value, String message) {
+  if (!value) throw new AssertionError(message);
+ }
+
+ public static void main(String[] args) throws Exception {
+  File target = new File(args[0]);
+  Files.write(target.toPath(), PAYLOAD);
+  checksum = Store.hash(target);
+  URL.setURLStreamHandlerFactory(protocol -> new URLStreamHandler() {
+   protected URLConnection openConnection(URL url) { return new Response(url); }
+  });
+
+  GitHubUpdateClient client = new GitHubUpdateClient(new Context());
+  GitHubUpdateClient.Asset asset = client.latest("fixture-token", "0.5.9", ASSET);
+  require("0.5.11".equals(asset.version), "Stable compatible asset was not selected");
+  require(client.latest("fixture-token", "0.5.11", ASSET) == null, "Same version accepted");
+  require("0.5.12".equals(client.latest("fixture-token", "0.5.9", "lecture-recorder.apk").version),
+    "Stable package did not pick its own asset");
+  client.download("fixture-token", asset, target, percent -> require(percent == 100, "Wrong progress"));
+  require(checksum.equals(Store.hash(target)), "Wrong payload");
+  location = "https://untrusted.example/fixture";
+  try {
+   client.download("fixture-token", asset, target, percent -> {});
+   throw new AssertionError("Untrusted redirect accepted");
+  } catch (AppUpdates.Failure expected) {}
+  require(cdnRequests == 1, "Unexpected download");
+  location = "https://" + CDN + "/fixture";
+  corrupt = true;
+  try {
+   client.download("fixture-token", asset, target, percent -> {});
+   throw new AssertionError("Corrupt payload accepted");
+  } catch (AppUpdates.Failure expected) {}
+ }
+}''',
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = Path(directory)
+            for name, source in sources.items():
+                file = fixture / name
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_text(source, encoding='utf-8')
+            subprocess.run([str(java / 'javac'), '-encoding', 'UTF-8', '-cp', str(gson), '-d', directory,
+                            str(SRC / 'GitHubUpdateClient.java'), *map(str, fixture.rglob('*.java'))], check=True)
+            subprocess.run([str(java / 'java'), '-cp', f'{directory}{os.pathsep}{gson}',
+                            'ru.ilya.lecturerecorder.Harness', str(fixture / 'apk')], check=True, timeout=30)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -23,11 +23,23 @@ final class Store {
   return audio.values();
  }
  static String recordingTitle(Context c,String file){
+  String date=recordingTitle(file);
+  String name=recordingName(c,file);
+  return name.isEmpty()?date:name+" · "+date;
+ }
+ static String recordingName(Context c,String file){
+  String date=recordingTitle(file);
   try{
-   String title=lesson(c,file).optString("subject");
-   if(!title.isEmpty())return title+" · "+recordingTitle(file);
+   String subject=lesson(c,file).optString("subject").trim();
+   if(!subject.isEmpty())return subject;
   }catch(Exception ignored){}
-  return recordingTitle(file);
+  for(boolean local:new boolean[]{true,false}){
+   try{
+    String name=LectureNotes.recordingName(readObject(LectureNotes.file(c,file,local)),date);
+    if(!name.isEmpty())return name;
+   }catch(Exception ignored){}
+  }
+  return "";
  }
  static String recordingTitle(String file){
   String name=file.substring("lecture-".length(),file.length()-".wav".length());
@@ -52,11 +64,9 @@ final class Store {
  }
  static void le(RandomAccessFile f,long n,int count)throws IOException{for(int i=0;i<count;i++)f.write((int)(n>>(8*i))&255);}
  static String hash(File f)throws Exception{MessageDigest d=MessageDigest.getInstance("SHA-256");try(InputStream in=new FileInputStream(f)){byte[] b=new byte[65536];int n;while((n=in.read(b))>0)d.update(b,0,n);}StringBuilder s=new StringBuilder();for(byte v:d.digest())s.append(String.format(Locale.US,"%02x",v&255));return s.toString();}
- static boolean transferable(String name){return name.matches("lecture-[0-9-]+\\.wav|board-[0-9]{13}-[a-f0-9]{32}\\.jpg");}
- static File file(Context c,String name)throws IOException{if(!transferable(name))throw new IOException("Некорректное имя записи");return new File(root(c),name);}
- static synchronized File transferFile(Context c,String name)throws Exception{
-  File wav=file(c,name);
-  return wav.isFile()&&!readObject(new File(wav.getPath()+".json")).optBoolean("awaiting_lesson")?wav:null;
+ private static File file(Context c,String name)throws IOException{
+  if(!LectureNotes.valid(name))throw new IOException("Некорректное имя записи");
+  return new File(root(c),name);
  }
  static synchronized void seal(File part)throws Exception{
   if(part.length()<44)throw new IOException("Незавершённый заголовок WAV");
@@ -79,13 +89,6 @@ final class Store {
    }
   }
   BoardPhotos.recover(c);
- }
- static synchronized JSONArray list(Context c)throws Exception{
-  JSONArray a=new JSONArray();File[] fs=root(c).listFiles();if(fs!=null){Arrays.sort(fs);for(File f:fs)if(transferable(f.getName())){
-   File meta=new File(f.getPath()+".json");JSONObject j=meta.exists()?new JSONObject(read(meta)):new JSONObject();
-   if(j.optBoolean("awaiting_lesson"))continue;
-   j.put("name",f.getName()).put("bytes",f.length()).put("sha256",hash(f)).put("seconds",Math.max(0,f.length()-44)/32000.0);if(f.getName().startsWith("board-"))j.put("kind","board_photo");a.put(j);
-  }}return a;
  }
  static JSONObject readObject(File f)throws Exception{return f.isFile()?new JSONObject(read(f)):new JSONObject();}
  static JSONObject lesson(Context c,String name)throws Exception{return readObject(lessonFile(c,name));}
@@ -133,5 +136,4 @@ final class Store {
  }
  static String read(File f)throws IOException{try(InputStream i=new FileInputStream(f);ByteArrayOutputStream o=new ByteArrayOutputStream()){byte[] b=new byte[8192];int n;while((n=i.read(b))>0)o.write(b,0,n);return o.toString("UTF-8");}}
  static void write(File f,JSONObject j)throws IOException{File temp=new File(f.getPath()+".tmp");try(FileOutputStream o=new FileOutputStream(temp)){o.write(j.toString().getBytes("UTF-8"));o.getFD().sync();}if(!temp.renameTo(f))throw new IOException("Не удалось сохранить метаданные");}
- static synchronized void acknowledge(Context c,String name,String digest)throws Exception{File f=file(c,name);if(!f.exists())return;if(readObject(new File(f.getPath()+".json")).optBoolean("awaiting_lesson"))throw new IOException("Нужно выбрать пару");if(!hash(f).equals(digest))throw new IOException("Контрольная сумма отличается");if(name.endsWith(".wav")&&c.getSharedPreferences("settings",0).getBoolean("keep_audio_copy",true)){File saved=new File(library(c),name);if(saved.exists()){if(!hash(saved).equals(digest))throw new IOException("Аудиокопия в библиотеке отличается");if(!f.delete())throw new IOException("Не удалось завершить перенос в библиотеку");}else if(!f.renameTo(saved))throw new IOException("Не удалось сохранить аудиокопию для прослушивания");}else if(!f.delete())throw new IOException("Не удалось удалить подтверждённую копию");new File(f.getPath()+".json").delete();if(name.startsWith("board-")){String id=name.substring(name.lastIndexOf('-')+1,name.length()-4);new File(BoardPhotos.camera(c),id+".jpg").delete();new File(BoardPhotos.camera(c),id+".json").delete();}}
 }
