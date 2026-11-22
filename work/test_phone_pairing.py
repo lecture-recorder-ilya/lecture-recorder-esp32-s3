@@ -1,7 +1,5 @@
 import http.client
 import json
-import os
-import shutil
 import socket
 import ssl
 import stat
@@ -126,44 +124,6 @@ class UsbTests(unittest.TestCase):
   with patch.object(phone_sync,'urlopen') as remote:
    phone_sync.request('http://127.0.0.1:8781','fixture-key','/list')
    self.assertNotIn('Authorization',remote.call_args.args[0].headers)
-
-
-class AndroidProtocolTests(unittest.TestCase):
- setUp=PairingTests.setUp
- tearDown=PairingTests.tearDown
- @classmethod
- def setUpClass(cls):
-  java_home=os.environ.get('JAVA_HOME');cls.javac=Path(java_home)/'bin/javac' if java_home else Path(shutil.which('javac') or '/missing')
-  cls.java=cls.javac.with_name('java')
-  if subprocess.run([str(cls.javac),'-version'],capture_output=True).returncode:raise unittest.SkipTest('JDK required for Android protocol test')
-  cls.classes=tempfile.TemporaryDirectory();root=Path(cls.classes.name)
-  harness=root/'PairingHarness.java';harness.write_text('''package ru.ilya.lecturerecorder;
-import java.nio.file.*;
-import java.nio.charset.StandardCharsets;
-public class PairingHarness {
- public static void main(String[] args)throws Exception {
-  if(args[0].equals("code")){System.out.print(PairingProtocol.certificateCode(Files.readAllBytes(Paths.get(args[1]))));return;}
-  System.out.print(PairingProtocol.post("127.0.0.1",Integer.parseInt(args[0]),args[1],args[2],new String(Files.readAllBytes(Paths.get(args[3])),StandardCharsets.UTF_8)));
- }
-}''')
-  protocol=Path('outputs/android/src/ru/ilya/lecturerecorder/PairingProtocol.java')
-  subprocess.run([str(cls.javac),'-encoding','UTF-8','-d',str(root),str(protocol),str(harness)],check=True,capture_output=True)
- @classmethod
- def tearDownClass(cls):cls.classes.cleanup()
- def java_call(self,code,route,body):
-  path=self.root/'request.json';path.write_text(json.dumps(body))
-  return subprocess.run([str(self.java),'-cp',self.classes.name,'ru.ilya.lecturerecorder.PairingHarness',str(self.manager.server.server_port),code,route,str(path)],capture_output=True,text=True,timeout=15)
- def test_android_pinning_matches_mac_code_and_rejects_wrong_code(self):
-  wrong='A'*12 if self.initial['code']!='A'*12 else 'B'*12
-  result=self.java_call(wrong,'/pair/request',self.body);self.assertNotEqual(result.returncode,0);self.assertIsNone(self.manager.pending)
-  result=self.java_call(self.initial['code'],'/pair/request',self.body);self.assertEqual(result.returncode,0,result.stderr)
-  self.assertIn('request_id',json.loads(result.stdout))
- def test_android_protocol_completes_real_tls_exchange(self):
-  result=self.java_call(self.initial['code'],'/pair/request',self.body);self.assertEqual(result.returncode,0,result.stderr);value=json.loads(result.stdout)
-  waiting=self.java_call(self.initial['code'],'/pair/status',{'request_id':value['request_id']});self.assertNotIn('sync_token',json.loads(waiting.stdout))
-  self.manager.decide(value['request_id'],True)
-  approved=self.java_call(self.initial['code'],'/pair/status',{'request_id':value['request_id']});self.assertEqual(json.loads(approved.stdout)['sync_token'],pairing.read(self.manager.config)['token'])
-  ack=self.java_call(self.initial['code'],'/pair/ack',{'request_id':value['request_id']});self.assertTrue(json.loads(ack.stdout)['ok'])
 
 
 if __name__=='__main__':unittest.main()

@@ -14,14 +14,43 @@ from update_manager import allowed
 def main():
     parser = argparse.ArgumentParser(description='Собрать пакеты закрытого канала обновлений.')
     parser.add_argument('--preview-apk', type=Path, help='APK отдельной сборки Android с прежней подписью')
+    parser.add_argument('--android-only', action='store_true', help='Собрать только пакет обновлений Android')
+    parser.add_argument('--android-apk', type=Path, help='Обычный APK, подписанный ключом предыдущего релиза')
     args = parser.parse_args()
     output = ROOT/'work/release'
+    if args.android_only:
+        if args.android_apk is None and args.preview_apk is None:
+            parser.error('--android-only требует --android-apk или --preview-apk')
+        output /= 'android'
+    apk = args.android_apk
+    if not args.android_only and apk is None:
+        apk = ROOT/'outputs/android/Запись лекций.apk'
+    for path in (apk, args.preview_apk):
+        if path is not None and not path.is_file():
+            parser.error(f'APK не найден: {path}')
     output.mkdir(parents=True, exist_ok=True)
-    apk = ROOT/'outputs/android/Запись лекций.apk'
-    if not apk.is_file():
-        raise SystemExit('Сначала собери Android: outputs/android/build.py')
-    if args.preview_apk is not None and not args.preview_apk.is_file():
-        raise SystemExit('Не найден APK отдельной сборки Android')
+    packages = [] if args.android_only else [build_mac_archive(output)]
+    for source, name in ((apk, 'lecture-recorder.apk'), (args.preview_apk, 'lecture-recorder-android.apk')):
+        target = output/name
+        if source is None:
+            target.unlink(missing_ok=True)
+            continue
+        if source.resolve() != target.resolve():
+            shutil.copyfile(source, target)
+        packages.append(target)
+
+    sums = []
+    for path in packages:
+        with path.open('rb') as stream:
+            digest = hashlib.sha256()
+            for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                digest.update(chunk)
+        sums.append(f'{digest.hexdigest()}  {path.name}')
+    (output/'SHA256SUMS.txt').write_text('\n'.join(sums)+'\n')
+    print(output)
+
+
+def build_mac_archive(output):
     sources = [ROOT/'release.json']
     for folder in ('outputs/recorder', 'outputs/Запись лекций.app', 'outputs/Синхронизация Bluetooth.app'):
         path = ROOT/folder
@@ -34,22 +63,7 @@ def main():
             if path.is_symlink():
                 raise ValueError('Ссылки не включаются в обновление')
             z.write(path, path.relative_to(ROOT).as_posix())
-    stable = output/'lecture-recorder.apk'
-    preview = output/'lecture-recorder-android.apk'
-    shutil.copyfile(apk, stable)
-    packages = [archive, stable]
-    if args.preview_apk is not None:
-        shutil.copyfile(args.preview_apk, preview)
-        packages.append(preview)
-    elif preview.is_file():
-        preview.unlink()
-    sums = []
-    for path in packages:
-        with path.open('rb') as stream:
-            digest = hashlib.file_digest(stream, 'sha256').hexdigest()
-        sums.append(f'{digest}  {path.name}')
-    (output/'SHA256SUMS.txt').write_text('\n'.join(sums)+'\n')
-    print(output)
+    return archive
 
 
 if __name__ == '__main__':

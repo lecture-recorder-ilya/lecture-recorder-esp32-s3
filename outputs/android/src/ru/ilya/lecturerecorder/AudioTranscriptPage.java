@@ -506,7 +506,7 @@ final class AudioTranscriptPage extends LinearLayout {
         String message = PhoneAnalysisService.statusFor(selected);
         if (busy && !loading) message = "Обрабатывается другая запись";
         else if (message.isEmpty() && transcriptRows.isEmpty()) {
-            if (!supported) message = "Расшифровка появится после обработки на Mac.";
+            if (!supported) message = "Для расшифровки на телефоне нужна 64-битная версия Android.";
             else message = "У этой записи пока нет расшифровки.";
         }
         if (!TextUtils.equals(transcriptStatus.getText(), message)) transcriptStatus.setText(message);

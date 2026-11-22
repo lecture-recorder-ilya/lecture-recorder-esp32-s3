@@ -3,7 +3,6 @@ package ru.ilya.lecturerecorder;
 import android.content.Context;
 import org.json.*;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -88,18 +87,6 @@ final class LectureNotes {
   Store.write(target,document);
  }
  static boolean valid(String n){return n!=null&&n.matches("lecture-[0-9-]+\\.wav");}
- static synchronized JSONObject index(Context c)throws Exception{
-  JSONObject j=new JSONObject();File[] fs=root(c).listFiles(f->f.getName().endsWith(".wav.json"));
-  if(fs!=null)for(File f:fs)j.put(f.getName().replaceFirst("\\.json$",""),Store.hash(f));return j;
- }
- static synchronized String save(Context c,byte[] body)throws Exception{
-  if(body.length>2*1024*1024)throw new IOException("Текст слишком большой");
-  JSONObject j=new JSONObject(new String(body,StandardCharsets.UTF_8));String name=j.getString("file");
-  if(!valid(name)||!j.has("report"))throw new IOException("Некорректный текст лекции");j.getJSONObject("report");
-  File target=new File(root(c),name+".json"),tmp=new File(root(c),name+".tmp");
-  try(FileOutputStream out=new FileOutputStream(tmp)){out.write(body);out.getFD().sync();}
-  if(!tmp.renameTo(target))throw new IOException("Текст не сохранён");return Store.hash(target);
- }
  static File[] files(Context c,boolean local){File[] fs=(local?localRoot(c):root(c)).listFiles(f->f.getName().endsWith(".wav.json"));if(fs==null)return new File[0];Arrays.sort(fs,Collections.reverseOrder());return fs;}
  static String title(JSONObject value){JSONObject r=value.optJSONObject("report"),m=value.optJSONObject("lesson");String subject=r.optString("subject",m==null?"":m.optString("subject"));String date=m==null?"":m.optString("date");return subject.isEmpty()?value.optString("file"):subject+(date.isEmpty()?"":" · "+date);}
  static String text(JSONObject v)throws Exception{return text(v,true);}

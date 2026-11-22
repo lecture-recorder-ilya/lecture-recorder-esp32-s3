@@ -117,7 +117,7 @@ public class LectureReaderActivity extends Activity {
         Button back = button("‹ Аудио", this::finish);
         navigation.addView(back, new LinearLayout.LayoutParams(-2, dp(48)));
         if (LectureNotes.file(this, recording, !local).isFile()) {
-            Button source = button(local ? "Версия с Mac" : "Версия с телефона", () -> {
+            Button source = button(local ? "Ранее сохранённая" : "Версия с телефона", () -> {
                 startActivity(new Intent(this, LectureReaderActivity.class)
                         .putExtra("file", note.getName()).putExtra("local", !local).putExtra("tab", tab));
                 finish();
@@ -452,18 +452,10 @@ public class LectureReaderActivity extends Activity {
         if (scroll != null) state.putInt("reader_scroll", scroll.getScrollY());
     }
 
-    @Override protected void onStart() {
-        super.onStart();
-        if (note != null) CaptureService.screenStarted();
-    }
-
     @Override public void onResume() {
         super.onResume();
         foreground = true;
-        if (note != null) {
-            CaptureService.resumeSync(this);
-            refresh();
-        }
+        if (note != null) refresh();
     }
 
     @Override public void onPause() {
@@ -474,11 +466,6 @@ public class LectureReaderActivity extends Activity {
             toggle.setText("Продолжить");
         }
         super.onPause();
-    }
-
-    @Override protected void onStop() {
-        if (note != null) CaptureService.screenStopped();
-        super.onStop();
     }
 
     @Override public void onDestroy() {
