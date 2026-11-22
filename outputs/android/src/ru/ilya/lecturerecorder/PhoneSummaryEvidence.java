@@ -19,7 +19,13 @@ final class PhoneSummaryEvidence {
     private static final Pattern EXCLUDED_TASK = Pattern.compile(
             "[?]|например|допустим|в качестве примера|если бы|не\\s+(?:нужно|надо|реш|дел|сда|готов|буд)|(?:задани[ея] нет|задани[ея] не будет)",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-    private static final Pattern CONDITION = Pattern.compile("^(?:если|когда|при условии,? что)\\s+.*[,;:]$",
+    private static final Pattern REPLACED_DEADLINE = Pattern.compile(
+            "((?<![\\p{L}])(?:к|до)\\s+[\\p{L}0-9./:-]+(?:\\s+[\\p{L}0-9]+)?\\s+)не\\s+(?:надо|нужно)"
+            + "(?=\\s*,\\s*(?:а\\s+)?(?:сдайте|сдать)\\s+(?:к|до)\\s+)",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern CONDITION_START = Pattern.compile("^(?:(?:если|когда),?|при условии,? что)\\s+",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern CONDITION_BODY = Pattern.compile("[,;:]\\s*\\S|\\sто\\s+",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
     private static final Pattern CONSEQUENCE = Pattern.compile("^то\\s+(?!(?:есть|же|самое|что)(?:\\s|$))",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
@@ -49,8 +55,11 @@ final class PhoneSummaryEvidence {
         for (int index : exercises) {
             JSONObject row = segments.getJSONObject(index);
             String quote = row.getString("text");
+            // Ignore only the rejected date before an explicit replacement;
+            // keep every word, including the negation, in the stored task.
+            String taskContext = REPLACED_DEADLINE.matcher(quote).replaceAll("$1");
             if (row.optBoolean("needs_review") || !AFTER_CLASS.matcher(quote).find()
-                    || !ASSIGNMENT.matcher(quote).find() || EXCLUDED_TASK.matcher(quote).find()
+                    || !ASSIGNMENT.matcher(quote).find() || EXCLUDED_TASK.matcher(taskContext).find()
                     || !tasks.add(quote)) continue;
             homework.put(anchor(row, index, quote).put("task", quote));
         }
@@ -64,7 +73,7 @@ final class PhoneSummaryEvidence {
         if (CONSEQUENCE.matcher(quote).find()) {
             return previous >= 0 ? conditional(segments, previous, index) : null;
         }
-        if (CONDITION.matcher(quote).matches()) {
+        if (openCondition(quote)) {
             return index + 1 < segments.length() ? conditional(segments, index, index + 1) : null;
         }
         return anchor(row, index, quote);
@@ -77,10 +86,18 @@ final class PhoneSummaryEvidence {
         String left = condition.getString("text").trim();
         String right = result.getString("text").trim();
         double gap = result.getDouble("start") - condition.getDouble("end");
-        if (!CONDITION.matcher(left).matches() || !CONSEQUENCE.matcher(right).find() || gap < -.25 || gap > 1.5) {
+        if (!openCondition(left) || !CONSEQUENCE.matcher(right).find() || gap < -.25 || gap > 1.5) {
             return null;
         }
         return anchor(condition, first, left + " " + right).put("end", result.getDouble("end"));
+    }
+
+    private static boolean openCondition(String text) {
+        // ASR often omits the comma; that does not turn "Если ..." into a fact.
+        Matcher start = CONDITION_START.matcher(text);
+        return start.find() && !text.endsWith("?")
+                && (text.matches("(?s).*[,;:…]$") || text.endsWith("...")
+                    || !CONDITION_BODY.matcher(text.substring(start.end())).find());
     }
 
     private static JSONObject anchor(JSONObject row, int index, String quote) throws JSONException {

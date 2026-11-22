@@ -287,7 +287,63 @@ public final class SummaryStateTest {
         require(criticalTasks.length() == 1 && unfinishedDate.equals(criticalTasks.getJSONObject(0).getString("task"))
                         && !criticalTasks.getJSONObject(0).has("deadline"),
                 "Homework must keep the number and leave the unsettled date unspecified");
+        checkNoisyEvidence();
         System.out.println("PASS: verbatim quotes, timestamps, uncertainty and explicit homework");
+    }
+
+    private static void checkNoisyEvidence() throws Exception {
+        for (String text : new String[]{"Если определитель равен нулю", "Если определитель равен нулю,",
+                "При условии, что определитель равен нулю",
+                "Если, например, определитель равен нулю,",
+                "то система не имеет единственного решения."}) {
+            JSONArray rows = new JSONArray().put(new JSONObject().put("text", text).put("start", 0).put("end", 3));
+            JSONArray points = new JSONArray();
+            PhoneSummaryEvidence.add("KEY: 1", 0, 1, rows, points, new JSONArray(), new JSONArray(),
+                    new HashSet<>(), new HashSet<>());
+            require(points.length() == 0, "Incomplete condition: " + text);
+        }
+        String left = "Если определитель равен нулю";
+        String right = "то система не имеет единственного решения.";
+        JSONArray split = new JSONArray()
+                .put(new JSONObject().put("text", left).put("start", 0).put("end", 3))
+                .put(new JSONObject().put("text", right).put("start", 3).put("end", 6));
+        for (String selection : new String[]{"1", "2", "1,2"}) {
+            JSONArray points = new JSONArray(), anchors = new JSONArray();
+            PhoneSummaryEvidence.add("KEY: " + selection, 0, 2, split, points, anchors, new JSONArray(),
+                    new HashSet<>(), new HashSet<>());
+            require(points.length() == 1 && (left + " " + right).equals(points.getString(0)),
+                    "Missing punctuation must not sever a condition");
+            require(anchors.getJSONObject(0).getInt("start") == 0 && anchors.getJSONObject(0).getInt("end") == 6,
+                    "Keep both source timestamps");
+        }
+        for (String text : new String[]{"Сопротивление равно не 15, а 150 ом.",
+                "Сопротивление примерно 150 ом, точное значение не измерено.", "Этот метод не сходится.",
+                "Когда началась промышленная революция?",
+                "Если функция непрерывна, она ограничена.", "То есть функция ограничена на отрезке."}) {
+            JSONArray rows = new JSONArray().put(new JSONObject().put("text", text).put("start", 0).put("end", 3));
+            JSONArray points = new JSONArray();
+            PhoneSummaryEvidence.add("KEY: 1", 0, 1, rows, points, new JSONArray(), new JSONArray(),
+                    new HashSet<>(), new HashSet<>());
+            require(points.length() == 1 && text.equals(points.getString(0)), "Changed a number or negation: " + text);
+        }
+        for (String text : new String[]{"На дом решите задачу 15. Сдайте примерно до пятницы.",
+                "На дом решите задачу 15. Сдайте не к пятнице, а к понедельнику.",
+                "На дом решите задачу 15. Сдать до пятницы не надо, сдайте к понедельнику.",
+                "На дом решите задачу 15. Срок пока не утверждён."}) {
+            JSONArray rows = new JSONArray().put(new JSONObject().put("text", text).put("start", 0).put("end", 5));
+            JSONArray tasks = new JSONArray();
+            PhoneSummaryEvidence.add("TASK: 1", 0, 1, rows, new JSONArray(), new JSONArray(), tasks,
+                    new HashSet<>(), new HashSet<>());
+            require(tasks.length() == 1 && text.equals(tasks.getJSONObject(0).getString("task"))
+                    && !tasks.getJSONObject(0).has("deadline"), "Invented an exact deadline");
+        }
+        String cancelled = "На дом решите задачу 15. Сдавать её не надо.";
+        JSONArray rows = new JSONArray().put(new JSONObject().put("text", cancelled).put("start", 0).put("end", 5));
+        JSONArray tasks = new JSONArray();
+        PhoneSummaryEvidence.add("TASK: 1", 0, 1, rows, new JSONArray(), new JSONArray(), tasks,
+                new HashSet<>(), new HashSet<>());
+        require(tasks.length() == 0, "Cancelled work must stay excluded");
+        System.out.println("PASS: fixed noisy fixtures: deadlines, numbers, negations and incomplete conditions");
     }
 
     private static JSONArray segments(String text) throws Exception {
