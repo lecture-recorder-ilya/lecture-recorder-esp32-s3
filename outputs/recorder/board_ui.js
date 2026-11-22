@@ -20,6 +20,15 @@ function updateBoardPhotoCard(card,name){
 }
 function boardPhotoSeconds(value){const parts=value.trim().split(':');if(!parts.length||parts.length>3||parts.some(v=>!/^\d+(?:\.\d+)?$/.test(v)))throw Error('Укажи время как 12:30');if(parts.length>1&&parts.slice(1).some(v=>Number(v)>=60))throw Error('Минуты и секунды после двоеточия должны быть от 0 до 59');return parts.reduce((sum,v)=>sum*60+Number(v),0)}
 const boardInbox=el('details',undefined,'card board-inbox');const boardHeading=el('summary'),boardCount=el('span','','board-count');boardHeading.append(el('span','Фото с телефона','board-inbox-title'),boardCount);boardInbox.append(boardHeading);const boardStatus=el('p','','muted'),boardList=el('div');boardInbox.append(boardStatus,boardList);document.querySelector('#view-library .view-intro').after(boardInbox);
+const boardShortcut=el('button','Фото с телефона','secondary');
+boardShortcut.type='button';
+boardShortcut.onclick=()=>{
+ window.showLectureView?.('library');
+ boardInbox.open=true;
+ boardHeading.focus({preventScroll:true});
+ boardInbox.scrollIntoView({block:'nearest'});
+};
+document.querySelector('#view-record .record-shortcuts')?.append(boardShortcut);
 let boardPollTimer,boardPolling=false;const boardDrafts=new Map();
 async function pollBoardPhotos(){
  if(boardPolling)return;boardPolling=true;

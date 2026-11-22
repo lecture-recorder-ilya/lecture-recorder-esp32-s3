@@ -65,12 +65,16 @@ function addCard(name){
 let updating=false;
 async function update(){if(updating)return;updating=true;try{
  const response=await fetch('/status',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Status unavailable');const s=await response.json();studyStatus=s;
- let phoneStatus=$('#phone-sync-status');if(!phoneStatus){phoneStatus=document.createElement('p');phoneStatus.id='phone-sync-status';phoneStatus.className='muted';$('#status').parentNode.append(phoneStatus)}phoneStatus.textContent=s.phone_sync?(s.phone_sync.connected?'Телефон: '+s.phone_sync.message:'Телефон не подключён · записи перенесутся, когда он будет доступен.'):'';
- $('#timer').closest('section').classList.toggle('is-recording',Boolean(s.recording));$('#timer').closest('section').dataset.recording=String(Boolean(s.recording));window.syncRecordingPreview?.(s);
- $('#status').textContent=s.reconnecting?'Связь потеряна · переподключаю ESP…':s.busy?'Подключаю ESP…':s.recording?'● Идёт запись':'Готово к записи';
+ let phoneStatus=$('#phone-sync-status');if(!phoneStatus){phoneStatus=document.createElement('p');phoneStatus.id='phone-sync-status';phoneStatus.className='muted';$('#status').parentNode.append(phoneStatus)}phoneStatus.textContent=s.phone_sync?(s.phone_sync.connected?s.phone_sync.message:'Телефон не подключён'):'';
+ const running=Boolean(s.recording||s.busy),source=$('#transport');
+ const needsUsb=!s.usb_present&&source.value==='usb';
+ const status=s.reconnecting?'Связь потеряна · переподключаю ESP…':s.busy?'Подключаю ESP…':s.recording?'Идёт запись':needsUsb?'Подключи микрофон':'Готово к записи';
+ if($('#status').textContent!==status)$('#status').textContent=status;
  const sec=s.recording||s.busy?Math.floor(s.seconds||0):0;$('#timer').textContent=[Math.floor(sec/3600),Math.floor(sec/60)%60,sec%60].map(v=>String(v).padStart(2,'0')).join(':');
  $('#level').value=s.level>0?Math.max(0,100+20*Math.log10(s.level/32768)):0;
- $('#start').disabled=s.recording||s.busy||(!s.usb_present&&$('#transport').value==='usb');if(!s.recording&&!s.busy&&!s.usb_present&&$('#transport').value==='usb')$('#status').textContent='Подключи микрофон';$('#stop').disabled=!(s.recording||s.busy);$('#transport').disabled=s.recording||s.busy;if((s.recording||s.busy)&&s.transport)$('#transport').value=s.transport;
+ const focusedControl=document.activeElement;
+ $('#start').disabled=running||needsUsb;$('#stop').disabled=!running;source.disabled=running;if(running&&s.transport)source.value=s.transport;
+ window.syncRecordingControls?.(s,focusedControl);window.syncRecordingPreview?.(s);
  for(const id of ['pair','setup','check','reserve-check'])$('#'+id).disabled=s.recording||s.busy||inFlight;
  if(s.error)$('#error').textContent=s.error;else $('#error').textContent=s.missing_seconds?'Пропущено '+s.missing_seconds+' с звука из-за потери связи.':'';
  $('#usbstatus').textContent=s.usb_present?'USB подключён':'USB не подключён';

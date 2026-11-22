@@ -18,7 +18,9 @@ import java.util.*;
 public class MainActivity extends Activity {
  private TextView state,duration,deviceBattery;
  private RecordingMeter meter;
- private FrameLayout deviceReveal,deviceGrip;
+ private FrameLayout deviceReveal;
+ private LinearLayout deviceToggle;
+ private TextView deviceChevron;
  private ValueAnimator deviceExpansion;
  private LinearLayout deviceDetails,pairedDevice;
  private RecorderModelView deviceModel;
@@ -38,7 +40,8 @@ public class MainActivity extends Activity {
  private long nextPresenceCheck;
  private boolean lastRecording;
  private boolean microphonePermissionDenied;
- private Button start,stop;
+ private Button recordAction;
+ private boolean recordingActionShown;
  private ChoiceDropdown transport;
  private final Handler timer=new Handler();
  private int selectedPage=0;
@@ -131,8 +134,6 @@ public class MainActivity extends Activity {
   root.setOnApplyWindowInsetsListener((view,insets)->{view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});root.requestApplyInsets();
   FrameLayout host=new FrameLayout(this);root.addView(host,new LinearLayout.LayoutParams(-1,0,1));
   LinearLayout record=page(host,0,"Новая запись");
-  addConnectionPanel(record);
-  if(saved!=null)deviceModel.setYaw(saved.getFloat("device_rotation",-.30f));
   LinearLayout hero=card(record);
   hero.setBackground(StudioStyle.recorderCard(this));
 
@@ -148,11 +149,21 @@ public class MainActivity extends Activity {
   duration.setPadding(0,dp(4),0,dp(10));
   hero.addView(duration,new LinearLayout.LayoutParams(-1,dp(74)));
 
+  recordAction=button("Начать запись",()->{
+   if(recordingActionShown!=CaptureService.recording)return;
+   if(recordingActionShown)startForegroundService(CaptureService.command(this,"STOP"));
+   else begin();
+  },true);
+  hero.addView(recordAction);
   TextView meterLabel=note("Уровень сигнала");
+  meterLabel.setPadding(0,dp(14),0,dp(6));
   hero.addView(meterLabel);
   meter=new RecordingMeter(this);
-  hero.addView(meter,new LinearLayout.LayoutParams(-1,dp(68)));
-  hero.addView(note("Источник звука"));
+  hero.addView(meter,new LinearLayout.LayoutParams(-1,dp(56)));
+
+  addRecordingShortcuts(record);
+  LinearLayout microphone=card(record);
+  microphone.addView(heading("Источник звука",16));
   SharedPreferences sourceSettings=getSharedPreferences("settings",0);
   String source=sourceSettings.getString("transport","phone");
   ChoiceDropdown.Option selectedSource=sources.get(source.equals("ble")||source.equals("wifi")?1:0);
@@ -165,20 +176,12 @@ public class MainActivity extends Activity {
     refreshConnection();
    });
   transport.setSelected(selectedSource);
-  hero.addView(transport.button,new LinearLayout.LayoutParams(-1,-2));
+  microphone.addView(transport.button,new LinearLayout.LayoutParams(-1,-2));
   LinearLayout.LayoutParams sourceList=new LinearLayout.LayoutParams(-1,-2);
   sourceList.topMargin=dp(6);
-  hero.addView(transport.list,sourceList);
-  start=button("Начать запись",()->begin(),true);
-  hero.addView(start);
-  stop=button("Завершить и сохранить",()->startForegroundService(CaptureService.command(this,"STOP")));
-  stop.setTextColor(StudioStyle.INK);
-  stop.setBackground(StudioStyle.control(this,StudioStyle.RECORDING,14));
-  stop.setVisibility(View.GONE);
-  hero.addView(stop);
-
-  Button photo=button("Сфотографировать доску",this::takeBoardPhoto);
-  record.addView(photo);
+  microphone.addView(transport.list,sourceList);
+  addConnectionPanel(microphone);
+  if(saved!=null)deviceModel.setYaw(saved.getFloat("device_rotation",-.30f));
   LinearLayout settingsPage=page(host,SETTINGS_PAGE,"Настройки");
   LinearLayout mac=card(settingsPage);
   mac.addView(heading("Телефон и Mac",18));
@@ -299,16 +302,26 @@ public class MainActivity extends Activity {
    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
   startActivityForResult(pick,7);
  }
- private void addConnectionPanel(LinearLayout record){
-  LinearLayout panel=card(record);
-  panel.setPadding(dp(14),0,dp(14),0);
-  LinearLayout row=new LinearLayout(this);
-  row.setGravity(Gravity.CENTER_VERTICAL);
-  row.setMinimumHeight(dp(48));
-  row.setFocusable(true);
-  row.setBackground(new android.graphics.drawable.RippleDrawable(
-   android.content.res.ColorStateList.valueOf(0x22ffffff),null,surface(Color.WHITE,12)));
-  row.setOnClickListener(view->toggleDevicePanel());
+ private void addRecordingShortcuts(LinearLayout record){
+  LinearLayout shortcuts=column();
+  boolean horizontal=getResources().getConfiguration().screenWidthDp>=360
+    &&getResources().getConfiguration().fontScale<=1.25f;
+  if(horizontal)shortcuts.setOrientation(LinearLayout.HORIZONTAL);
+  LinearLayout.LayoutParams placement=new LinearLayout.LayoutParams(-1,-2);
+  placement.bottomMargin=dp(12);
+  record.addView(shortcuts,placement);
+  Button importAudio=button("Импорт аудио",this::chooseAudio);
+  Button photo=button("Фото доски",this::takeBoardPhoto);
+  LinearLayout.LayoutParams first=new LinearLayout.LayoutParams(horizontal?0:-1,-2,horizontal?1:0);
+  LinearLayout.LayoutParams second=new LinearLayout.LayoutParams(horizontal?0:-1,-2,horizontal?1:0);
+  if(horizontal)first.setMarginEnd(dp(10));else second.topMargin=dp(8);
+  shortcuts.addView(importAudio,first);
+  shortcuts.addView(photo,second);
+ }
+ private void addConnectionPanel(LinearLayout panel){
+  LinearLayout signal=new LinearLayout(this);
+  signal.setGravity(Gravity.CENTER_VERTICAL);
+  signal.setMinimumHeight(dp(36));
   View indicator=new View(this);
   indicator.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   linkDot=new GradientDrawable();
@@ -316,10 +329,26 @@ public class MainActivity extends Activity {
   indicator.setBackground(linkDot);
   LinearLayout.LayoutParams marker=new LinearLayout.LayoutParams(dp(10),dp(10));
   marker.setMarginEnd(dp(10));
-  row.addView(indicator,marker);
-  state=heading("",14);
+  signal.addView(indicator,marker);
+  state=note("");
   state.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-  row.addView(state,new LinearLayout.LayoutParams(0,-2,1));
+  signal.addView(state,new LinearLayout.LayoutParams(0,-2,1));
+  panel.addView(signal,new LinearLayout.LayoutParams(-1,-2));
+
+  LinearLayout row=new LinearLayout(this);
+  deviceToggle=row;
+  row.setGravity(Gravity.CENTER_VERTICAL);
+  row.setMinimumHeight(dp(48));
+  row.setFocusable(true);
+  row.setBackground(new android.graphics.drawable.RippleDrawable(
+   android.content.res.ColorStateList.valueOf(0x22ffffff),null,surface(Color.WHITE,12)));
+  row.setOnClickListener(view->toggleDevicePanel());
+  row.addView(heading("Устройство ESP",14),new LinearLayout.LayoutParams(0,-2,1));
+  deviceChevron=note("⌄");
+  deviceChevron.setGravity(Gravity.CENTER);
+  deviceChevron.setRotation(deviceExpanded?180f:0f);
+  deviceChevron.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+  row.addView(deviceChevron,new LinearLayout.LayoutParams(dp(28),dp(32)));
   panel.addView(row,new LinearLayout.LayoutParams(-1,-2));
 
   deviceDetails=column();
@@ -351,14 +380,6 @@ public class MainActivity extends Activity {
   deviceReveal.setClipChildren(true);
   deviceReveal.addView(deviceDetails,new FrameLayout.LayoutParams(-1,-2));
   panel.addView(deviceReveal,new LinearLayout.LayoutParams(-1,-2));
-  deviceGrip=new FrameLayout(this);
-  deviceGrip.setFocusable(true);
-  deviceGrip.setOnClickListener(view->toggleDevicePanel());
-  View pill=new View(this);
-  pill.setBackground(surface(0xff626578,4));
-  pill.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-  deviceGrip.addView(pill,new FrameLayout.LayoutParams(dp(46),dp(5),Gravity.CENTER));
-  panel.addView(deviceGrip,new LinearLayout.LayoutParams(-1,dp(29)));
   showConnection(CaptureService.Link.OFF,"Микрофон выключен");
   updateDevicePanel();
   deviceReveal.setVisibility(deviceExpanded?View.VISIBLE:View.GONE);
@@ -398,8 +419,7 @@ public class MainActivity extends Activity {
   return square;
  }
  private void updateDevicePanel(){
-  deviceGrip.setContentDescription(panelAction());
-  state.setContentDescription(state.getText()+". "+panelAction());
+  deviceToggle.setContentDescription(panelAction());
   boolean paired=!getSharedPreferences("settings",0).getString("esp_paired_transport","").isEmpty();
   pairedDevice.setVisibility(paired?View.VISIBLE:View.GONE);
   addDevice.setVisibility(paired?View.GONE:View.VISIBLE);
@@ -407,7 +427,7 @@ public class MainActivity extends Activity {
   deviceBattery.setText(deviceCharge<0?"Заряд недоступен":"Заряд · "+deviceCharge+"%");
  }
  private String panelAction(){
-  return (deviceExpanded?"Свернуть":"Раскрыть")+" панель устройства";
+  return (deviceExpanded?"Свернуть":"Раскрыть")+" настройки устройства ESP";
  }
  private void toggleDevicePanel(){
   setDeviceExpanded(!deviceExpanded);
@@ -416,6 +436,10 @@ public class MainActivity extends Activity {
   if(deviceExpanded==expanded)return;
   deviceExpanded=expanded;
   updateDevicePanel();
+  deviceChevron.animate().cancel();
+  float rotation=expanded?180f:0f;
+  if(ValueAnimator.areAnimatorsEnabled())deviceChevron.animate().rotation(rotation).setDuration(180).start();
+  else deviceChevron.setRotation(rotation);
 
   if(deviceExpansion!=null){
    ValueAnimator previous=deviceExpansion;
@@ -424,7 +448,10 @@ public class MainActivity extends Activity {
   }
   int from=deviceReveal.getVisibility()==View.VISIBLE?deviceReveal.getHeight():0;
   int width=deviceReveal.getWidth();
-  if(width<=0)width=((View)deviceReveal.getParent()).getWidth()-dp(28);
+  if(width<=0){
+   View panel=(View)deviceReveal.getParent();
+   width=panel.getWidth()-panel.getPaddingLeft()-panel.getPaddingRight();
+  }
   if(width<=0||!ValueAnimator.areAnimatorsEnabled()){
    ViewGroup.LayoutParams layout=deviceReveal.getLayoutParams();
    layout.height=ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -493,7 +520,6 @@ public class MainActivity extends Activity {
   }
   if(!message.contentEquals(state.getText())){
    state.setText(message);
-   state.setContentDescription(message+". "+panelAction());
   }
  }
  private void refreshConnection(){
@@ -588,8 +614,13 @@ public class MainActivity extends Activity {
   addDevice.setEnabled(pairingAvailable);
   reconnectDevice.setEnabled(pairingAvailable);
   firmwareButton.setEnabled(!active&&firmwareQuery==null);
-  start.setEnabled(!active&&firmwareQuery==null);start.setVisibility(active?View.GONE:View.VISIBLE);
-  stop.setEnabled(active);stop.setVisibility(active?View.VISIBLE:View.GONE);
+  if(active!=recordingActionShown){
+   recordingActionShown=active;
+   recordAction.setText(active?"Завершить и сохранить":"Начать запись");
+   recordAction.setBackground(StudioStyle.control(this,active?StudioStyle.RECORDING:accent,14));
+   if(selectedPage==0)StudioStyle.enter(recordAction,false);
+  }
+  recordAction.setEnabled(active||firmwareQuery==null);
   transport.setEnabled(!active);
   meter.setRecording(active&&selectedPage==0);
   if(selectedPage==SETTINGS_PAGE)refreshSyncSettings(active);

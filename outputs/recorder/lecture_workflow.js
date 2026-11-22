@@ -121,7 +121,7 @@
  function initImport(){
   const library=document.querySelector('#view-library');if(!library)return;
   const form=node('form',undefined,'lecture-import card');form.id='lecture-import';
-  const headline=node('div',undefined,'import-heading');headline.append(node('span','01 / ЗАПИСЬ → ТЕКСТ → КОНСПЕКТ','import-eyebrow'),node('h3','Загрузить запись пары'),node('p','Выбери аудио с телефона или диктофона. Распознавание и конспект готовятся на этом Mac.','muted'));form.append(headline);
+  const headline=node('div',undefined,'import-heading');headline.append(node('h3','Загрузить запись пары'),node('p','Выбери аудио с телефона или диктофона. Распознавание и конспект готовятся на этом Mac.','muted'));form.append(headline);
   const picker=node('input');picker.type='file';picker.id='lecture-audio-file';picker.accept='audio/*,.wav,.mp3,.m4a,.aac,.flac,.ogg,.opus,.webm,.mp4,.caf,.aif,.aiff';picker.className='import-file-input';
   const choose=node('button','Выбрать аудиозапись','import-choose');choose.type='button';choose.onclick=()=>picker.click();
   const drop=node('div',undefined,'import-drop');drop.tabIndex=0;drop.setAttribute('aria-label','Выбрать или перетащить аудиозапись');const filename=node('span','WAV, MP3, M4A и другие форматы · до 2 ГБ','import-filename');drop.append(choose,filename,picker);form.append(drop);
@@ -138,7 +138,13 @@
   const cancel=node('button','Отменить загрузку','secondary');cancel.type='button';cancel.hidden=true;cancel.onclick=()=>upload?.abort();actions.append(submit,cancel);form.append(actions);
   const progress=node('progress');progress.max=100;progress.hidden=true;progress.setAttribute('aria-label','Загрузка записи');const message=node('p','','import-message');message.setAttribute('role','status');const jobs=node('div',undefined,'import-jobs');form.append(progress,message,jobs);
   library.querySelector('.view-intro').after(form);
-  for(const view of ['#view-record']){const intro=document.querySelector(view+' .view-intro');if(intro){const shortcut=node('button','Загрузить готовую запись','secondary import-shortcut');shortcut.onclick=()=>{window.showLectureView?.('library');form.scrollIntoView({block:'start',behavior:motion()});choose.focus()};intro.append(shortcut)}}
+  const shortcuts=document.querySelector('#view-record .record-shortcuts');
+  if(shortcuts){
+   const shortcut=node('button','Импорт аудио','secondary');
+   shortcut.type='button';
+   shortcut.onclick=()=>{window.showLectureView?.('library');choose.focus({preventScroll:true});form.scrollIntoView({block:'start',behavior:motion()})};
+   shortcuts.prepend(shortcut);
+  }
   const open=name=>{window.showLectureView?.('library');window.revealCalendarFile?.(name);const card=typeof cards!=='undefined'?cards.get(name):null;if(card){card.details.open=true;card.li.closest('#files>li>details')?.setAttribute('open','');card.li.scrollIntoView({block:'start',behavior:motion()});update()}};
   const pendingOpen=new Set();let stamp='',polling=false;
   async function poll(){
