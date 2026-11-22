@@ -33,7 +33,7 @@ final class PhonePhrases {
             end = until;
             double score = word.optDouble("conf", 1);
             confidence += score;
-            uncertain |= score < .55 || word.optBoolean("needs_review");
+            uncertain |= score < .55 || word.optDouble("speech_conf", score) < .55 || word.optBoolean("needs_review");
             sentenceEnd = token.matches(".*[.!?…][»\\\"’)]*$");
             count++;
         }

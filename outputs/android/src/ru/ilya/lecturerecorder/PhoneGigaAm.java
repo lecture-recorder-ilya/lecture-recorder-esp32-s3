@@ -138,7 +138,7 @@ final class PhoneGigaAm {
         double wordStart = left;
         double wordEnd = left;
         double textStart = left, textEnd = left, openingTextEnd = left;
-        double confidence = 0;
+        double confidence = 0, speechConfidence = 0;
         int pieces = 0, speechPieces = 0;
         int previous = BLANK;
         for (int frame = 0; frame < steps && frame < logits.length; frame++) {
@@ -156,28 +156,30 @@ final class PhoneGigaAm {
             if (token.startsWith("▁")) {
                 appendWord(result, word, speechPieces > 0 ? wordStart : textStart,
                         speechPieces > 0 ? wordEnd : textEnd, textStart, textEnd,
-                        confidence, pieces, start, end);
+                        confidence, pieces, speechConfidence, speechPieces, start, end);
                 word.setLength(0);
                 pieces = speechPieces = 0;
-                confidence = 0;
+                confidence = speechConfidence = 0;
                 token = token.substring(1);
             }
             if (token.isEmpty()) continue;
             if (pieces == 0) textStart = left + frame * FRAME_SECONDS;
             textEnd = Math.min(audioEnd, left + (frame + 1) * FRAME_SECONDS);
             if (result.length() == 0) openingTextEnd = textEnd;
+            double probability = Math.exp(scores[best]);
             // Пунктуация остаётся в тексте и уверенности, но не растягивает речь.
             if (CONTENT.matcher(token).find()) {
                 if (speechPieces++ == 0) wordStart = left + frame * FRAME_SECONDS;
                 wordEnd = textEnd;
+                speechConfidence += probability;
             }
             word.append(token);
-            confidence += Math.exp(scores[best]);
+            confidence += probability;
             pieces++;
         }
         appendWord(result, word, speechPieces > 0 ? wordStart : textStart,
                 speechPieces > 0 ? wordEnd : textEnd, textStart, textEnd,
-                confidence, pieces, start, end);
+                confidence, pieces, speechConfidence, speechPieces, start, end);
         if (steps > 0 && alignment != null && result.length() == 1) {
             JSONObject only = result.getJSONObject(0);
             int onset = alignment[0];
@@ -202,7 +204,7 @@ final class PhoneGigaAm {
 
     private static void appendWord(JSONArray result, StringBuilder word, double wordStart, double wordEnd,
                                    double textStart, double textEnd,
-                                   double confidence, int pieces, double start, double end) throws Exception {
+                                   double confidence, int pieces, double speechConfidence, int speechPieces, double start, double end) throws Exception {
         if (pieces == 0 || word.length() == 0) return;
         // Первая буква бывает в нулевом кадре. Окно выбирает последний речевой кадр,
         // а не середина между этой буквой и концом слова.
@@ -214,7 +216,9 @@ final class PhoneGigaAm {
         if (wordStart < wordEnd && (legacyCore || speechFrame >= start && speechFrame < end)) {
             result.put(new JSONObject().put("word", word.toString())
                     .put("start", wordStart).put("end", wordEnd)
-                    .put("conf", confidence / pieces).put("_legacy_core", legacyCore));
+                    .put("conf", confidence / pieces)
+                    .put("speech_conf", speechPieces > 0 ? speechConfidence / speechPieces : confidence / pieces)
+                    .put("_legacy_core", legacyCore));
         }
     }
 
