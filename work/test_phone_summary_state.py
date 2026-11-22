@@ -68,6 +68,7 @@ public final class SummaryStateTest {
         File history = new File(new File(root, "phone-note-history"), NAME);
         if (args[1].equals("replace")) {
             checkEvidence();
+            checkEditedDerivedData(new Context(new File(root, "derived-data")));
             checkPhrases();
             JSONArray oldSegments = segments(OLD_TEXT);
             oldSegments.getJSONObject(0).put("review_key", OLD_KEY);
@@ -76,6 +77,7 @@ public final class SummaryStateTest {
                     .put("teacher", "Преподаватель").put("duration", 42)
                     .put("overview", "Старое введение").put("warnings", new JSONArray().put("Старое предупреждение"))
                     .put("summary", new JSONArray().put(OLD_TEXT)).put("homework", new JSONArray().put("Старое задание"))
+                    .put("formulas", new JSONArray().put(new JSONObject().put("latex", "x=5").put("quote", OLD_TEXT)))
                     .put("draft", true).put("asr_engine", "vosk-small-ru")
                     .put("segments", oldSegments);
             JSONObject original = new JSONObject().put("file", NAME).put("report", oldReport)
@@ -108,7 +110,7 @@ public final class SummaryStateTest {
             JSONObject pending = read(target);
             JSONObject report = pending.getJSONObject("report");
             require(report.optBoolean("local_summary_pending"), "New transcript must invalidate the summary");
-            for (String field : new String[]{"summary", "homework", "overview", "warnings", "draft"}) {
+            for (String field : new String[]{"summary", "summary_evidence", "homework", "formulas", "overview", "warnings", "draft"}) {
                 require(!report.has(field), "Stale field: " + field);
             }
             require("Математика".equals(report.getString("subject"))
@@ -327,6 +329,7 @@ public final class SummaryStateTest {
     private static void checkNoisyEvidence() throws Exception {
         for (String text : new String[]{"Если определитель равен нулю", "Если определитель равен нулю,",
                 "При условии, что определитель равен нулю",
+                "Структура суверенитета подвергается некой",
                 "Если, например, определитель равен нулю,",
                 "то система не имеет единственного решения."}) {
             JSONArray rows = new JSONArray().put(new JSONObject().put("text", text).put("start", 0).put("end", 3));
@@ -376,7 +379,81 @@ public final class SummaryStateTest {
         PhoneSummaryEvidence.add("TASK: 1", 0, 1, rows, new JSONArray(), new JSONArray(), tasks,
                 new HashSet<>(), new HashSet<>());
         require(tasks.length() == 0, "Cancelled work must stay excluded");
+        for (String correction : new String[]{"Задание отменяется.", "Нет, срок переносится на понедельник."}) {
+            String assignment = "На дом решите задачу 15. Сдайте до пятницы.";
+            for (boolean separate : new boolean[]{false, true}) {
+                JSONArray lines = new JSONArray().put(new JSONObject().put("text", separate ? assignment : assignment + " " + correction)
+                        .put("start", 1).put("end", 4));
+                if (separate) lines.put(new JSONObject().put("text", correction).put("start", 4).put("end", 6));
+                JSONArray work = new JSONArray();
+                PhoneSummaryEvidence.add("TASK: 1", 0, lines.length(), lines, new JSONArray(), new JSONArray(), work,
+                        new HashSet<>(), new HashSet<>());
+                if (correction.startsWith("Задание")) require(work.length() == 0, "Отменённое ДЗ осталось в списке");
+                else require(work.length() == 1 && (assignment + " " + correction).equals(work.getJSONObject(0).getString("quote"))
+                        && work.getJSONObject(0).getInt("end") == (separate ? 6 : 4), "Потеряна поправка срока или таймкод");
+            }
+        }
         System.out.println("PASS: fixed noisy fixtures: deadlines, numbers, negations and incomplete conditions");
+    }
+
+    private static void checkEditedDerivedData(Context context) throws Exception {
+        for (boolean local : new boolean[]{true, false}) {
+            String name = local ? "lecture-2026-11-22-13-00-00.wav" : "lecture-2026-11-22-14-00-00.wav";
+            String taskText = "На дом решите задачу 15. Сдайте до 15 ноября.";
+            String formulaText = "Икс равен пяти.";
+            JSONArray lines = new JSONArray()
+                    .put(new JSONObject().put("id", 7).put("start", 10).put("end", 15).put("text", taskText))
+                    .put(new JSONObject().put("id", 9).put("start", 20).put("end", 25).put("text", formulaText));
+            JSONObject task = new JSONObject().put("quote", taskText).put("task", taskText).put("deadline", "до 15 ноября")
+                    .put("segment_id", 7).put("start", 10).put("end", 15);
+            JSONObject formula = new JSONObject().put("quote", formulaText).put("latex", "x=5")
+                    .put("segment_id", 9).put("start", 20).put("end", 25);
+            JSONObject report = new JSONObject().put("segments", lines).put("homework", new JSONArray().put(task))
+                    .put("summary", new JSONArray().put(taskText).put(formulaText))
+                    .put("summary_evidence", new JSONArray().put(new JSONObject(task.toString())).put(new JSONObject(formula.toString())))
+                    .put("formulas", new JSONArray().put(formula));
+            JSONObject original = new JSONObject().put("file", name).put("report", report);
+            Store.write(LectureNotes.file(context, name, local), original);
+            TranscriptEdits.Line line = new TranscriptEdits.Line(lines.getJSONObject(0), 0, local, new JSONObject());
+            int lastNumber = -1;
+            for (int i = 0; i < line.words.size(); i++) if (line.words.get(i).original.equals("15")) lastNumber = i;
+            TranscriptEdits.save(context, name, line, lastNumber, "20");
+            TranscriptEdits.Line math = new TranscriptEdits.Line(lines.getJSONObject(1), 1, local, new JSONObject());
+            TranscriptEdits.save(context, name, math, 2, "пятидесяти");
+            JSONObject edits = TranscriptEdits.read(TranscriptEdits.file(context, name));
+            JSONObject view = new JSONObject(original.toString());
+            TranscriptEdits.apply(view, edits, local);
+            JSONObject revised = view.getJSONObject("report");
+            String quote = "На дом решите задачу 15. Сдайте до 20 ноября.";
+            require(quote.equals(revised.getJSONArray("summary").getString(0))
+                    && quote.equals(revised.getJSONArray("homework").getJSONObject(0).getString("quote")), "Не обновлена цитата после правки числа");
+            require(!revised.getJSONArray("homework").getJSONObject(0).has("deadline"), "Остался старый срок после правки");
+            require(revised.getJSONArray("formulas").length() == 0, "Осталась старая LaTeX-формула после правки");
+            JSONObject anchor = revised.getJSONArray("summary_evidence").getJSONObject(0);
+            require(anchor.getInt("segment_id") == 7 && anchor.getInt("start") == 10 && anchor.getInt("end") == 15,
+                    "Правка поменяла привязку к аудио");
+            if (local) {
+                JSONArray replacement = new JSONArray().put(new JSONObject().put("id", 0).put("start", 30).put("end", 34)
+                        .put("text", "На дом решите задачу двадцать."));
+                JSONObject pending = LectureNotes.saveTranscript(context, name, "Тест", new JSONObject(original.toString()), replacement, "fixed-test-ASR");
+                require(!pending.getJSONObject("report").has("formulas"), "Новая расшифровка сохранила старую формулу");
+                JSONArray points = new JSONArray(), sources = new JSONArray(), work = new JSONArray();
+                PhoneSummaryEvidence.add("KEY: 1\nTASK: 1", 0, 1, replacement, points, sources, work, new HashSet<>(), new HashSet<>());
+                pending.getJSONObject("report").put("summary", points).put("summary_evidence", sources).put("homework", work);
+                LectureNotes.saveSummary(context, pending);
+                JSONObject fresh = read(LectureNotes.file(context, name, true));
+                TranscriptEdits.apply(fresh, edits, true);
+                JSONObject freshAnchor = fresh.getJSONObject("report").getJSONArray("summary_evidence").getJSONObject(0);
+                require(freshAnchor.getInt("start") == 30 && freshAnchor.getInt("end") == 34
+                        && freshAnchor.getString("quote").equals(replacement.getJSONObject(0).getString("text")), "Старая правка попала в новый конспект");
+                File history = new File(new File(context.getFilesDir(), "phone-note-history"), name);
+                JSONObject archived = new JSONObject(archive(history));
+                TranscriptEdits.apply(archived, edits, true);
+                require(quote.equals(archived.getJSONObject("report").getJSONArray("summary").getString(0)),
+                        "История потеряла прежний конспект или его ручную правку");
+            }
+        }
+        System.out.println("PASS: правки Mac/Android, формулы, сроки, новые привязки и старый конспект в истории");
     }
 
     private static JSONArray segments(String text) throws Exception {

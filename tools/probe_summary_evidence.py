@@ -35,6 +35,8 @@ def main():
     parser.add_argument('--model', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--baseline', default='v0.5.9')
+    parser.add_argument('--fixtures', type=Path, help='JSON с явно указанными источниками и строками после ASR')
+    parser.add_argument('--without-throttle', action='store_true', help='Убрать паузы только в этом контрольном прогоне')
     args = parser.parse_args()
     from mlx_lm import load
     from mlx_lm.sample_utils import make_sampler
@@ -49,21 +51,25 @@ def main():
                   config_sha256=hashlib.sha256(config.read_bytes()).hexdigest(),
                   validator_sha256=hashlib.sha256(Path(ai_worker.__file__).read_bytes()).hexdigest(),
                   baseline=args.baseline, temperature=0, max_tokens=2800, cases=[])
+    report['test_without_throttle']=args.without_throttle
     args.output.parent.mkdir(parents=True, exist_ok=True)
     print('Загружаю локальную модель конспекта',flush=True)
     model, tokenizer = load(str(args.model))
     mx.random.seed(0)
-    for fixture in fixtures():
+    inputs = json.loads(args.fixtures.read_text(encoding='utf-8')) if args.fixtures else fixtures()
+    report['fixtures'] = str(args.fixtures.resolve()) if args.fixtures else 'встроенные искусственные фрагменты'
+    for fixture in inputs:
         print(f"{fixture['name']}: генерирую",flush=True)
         started = time.monotonic()
         rows = [dict(needs_review=False, **row) if 'needs_review' not in row else row for row in fixture['rows']]
         messages = [dict(role='system',content=ai_worker.SYSTEM),
                     dict(role='user',content='Предмет по расписанию (контекст, не доказательство): None\nРасшифровка:\n'
                          + json.dumps(rows,ensure_ascii=False))]
-        trace = dict(name=fixture['name'], rows=rows, attempts=[])
+        trace = dict(name=fixture['name'], rows=rows, origin=fixture.get('origin','искусственная расшифровка'), attempts=[])
         for attempt in range(2):
             prompt = tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=True)
-            raw = ai_worker.streamed_text(model,tokenizer,prompt,2800,make_sampler(temp=0))
+            budget=ai_worker.Budget(enabled=lambda:False) if args.without_throttle else None
+            raw = ai_worker.streamed_text(model,tokenizer,prompt,2800,make_sampler(temp=0),budget=budget)
             trace['attempts'].append(raw)
             try:
                 proposal = ai_worker.parse_json(raw)

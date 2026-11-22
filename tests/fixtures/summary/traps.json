@@ -1,0 +1,677 @@
+[
+  {
+    "name": "quote_0",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Икс не равен пяти."
+      }
+    ],
+    "proposal": {
+      "summary": [
+        {
+          "quote": "Икс не равен пяти.",
+          "segment_id": 0,
+          "point": "Икс равен пяти."
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: 1",
+    "expected_mac": {
+      "summary": [
+        "Икс не равен пяти."
+      ],
+      "homework_count": 0
+    },
+    "expected_android": {
+      "summary_count": 1,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "quote_1",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Сопротивление равно не 15, а 150 ом."
+      }
+    ],
+    "proposal": {
+      "summary": [
+        {
+          "quote": "Сопротивление равно не 15, а 150 ом.",
+          "segment_id": 0,
+          "point": "Икс равен пяти."
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: 1",
+    "expected_mac": {
+      "summary": [
+        "Сопротивление равно не 15, а 150 ом."
+      ],
+      "homework_count": 0
+    },
+    "expected_android": {
+      "summary_count": 1,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "cancel_same",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "На дом решите задачу 15. Сдайте до пятницы. Задание отменяется."
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "На дом решите задачу 15. Сдайте до пятницы. Задание отменяется.",
+          "segment_id": 0,
+          "deadline": "до пятницы"
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_mac": {
+      "homework_count": 0
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "move_same",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "На дом решите задачу 15. Сдайте до пятницы. Нет, срок переносится на понедельник."
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "На дом решите задачу 15. Сдайте до пятницы. Нет, срок переносится на понедельник.",
+          "segment_id": 0,
+          "deadline": "до пятницы"
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_mac": {
+      "homework_count": 1,
+      "deadline": null
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 1
+    }
+  },
+  {
+    "name": "cancel_split",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "На дом решите задачу 15. Сдайте до пятницы."
+      },
+      {
+        "id": 1,
+        "start": 4,
+        "end": 6,
+        "text": "Задание отменяется."
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "На дом решите задачу 15. Сдайте до пятницы.",
+          "segment_id": 0,
+          "deadline": "до пятницы"
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_mac": {
+      "homework_count": 0
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "move_split",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "На дом решите задачу 15. Сдайте до пятницы."
+      },
+      {
+        "id": 1,
+        "start": 4,
+        "end": 6,
+        "text": "Нет, срок переносится на понедельник."
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "На дом решите задачу 15. Сдайте до пятницы.",
+          "segment_id": 0,
+          "deadline": "до пятницы"
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_mac": {
+      "homework_count": 1,
+      "deadline": null
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 1
+    }
+  },
+  {
+    "name": "invented_number",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Икс равен пяти."
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Икс равен пяти.",
+          "segment_id": 0,
+          "latex": "x=50"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: 1",
+    "expected_mac": {
+      "homework_count": 0,
+      "formulas_count": 0
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "lost_not",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Икс не равен пяти."
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Икс не равен пяти.",
+          "segment_id": 0,
+          "latex": "x=5"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: 1",
+    "expected_mac": {
+      "homework_count": 0,
+      "formulas_count": 0
+    },
+    "expected_android": {
+      "summary_count": 1,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "open_formula",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Икс плюс три равен."
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Икс плюс три равен.",
+          "segment_id": 0,
+          "latex": "x+3=3"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: 1",
+    "expected_mac": {
+      "homework_count": 0,
+      "formulas_count": 0
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "open_condition",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Если икс равен пяти,"
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Если икс равен пяти,",
+          "segment_id": 0,
+          "latex": "x=5"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: 1",
+    "expected_mac": {
+      "homework_count": 0,
+      "formulas_count": 0
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "spoken_formula",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Икс равен пяти."
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Икс равен пяти.",
+          "segment_id": 0,
+          "latex": "x=5"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: 1",
+    "expected_mac": {
+      "homework_count": 0,
+      "formulas_count": 1
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "spoken_inequality",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Икс не равен пяти."
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Икс не равен пяти.",
+          "segment_id": 0,
+          "latex": "x\\ne 5"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: 1",
+    "expected_mac": {
+      "homework_count": 0,
+      "formulas_count": 1
+    },
+    "expected_android": {
+      "summary_count": 1,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "spoken_physics",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Сила равна массе, умноженной на ускорение."
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Сила равна массе, умноженной на ускорение.",
+          "segment_id": 0,
+          "latex": "F=ma"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: 1",
+    "expected_mac": {
+      "homework_count": 0,
+      "formulas_count": 1
+    },
+    "expected_android": {
+      "summary_count": 1,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "unfinished_13",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "то система не имеет единственного решения."
+      }
+    ],
+    "proposal": {
+      "summary": [
+        {
+          "quote": "то система не имеет единственного решения.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: 1",
+    "expected_mac": {
+      "summary": [],
+      "homework_count": 0
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "unfinished_14",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Структура суверенитета подвергается некой"
+      }
+    ],
+    "proposal": {
+      "summary": [
+        {
+          "quote": "Структура суверенитета подвергается некой",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: 1",
+    "expected_mac": {
+      "summary": [],
+      "homework_count": 0
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "approximate",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "На дом решите задачу 15. Сдайте примерно до пятницы."
+      }
+    ],
+    "proposal": {
+      "homework": [
+        {
+          "quote": "На дом решите задачу 15. Сдайте примерно до пятницы.",
+          "segment_id": 0,
+          "deadline": "до пятницы"
+        }
+      ]
+    },
+    "android_response": "KEY: \nTASK: 1",
+    "expected_mac": {
+      "homework_count": 1,
+      "deadline": null
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 1
+    }
+  },
+  {
+    "name": "no_five_in_fifteen",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Икс равен пятнадцати.",
+        "needs_review": false
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Икс равен пятнадцати.",
+          "segment_id": 0,
+          "latex": "x=5"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: ",
+    "expected_mac": {
+      "formulas_count": 0,
+      "homework_count": 0
+    },
+    "expected_android": {
+      "summary_count": 1,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "no_five_in_fifty",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Икс равен пятидесяти.",
+        "needs_review": false
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Икс равен пятидесяти.",
+          "segment_id": 0,
+          "latex": "x=5"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: ",
+    "expected_mac": {
+      "formulas_count": 0,
+      "homework_count": 0
+    },
+    "expected_android": {
+      "summary_count": 1,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "spoken_fifteen",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Икс равен пятнадцати.",
+        "needs_review": false
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Икс равен пятнадцати.",
+          "segment_id": 0,
+          "latex": "x=15"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: ",
+    "expected_mac": {
+      "formulas_count": 1,
+      "homework_count": 0
+    },
+    "expected_android": {
+      "summary_count": 1,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "spoken_fifty",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Икс равен пятидесяти.",
+        "needs_review": false
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Икс равен пятидесяти.",
+          "segment_id": 0,
+          "latex": "x=50"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: ",
+    "expected_mac": {
+      "formulas_count": 1,
+      "homework_count": 0
+    },
+    "expected_android": {
+      "summary_count": 1,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "uncertain_formula",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Икс равен пяти или пятидесяти.",
+        "needs_review": true
+      }
+    ],
+    "proposal": {
+      "formulas": [
+        {
+          "quote": "Икс равен пяти или пятидесяти.",
+          "segment_id": 0,
+          "latex": "x=5"
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: ",
+    "expected_mac": {
+      "formulas_count": 0,
+      "homework_count": 0
+    },
+    "expected_android": {
+      "summary_count": 0,
+      "homework_count": 0
+    }
+  },
+  {
+    "name": "uncertain_plain_claim",
+    "origin": "короткая искусственная ловушка; аудио нет",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Язык сохраняет таинственную структуру.",
+        "needs_review": true
+      }
+    ],
+    "proposal": {
+      "summary": [
+        {
+          "quote": "Язык сохраняет таинственную структуру.",
+          "segment_id": 0
+        }
+      ]
+    },
+    "android_response": "KEY: 1\nTASK: ",
+    "expected_mac": {
+      "summary": []
+    },
+    "expected_android": {
+      "summary": []
+    }
+  }
+]

@@ -29,6 +29,15 @@ final class PhoneSummaryEvidence {
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
     private static final Pattern CONSEQUENCE = Pattern.compile("^то\\s+(?!(?:есть|же|самое|что)(?:\\s|$))",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern UNFINISHED = Pattern.compile(
+            "(?<![\\p{L}])(?:не|ни|но|или|если|при|для|без|из|к|на|в|с|до|по|о|об|некой|такого|равен|равна|равно|плюс|минус)[ .,!?:;…]*$",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern CANCELLED = Pattern.compile(
+            "задани[ея]\\s+отмен(?:ено|яется)|отменяю\\s+(?:задани[ея]|домашн[\\p{L}]*\\s+работ[\\p{L}]*)",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern CORRECTION = Pattern.compile(
+            "^(?:нет(?:[, :]|$)|(?:срок|дат[ау])\\s|задани[ея]\\s+отмен|отменяю\\s+задани[ея])",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
     static void add(String response, int first, int next, JSONArray segments, JSONArray summary,
                     JSONArray sources, JSONArray homework, Set<String> points, Set<String> tasks)
@@ -55,13 +64,23 @@ final class PhoneSummaryEvidence {
         for (int index : exercises) {
             JSONObject row = segments.getJSONObject(index);
             String quote = row.getString("text");
+            double end = row.getDouble("end");
+            boolean uncertain = row.optBoolean("needs_review");
+            for (int i = index + 1; i < Math.min(segments.length(), index + 3); i++) {
+                JSONObject following = segments.getJSONObject(i);
+                double gap = following.getDouble("start") - end;
+                if (gap < -.25 || gap > 2 || !CORRECTION.matcher(following.getString("text")).find()) break;
+                quote += " " + following.getString("text");
+                end = following.getDouble("end");
+                uncertain |= following.optBoolean("needs_review");
+            }
             // Ignore only the rejected date before an explicit replacement;
             // keep every word, including the negation, in the stored task.
             String taskContext = REPLACED_DEADLINE.matcher(quote).replaceAll("$1");
-            if (row.optBoolean("needs_review") || !AFTER_CLASS.matcher(quote).find()
+            if (uncertain || CANCELLED.matcher(quote).find() || !AFTER_CLASS.matcher(quote).find()
                     || !ASSIGNMENT.matcher(quote).find() || EXCLUDED_TASK.matcher(taskContext).find()
                     || !tasks.add(quote)) continue;
-            homework.put(anchor(row, index, quote).put("task", quote));
+            homework.put(anchor(row, index, quote).put("end", end).put("task", quote));
         }
     }
 
@@ -69,6 +88,7 @@ final class PhoneSummaryEvidence {
         JSONObject row = segments.getJSONObject(index);
         if (row.optBoolean("needs_review")) return null;
         String quote = row.getString("text").trim();
+        if (UNFINISHED.matcher(quote).find() && !openCondition(quote)) return null;
         int previous = index - 1;
         if (CONSEQUENCE.matcher(quote).find()) {
             return previous >= 0 ? conditional(segments, previous, index) : null;
@@ -86,7 +106,8 @@ final class PhoneSummaryEvidence {
         String left = condition.getString("text").trim();
         String right = result.getString("text").trim();
         double gap = result.getDouble("start") - condition.getDouble("end");
-        if (!openCondition(left) || !CONSEQUENCE.matcher(right).find() || gap < -.25 || gap > 1.5) {
+        if (!openCondition(left) || !CONSEQUENCE.matcher(right).find() || UNFINISHED.matcher(right).find()
+                || gap < -.25 || gap > 1.5) {
             return null;
         }
         return anchor(condition, first, left + " " + right).put("end", result.getDouble("end"));

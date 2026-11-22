@@ -102,7 +102,21 @@ final class TranscriptEdits {
             if (!quote.equals(revised)) {
                 task.put("quote", revised);
                 if (quote.equals(task.optString("task"))) task.put("task", revised);
+                // После правки текста прежний срок больше не подтверждён.
+                task.remove("deadline");
             }
+        }
+        JSONArray formulas = report.optJSONArray("formulas");
+        if (formulas != null) {
+            JSONArray supported = new JSONArray();
+            for (int i = 0; i < formulas.length(); i++) {
+                JSONObject formula = formulas.optJSONObject(i);
+                if (formula == null) continue;
+                String quote = formula.optString("quote");
+                if (quote.equals(revisedQuote(quote, formula, originals, rows))) supported.put(formula);
+            }
+            // Цитату можно спроецировать, но пересчитывать LaTeX без модели нельзя.
+            report.put("formulas", supported);
         }
     }
 
