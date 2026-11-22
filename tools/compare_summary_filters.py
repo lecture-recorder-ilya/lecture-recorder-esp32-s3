@@ -2,13 +2,14 @@
 import argparse
 import copy
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
-import types
+import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT/'outputs/recorder'),str(ROOT/'work')]
@@ -44,11 +45,21 @@ def source(ref,path):
     return subprocess.check_output(['git','show',ref+':'+path],cwd=ROOT,text=True)
 
 
-def validator(ref):
-    module=types.ModuleType('summary_'+ref.replace('.','_'))
-    module.__file__=ai_worker.__file__
-    exec(compile(source(ref,'outputs/recorder/ai_worker.py'),module.__file__,'exec'),module.__dict__)
-    return module
+def mac(ref,items):
+    if ref is None:return [ai_worker.validate_part(copy.deepcopy(c['proposal']),copy.deepcopy(c['rows'])) for c in items]
+    # Старый модуль получает и старые зависимости, а не новые функции из sys.modules.
+    with tempfile.TemporaryDirectory(prefix='summary-version-') as temp:
+        root=Path(temp);payload=subprocess.check_output(['git','archive',ref,'outputs/recorder'],cwd=ROOT)
+        with tarfile.open(fileobj=io.BytesIO(payload)) as archive:
+            for item in archive:
+                parts=Path(item.name).parts
+                if item.isfile() and Path(item.name).suffix in ('.py','.json') and parts[:2]==('outputs','recorder') and '..' not in parts:
+                    path=root/item.name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(archive.extractfile(item).read())
+        data=root/'inputs.json';data.write_text(json.dumps(items,ensure_ascii=False),encoding='utf-8')
+        runner="import json,sys;sys.path.insert(0,sys.argv[1]);import ai_worker;items=json.load(open(sys.argv[2]));print(json.dumps([ai_worker.validate_part(c['proposal'],c['rows']) for c in items],ensure_ascii=False))"
+        completed=subprocess.run([sys.executable,'-c',runner,root/'outputs/recorder',data],text=True,capture_output=True)
+        if completed.returncode:raise RuntimeError(ref+': '+completed.stderr)
+        return json.loads(completed.stdout)
 
 
 def android(ref,items,jdk,jar):
@@ -112,22 +123,25 @@ def main():
             raise ValueError('Нужен сохранённый ответ в proposal, а не новый ответ модели')
         item['android_response_origin']='из файла' if 'android_response' in item else 'фиксированный выбор строк; Android-модель не запускалась'
         item.setdefault('android_response','KEY: '+','.join(str(i+1) for i in range(min(4,len(item['rows']))))+'\nTASK: ')
-    versions={ref:validator(ref) for ref in args.baseline}
-    versions['рабочая_копия']=ai_worker
+    versions=[*args.baseline,'рабочая_копия']
     report=dict(kind='повтор фиксированных ответов; модель и ASR не запускаются',
                 input_sha256=hashlib.sha256(args.input.read_bytes()).hexdigest(),
                 validator_sha256=hashlib.sha256(Path(ai_worker.__file__).read_bytes()).hexdigest(),
                 revisions={ref:subprocess.check_output(['git','rev-parse',ref+'^{}'],cwd=ROOT,text=True).strip() for ref in args.baseline},cases=[])
+    report['filter_files_sha256']={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in [ROOT/'outputs/recorder'/name for name in ('ai_worker.py','formula_evidence.py','homework_evidence.py','summary_sources.py')]
+        +[ROOT/'outputs/android/src/ru/ilya/lecturerecorder'/name for name in ('PhoneSummaryEvidence.java','HomeworkEvidence.java')] if p.exists()}
+    desktop={ref:mac(None if ref=='рабочая_копия' else ref,items) for ref in versions}
     phone={ref:android(None if ref=='рабочая_копия' else ref,items,args.java_home,args.android_json_jar) for ref in versions}
     for index,item in enumerate(items):
         entry=dict(name=item['name'],origin=item.get('origin'),proposal_sha256=digest(item['proposal']),
                    android_response_sha256=digest(item['android_response']),android_response_origin=item['android_response_origin'],versions={})
-        for ref,module in versions.items():
-            mac=module.validate_part(copy.deepcopy(item['proposal']),copy.deepcopy(item['rows']))
+        for ref in versions:
+            mac_result=desktop[ref][index]
             mobile=phone[ref][index]
-            entry['versions'][ref]=dict(mac=mac,android=mobile,
-                mac_anchors_supported=anchors_supported(mac,item['rows']),android_anchors_supported=anchors_supported(mobile,item['rows'],True),
-                mac_mismatches=mismatches(mac,item.get('expected_mac',{})),
+            entry['versions'][ref]=dict(mac=mac_result,android=mobile,
+                mac_anchors_supported=anchors_supported(mac_result,item['rows']),android_anchors_supported=anchors_supported(mobile,item['rows'],True),
+                mac_mismatches=mismatches(mac_result,item.get('expected_mac',{})),
                 android_mismatches=mismatches(mobile,item.get('expected_android',{})))
         report['cases'].append(entry)
     args.output.parent.mkdir(parents=True,exist_ok=True)

@@ -1,12 +1,10 @@
-"""Проверить фильтры конспекта на ответах локальной модели для двух искусственных расшифровок."""
+"""Сохранить живые ответы локальной модели для явно указанных расшифровок."""
 import argparse
 import hashlib
 import json
 from pathlib import Path
-import subprocess
 import sys
 import time
-import types
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'outputs/recorder'))
@@ -42,16 +40,14 @@ def main():
     from mlx_lm.sample_utils import make_sampler
     import mlx.core as mx
 
-    source = subprocess.check_output(['git','show',args.baseline+':outputs/recorder/ai_worker.py'], cwd=ROOT, text=True)
-    baseline = types.ModuleType('baseline_ai_worker')
-    baseline.__file__ = ai_worker.__file__
-    exec(compile(source, str(ai_worker.__file__), 'exec'), baseline.__dict__)
+    from compare_summary_filters import mac
     config = args.model / 'config.json'
-    report = dict(kind='local_model_on_synthetic_transcript', model=str(args.model.resolve()),
+    report = dict(kind='local_model_on_saved_transcript', model=str(args.model.resolve()),
                   config_sha256=hashlib.sha256(config.read_bytes()).hexdigest(),
                   validator_sha256=hashlib.sha256(Path(ai_worker.__file__).read_bytes()).hexdigest(),
                   baseline=args.baseline, temperature=0, max_tokens=2800, cases=[])
     report['test_without_throttle']=args.without_throttle
+    report['system_sha256']=hashlib.sha256(ai_worker.SYSTEM.encode('utf-8')).hexdigest()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     print('Загружаю локальную модель конспекта',flush=True)
     model, tokenizer = load(str(args.model))
@@ -73,7 +69,7 @@ def main():
             trace['attempts'].append(raw)
             try:
                 proposal = ai_worker.parse_json(raw)
-                trace.update(proposal=proposal, before=baseline.validate_part(proposal,rows),
+                trace.update(proposal=proposal, before=mac(args.baseline,[dict(proposal=proposal,rows=rows)])[0],
                              after=ai_worker.validate_part(proposal,rows))
                 break
             except (ValueError,json.JSONDecodeError) as error:
