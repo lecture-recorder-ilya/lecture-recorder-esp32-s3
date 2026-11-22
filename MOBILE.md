@@ -32,7 +32,7 @@
 - Текст сохраняется перед составлением конспекта. Если конспект прервался, нажми **Завершить конспект**. Локальный разбор и текст с Mac хранятся в библиотеке отдельно.
 - Распознавание выполняет [GigaAM v3](https://github.com/salute-developers/GigaAM) с [ONNX Runtime](https://onnxruntime.ai/). При сбое используется [Vosk](https://alphacephei.com/vosk/models). Ключевые фразы выбирает [Qwen3](https://huggingface.co/litert-community/Qwen3-0.6B). Конспект составляется из фраз расшифровки. Сомнительные места можно прослушать по таймкодам.
 
-Для отдельной сборки на Mac выполни `python3 outputs/android/build.py --preview` с Android SDK 36, Build Tools и JDK 21 или новее. Сборка ставится рядом с версией из релиза и хранит собственные записи. Версия и код ИИ-сборки указаны в поле `android_preview` файла `release.json`. В GitHub для ИИ-сборок используется предварительный релиз.
+Для отдельной сборки на Mac выполни `python3 outputs/android/build.py --preview` с Android SDK 36, Build Tools и JDK 21 или новее. Сборка ставится рядом с версией из релиза и хранит собственные записи. Обе сборки используют общую версию из `release.json`. У отдельной сборки свой код `android_preview.code`, пакет и подпись для обновления уже установленных экземпляров. Её APK доступен в обычном релизе GitHub.
 
 ## iPhone и iPad
 

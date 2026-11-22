@@ -116,11 +116,10 @@ def main():
         generated = build / "generated"
         generated.mkdir()
         manifest = manifest_for_preview(build) if args.preview else ROOT / "AndroidManifest.xml"
-        if args.preview:
-            version = version["android_preview"]
+        version_code = version["android_preview"]["code"] if args.preview else version["code"]
         apk = build / "base.apk"
         run(tools / "aapt2", "link", "-o", apk, "-I", platform, "--manifest", manifest,
-            "--java", generated, "-A", ROOT / "assets", "--custom-package", PACKAGE, "--version-code", version["code"],
+            "--java", generated, "-A", ROOT / "assets", "--custom-package", PACKAGE, "--version-code", version_code,
             "--version-name", version["version"], build / "res.zip")
 
         classes = build / "classes"
