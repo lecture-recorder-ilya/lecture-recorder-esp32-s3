@@ -59,13 +59,14 @@ class Decoder:
  def __init__(self, threads=None, *, allow_fast_character=True):
   from power_budget import decoder_threads
   self.threads = decoder_threads() if threads is None else threads
+  self._allow_fast_character = allow_fast_character
   self.fast_character = allow_fast_character and character_weights.available(CHAR)
   self.models = {}
   self.lock = threading.Lock()
   self.last = {}
  def refresh_character_model(self):
   with self.lock:
-   self.fast_character = character_weights.available(CHAR)
+   self.fast_character = self._allow_fast_character and character_weights.available(CHAR)
    if not self.fast_character:
     self.models.pop('char_fast',None)
  @property

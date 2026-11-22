@@ -1,6 +1,8 @@
+import hashlib
 import math
 from pathlib import Path
 import sys
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -8,6 +10,8 @@ from unittest.mock import Mock, patch
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'outputs/recorder'))
+import character_weights
+import quality_asr
 from quality_asr import Decoder
 from speech_gate import SpeechProfile
 
@@ -20,6 +24,12 @@ def result(tokens, times=None, confidence=.99):
 
 class CharacterPrecisionTests(unittest.TestCase):
     def setUp(self):
+        folder = Path(self.enterContext(TemporaryDirectory()))
+        data = b'compact character model'
+        self.compact = folder / character_weights.FILENAME
+        self.compact.write_bytes(data)
+        self.enterContext(patch.object(quality_asr, 'CHAR', folder))
+        self.enterContext(patch.multiple(character_weights, SIZE=len(data), SHA256=hashlib.sha256(data).hexdigest()))
         self.audio = np.ones(32000, dtype=np.float32) * .02
         self.profile = SpeechProfile([(0, 2)], [(0, 2)], [(0, 2)])
         self.decoder = Decoder()
@@ -35,9 +45,7 @@ class CharacterPrecisionTests(unittest.TestCase):
         ]:
             self.models[kind] = Mock(recognize=Mock(return_value=output))
 
-    def decode(self, *, fast=True, terms=None):
-        if fast is not None:
-            self.decoder.fast_character = fast
+    def decode(self, *, terms=None):
         with patch.object(self.decoder, '_load', side_effect=self.models.__getitem__) as load:
             text = self.decoder.transcribe(self.audio, speech=self.profile, terms=terms)
         return text, [call.args[0] for call in load.call_args_list]
@@ -46,7 +54,15 @@ class CharacterPrecisionTests(unittest.TestCase):
         self.assertEqual(self.decode(), ('Смотрим записи.', ['ctc', 'rnnt', 'char_fast']))
 
     def test_older_installation_uses_full_precision(self):
-        self.assertEqual(self.decode(fast=None), ('Смотрим записи.', ['ctc', 'rnnt', 'char']))
+        self.compact.unlink()
+        self.decoder = Decoder()
+        self.assertEqual(self.decode(), ('Смотрим записи.', ['ctc', 'rnnt', 'char']))
+
+    def test_refresh_respects_explicit_full_precision(self):
+        self.decoder = Decoder(allow_fast_character=False)
+        self.decoder.refresh_character_model()
+        self.assertEqual(self.decoder.engine, quality_asr.BASE_ENGINE)
+        self.assertEqual(self.decode(), ('Смотрим записи.', ['ctc', 'rnnt', 'char']))
 
     def test_user_terms_use_full_precision(self):
         self.assertEqual(self.decode(terms=['записи']), ('Смотрим записи.', ['ctc', 'rnnt', 'char']))
