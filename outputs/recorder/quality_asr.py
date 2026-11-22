@@ -63,6 +63,11 @@ class Decoder:
   self.models = {}
   self.lock = threading.Lock()
   self.last = {}
+ def refresh_character_model(self):
+  with self.lock:
+   self.fast_character = character_weights.available(CHAR)
+   if not self.fast_character:
+    self.models.pop('char_fast',None)
  @property
  def engine(self):
   return engine_for(self.fast_character)

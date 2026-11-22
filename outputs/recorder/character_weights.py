@@ -23,7 +23,10 @@ def _verified(path, expected_stat):
 
 
 def available(folder):
-    path = folder / FILENAME
+    return valid_file(folder / FILENAME)
+
+
+def valid_file(path):
     try:
         info = path.stat()
         return (stat.S_ISREG(info.st_mode) and info.st_size == SIZE

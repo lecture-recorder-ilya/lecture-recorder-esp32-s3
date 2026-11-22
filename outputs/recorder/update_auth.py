@@ -84,6 +84,7 @@ class Authorization:
         with self.lock:
             self.vault.delete()
             self.credentials, self.pending = {}, None
+            self.wake()
             self.message = 'Выход выполнен. Доступ на этом Mac удалён из Связки ключей.'
             return self.public()
 

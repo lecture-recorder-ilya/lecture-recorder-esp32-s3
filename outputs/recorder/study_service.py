@@ -299,6 +299,7 @@ def monitor_quality(name,total,flush=False):
     started=time.monotonic()
     if not quality_ready():raise RuntimeError('GigaAM: модель не установлена полностью')
     if QUALITY_CURSOR['file']!=name:
+        QUALITY_DECODER.refresh_character_model()
         QUALITY_CURSOR.update(file=name,end=max(0,total-int(12.45*16000)))
     offset=QUALITY_CURSOR['end'];end=min(max(0,total-(0 if flush else int(.45*16000))),offset+12*16000)
     if end <= offset or (not flush and end - offset < 12 * 16000):

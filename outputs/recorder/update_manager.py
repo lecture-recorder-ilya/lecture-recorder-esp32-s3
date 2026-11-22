@@ -211,7 +211,7 @@ def download_release(project=PROJECT):
     tag = release.get('tag_name', '')
     if tag == 'v' + read(project / 'release.json').get('version', ''):
         STATE.update(message='На Mac последняя версия · ' + apk_status)
-        return
+        return True
     asset = next((a for a in release.get('assets', []) if a['name'] == 'lecture-mac-update.zip'), None)
     if not asset:
         raise ValueError('В релизе пока нет обновления Mac')
@@ -346,30 +346,46 @@ def _install(project):
     return meta
 
 
+def idle_for_update(server):
+    return (not (getattr(server, 'pairing', None) and server.pairing.public()['active'])
+            and not (getattr(server, 'importer', None) and server.importer.active())
+            and not (getattr(server, 'enhancer', None) and server.enhancer.active())
+            and idle(server.service_url))
+
+
 def start(server):
+    from character_download import ModelRefresh
+    refresh = ModelRefresh(PROJECT)
     AUTH.wake = CHECK.set
     def loop():
         last = -6 * 3600
+
+        def interrupted():
+            return STOP.is_set() or CHECK.is_set() or time.monotonic() - last >= 6 * 3600
+
+        def model_idle():
+            return not (PROJECT / 'work/updates/pending.json').exists() and idle_for_update(server)
+
         while not STOP.is_set():
             try:
                 AUTH.poll()
                 if time.monotonic() - last >= 6 * 3600 or CHECK.is_set():
                     CHECK.clear(); last = time.monotonic()
+                    current = False
                     try:
-                        download_release()
+                        current = download_release()
                     except HTTPError as e:
                         STATE.update(message='Релизы недоступны · нужен опубликованный релиз и доступ к репозиторию' if e.code == 404 else 'Проверю обновление позже')
                     except Exception as e:
                         STATE.update(message='Проверка отложена: ' + str(e)[:160])
+                    refresh.after_check(current)
                 if (read(PROJECT / 'work/updates/pending.json')
                         and read(PROJECT/'work/updates/hold.json').get('until',0) < time.time()
-                        and not (getattr(server, 'pairing', None) and server.pairing.public()['active'])
-                        and not (getattr(server, 'importer', None) and server.importer.active())
-                        and not (getattr(server, 'enhancer', None) and server.enhancer.active())
-                        and idle(server.service_url)):
+                        and idle_for_update(server)):
                     server.install_requested = True
                     server.shutdown()
                     return
+                refresh.poll(fetch, model_idle, interrupted)
             except HTTPError as e:
                 STATE.update(message='Релизы недоступны · нужен опубликованный релиз и доступ к репозиторию' if e.code == 404 else 'Проверю обновление позже')
             except Exception as e:
