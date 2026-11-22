@@ -23,8 +23,22 @@
  const continueSelection=el('button','Выбрать пару для записи','secondary session-pending');
  continueSelection.type='button';
  continueSelection.hidden=true;
- record.querySelector('.recorder-hero').after(continueSelection);
+ const savedRecording=el('section',undefined,'session-saved');
+ savedRecording.hidden=true;
+ const savedText=el('div',undefined,'session-saved-copy');
+ savedText.setAttribute('role','status');
+ const savedTitle=el('strong','Запись сохранена');
+ const savedStatus=el('p','','muted');
+ savedText.append(savedTitle,savedStatus);
+ const openSaved=el('button','Открыть запись','secondary');
+ openSaved.type='button';
+ savedRecording.append(savedText,openSaved);
+ record.querySelector('.recorder-hero').after(continueSelection,savedRecording);
 
+ let lastSaved='';
+ try{lastSaved=localStorage.getItem('lecture-last-saved')||'';}catch{}
+ let focusSaved=false;
+ let saveWarning='';
  let profile=null;
  let status=null;
  let active='';
@@ -136,14 +150,38 @@
    updateSave();
   }).catch(error=>{if(active===name&&selectionDialog.open)note.textContent=error.message});
  }
+ function updateSavedRecording(pending){
+  const visible=Boolean(lastSaved&&status?.files?.includes(lastSaved)&&!pending.length&&!status.recording&&!status.busy);
+  savedRecording.hidden=!visible;
+  if(!visible)return;
+  const lesson=status.lessons?.[lastSaved],job=status.ai?.jobs?.[lastSaved];
+  const ready=lesson?.has_summary;
+  const title=lesson?.title||lesson?.subject||'Запись сохранена';
+  const progress=job?.status==='error'?'Запись сохранена · разбор можно повторить'
+   :ready?'Запись сохранена · конспект готов'
+   :job?.status==='done'?'Запись сохранена · разбор готов'
+   :job?.status==='queued'?'Запись сохранена · в очереди на расшифровку'
+   :job?.status==='processing'?'Запись сохранена · готовлю расшифровку'
+   :lesson?.has_draft?'Запись сохранена · черновик доступен'
+   :saveWarning||(!status.ai?.auto&&status.ai?.ready?'Запись сохранена · разбор можно запустить в библиотеке':'Запись сохранена');
+  if(savedTitle.textContent!==title)savedTitle.textContent=title;
+  const description=title!==progress?progress:'';
+  if(savedStatus.textContent!==description)savedStatus.textContent=description;
+  if(focusSaved&&!record.hidden&&!selectionDialog.open&&!profileDialog.open){
+   focusSaved=false;
+   openSaved.focus({preventScroll:true});
+  }
+ }
  function reconcile(){
   const pending=status?.pending_lessons||[];
   continueSelection.hidden=!pending.length;
+  updateSavedRecording(pending);
   if(profileDialog.open||selectionDialog.open||status?.recording||status?.busy)return;
   if(profile&&!profile.configured){openProfile();return;}
   if(pending.length&&pending[0]!==ignored)openSelection(pending[0]);
  }
  window.updateRecordingSelection=value=>{status=value;reconcile()};
+ openSaved.onclick=()=>window.LectureWorkflow?.openRecording(lastSaved);
  continueSelection.onclick=()=>{
   ignored='';
   reconcile();
@@ -174,7 +212,13 @@
   $('#selection-error').textContent='';
   for(const button of selectionDialog.querySelectorAll('button'))button.disabled=true;
   try{
-   await post('/recording-selection',{file,action,lesson});
+   const result=await post('/recording-selection',{file,action,lesson});
+   if(action==='save'){
+    lastSaved=file;
+    saveWarning=result.warning||'';
+    focusSaved=true;
+    try{localStorage.setItem('lecture-last-saved',lastSaved);}catch{}
+   }
    ignored=file;
    selectionDialog.close();
    await update();

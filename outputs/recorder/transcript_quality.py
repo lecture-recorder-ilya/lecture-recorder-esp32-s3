@@ -10,6 +10,10 @@ def number(value):
 
 def fingerprint(segment):
     payload = [segment.get(k) for k in ('id', 'start', 'end', 'text', 'original_text')]
+    quality = segment.get('quality')
+    unrecognized = quality.get('unrecognized_audio') if isinstance(quality, dict) else None
+    if unrecognized:
+        payload.append(unrecognized)
     return hashlib.sha256(json.dumps(payload, ensure_ascii=False).encode()).hexdigest()
 
 
@@ -69,6 +73,18 @@ def annotate(report, decisions=None):
         if original and original != row['text']:
             row.setdefault('original_text', original)
         row['quality'] = assess(row)
+        raw_audio = recognition.get('unrecognized_audio')
+        available = report.get('duration')
+        if isinstance(raw_audio, list):
+            unrecognized = [
+                {'start': span['start'], 'end': span['end']} for span in raw_audio
+                if isinstance(span, dict) and number(span.get('start')) and number(span.get('end'))
+                and 0 <= span['start'] < span['end']
+                and (not number(available) or span['end'] <= available + .011)
+            ]
+            if unrecognized:
+                row['quality'].update(unrecognized_audio=unrecognized, needs_review=True, assessment='review')
+                row['quality']['reasons'].append('Рядом возможна речь, которой нет в тексте')
         row['needs_review'] = row['quality']['needs_review']
         row['review_key'] = fingerprint(row)
         row['reviewed'] = decisions.get(row['review_key'], {}).get('reviewed') is True

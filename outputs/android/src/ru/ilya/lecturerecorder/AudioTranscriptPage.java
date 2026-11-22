@@ -577,6 +577,16 @@ final class AudioTranscriptPage extends LinearLayout {
         replacement.setSelectAllOnFocus(true);
         sheet.addView(replacement, spaced(-1, dp(50), 12));
 
+        if (word.audioStartMillis >= 0 && Store.audio(activity, recording).isFile()) {
+            String time = LectureReaderActivity.clock(word.audioStartMillis / 1000.0);
+            Button listen = button("Слушать с " + time, () -> {
+                if (recording.equals(selected) && player != null) {
+                    seek((int) word.audioStartMillis, true);
+                }
+            });
+            sheet.addView(listen, spaced(-1, dp(48), 8));
+        }
+
         if (!word.original.equals(word.value)) {
             sheet.addView(button("Вернуть исходное", () ->
                     saveWord(editor, recording, line, index, word.original)), spaced(-1, dp(48), 6));

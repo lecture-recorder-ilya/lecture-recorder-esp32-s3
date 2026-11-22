@@ -42,6 +42,7 @@ public class MainActivity extends Activity {
  private boolean microphonePermissionDenied;
  private Button recordAction;
  private Button recentRecording;
+ private Button pendingLesson;
  private TextView recordState;
  private String lastSavedRecording="";
  private RecordingLessonFlow lessonFlow;
@@ -155,7 +156,10 @@ public class MainActivity extends Activity {
   super.onCreate(saved);if(saved!=null){pendingPhoto=saved.getString("pending_photo");selectedPage=saved.getInt("page",0);if(selectedPage==3)selectedPage=AUDIO_PAGE;deviceExpanded=saved.getBoolean("device_expanded");deviceCharge=saved.getInt("device_charge",-1);}try{CaptureService.provision(this);if(!CaptureService.recording)Store.recover(this);}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
   getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(bg);getWindow().getDecorView().setSystemUiVisibility(0);
   if(saved!=null)lastSavedRecording=saved.getString("last_saved_recording","");
-  lessonFlow=new RecordingLessonFlow(this,this::showSavedRecording);
+  lessonFlow=new RecordingLessonFlow(this,this::showSavedRecording,()->{
+   showPage(0);
+   refreshPendingLesson(CaptureService.recording);
+  });
   LinearLayout root=column();root.setBackgroundColor(bg);setContentView(root);
   root.setOnApplyWindowInsetsListener((view,insets)->{view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});root.requestApplyInsets();
   FrameLayout host=new FrameLayout(this);root.addView(host,new LinearLayout.LayoutParams(-1,0,1));
@@ -195,6 +199,9 @@ public class MainActivity extends Activity {
   meter=new RecordingMeter(this);
   hero.addView(meter,new LinearLayout.LayoutParams(-1,dp(46)));
   hero.addView(recordAction);
+  pendingLesson=button("Выбрать пару для записи",lessonFlow::openPending);
+  pendingLesson.setVisibility(View.GONE);
+  hero.addView(pendingLesson);
   recentRecording=button("Открыть последнюю запись",this::openSavedRecording);
   recentRecording.setVisibility(View.GONE);
   hero.addView(recentRecording);
@@ -352,6 +359,13 @@ public class MainActivity extends Activity {
  private void showSavedRecording(String file){
   lastSavedRecording=file;
   refreshSavedRecording(CaptureService.recording);
+  refreshPendingLesson(CaptureService.recording);
+ }
+ private void refreshPendingLesson(boolean recording){
+  int visibility=!recording&&lessonFlow.hasPending()?View.VISIBLE:View.GONE;
+  if(visibility==pendingLesson.getVisibility())return;
+  pendingLesson.setVisibility(visibility);
+  if(visibility==View.VISIBLE&&selectedPage==0)StudioStyle.enter(pendingLesson,false);
  }
  private void refreshSavedRecording(boolean recording){
   int visibility=!recording&&LectureNotes.valid(lastSavedRecording)&&
@@ -703,6 +717,7 @@ public class MainActivity extends Activity {
   if(selectedPage==SETTINGS_PAGE)refreshSyncSettings(active);
   mireaProfileStatus.setText(lessonFlow.profileLabel());
   lessonFlow.refresh(active);
+  refreshPendingLesson(active);
   timer.postDelayed(()->refresh(),1000);
  }
  private void refreshSyncSettings(boolean recording){

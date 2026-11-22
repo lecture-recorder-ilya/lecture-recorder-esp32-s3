@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent;PROJECT=ROOT.parent.parent
 MODEL=PROJECT/'work/models/gigaam';RNNT=PROJECT/'work/models/gigaam-rnnt'
 CHAR=PROJECT/'work/models/gigaam-beam'
-ENGINE='GigaAM-v3-3pass-phrases-v9-protected'
+ENGINE='GigaAM-v3-3pass-phrases-v10-coverage'
 
 def ready():
  return all(p.exists() for p in [MODEL/'v3_e2e_ctc.int8.onnx',MODEL/'v3_e2e_ctc_vocab.txt',PROJECT/'work/models/gigaam-manifest.json',RNNT/'v3_e2e_rnnt_encoder.onnx',RNNT/'v3_e2e_rnnt_decoder.onnx',RNNT/'v3_e2e_rnnt_joint.onnx',RNNT/'v3_e2e_rnnt_vocab.txt',PROJECT/'work/models/gigaam-rnnt-manifest.json',CHAR/'v3_ctc.onnx',CHAR/'v3_vocab.txt',PROJECT/'work/models/gigaam-beam-manifest.json'])
@@ -24,7 +24,7 @@ class Decoder:
   return self.models[kind]
  def transcribe(self,samples,terms=None,speech=None,emit_start=0,emit_end=float('inf')):
   from speech_gate import strict_speech_ranges,anchored_speech_ranges
-  from asr_guard import prepare,supported_words,join_words,choose_candidate,refine_words,speech_windows,lexical
+  from asr_guard import prepare,supported_words,join_words,choose_candidate,refine_words,speech_windows,lexical,unrecognized_voice
   from asr_terms import apply_terms
   from speech_quality import repetition
   from context_review import acoustic_evidence
@@ -79,5 +79,7 @@ class Decoder:
              'ctc_confidence':round(confidence,3),'needs_review':bool(uncertain) or confidence<.85 or any(w['needs_review'] for w in selected_all),
              'uncertain_words':uncertain,'refinements':changes,'decoded_seconds':round(decoded_seconds,3),'speech_windows':len(kinds)}
   self.last['word_evidence']=acoustic_evidence(selected_all,list(alternatives.items()))
+  gaps=unrecognized_voice(core,selected_all,max(0,emit_start),min(len(samples)/16000,emit_end))
+  if gaps:self.last['unrecognized_voice']=gaps
   if changes:self.last['original_text']=join_words(raw_all)
   return text

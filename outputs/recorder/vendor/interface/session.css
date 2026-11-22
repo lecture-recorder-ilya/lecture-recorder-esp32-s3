@@ -38,10 +38,28 @@
 .session-sr { clip-path: inset(50%); position: absolute; height: 1px; width: 1px; overflow: hidden; white-space: nowrap; }
 @media (max-width: 470px) { .session-dialog { padding: 19px; } }
 
+.session-saved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin: 0 0 12px;
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+}
+.session-saved-copy { flex: 1 1 180px; min-width: 0; overflow-wrap: anywhere; }
+.session-saved-copy p { margin: 3px 0 0; font-size: 13px; }
+.session-saved-copy p:empty { display: none; }
+.organized .session-saved button { margin: 0; flex-shrink: 0; }
+
 @media (prefers-reduced-motion: no-preference) {
   #selection-confirm:not([hidden]), #selection-manual-label:not([hidden]),
   #selection-choices:not([hidden]) {
     animation: session-in 180ms var(--motion-ease) both;
   }
   .session-choice { transition: background-color 150ms ease, border-color 150ms ease; }
+  .session-saved:not([hidden]) { animation: session-in 180ms var(--motion-ease) both; }
 }

@@ -16,25 +16,32 @@ import org.json.JSONObject;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 final class RecordingLessonFlow {
+    private static final String DEFERRED = "deferred_lessons";
     private final Activity activity;
     private final SharedPreferences profile;
     private final Consumer<String> onSaved;
+    private final Runnable onDeferred;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private AlertDialog dialog;
     private String checkedGroup = "";
     private boolean disposed;
     private boolean pendingChecked;
+    private String pending = "";
     private String lastRecording = "";
 
-    RecordingLessonFlow(Activity activity, Consumer<String> onSaved) {
+    RecordingLessonFlow(Activity activity, Consumer<String> onSaved, Runnable onDeferred) {
         this.activity = activity;
         this.onSaved = onSaved;
+        this.onDeferred = onDeferred;
         profile = MireaSchedule.profile(activity);
     }
 
@@ -45,6 +52,14 @@ final class RecordingLessonFlow {
     }
 
     void onResume() { pendingChecked = false; }
+
+    boolean hasPending() { return !pending.isEmpty(); }
+
+    void openPending() {
+        if (disposed || dialog != null || CaptureService.recording) return;
+        pending = Store.pendingLesson(activity);
+        if (hasPending()) choose(pending);
+    }
 
     void refresh(boolean recording) {
         if (recording) {
@@ -60,10 +75,29 @@ final class RecordingLessonFlow {
             profile(false);
         } else if (!pendingChecked) {
             pendingChecked = true;
-            String pending = Store.pendingLesson(activity);
-            if (!pending.isEmpty()) choose(pending);
-            else warmSchedule();
+            pending = Store.pendingLesson(activity);
+            if (!hasPending()) {
+                if (profile.contains(DEFERRED)) profile.edit().remove(DEFERRED).apply();
+                warmSchedule();
+            } else if (!deferred().contains(pending)) choose(pending);
         }
+    }
+
+    private Set<String> deferred() {
+        return profile.getStringSet(DEFERRED, Collections.emptySet());
+    }
+
+    private void defer(String name) {
+        Set<String> entries = new HashSet<>(deferred());
+        if (entries.add(name)) profile.edit().putStringSet(DEFERRED, entries).apply();
+        onDeferred.run();
+    }
+
+    private void resolve(String name) {
+        Set<String> entries = new HashSet<>(deferred());
+        if (entries.remove(name)) profile.edit().putStringSet(DEFERRED, entries).apply();
+        pending = "";
+        pendingChecked = false;
     }
 
     void profile(boolean editing) {
@@ -171,8 +205,14 @@ final class RecordingLessonFlow {
                 .setView(scroll(content))
                 .setPositiveButton("Сохранить", null)
                 .setNegativeButton("Удалить запись", null)
+                .setNeutralButton("Позже", (dismissed, button) -> defer(name))
                 .create();
-        show(choice, content, false);
+        choice.setOnCancelListener(cancelled -> defer(name));
+        show(choice, content, true);
+        Button later = choice.getButton(AlertDialog.BUTTON_NEUTRAL);
+        later.setAllCaps(false);
+        later.setTextColor(StudioStyle.MUTED);
+        later.setContentDescription("Выбрать пару позже");
         choice.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
             RadioButton selected = options.findViewById(options.getCheckedRadioButtonId());
             int index = (Integer) selected.getTag();
@@ -190,7 +230,7 @@ final class RecordingLessonFlow {
                         .put("start", start.toLocalTime().withSecond(0).withNano(0).toString())
                         .put("end", "").put("type", "").put("group", group).put("source", "manual");
                 Store.finishLesson(activity, name, lesson);
-                pendingChecked = false;
+                resolve(name);
                 choice.dismiss();
                 onSaved.accept(name);
                 boolean analyze = android.os.Process.is64Bit() && !PhoneAnalysisService.busy() && PhoneModels.ready(activity);
@@ -207,7 +247,7 @@ final class RecordingLessonFlow {
                 .setPositiveButton("Удалить", (confirmation, which) -> {
                     try {
                         Store.discardLesson(activity, name);
-                        pendingChecked = false;
+                        resolve(name);
                         choice.dismiss();
                     } catch (Exception error) {
                         Toast.makeText(activity, error.getMessage(), Toast.LENGTH_LONG).show();

@@ -165,6 +165,26 @@ public final class SummaryStateTest {
         require(result.length() == 1 && "Нет.".equals(result.getJSONObject(0).getString("text")),
                 "Punctuation-only noise must not create a transcript");
         require(result.getJSONObject(0).getDouble("start") == 1, "Speech timestamp must be preserved");
+
+        builder = new PhonePhrases();
+        builder.accept(new JSONArray()
+                .put(new JSONObject().put("word", "Это").put("start", 4).put("end", 4.2))
+                .put(new JSONObject().put("word", "по-русски.").put("start", 4.37).put("end", 4.8)));
+        JSONObject row = builder.finish().getJSONObject(0);
+        TranscriptEdits.Line line = new TranscriptEdits.Line(row, 0, true, new JSONObject());
+        require(line.words.size() == 2 && line.words.get(0).audioStartMillis == 4000
+                && line.words.get(1).audioStartMillis == 4370, "Word seek must keep millisecond timing and hyphens");
+        JSONObject corrections = new JSONObject().put(line.key, new JSONObject().put("original", line.original)
+                .put("words", new JSONObject().put("1", new JSONObject().put("original", "по-русски")
+                        .put("replacement", "на русском"))));
+        TranscriptEdits.Line corrected = new TranscriptEdits.Line(row, 0, true, corrections);
+        require("на русском".equals(corrected.words.get(1).value)
+                && corrected.words.get(1).audioStartMillis == 4370, "A local correction must keep source playback");
+        JSONObject note = new JSONObject().put("report", new JSONObject().put("segments",new JSONArray().put(row)));
+        TranscriptEdits.apply(note, corrections, true);
+        require(!row.has("word_times"), "Rewritten export cannot reuse old offsets");
+        require(new TranscriptEdits.Line(row, 0, true, new JSONObject()).words.get(0).audioStartMillis == -1,
+                "Old transcripts must not invent a word timestamp");
     }
 
     private static void checkEvidence() throws Exception {
@@ -267,7 +287,7 @@ def main():
         subprocess.run(
             [java_bin / "javac", "-encoding", "UTF-8", "-cp", jar, "-d", root,
              SOURCE / "LectureNotes.java", SOURCE / "Store.java", SOURCE / "PhoneSummaryEvidence.java",
-             SOURCE / "PhonePhrases.java",
+             SOURCE / "PhonePhrases.java", SOURCE / "TranscriptEdits.java",
              *(root / name for name in sources)],
             check=True,
         )

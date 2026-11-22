@@ -66,7 +66,10 @@ final class TranscriptEdits {
             JSONObject segment = rows.optJSONObject(i);
             if (segment != null) {
                 Line line = new Line(segment, i, local, corrections);
-                if (line.corrected) segment.put("text", line.text());
+                if (line.corrected) {
+                    segment.put("text", line.text());
+                    segment.remove("word_times");
+                }
             }
         }
     }
@@ -90,6 +93,9 @@ final class TranscriptEdits {
             key = (local ? "phone:" : "mac:") + index + ":" + segment.optString("start") + ":" + segment.optString("end");
             JSONObject replacements = changes(corrections.optJSONObject(key), original);
             Matcher matcher = WORD.matcher(original);
+            JSONArray timings = segment.optJSONArray("word_times");
+            double end = segment.optDouble("end");
+            int timeIndex = 0;
             boolean changed = false;
             while (matcher.find()) {
                 String source = matcher.group();
@@ -97,7 +103,24 @@ final class TranscriptEdits {
                         : replacements.optJSONObject(Integer.toString(words.size()));
                 String value = found != null && source.equals(found.optString("original"))
                         ? found.optString("replacement", source) : source;
-                words.add(new Word(source, value, matcher.start(), matcher.end()));
+                long audioStart = -1;
+                while (timings != null && timeIndex < timings.length()) {
+                    JSONArray time = timings.optJSONArray(timeIndex);
+                    if (time == null || time.optInt(1, -1) <= matcher.start()) {
+                        timeIndex++;
+                        continue;
+                    }
+                    int first = time.optInt(0, -1);
+                    int last = time.optInt(1, -1);
+                    long millis = time.optLong(2, -1);
+                    if (first >= 0 && first <= matcher.start() && last >= matcher.end() && last <= original.length()
+                            && millis >= 0 && millis <= Integer.MAX_VALUE
+                            && millis >= start * 1000 - 1 && millis <= end * 1000 + 1) {
+                        audioStart = millis;
+                    }
+                    break;
+                }
+                words.add(new Word(source, value, matcher.start(), matcher.end(), audioStart));
                 changed |= !source.equals(value);
             }
             corrected = changed;
@@ -119,12 +142,14 @@ final class TranscriptEdits {
         final String value;
         final int start;
         final int end;
+        final long audioStartMillis;
 
-        Word(String original, String value, int start, int end) {
+        Word(String original, String value, int start, int end, long audioStartMillis) {
             this.original = original;
             this.value = value;
             this.start = start;
             this.end = end;
+            this.audioStartMillis = audioStartMillis;
         }
     }
 

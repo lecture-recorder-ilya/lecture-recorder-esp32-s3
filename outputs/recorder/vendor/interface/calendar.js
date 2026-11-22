@@ -88,7 +88,7 @@ if(typeof document!=='undefined')(() => {
   if(!day)chooseDay(today());else render();
  };
  window.revealCalendarFile=name=>{
-  const meta=status?.lessons?.[name];if(!meta)return;day=meta.date;selected=meta.folder;const matching=(schedule?.entries||[]).some(e=>calendarFolder(e)===selected);if(!matching)selected='other';render();
+  const meta=status?.lessons?.[name];if(!meta)return;if(!calendarTopFiles(status).includes(name))showOriginals=true;day=meta.date;selected=meta.folder;const matching=(schedule?.entries||[]).some(e=>calendarFolder(e)===selected);if(!matching)selected='other';render();
  };
  let requestNumber=0;
  window.refreshScheduleData=async()=>{

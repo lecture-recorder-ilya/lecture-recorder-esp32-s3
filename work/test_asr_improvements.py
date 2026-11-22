@@ -9,7 +9,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'outputs/recorder'))
 from speech_audio import normalize_audio
 from asr_terms import apply_terms
 from asr_segments import phrase_rows
-from asr_guard import speech_windows
+from asr_guard import speech_windows,unrecognized_voice
 from asr_windows import boundary_at_pause
 from quality_asr import Decoder
 
@@ -41,6 +41,41 @@ class AudioTests(unittest.TestCase):
   self.assertEqual(boundary_at_pause(samples[16000:],32000)+16000,cut)
   self.assertEqual(boundary_at_pause(samples,32800),32800)
   self.assertEqual(boundary_at_pause(samples,0),0)
+
+class UnrecognizedAudioTests(unittest.TestCase):
+ def test_covered_voice_and_silence_are_not_marked(self):
+  word_spans=[dict(start=.2,end=.9),dict(start=5.2,end=5.9)]
+  self.assertEqual(unrecognized_voice([(0,1),(5,6)],word_spans,0,6),[])
+  self.assertEqual(unrecognized_voice([],[],0,6),[])
+
+ def test_potential_gap_is_clipped_to_owned_emission_window(self):
+  spans=[dict(start=.2,end=.75),dict(start=3.4,end=3.9)]
+  self.assertEqual(unrecognized_voice([(0,4)],spans,1,3),[(1,3)])
+  self.assertEqual(unrecognized_voice([(0,4)],spans,1,1.7),[])
+
+ def test_offsets_reach_review_without_entering_text_or_summary(self):
+  from ai_worker import analysis_rows
+  from transcript_cache import checkpoint,valid
+  from transcript_quality import annotate
+  text='Первая фраза. Вторая фраза.'
+  words=[word('Первая',.1),word('фраза.',.6),word('Вторая',4.1),word('фраза.',4.6)]
+  info=dict(word_evidence=words,ctc_confidence=.99,unrecognized_voice=[(2,3.5),(7,8.5)])
+  rows=phrase_rows(text,info,20,20,25)
+  self.assertEqual(rows[0]['text']+' '+rows[1]['text'],text)
+  self.assertNotIn('unrecognized_audio',rows[0]['recognition'])
+  self.assertEqual(rows[1]['recognition']['unrecognized_audio'],[dict(start=22,end=23.5)])
+  self.assertFalse(analysis_rows(rows)[1]['needs_review'])
+  before=annotate(dict(segments=[dict(rows[1],recognition={})]))['segments'][0]
+  decisions={before['review_key']:{'reviewed':True}}
+  expected={'engine':'test'}
+  cache=checkpoint(expected,rows,25,25*16000,True)
+  self.assertTrue(valid(cache,expected,25*16000,20*16000))
+  report=annotate(cache,decisions)
+  self.assertEqual(report['segments'][1]['quality']['unrecognized_audio'],[dict(start=22,end=23.5)])
+  self.assertTrue(report['segments'][1]['needs_review'])
+  self.assertFalse(report['segments'][1]['reviewed'])
+  self.assertEqual(report['segments'][1]['text'],'Вторая фраза.')
+  self.assertEqual(report['quality']['pending'],1)
 
 class TermTests(unittest.TestCase):
  def setUp(self):

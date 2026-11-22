@@ -52,6 +52,26 @@ def join_words(words):
 def supported_text(result,core,emit_start=0,emit_end=float('inf')):
  return join_words(supported_words(result,core,emit_start,emit_end))
 
+MIN_UNRECOGNIZED_VOICE=.9
+
+def unrecognized_voice(core,words,start,end):
+ """Найти возможную речь вне таймкодов слов внутри текущего фрагмента."""
+ if not core or end<=start:return []
+ coverage=sorted((w['start']-.13,w['end']+.13) for w in words)
+ gaps=[]
+ for a,b in core:
+  left,right=max(a,start),min(b,end)
+  if right-left<MIN_UNRECOGNIZED_VOICE:continue
+  cursor=left
+  for first,last in coverage:
+   if last<=left:continue
+   if first>=right:break
+   if first-cursor>=MIN_UNRECOGNIZED_VOICE:gaps.append((cursor,first))
+   cursor=max(cursor,last)
+   if cursor>=right:break
+  if right-cursor>=MIN_UNRECOGNIZED_VOICE:gaps.append((cursor,right))
+ return gaps
+
 def choose_candidate(ctc,rnnt):
  # Scores are not calibrated across different models. Use the CTC score only
  # to distinguish clear audio from the difficult audio where RNNT lost words.

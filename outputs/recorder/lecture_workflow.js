@@ -132,6 +132,14 @@
      const reviewBar=node('div',undefined,'transcript-review');
      const label=node('span',segment.reviewed?'Проверено по записи':'Проверь по записи','review-label');
      const reasons=(segment.quality?.reasons||[]).join(' · ');if(reasons&&!segment.reviewed){label.title=reasons;reviewBar.append(label,node('span',reasons,'review-reasons'))}else reviewBar.append(label);
+     if(state.tab==='review'){
+      for(const span of segment.quality?.unrecognized_audio||[]){
+       if(!Number.isFinite(span?.start)||!Number.isFinite(span.end)||span.start<0||span.end<=span.start)continue;
+       const listen=node('button','Слушать участок · '+clock(span.start),'review-action review-audio-gap');
+       listen.type='button';listen.onclick=()=>seek(card,span.start);
+       reviewBar.append(listen);
+      }
+     }
      const acknowledge=node('button',segment.reviewed?'Отменить проверку':'Подтвердить по записи','review-action');acknowledge.type='button';
      acknowledge.onclick=async()=>{
       acknowledge.disabled=true;
@@ -215,6 +223,18 @@
   const busy=['queued','processing'].includes(job?.status);
   card.workflowBadge.textContent=busy?(job.message||'Обрабатываю запись'):job?.status==='error'?'Разбор прерван · можно повторить':card.workflowBadge.textContent==='Разбор готов'?'Разбор готов':'Текст готов';
  }
+ async function openRecording(name){
+  window.showLectureView?.('library',false);
+  let card=cards.get(name);
+  if(!card){await update();card=cards.get(name)}
+  if(!card)return;
+  window.revealCalendarFile?.(name);
+  card.details.open=true;
+  card.li.closest('#files>li>details')?.setAttribute('open','');
+  card.details.querySelector('summary')?.focus({preventScroll:true});
+  card.li.scrollIntoView({block:'start',behavior:motion()});
+  update();
+ }
  function initImport(){
   const library=document.querySelector('#view-library');if(!library)return;
   const importPanel=node('details',undefined,'lecture-import-panel card');
@@ -245,7 +265,6 @@
    shortcut.onclick=()=>{window.showLectureView?.('library');importPanel.open=true;choose.focus({preventScroll:true});importPanel.scrollIntoView({block:'start',behavior:motion()})};
    shortcuts.prepend(shortcut);
   }
-  const open=name=>{window.showLectureView?.('library');window.revealCalendarFile?.(name);const card=typeof cards!=='undefined'?cards.get(name):null;if(card){card.details.open=true;card.li.closest('#files>li>details')?.setAttribute('open','');card.li.scrollIntoView({block:'start',behavior:motion()});update()}};
   const pendingOpen=new Set();let stamp='',polling=false;
   async function poll(){
    if(polling)return;polling=true;
@@ -253,9 +272,9 @@
     if(current!==stamp){stamp=current;jobs.replaceChildren();for(const job of (value.jobs||[]).slice(0,5)){
      const row=node('article',undefined,'import-job');const copy=node('div');copy.append(node('strong',job.title||job.name));const ai=typeof studyStatus==='object'?studyStatus?.ai?.jobs?.[job.file]:null;const status=job.status==='ready'&&ai?.message?ai.message:job.message;copy.append(node('p',status,'muted'));row.append(copy);
      if(job.status==='error'){const retry=node('button','Повторить','secondary');retry.type='button';retry.onclick=async()=>{retry.disabled=true;try{await post('/imports/retry',{id:job.id});stamp='';await poll()}catch(e){message.textContent=e.message}finally{retry.disabled=false}};row.append(retry)}
-     if(job.status==='ready'){const b=node('button','Открыть пару','secondary');b.type='button';b.onclick=()=>open(job.file);row.append(b)}jobs.append(row);
+     if(job.status==='ready'){const b=node('button','Открыть пару','secondary');b.type='button';b.onclick=()=>openRecording(job.file);row.append(b)}jobs.append(row);
     }}
-    for(const job of value.jobs||[])if(job.status==='ready'&&pendingOpen.has(job.id)&&typeof cards!=='undefined'&&cards.has(job.file)){pendingOpen.delete(job.id);open(job.file)}
+    for(const job of value.jobs||[])if(job.status==='ready'&&pendingOpen.has(job.id)&&typeof cards!=='undefined'&&cards.has(job.file)){pendingOpen.delete(job.id);openRecording(job.file)}
    }catch{}finally{polling=false}
   }
   form.onsubmit=e=>{e.preventDefault();if(!selected||upload)return;if(selected.size===0||selected.size>2*1024**3){message.textContent='Выбери непустую запись размером до 2 ГБ.';return}
@@ -269,6 +288,6 @@
   };
   const loop=async()=>{if(!document.hidden)await poll();setTimeout(loop,2000)};loop();
  }
- window.LectureWorkflow={renderReader,refreshCard,seek,clock};
+ window.LectureWorkflow={renderReader,refreshCard,seek,clock,openRecording};
  initImport();
 })();

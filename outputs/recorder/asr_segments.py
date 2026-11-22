@@ -1,6 +1,6 @@
 import math
 import re
-from asr_guard import join_words, lexical
+from asr_guard import MIN_UNRECOGNIZED_VOICE, join_words, lexical
 from speech_quality import clean_asr_text, usable
 
 SENTENCE_END = re.compile(r'[.!?…][»"\)\]]*$')
@@ -48,7 +48,24 @@ def _split_phrases(words):
     yield from _split_passage(words[first:])
 
 
+def _attach_unrecognized_audio(rows, gaps, offset, start, end):
+    if not rows:
+        return rows
+    for left, right in gaps:
+        gap_start = round(max(start, offset + left), 3)
+        gap_end = round(min(end, offset + right), 3)
+        if gap_end - gap_start + 1e-9 < MIN_UNRECOGNIZED_VOICE:
+            continue
+        row = min(rows, key=lambda item: max(0, item['start'] - gap_end, gap_start - item['end']))
+        row['recognition'].setdefault('unrecognized_audio', []).append(dict(start=gap_start, end=gap_end))
+    return rows
+
+
 def phrase_rows(text, recognition, offset, start, end, first_id=0):
+    gaps = recognition.get('unrecognized_voice', [])
+    if gaps:
+        recognition = dict(recognition)
+        recognition.pop('unrecognized_voice')
     words = recognition.get('word_evidence') or []
     valid = bool(words) and all(isinstance(word, dict) and isinstance(word.get('text'), str)
                                and all(type(word.get(key)) in (int, float) and math.isfinite(word[key])
@@ -59,7 +76,8 @@ def phrase_rows(text, recognition, offset, start, end, first_id=0):
         row = dict(id=first_id, start=round(start, 3), end=round(end, 3), text=text,
                    timing='audio_excerpt', needs_review=bool(recognition.get('needs_review')),
                    recognition=dict(recognition, audio_offset=offset))
-        return [row] if start < end and usable(row) else []
+        rows = [row] if start < end and usable(row) else []
+        return _attach_unrecognized_audio(rows, gaps, offset, start, end)
     rows = []
     for group in _split_phrases(words):
         left, right = max(start, offset+group[0]['start']), min(end, offset+max(w['end'] for w in group))
@@ -84,4 +102,4 @@ def phrase_rows(text, recognition, offset, start, end, first_id=0):
                    words=timed, timing='asr_words', needs_review=details['needs_review'], recognition=details)
         if usable(row):
             rows.append(row)
-    return rows
+    return _attach_unrecognized_audio(rows, gaps, offset, start, end)
