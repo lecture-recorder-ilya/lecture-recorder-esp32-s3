@@ -82,6 +82,9 @@ final class AudioTranscriptPage extends LinearLayout {
     private String noteRevision;
     private ChoiceDropdown recordingDropdown;
     private Button play;
+    private Button backTen;
+    private Button aheadTen;
+    private LinearLayout playbackControls;
     private Button transcribe;
     private Button summary;
     private final Button importButton;
@@ -97,7 +100,10 @@ final class AudioTranscriptPage extends LinearLayout {
     private TranscriptAdapter transcript;
     private CheckBox reviewFilter;
     private ListView transcriptList;
+    private LinearLayout reviewNavigation;
+    private Button previousReview;
     private Button nextReview;
+    private TextView reviewPosition;
     private String reviewKey;
     private List<TranscriptEdits.Line> transcriptRows = Collections.emptyList();
     private List<TranscriptEdits.Line> reviewRows = Collections.emptyList();
@@ -196,19 +202,45 @@ final class AudioTranscriptPage extends LinearLayout {
         waveStatus = text("", 13, MUTED);
         audio.addView(waveStatus);
 
-        LinearLayout controls = new LinearLayout(activity);
-        controls.setGravity(Gravity.CENTER_VERTICAL);
+        playbackControls = new LinearLayout(activity);
+        playbackControls.setGravity(Gravity.CENTER_VERTICAL);
+        playbackControls.setShowDividers(LinearLayout.SHOW_DIVIDER_MIDDLE);
+        GradientDrawable gap = StudioStyle.surface(activity, Color.TRANSPARENT, 0);
+        gap.setSize(dp(6), 1);
+        playbackControls.setDividerDrawable(gap);
+        backTen = skipButton("−10", "На 10 секунд назад", -10000);
+        aheadTen = skipButton("+10", "На 10 секунд вперёд", 10000);
         play = button("Слушать", this::togglePlayback);
-        controls.addView(play, new LinearLayout.LayoutParams(-2, dp(48)));
+        play.setBackground(StudioStyle.control(activity, StudioStyle.ACTIVE, 12));
+        play.setTextColor(ACCENT);
+        playbackControls.addView(backTen, new LinearLayout.LayoutParams(dp(52), dp(48)));
+        playbackControls.addView(play, new LinearLayout.LayoutParams(0, dp(48), 1));
+        playbackControls.addView(aheadTen, new LinearLayout.LayoutParams(dp(52), dp(48)));
+        audio.addView(playbackControls, spaced(-1, dp(48), 4));
+
+        LinearLayout info = new LinearLayout(activity);
+        info.setGravity(Gravity.CENTER_VERTICAL);
         times = text("", 13, MUTED);
         times.setTypeface(Typeface.MONOSPACE);
-        times.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        controls.addView(times, new LinearLayout.LayoutParams(0, -1, 1));
-        if (!landscape) addSummaryButton(controls);
-        audio.addView(controls, spaced(-1, dp(48), 4));
+        times.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        info.addView(times, new LinearLayout.LayoutParams(0, -2, 1));
+        if (!landscape) addSummaryButton(info);
+        audio.addView(info, spaced(-1, -2, 4));
         if (landscape) {
             addTranscribeButton(audio, spaced(-1, dp(48), 8));
         }
+    }
+
+    private Button skipButton(String label, String description, int millis) {
+        Button control = button(label, () -> {
+            if (!prepared) return;
+            seek(position + millis, false);
+        });
+        control.setContentDescription(description);
+        control.setPadding(0, 0, 0, 0);
+        control.setMinWidth(0);
+        control.setMinimumWidth(0);
+        return control;
     }
 
     private void addSummaryButton(LinearLayout host) {
@@ -280,10 +312,20 @@ final class AudioTranscriptPage extends LinearLayout {
         reviewFilter.setVisibility(View.GONE);
         box.addView(reviewFilter, spaced(-1, -2, 4));
 
-        nextReview = button("Следующий сомнительный фрагмент", this::nextReviewFragment);
-        nextReview.setMinHeight(dp(48));
-        nextReview.setVisibility(View.GONE);
-        box.addView(nextReview, spaced(-1, -2, 4));
+        reviewNavigation = new LinearLayout(activity);
+        reviewNavigation.setGravity(Gravity.CENTER_VERTICAL);
+        reviewNavigation.setVisibility(View.GONE);
+        previousReview = button("Назад", () -> moveReview(-1));
+        previousReview.setContentDescription("Предыдущий сомнительный фрагмент");
+        nextReview = button("Дальше", () -> moveReview(1));
+        nextReview.setContentDescription("Следующий сомнительный фрагмент");
+        reviewPosition = text("", 13, MUTED);
+        reviewPosition.setGravity(Gravity.CENTER);
+        reviewPosition.setTypeface(Typeface.MONOSPACE);
+        reviewNavigation.addView(previousReview, new LinearLayout.LayoutParams(0, dp(48), 1));
+        reviewNavigation.addView(reviewPosition, new LinearLayout.LayoutParams(0, -2, 1));
+        reviewNavigation.addView(nextReview, new LinearLayout.LayoutParams(0, dp(48), 1));
+        box.addView(reviewNavigation, spaced(-1, -2, 4));
 
         ListView lines = new ListView(activity);
         transcriptList = lines;
@@ -391,9 +433,9 @@ final class AudioTranscriptPage extends LinearLayout {
         boolean hasAudio = audioFile.isFile();
         transcriptPanel.setVisibility(View.VISIBLE);
         waveform.setVisibility(hasAudio ? View.VISIBLE : View.GONE);
-        play.setVisibility(hasAudio ? View.VISIBLE : View.GONE);
+        playbackControls.setVisibility(hasAudio ? View.VISIBLE : View.GONE);
         times.setVisibility(hasAudio ? View.VISIBLE : View.GONE);
-        play.setEnabled(false);
+        enablePlayback(false);
         if (!hasAudio) {
             showWaveStatus("");
             refreshTranscriptState();
@@ -433,7 +475,7 @@ final class AudioTranscriptPage extends LinearLayout {
                 if (ready != player) return;
                 prepared = true;
                 duration = ready.getDuration();
-                play.setEnabled(duration > 0);
+                enablePlayback(duration > 0);
                 if (position > 0 || playWhenReady) seek(position, playWhenReady);
                 playWhenReady = false;
                 updatePosition();
@@ -456,8 +498,14 @@ final class AudioTranscriptPage extends LinearLayout {
     private void playbackError() {
         releasePlayer();
         play.setText("Слушать");
-        play.setEnabled(false);
+        enablePlayback(false);
         times.setText("Аудио недоступно");
+    }
+
+    private void enablePlayback(boolean enabled) {
+        play.setEnabled(enabled);
+        backTen.setEnabled(enabled);
+        aheadTen.setEnabled(enabled);
     }
 
     private void togglePlayback() {
@@ -495,7 +543,10 @@ final class AudioTranscriptPage extends LinearLayout {
                     + LectureReaderActivity.clock(duration / 1000.0);
             if (!TextUtils.equals(times.getText(), elapsed)) times.setText(elapsed);
             String action = prepared && player.isPlaying() ? "Пауза" : "Слушать";
-            if (!TextUtils.equals(play.getText(), action)) play.setText(action);
+            if (!TextUtils.equals(play.getText(), action)) {
+                play.setText(action);
+                StudioStyle.changeAction(play);
+            }
         }
         waveform.invalidate();
     }
@@ -576,8 +627,8 @@ final class AudioTranscriptPage extends LinearLayout {
         transcript.replace(filtered ? reviewRows : transcriptRows);
         reviewFilter.setText(filtered ? "Только сомнительные (" + reviewRows.size() + ") · снять для полного текста"
                 : "Показать сомнительные (" + reviewRows.size() + ")");
-        nextReview.setVisibility(filtered && !reviewRows.isEmpty() ? View.VISIBLE : View.GONE);
-        updateNextReview();
+        reviewNavigation.setVisibility(filtered && !reviewRows.isEmpty() ? View.VISIBLE : View.GONE);
+        updateReviewNavigation();
     }
 
     private int reviewIndex(List<TranscriptEdits.Line> rows) {
@@ -588,21 +639,21 @@ final class AudioTranscriptPage extends LinearLayout {
         return -1;
     }
 
-    private void updateNextReview() {
+    private void updateReviewNavigation() {
         int current = reviewIndex(reviewRows);
+        previousReview.setEnabled(current > 0);
         nextReview.setEnabled(current < reviewRows.size() - 1);
-        nextReview.setText(current < 0 ? "К первой сомнительной фразе"
-                : current == reviewRows.size() - 1 ? "Последняя сомнительная фраза"
-                : "К следующей фразе · " + (current + 2) + " из " + reviewRows.size());
+        reviewPosition.setText(current < 0 ? String.valueOf(reviewRows.size()) : (current + 1) + " / " + reviewRows.size());
     }
 
-    private void nextReviewFragment() {
-        int next = reviewIndex(reviewRows) + 1;
-        if (next >= reviewRows.size()) return;
+    private void moveReview(int direction) {
+        int next = reviewIndex(reviewRows) + direction;
+        if (next < 0 || next >= reviewRows.size()) return;
         reviewKey = reviewRows.get(next).key;
         transcript.notifyDataSetChanged();
-        transcriptList.setSelectionFromTop(next, 0);
-        updateNextReview();
+        if (android.animation.ValueAnimator.areAnimatorsEnabled()) transcriptList.smoothScrollToPositionFromTop(next, 0, 160);
+        else transcriptList.setSelectionFromTop(next, 0);
+        updateReviewNavigation();
         transcriptList.announceForAccessibility("Фрагмент " + (next + 1) + " из " + reviewRows.size());
     }
 
@@ -838,7 +889,7 @@ final class AudioTranscriptPage extends LinearLayout {
                     if (reviewFilter.isChecked()) {
                         reviewKey = line.key;
                         notifyDataSetChanged();
-                        updateNextReview();
+                        updateReviewNavigation();
                     }
                     seek((int) (Math.max(0, line.start) * 1000), true);
                 });
@@ -858,7 +909,7 @@ final class AudioTranscriptPage extends LinearLayout {
                         if (reviewFilter.isChecked()) {
                             reviewKey = line.key;
                             notifyDataSetChanged();
-                            updateNextReview();
+                            updateReviewNavigation();
                         }
                         editWord(line, wordIndex);
                     }

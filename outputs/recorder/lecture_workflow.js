@@ -43,6 +43,20 @@
   }
   const play=node('button','Слушать','secondary reader-play');
   play.type='button';
+  const steps=node('div',undefined,'reader-transport');
+  const step=(label,description,seconds)=>{
+   const button=node('button',label,'secondary reader-skip');
+   button.type='button';
+   button.title=description;
+   button.setAttribute('aria-label',description);
+   button.onclick=()=>{
+    if(!button.disabled)card.audio.currentTime=Math.max(0,Math.min(card.audio.duration,card.audio.currentTime+seconds));
+   };
+   return button;
+  };
+  const back=step('−10','На 10 секунд назад',-10);
+  const ahead=step('+10','На 10 секунд вперёд',10);
+  steps.append(back,play,ahead);
   const timecode=node('span','','reader-position');
   const seekRange=node('input',undefined,'reader-seek');
   seekRange.type='range';seekRange.min='0';seekRange.step='0.25';seekRange.value='0';
@@ -50,8 +64,10 @@
   const updatePlayback=()=>{
    const label=card.audio.paused?'Слушать':'Пауза';
    if(play.textContent!==label)play.textContent=label;
+   playback.classList.toggle('is-playing',!card.audio.paused);
    const duration=card.audio.duration,available=Number.isFinite(duration)&&duration>0;
    seekRange.disabled=!available;
+   back.disabled=ahead.disabled=!available;
    if(available&&Number(seekRange.max)!==duration)seekRange.max=duration;
    seekRange.value=card.audio.currentTime;
    const position=clock(card.audio.currentTime);
@@ -64,9 +80,9 @@
   };
   play.onclick=()=>{if(card.audio.paused)seek(card,card.audio.currentTime||0);else card.audio.pause()};
   seekRange.oninput=()=>{if(!seekRange.disabled)card.audio.currentTime=Number(seekRange.value)};
-  for(const event of ['play','pause','ended','loadedmetadata','durationchange','timeupdate'])card.audio.addEventListener(event,updatePlayback,{signal});
+  for(const event of ['play','pause','ended','loadedmetadata','durationchange','timeupdate','seeked'])card.audio.addEventListener(event,updatePlayback,{signal});
   updatePlayback();
-  playback.append(play,seekRange,timecode);
+  playback.append(steps,seekRange,timecode);
   top.append(tabs,badge);root.append(top,playback,notice,panel);parent.append(root);
   card.readerRoot=root;card.workflowBadge=badge;
   const caption=node('p','Нажми на фразу, чтобы услышать её в записи.','reader-caption');
@@ -80,13 +96,16 @@
   const footer=node('div',undefined,'reader-footer');
   const download=node('a','Скачать текст с таймкодами');download.href='/transcript-export/'+encodeURIComponent(name);download.download=name.replace(/\.wav$/,'.txt');footer.append(download);
   const itemNodes=new Map();
+  let activeItem=null;
   let reviewIndex=-1;
   const reviewNavigation=node('div',undefined,'reader-review-navigation');
   const reviewPosition=node('span','','reader-review-position');
   reviewPosition.setAttribute('role','status');
-  const reviewPrevious=node('button','Предыдущая','secondary reader-step-prev');
-  const reviewNext=node('button','Следующий фрагмент','secondary reader-step-next');
-  const reviewInText=node('button','К фрагменту в тексте','secondary reader-step-text');
+  const reviewPrevious=node('button','Назад','secondary reader-step-prev');
+  const reviewNext=node('button','Дальше','secondary reader-step-next');
+  const reviewInText=node('button','Весь текст','secondary reader-step-text');
+  reviewPrevious.setAttribute('aria-label','Предыдущий фрагмент');
+  reviewNext.setAttribute('aria-label','Следующий фрагмент');
   reviewInText.type='button';
   reviewInText.onclick=()=>{
    const item=Array.from(itemNodes.values())[reviewIndex];
@@ -104,7 +123,8 @@
    reviewPosition.textContent=count?(reviewIndex<0?count+' фрагм.':String(reviewIndex+1)+' из '+count):'';
    reviewPosition.hidden=!count;
    reviewPrevious.hidden=reviewNext.hidden=!count;
-   reviewInText.textContent=reviewIndex<0?'Весь текст':'К фрагменту в тексте';
+   reviewInText.textContent=reviewIndex<0?'Весь текст':'К тексту';
+   reviewInText.setAttribute('aria-label',reviewIndex<0?'Весь текст':'К фрагменту в тексте');
    reviewPrevious.disabled=reviewIndex<=0;
    reviewNext.disabled=reviewIndex>=count-1;
    if(state.tab==='review'){
@@ -127,6 +147,7 @@
   }
   function renderRows(){
    const previous=timeline.scrollTop;timeline.replaceChildren();itemNodes.clear();
+   activeItem=null;
    const query=state.query.trim().toLocaleLowerCase('ru');
    const visible=rows.filter(r=>(state.tab!=='review'||r.needs_review&&!r.reviewed)&&(!query||r.text.toLocaleLowerCase('ru').includes(query)));
    for(const [index,segment] of visible.entries()){
@@ -146,7 +167,9 @@
     if(segment.needs_review||segment.reviewed){
      const reviewBar=node('div',undefined,'transcript-review');
      const label=node('span',segment.reviewed?'Проверено по записи':'Проверь по записи','review-label');
-     const reasons=(segment.quality?.reasons||[]).join(' · ');if(reasons&&!segment.reviewed){label.title=reasons;reviewBar.append(label,node('span',reasons,'review-reasons'))}else reviewBar.append(label);
+     const reasons=(segment.quality?.reasons||[]).filter(reason=>reason!=='Распознавание требует проверки по записи').join(' · ');
+     reviewBar.append(label);
+     if(reasons&&!segment.reviewed)reviewBar.append(node('span',reasons,'review-reasons'));
      if(state.tab==='review'){
       for(const span of segment.quality?.unrecognized_audio||[]){
        if(!Number.isFinite(span?.start)||!Number.isFinite(span.end)||span.start<0||span.end<=span.start)continue;
@@ -180,15 +203,23 @@
    updateReviewNavigation();
    timeline.scrollTop=previous;highlight();
   }
-  let activeId=null;
   function highlight(){
    const position=card.audio.currentTime;
    let lo=0,hi=timedRows.length-1,index=-1;
    while(lo<=hi){const mid=(lo+hi)>>1;if(timedRows[mid].start<=position){index=mid;lo=mid+1}else hi=mid-1}
-   const active=index>=0&&position<timedRows[index].end?timedRows[index].id:null;
-   for(const [id,item]of itemNodes){const yes=id===active;item.row.classList.toggle('is-playing',yes);if(yes)item.line.setAttribute('aria-current','true');else item.line.removeAttribute('aria-current')}
-   if(state.follow&&active!==activeId&&active!==null&&itemNodes.has(active)){const item=itemNodes.get(active).row;timeline.scrollTo({top:Math.max(0,item.offsetTop-timeline.offsetTop-timeline.clientHeight*.3),behavior:motion()})}
-   activeId=active;
+   const next=index>=0&&position<timedRows[index].end?itemNodes.get(timedRows[index].id):null;
+   if(next===activeItem)return;
+   if(activeItem){
+    activeItem.row.classList.remove('is-playing');
+    activeItem.line.removeAttribute('aria-current');
+   }
+   activeItem=next||null;
+   if(!next)return;
+   next.row.classList.add('is-playing');
+   next.line.setAttribute('aria-current','true');
+   if(state.follow&&timeline.isConnected){
+    timeline.scrollTo({top:Math.max(0,next.row.offsetTop-timeline.clientHeight*.3),behavior:motion()});
+   }
   }
   card.audio.addEventListener('timeupdate',highlight,{signal});card.audio.addEventListener('seeked',highlight,{signal});
   function summary(){
