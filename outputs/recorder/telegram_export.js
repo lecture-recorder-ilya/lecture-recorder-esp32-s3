@@ -3,21 +3,30 @@
  const clean=value=>String(value??'').replace(/\r/g,'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/^#{1,6}\s+/gm,'').trim();
  function group(text,offset){while(text[offset]===' ')offset++;if(text[offset]!=='{')return null;let depth=1,end=offset+1;for(;end<text.length&&depth;end++){if(text[end]==='{')depth++;if(text[end]==='}')depth--}return depth?null:{text:text.slice(offset+1,end-1),end}}
  function formula(value){
-  let text=String(value??'').replace(/\\\\(?=[A-Za-z])/g,'\\').replace(/\\(?:begin|end)\{[^}]+\}/g,'').replace(/\\(?:left|right|displaystyle)/g,'').replace(/\\\\/g,'\n').replace(/&/g,'');
+  let text=String(value??'').replace(/\\\\(?=[A-Za-z])/g,'\\').replace(/\\(?:mathrm|text)\{((?:[^{}]|\{[^{}]*\})*)\}/g,'$1').replace(/\\[,;!:]/g,' ').replace(/\\(?:begin|end)\{[^}]+\}/g,'').replace(/\\(?:left|right|displaystyle)/g,'').replace(/\\\\/g,'\n').replace(/&/g,'');
   for(let guard=0;guard<40;guard++){const match=/\\(?:dfrac|tfrac|frac|sqrt)/.exec(text);if(!match)break;const first=group(text,match.index+match[0].length);if(!first)break;const second=match[0]==='\\sqrt'?null:group(text,first.end);if(match[0]!=='\\sqrt'&&!second)break;const replacement=second?'('+formula(first.text)+') / ('+formula(second.text)+')':'√('+formula(first.text)+')';text=text.slice(0,match.index)+replacement+text.slice(second?second.end:first.end)}
-  const names={alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',theta:'θ',lambda:'λ',mu:'μ',sigma:'σ',omega:'ω',pi:'π',infty:'∞',to:'→',rightarrow:'→',sim:'∼',approx:'≈',le:'≤',leq:'≤',ge:'≥',geq:'≥',neq:'≠',cdot:'·',times:'×',div:'÷',pm:'±',int:'∫',sum:'Σ',sin:'sin',cos:'cos',tan:'tan',tg:'tg',log:'log',ln:'ln',lim:'lim',quad:' ',qquad:' '};
+  const names={alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',theta:'θ',lambda:'λ',mu:'μ',sigma:'σ',omega:'ω',pi:'π',infty:'∞',to:'→',rightarrow:'→',sim:'∼',approx:'≈',le:'≤',leq:'≤',ge:'≥',geq:'≥',ne:'≠',neq:'≠',Omega:'Ω',cdot:'·',times:'×',div:'÷',pm:'±',int:'∫',sum:'Σ',sin:'sin',cos:'cos',tan:'tan',tg:'tg',log:'log',ln:'ln',lim:'lim',quad:' ',qquad:' '};
   text=text.replace(/\\([A-Za-z]+)/g,(all,key)=>names[key]??key);
   text=text.replace(/lim_\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g,(_,body)=>'lim ('+body.replace(/[{}]/g,'')+') ');
   const supers={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻','+':'⁺','n':'ⁿ'};const subs={'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉','-':'₋','+':'₊'};
   text=text.replace(/([_^])(?:\{([^{}]+)\}|([0-9n+-]))/g,(_,sign,a,b)=>{const body=a??b,map=sign==='^'?supers:subs;return [...body].every(c=>map[c])?[...body].map(c=>map[c]).join(''):sign+'('+body+')'});
   return text.replace(/[{}]/g,'').replace(/[ \t]+/g,' ').replace(/ *\n */g,'\n').trim();
  }
+ function timecode(value){const ms=Math.round(value*1000);return Math.floor(ms/60000)+':'+String(Math.floor(ms/1000)%60).padStart(2,'0')+'.'+String(ms%1000).padStart(3,'0')}
+ function source(item){
+  if(!item?.quote)return '';
+  const valid=item.source_status!=='needs_review'&&Number.isFinite(item.start)&&Number.isFinite(item.end);
+  const lines=[valid?'Источник ['+timecode(item.start)+'–'+timecode(item.end)+']: «'+clean(item.quote)+'»':'Неподтверждённая цитата: «'+clean(item.quote)+'». Источник нужно сверить.'];
+  const old=item.original_source;if(old&&Number.isFinite(old.start)&&Number.isFinite(old.end)&&(old.start!==item.start||old.end!==item.end))lines.push('Исходная привязка ['+timecode(old.start)+'–'+timecode(old.end)+']; до повторной сверки.');
+  return lines.join('\n');
+ }
  function blocks(result,lesson={},full=false){
   const rows=[];if(result.overview)rows.push(clean(result.overview));
-  if(result.summary?.length)rows.push('📝 КОНСПЕКТ\n'+result.summary.map(x=>'• '+clean(x)).join('\n'));
-  if(result.highlights?.length)rows.push('📌 ВАЖНОЕ\n'+result.highlights.map(x=>'• '+clean(x.point)).filter(x=>x!=='• ').join('\n'));
-  if(result.formulas?.length)rows.push('🧮 ФОРМУЛЫ\n'+result.formulas.map(x=>formula(x.latex)).filter(Boolean).join('\n\n'));
-  if(result.homework?.length)rows.push('🏠 ДОМАШНЕЕ ЗАДАНИЕ\n'+result.homework.map(x=>'• '+clean(x.task)+(x.deadline?' · '+clean(x.deadline):'')).join('\n'));
+  if(result.summary?.length)rows.push('📝 КОНСПЕКТ\n'+result.summary.map((x,i)=>'• '+clean(x)+(source(result.summary_evidence?.[i])?'\n'+source(result.summary_evidence[i]):'')).join('\n'));
+  if(result.highlights?.length)rows.push('📌 ВАЖНОЕ\n'+result.highlights.map(x=>'• '+clean(x.point)+(source(x)?'\n'+source(x):'')).filter(x=>x!=='• ').join('\n'));
+  if(result.formulas?.length)rows.push('🧮 ФОРМУЛЫ\n'+result.formulas.map(x=>formula(x.latex)+(source(x)?'\n'+source(x):'')).filter(Boolean).join('\n\n'));
+  if(result.homework?.length)rows.push('🏠 ДОМАШНЕЕ ЗАДАНИЕ\n'+result.homework.map(x=>'• '+clean(x.task)+(x.deadline?' · '+clean(x.deadline):'')+(source(x)?'\n'+source(x):'')).join('\n'));
+  for(const field of ['formula_review','homework_review'])if(result[field]?.length)rows.push('⚠️ НУЖНО СВЕРИТЬ\n'+result[field].map(x=>clean(x.review_note||'Нужно сверить.')+'\n'+source(x)).join('\n\n'));
   if(full){
    const texts=(result.segments||[]).map(x=>clean(x.text)).filter(Boolean);let paragraphs=[],current='';
    for(const text of texts){if(current.length+text.length>650&&current){paragraphs.push(current);current=''}current+=(current?' ':'')+text;if(current.length>350&&/[.!?…]$/.test(current)){paragraphs.push(current);current=''}}

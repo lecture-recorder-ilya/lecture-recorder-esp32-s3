@@ -119,11 +119,12 @@ def report_for(root, name):
         elif path.name.endswith('.live.json'):
             report = dict(report, draft=True)
         from summary_sources import reconcile
+        from formula_evidence import finalize
         try:
             decisions=json.loads((root/'study'/(stem+'.notes.json')).read_text()).get('transcript_review',{})
         except (OSError,ValueError,TypeError):
             decisions={}
-        return reconcile(annotate(report,decisions))
+        return reconcile(finalize(annotate(report,decisions)))
     return None
 
 
@@ -147,22 +148,45 @@ def plain_text(report):
 
 
 def markdown(report):
+    from summary_sources import reconcile
+    from summary_export import source_lines,timecode
+    from formula_evidence import finalize
+    report=reconcile(finalize(report))
     lines = ['# ' + (report.get('topic') or report.get('subject') or 'Конспект занятия'), '']
     if report.get('teacher'):
         lines.extend(['Преподаватель: ' + report['teacher'], ''])
     lines.extend(['## Главное', '', report.get('overview') or '', '', '## Ключевые мысли', ''])
-    lines.extend('- ' + point for point in report.get('summary') or [])
+    for index,point in enumerate(report.get('summary') or []):
+        lines.append('- '+point)
+        source=(report.get('summary_evidence') or [])[index]
+        lines.extend('  '+text for text in source_lines(source))
     for title, field in [('Темы по времени', 'sections'), ('Акценты преподавателя', 'highlights'), ('Задания из записи', 'homework')]:
         if report.get(field):
             lines.extend(['', '## ' + title, ''])
             for item in report[field]:
-                lines.append('- [' + timestamp(item.get('start', 0)) + '] ' + (item.get('title') or item.get('point') or item.get('task') or ''))
+                prefix='['+timecode(item['start'])+'] ' if field=='sections' and number(item.get('start')) else ''
+                lines.append('- '+prefix + (item.get('title') or item.get('point') or item.get('task') or ''))
                 if item.get('quote'):
-                    lines.append('  > ' + item['quote'])
+                    lines.extend('  '+text for text in source_lines(item))
     if report.get('formulas'):
         lines.extend(['', '## Формулы из записи', ''])
         for item in report['formulas']:
             lines.extend(['$$', item.get('latex', ''), '$$', item.get('explanation', ''), ''])
+            lines.extend(source_lines(item))
+    for field,title in [('formula_review','Формулы для сверки'),('homework_review','Реплики без подтверждённой выдачи ДЗ')]:
+        if report.get(field):
+            lines.extend(['','## '+title,''])
+            for item in report[field]:
+                lines.append(item.get('review_note','Нужно сверить.'))
+                lines.extend(source_lines(item))
+    if report.get('moments'):
+        from summary_sources import bind
+        lines.extend(['','## Даты и понятия',''])
+        for item in report['moments']:
+            lines.append('- '+(item.get('date') or item.get('title',''))+' — '+item.get('description',''))
+            lines.extend(source_lines(bind(item,report.get('segments',[]))))
+    if report.get('warnings'):
+        lines.extend(['','## Примечания','',*['- '+str(v) for v in report['warnings']]])
     lines.extend(['', '## Места для проверки', ''])
     uncertain = [row for row in report.get('segments') or [] if row.get('needs_review') and not row.get('reviewed')]
     lines.extend('- [' + time_label(row) + '] ' + row['text'] for row in uncertain)

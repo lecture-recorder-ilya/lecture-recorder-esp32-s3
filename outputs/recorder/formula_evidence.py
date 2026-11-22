@@ -153,7 +153,11 @@ def finalize(report):
         valid=False
         if len(spans)==1 and not any(r.get('needs_review') and not r.get('reviewed') for r in spans[0][1]):
             valid,code=check(item.get('latex',''),item['quote'])
-        if valid:accepted.append(item)
+        if valid:
+            item['verification_status']='confirmed'
+            explanation=str(item.get('explanation',''))
+            if explanation.strip().lower() not in item['quote'].lower():item['explanation']=''
+            accepted.append(item)
         else:pending.append(review(item,code))
     result['formulas']=accepted
     result['formula_review']=list({(v['quote'],v.get('candidate_latex'),v.get('review_reason')):v for v in pending}.values())

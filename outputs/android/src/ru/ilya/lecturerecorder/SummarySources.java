@@ -91,6 +91,17 @@ final class SummarySources {
     }
 
     static void reconcile(JSONObject report,boolean local,boolean fresh)throws Exception {
+        JSONArray legacy=report.optJSONArray("formulas");
+        if(legacy!=null){
+            JSONArray accepted=new JSONArray(),review=report.optJSONArray("formula_review");if(review==null)review=new JSONArray();
+            for(int i=0;i<legacy.length();i++){
+                JSONObject formula=legacy.optJSONObject(i);if(formula==null)continue;
+                if(formula.optString("verification_status").equals("confirmed"))accepted.put(formula);
+                else{formula.put("candidate_latex",formula.optString("latex"));formula.remove("latex");
+                    formula.put("verification_status","needs_review").put("review_note","Формула из прежнего конспекта требует сверки.");review.put(formula);}
+            }
+            report.put("formulas",accepted);if(review.length()>0)report.put("formula_review",review);
+        }
         JSONArray rows=report.optJSONArray("segments");if(rows==null)rows=new JSONArray();
         JSONArray points=report.optJSONArray("summary"),sources=report.optJSONArray("summary_evidence");
         boolean overviewDerived=points!=null&&report.optString("overview").equals(TranscriptEdits.summaryOverview(points));

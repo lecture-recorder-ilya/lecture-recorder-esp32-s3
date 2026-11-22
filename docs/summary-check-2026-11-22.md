@@ -65,3 +65,11 @@ export ANDROID_JSON_JAR="$clipmic_repo/work/lecture-profile-local-asr/asr-check/
 "$PY" tools/compare_summary_filters.py work/next-summary-check/real-fixed.json --baseline v0.5.9 --baseline 68f2236 --output work/next-summary-check/real-compare.json
 "$PY" tools/compare_summary_filters.py work/next-summary-check/mtedx-fixed.json --baseline v0.5.9 --baseline 68f2236 --output work/next-summary-check/mtedx-compare.json
 ```
+
+## Экспорт и восстановление
+
+Markdown Mac, текст Android и подготовка текста для Telegram сохраняют дословную цитату и обе временные границы с миллисекундами. При снятой привязке печатаются статус сверки и исходные границы; выдуманного перехода на ноль нет. Места проверки формул и ДЗ экспортируются отдельно. Сохранённый Markdown и HTTP-экспорт используют один преобразователь. Прежние формулы при чтении и экспорте проверяются заново.
+
+На Mac восстановление через `summary_history.restore` сначала сохраняет текущую версию; исходный архив возвращается побайтно. На Android `LectureNotes.restore` восстанавливает и снимок ручных правок. Новое поколение правок изолировано даже при совпавших тексте и границах нового ASR. Повреждённый архив или снимок правок не заменяет текущий конспект. Это функции данных и файловая история; интерфейс выбора версии не добавлялся.
+
+Проверки: `work/test_summary_export.py` (5 тестов), `work/test_next_summary.py` (сбои сохранения), `work/test_telegram_export.js`, JVM-сценарий `checkHistoryExport` (правка → такой же ASR-интервал → другая правка → восстановление → экспорт). Физическое прослушивание и реальные пользователи не подменяются этими тестами.

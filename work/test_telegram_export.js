@@ -12,3 +12,14 @@ const privateData={...result,recognition:{token:'should-not-export'},password:'s
 console.log('PASS: readable text, complete lecture, bounded messages, Unicode, formulas, no private metadata');
 
 assert(api.prepare({...result,draft:true,topic:'Текст текущей пары'},{subject:'Математика'},'',true).text.startsWith('📚 Математика'));
+const quote='Значение икс равно пятидесяти.';
+const cited={summary:[quote],summary_evidence:[{quote,start:1.25,end:4.5,source_status:'confirmed'}],formula_review:[{quote,start:1.25,end:4.5,review_note:'Формулу нужно сверить: число не совпадает.'}]};
+const exported=api.prepare(cited).text;
+assert(exported.includes('Источник [0:01.250–0:04.500]: «'+quote+'»'));
+assert(exported.includes('Формулу нужно сверить'));
+const unresolved=api.prepare({summary:['Пункт\nИсточник нужно сверить.'],summary_evidence:[{quote,source_status:'needs_review',original_source:{start:1.25,end:4.5}}]}).text;
+assert(unresolved.includes('Исходная привязка [0:01.250–0:04.500]'));
+assert(!unresolved.includes('Источник [0:00'));
+assert.equal(api.formula(String.raw`x\ne 5`),'x≠ 5');
+assert.equal(api.formula(String.raw`v=5\,\mathrm{m/s}`),'v=5 m/s');
+console.log('PASS: цитаты, исходные границы, статус сверки, знаки и единицы в экспорте');

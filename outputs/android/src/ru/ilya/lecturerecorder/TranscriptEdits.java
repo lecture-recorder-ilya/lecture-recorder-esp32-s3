@@ -182,7 +182,8 @@ final class TranscriptEdits {
             original = segment.optString("text");
             start = segment.optDouble("start");
             needsReview = segment.optBoolean("needs_review");
-            key = (local ? "phone:" : "mac:") + index + ":" + segment.optString("start") + ":" + segment.optString("end");
+            key = (local ? "phone:" : "mac:") + index + ":" + segment.optString("start") + ":" + segment.optString("end")
+                    + (segment.has("edit_generation") ? ":"+segment.optString("edit_generation") : "");
             JSONObject replacements = changes(corrections.optJSONObject(key), original);
             Matcher matcher = WORD.matcher(original);
             JSONArray timings = segment.optJSONArray("word_times");

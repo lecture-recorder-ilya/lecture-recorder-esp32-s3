@@ -13,6 +13,7 @@ def read_document(root, name, paths, errors):
     from phone_sync import encode_body
     from transcript_quality import annotate
     from summary_sources import reconcile
+    from formula_evidence import finalize
     for path in sorted(paths, key=lambda p: (p.name.endswith(('.live.json', '.transcript.json')), -p.stat().st_mtime_ns)):
         try:
             report = json.loads(path.read_text())
@@ -23,7 +24,7 @@ def read_document(root, name, paths, errors):
                 decisions = json.loads(notes_path.read_text()).get('transcript_review', {})
             except (OSError, ValueError):
                 decisions = {}
-            report = reconcile(annotate(report, decisions))
+            report = reconcile(finalize(annotate(report, decisions)))
             rows = report.get('segments') or []
             if not isinstance(rows, list):
                 raise ValueError('Некорректные строки расшифровки')

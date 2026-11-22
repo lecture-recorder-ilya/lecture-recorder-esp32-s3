@@ -71,6 +71,7 @@ public final class SummaryStateTest {
             checkSourceBinding();
             checkHomeworkKinds(new JSONArray(new String(Files.readAllBytes(new File(args[2]).toPath()), java.nio.charset.StandardCharsets.UTF_8)));
             checkEditedDerivedData(new Context(new File(root, "derived-data")));
+            checkHistoryExport(new Context(new File(root,"history-export")));
             checkPhrases();
             JSONArray oldSegments = segments(OLD_TEXT);
             oldSegments.getJSONObject(0).put("review_key", OLD_KEY);
@@ -507,6 +508,41 @@ public final class SummaryStateTest {
         System.out.println("PASS: вопрос, пример, переспрос, чужое «надо» и явное ДЗ");
     }
 
+    private static JSONObject note(String name,String quote)throws Exception {
+        JSONObject row=new JSONObject().put("text",quote).put("start",1.25).put("end",4.5);
+        JSONObject anchor=new JSONObject().put("quote",quote).put("start",1.25).put("end",4.5).put("segment_id",0);
+        return new JSONObject().put("file",name).put("report",new JSONObject().put("segments",new JSONArray().put(row))
+                .put("summary",new JSONArray().put(quote)).put("summary_evidence",new JSONArray().put(anchor)));
+    }
+
+    private static void checkHistoryExport(Context context)throws Exception {
+        String name="lecture-2026-11-22-15-00-00.wav",quote="Значение икс равно пяти.";
+        JSONObject old=note(name,quote);Store.write(LectureNotes.file(context,name,true),old);
+        TranscriptEdits.Line line=new TranscriptEdits.Line(old.getJSONObject("report").getJSONArray("segments").getJSONObject(0),0,true,new JSONObject());
+        TranscriptEdits.save(context,name,line,3,"пятидесяти");
+        JSONObject edited=new JSONObject(old.toString());
+        TranscriptEdits.apply(edited,TranscriptEdits.read(TranscriptEdits.file(context,name)),true);
+        require(LectureNotes.summary(edited).contains("Источник [0:01.250–0:04.500]: «Значение икс равно пятидесяти.»"),"Экспорт потерял правку или точное время");
+        JSONObject next=LectureNotes.saveTranscript(context,name,"Тест",new JSONObject(old.toString()),note(name,quote).getJSONObject("report").getJSONArray("segments"),"fixed-ASR");
+        String revision=LectureNotes.history(context,name).getString(0);
+        JSONObject view=new JSONObject(next.toString());TranscriptEdits.apply(view,TranscriptEdits.read(TranscriptEdits.file(context,name)),true);
+        require(quote.equals(view.getJSONObject("report").getJSONArray("segments").getJSONObject(0).getString("text")),"Старая правка перешла в новую расшифровку с теми же границами");
+        JSONObject row=next.getJSONObject("report").getJSONArray("segments").getJSONObject(0);
+        TranscriptEdits.save(context,name,new TranscriptEdits.Line(row,0,true,new JSONObject()),3,"двум");
+        JSONObject restored=LectureNotes.restore(context,name,revision);
+        TranscriptEdits.apply(restored,TranscriptEdits.read(TranscriptEdits.file(context,name)),true);
+        String export=LectureNotes.summary(restored);
+        require(export.contains("Значение икс равно пятидесяти.")&&!export.contains("равно двум")
+                &&export.contains("[0:01.250–0:04.500]")&&export.contains(revision),"Восстановление потеряло снимок правок, цитату или время");
+        require(LectureNotes.history(context,name).length()==2,"Восстановление уничтожило новую версию");
+        String before=Store.read(LectureNotes.file(context,name,true));
+        File editsSnapshot=new File(new File(new File(context.getFilesDir(),"phone-note-history"),name),revision+".edits.json");
+        Files.write(editsSnapshot.toPath(),"{}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        try{LectureNotes.restore(context,name,revision);throw new AssertionError("Повреждённый снимок правок принят");}
+        catch(IOException expected){require(before.equals(Store.read(LectureNotes.file(context,name,true))),"Ошибка архива изменила текущий конспект");}
+        System.out.println("PASS: экспорт после правки, одинаковые границы нового ASR, снимок правок и восстановление истории");
+    }
+
     private static JSONArray segments(String text) throws Exception {
         return new JSONArray().put(new JSONObject().put("text", text).put("start", 5).put("end", 9)
                 .put("needs_review", true));
@@ -526,7 +562,7 @@ public final class SummaryStateTest {
     }
 
     private static String archive(File history) throws Exception {
-        File[] snapshots = history.listFiles();
+        File[] snapshots = history.listFiles((folder,name)->name.matches("[0-9a-f]{64}\\.json"));
         require(snapshots != null && snapshots.length == 1, "Expected exactly one archived snapshot");
         return Store.read(snapshots[0]);
     }

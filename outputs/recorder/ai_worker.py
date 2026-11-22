@@ -23,6 +23,7 @@ from formula_evidence import check as check_formula, REASONS as FORMULA_REASONS,
 from transcript_quality import annotate, assess
 from summary_sources import reconcile as reconcile_sources
 from homework_evidence import classify as homework_kind, LABELS as HOMEWORK_LABELS
+from summary_history import save as save_summary
 
 ROOT = Path(__file__).resolve().parent
 MODELS = ROOT.parent.parent / 'work' / 'models'
@@ -35,22 +36,6 @@ def save(path, value):
     temp = path.with_suffix(path.suffix + '.tmp')
     temp.write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding='utf-8')
     temp.replace(path)
-
-
-def save_summary(path, value):
-    """Сохранить новый конспект только после точной копии предыдущего."""
-    payload = json.dumps(value, ensure_ascii=False, indent=2).encode('utf-8')
-    if path.exists():
-        previous = path.read_bytes()
-        if previous != payload:
-            history = path.parent / 'history' / path.stem
-            history.mkdir(parents=True, exist_ok=True)
-            archived = history / (hashlib.sha256(previous).hexdigest() + '.json')
-            if not archived.exists():
-                temporary = archived.with_suffix('.json.tmp')
-                temporary.write_bytes(previous)
-                temporary.replace(archived)
-    save(path, value)
 
 
 def normalized(value):
@@ -302,7 +287,7 @@ def validate_part(part, segments):
         if valid:
             explanation = str(item.get('explanation',''))[:500]
             if normalized(explanation) not in normalized(anchor['quote']): explanation = ''
-            result['formulas'].append(dict(anchor,latex=latex[:1500],explanation=explanation))
+            result['formulas'].append(dict(anchor,latex=latex[:1500],explanation=explanation,verification_status='confirmed'))
         else:
             result['formula_review'].append(dict(basis,candidate_latex=latex[:1500],verification_status='needs_review',
                 review_reason=code,review_note='Формулу нужно сверить: '+FORMULA_REASONS.get(code,FORMULA_REASONS['syntax'])+'.'))
@@ -568,30 +553,8 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
     result = finalize_formulas(result)
     result = reconcile_sources(result,fresh=True)
     save_summary(result_path, result)
-    markdown = ['# '+(result['subject'] or 'Предмет не определён'), '', 'Преподаватель: '+(result['teacher'] or 'не определён'), '', '## Конспект', '']
-    markdown[4:4] = ['Тема: '+(result.get('topic') or 'не определена'), '', result.get('overview',''), '']
-    markdown += ['- '+note for note in result['summary']] or ['Содержательного конспекта нет.']
-    markdown += ['', '## На чём преподаватель сделал акцент', '']
-    for item in result['highlights']:
-        markdown += ['- **'+item['point']+'**',
-                     f"  Цитата ({item['start']:.1f}–{item['end']:.1f} с): «{item['quote']}»"]
-    if not result['highlights']:
-        markdown += ['Явных учебных акцентов в расшифровке не обнаружено.']
-    markdown += ['', '## Даты и понятия по ходу занятия', '']
-    for item in result.get('moments',[]):
-        markdown += ['- **'+(item.get('date') or item['title'])+'** — '+item['description'], f"  Момент ({item['start']:.1f} с): «{item['quote']}»"]
-    markdown += ['', '## Формулы', '']
-    for item in result.get('formulas',[]):
-        markdown += ['$$', item['latex'], '$$', item['explanation'], f"Основание ({item['start']:.1f} с): «{item['quote']}»", '']
-    markdown += ['', '## Домашнее задание', '']
-    for task in result['homework']:
-        markdown += ['- '+task['task'] + (' — '+task['deadline'] if task['deadline'] else ''),
-                     f"  Основание ({task['start']:.1f} с): «{task['quote']}»"]
-    if not result['homework']:
-        markdown += ['Явного домашнего задания не обнаружено.']
-    markdown += ['', '## Примечания', ''] + ['- '+w for w in result.get('warnings', [])]
-    markdown += ['', '## Расшифровка', '', transcript]
-    result_path.with_suffix('.md').write_text('\n'.join(markdown)+'\n', encoding='utf-8')
+    from transcript_quality import markdown as export_markdown
+    result_path.with_suffix('.md').write_text(export_markdown(result)+'\n',encoding='utf-8')
     save(progress_path, {'status':'done','stage':'done','percent':100,'message':'Разбор готов'})
 
 
