@@ -1,0 +1,69 @@
+{
+  "capacity_min_mAh": 400,
+  "usable_assumption_mAh": 320.0,
+  "led_bat_mA": 1.2543859649122804,
+  "steady_modes": {
+    "deep_sleep": {
+      "mA": 3.0,
+      "h": 106.66666666666667
+    },
+    "light_sleep": {
+      "mA": 5.0,
+      "h": 64.0
+    },
+    "modem_sleep": {
+      "mA": 44.0,
+      "h": 7.2727272727272725
+    },
+    "record_sd_led": {
+      "mA": 65.75438596491227,
+      "h": 4.866595517609392
+    },
+    "sync_wifi_sd_read_led": {
+      "mA": 126.25438596491227,
+      "h": 2.5345654137427918
+    },
+    "sync_ble_sd_read_led": {
+      "mA": 118.25438596491227,
+      "h": 2.7060307098879908
+    }
+  },
+  "duty_35sleep_60rec_5wifi": {
+    "mA": 46.81535087719298,
+    "h": 6.83536476826652
+  },
+  "sd_record_peak_from_seeed_plus_led_mA": 110.55438596491227,
+  "tx_sensitivity": [
+    {
+      "open_V": 4.2,
+      "loaded_V": 4.095837727695846,
+      "I_A": 0.3472075743471803,
+      "sag_V": 0.10416227230415398,
+      "loaded_above_3V3": true
+    },
+    {
+      "open_V": 3.8,
+      "loaded_V": 3.6841996063484928,
+      "I_A": 0.38600131217168987,
+      "sag_V": 0.11580039365150707,
+      "loaded_above_3V3": true
+    },
+    {
+      "open_V": 3.3,
+      "loaded_V": 3.165212274004576,
+      "I_A": 0.4492924199847475,
+      "sag_V": 0.134787725995424,
+      "loaded_above_3V3": false
+    },
+    {
+      "open_V": 3.0,
+      "loaded_V": 2.8503215303379106,
+      "I_A": 0.4989282322069638,
+      "sag_V": 0.14967846966208942,
+      "loaded_above_3V3": false
+    }
+  ],
+  "dropout_current_load_scenario_A": 0.36630000000000007,
+  "dropout_sag_scenario_V": 0.10989000000000002,
+  "charge_setpoint_nominal_mA": 109.0909090909091
+}

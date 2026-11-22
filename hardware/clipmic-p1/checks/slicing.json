@@ -1,0 +1,25 @@
+{
+  "slicer": "PrusaSlicer 2.9.6",
+  "profile": "geometry only, 0.4 mm nozzle / 0.2 mm layer / extrusion 0.45 / 3 perimeters / 5 top and bottom / 15% gyroid / no supports; stored temperatures from PLA geometry profile, select actual PETG profile on printer",
+  "parts": {
+    "Tray": {
+      "stl_sha256": "a231bc9382ab8c48ec46dafb17ad13083c9e55c80988936b900583f13ee492a9",
+      "layers": 57,
+      "brim_mm": 0,
+      "warnings": []
+    },
+    "Lid": {
+      "stl_sha256": "47e11c3702c57eddfb2e0b7a6cb288fa4ded686be83fe326053c0837381d54df",
+      "layers": 44,
+      "brim_mm": 0,
+      "warnings": []
+    },
+    "Clip": {
+      "stl_sha256": "789b383fabafccd538f5d8544d4092b7381aea3c4dfacd0e8934a1bab5b41878",
+      "layers": 65,
+      "brim_mm": 5,
+      "warnings": []
+    }
+  },
+  "initial_clip_without_brim": "Low bed adhesion"
+}

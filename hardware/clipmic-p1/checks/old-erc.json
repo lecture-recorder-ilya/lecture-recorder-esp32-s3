@@ -1,0 +1,71 @@
+{
+    "$schema": "https://schemas.kicad.org/erc.v1.json",
+    "coordinate_units": "mm",
+    "date": "2026-11-22T18:12:40",
+    "ignored_checks": [],
+    "included_severities": [
+        "error",
+        "warning",
+        "exclusion"
+    ],
+    "kicad_version": "10.0.6",
+    "sheets": [
+        {
+            "path": "/",
+            "uuid_path": "/3f04c61a-2f41-5f0e-9b74-360aa83eb2f7",
+            "violations": [
+                {
+                    "description": "Назначенное посад. место () не соответствует фильтрам посад. мест (Choke_* *Coil* Inductor_* L_*)",
+                    "items": [
+                        {
+                            "description": "Символ L1 [L]",
+                            "pos": {
+                                "x": 0.8509,
+                                "y": 1.3462
+                            },
+                            "uuid": "c998545b-65b9-5552-93e5-92fb718339f4"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "footprint_filter"
+                }
+            ]
+        },
+        {
+            "path": "/USB-C и входная защита/",
+            "uuid_path": "/3f04c61a-2f41-5f0e-9b74-360aa83eb2f7/30aab6dc-c6f8-5924-a3f9-3339065a76af",
+            "violations": []
+        },
+        {
+            "path": "/Зарядка, батарея и выбор режима USB/",
+            "uuid_path": "/3f04c61a-2f41-5f0e-9b74-360aa83eb2f7/efbe04f4-18a3-569c-b772-32421ef34eaa",
+            "violations": []
+        },
+        {
+            "path": "/Стабилизатор 3,3 В и измерение батареи/",
+            "uuid_path": "/3f04c61a-2f41-5f0e-9b74-360aa83eb2f7/9ff36879-f181-51a4-8d46-77cb2593df53",
+            "violations": []
+        },
+        {
+            "path": "/Измерение батареи и индикация зарядки/",
+            "uuid_path": "/3f04c61a-2f41-5f0e-9b74-360aa83eb2f7/25f417a6-493b-5c32-b455-a0929e23c086",
+            "violations": []
+        },
+        {
+            "path": "/ESP32-S3, кнопки и обслуживание/",
+            "uuid_path": "/3f04c61a-2f41-5f0e-9b74-360aa83eb2f7/29b28d76-ae70-5cf6-95e8-d1909e984c0e",
+            "violations": []
+        },
+        {
+            "path": "/Два канала I2S и сменные микрофоны/",
+            "uuid_path": "/3f04c61a-2f41-5f0e-9b74-360aa83eb2f7/9d6baf7e-61bf-596b-984b-cd80b1fa78c4",
+            "violations": []
+        },
+        {
+            "path": "/Питание microSD и изоляция SPI/",
+            "uuid_path": "/3f04c61a-2f41-5f0e-9b74-360aa83eb2f7/bae463bb-e0c5-5f4e-8055-5492b65789d5",
+            "violations": []
+        }
+    ],
+    "source": "lecture-recorder-v0.1.kicad_sch"
+}

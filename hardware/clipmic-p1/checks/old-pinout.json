@@ -1,0 +1,20 @@
+{
+  "kicad_version": "10.0.6",
+  "revision": "0.1.1",
+  "components": 104,
+  "nets": 103,
+  "erc_errors": 0,
+  "erc_warnings": 1,
+  "checks_disabled": false,
+  "warning_reason": "L1: не выбран дроссель и его посадочное место",
+  "all_exported_connections_match": true,
+  "pinout_csv_matches": true,
+  "pad_number_sets_checked": 100,
+  "unassigned_footprints": [
+    "U3",
+    "L1",
+    "MIC1",
+    "MIC2"
+  ],
+  "production_ready": false
+}
