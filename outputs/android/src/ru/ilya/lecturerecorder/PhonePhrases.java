@@ -1,10 +1,13 @@
 package ru.ilya.lecturerecorder;
 
+import java.util.regex.Pattern;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 final class PhonePhrases {
+    private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}]");
     private final JSONArray segments = new JSONArray();
     private final StringBuilder text = new StringBuilder();
     private double start, end, confidence;
@@ -38,8 +41,10 @@ final class PhonePhrases {
 
     private void flush() throws JSONException {
         if (count == 0) return;
-        segments.put(new JSONObject().put("start", start).put("end", end).put("text", text.toString())
-                .put("needs_review", uncertain || confidence / count < .78));
+        if (WORD.matcher(text).find()) {
+            segments.put(new JSONObject().put("start", start).put("end", end).put("text", text.toString())
+                    .put("needs_review", uncertain || confidence / count < .78));
+        }
         count = 0;
         text.setLength(0);
         confidence = 0;

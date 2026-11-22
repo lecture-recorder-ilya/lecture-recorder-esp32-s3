@@ -224,7 +224,13 @@ final class AudioTranscriptPage extends LinearLayout {
                 PhoneAnalysisService.request(activity, selected, Store.recordingTitle(activity, selected), true);
             }
         });
+        transcribe.setBackground(StudioStyle.control(activity, StudioStyle.ACTIVE, 12));
+        transcribe.setTextColor(ACCENT);
         host.addView(transcribe, layout);
+    }
+
+    void openRecording(String name) {
+        if (LectureNotes.valid(name)) select(name, 0, false);
     }
 
     private void addTranscriptStatus(LinearLayout host) {
@@ -260,7 +266,6 @@ final class AudioTranscriptPage extends LinearLayout {
         reviewFilter.setButtonTintList(ColorStateList.valueOf(ACCENT));
         reviewFilter.setMinHeight(dp(48));
         reviewFilter.setVisibility(View.GONE);
-        reviewFilter.setOnCheckedChangeListener((filter, checked) -> updateVisibleTranscript());
         box.addView(reviewFilter, spaced(-1, -2, 4));
 
         ListView lines = new ListView(activity);
@@ -270,6 +275,10 @@ final class AudioTranscriptPage extends LinearLayout {
         lines.setDividerHeight(dp(1));
         if (landscape) lines.setScrollbarFadingEnabled(false);
         box.addView(lines, new LinearLayout.LayoutParams(-1, 0, 1));
+        reviewFilter.setOnCheckedChangeListener((filter, checked) -> {
+            updateVisibleTranscript();
+            if (filter.isShown()) StudioStyle.enter(lines, false);
+        });
     }
 
     private View addDropdownDismiss(FrameLayout host) {

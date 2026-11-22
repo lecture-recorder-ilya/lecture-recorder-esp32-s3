@@ -74,6 +74,7 @@ def refine_words(primary,secondary,character=()):
  proposal must have strong acoustic evidence and identical neighbours; a short
  prefix also needs the completed word independently repeated in this excerpt.
  """
+ from context_review import protected
  output=[dict(w) for w in primary];changes=[]
  def near(words,word):
   candidates=[(i,w) for i,w in enumerate(words) if abs(w['start']-word['start'])<=.32]
@@ -93,6 +94,10 @@ def refine_words(primary,secondary,character=()):
   if proposal is None and char_clear and original['confidence']<.8:
    j,other=near(character,original)
    if other and other['confidence']>=.9 and other['confidence']-original['confidence']>=.15 and lexical(other['text'])!=key and anchored(i,j,character):proposal=other;source='character-acoustic-pass'
+  if proposal and (protected(original['text']) or protected(proposal['text'])):
+   output[i]['needs_review']=True
+   output[i]['review_reason']='protected_word_mismatch'
+   continue
   if proposal:
    # Retain punctuation from the original; never insert an unaligned phrase.
    value=re.sub(r'[\W_]+$','',proposal['text']);suffix=re.search(r'[\W_]+$',original['text'])

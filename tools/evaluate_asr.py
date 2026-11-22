@@ -93,6 +93,28 @@ def indexed_rows(rows, label):
     return index
 
 
+def summarize_scores(rows):
+    words = sum(row['reference_words'] for row in rows)
+    errors = sum(row['word_errors'] for row in rows if row['reference_words'])
+    summary = dict(clips=len(rows), reference_words=words, word_errors=errors,
+                   wer=errors/words if words else None,
+                   hallucinated_words=sum(row['hallucinated_words'] for row in rows),
+                   noise_cases=sum(not row['reference_words'] for row in rows),
+                   failed_noise_cases=sum(row['hallucinated_words'] > 0 for row in rows))
+    for metric in ('critical_phrases', 'numeric_tokens', 'negations'):
+        summary[metric] = {kind: sum(row[metric][kind] for row in rows) for kind in ('missed', 'extra')}
+    return summary
+
+
+def summarize_subsets(rows):
+    groups = {}
+    for row in rows:
+        subset = row.get('subset')
+        if isinstance(subset, str) and subset:
+            groups.setdefault(subset, []).append(row)
+    return {subset: summarize_scores(group) for subset, group in groups.items()}
+
+
 def compare_transcripts(manifest, paths):
     cases = indexed_rows(json.loads(manifest.read_text()), 'Эталон')
     for name, case in cases.items():
@@ -112,16 +134,9 @@ def compare_transcripts(manifest, paths):
                 raise ValueError(f'{label}, {name}: SHA-256 WAV не совпадает с эталоном.')
             if not isinstance(result.get('text'), str):
                 raise ValueError(f'{label}, {name}: ожидается текст расшифровки.')
-            rows.append(dict(id=name, **score(case['reference'], result['text'], case.get('critical_phrases', []))))
-        words = sum(row['reference_words'] for row in rows)
-        errors = sum(row['word_errors'] for row in rows if row['reference_words'])
-        summary = dict(reference_words=words, word_errors=errors, wer=errors/words if words else None,
-                       hallucinated_words=sum(row['hallucinated_words'] for row in rows),
-                       noise_cases=sum(not row['reference_words'] for row in rows),
-                       failed_noise_cases=sum(row['hallucinated_words'] > 0 for row in rows))
-        for metric in ('critical_phrases', 'numeric_tokens', 'negations'):
-            summary[metric] = {kind: sum(row[metric][kind] for row in rows) for kind in ('missed', 'extra')}
-        systems[label] = dict(summary=summary, cases=rows)
+            rows.append(dict(id=name, subset=case.get('subset'),
+                             **score(case['reference'], result['text'], case.get('critical_phrases', []))))
+        systems[label] = dict(summary=summarize_scores(rows), subsets=summarize_subsets(rows), cases=rows)
     return dict(audio_sha256=hashes, systems=systems)
 
 
@@ -155,7 +170,7 @@ def evaluate(manifest, source_root):
                 elif text:
                     rows.append(dict(start=offset/16000, end=min(len(audio), offset+320000)/16000, text=text))
             text = ' '.join(row['text'] for row in rows)
-            result = dict(id=case['id'], audio_sha256=audio_sha256(path),
+            result = dict(id=case['id'], subset=case.get('subset'), audio_sha256=audio_sha256(path),
                           duration=len(audio)/16000, elapsed_seconds=round(time.monotonic()-started, 3),
                           reference=case['reference'], text=text, segments=rows,
                           **score(case['reference'], text, case.get('critical_phrases', [])))
@@ -167,7 +182,8 @@ def evaluate(manifest, source_root):
     return dict(engine=ENGINE, source='synthetic' if all(case.get('synthetic') is True for case in cases) else 'provided',
                 normalization='Нижний регистр, ё→е, без пунктуации; цифры и слова не приравниваются.',
                 word_errors=sum(case['word_errors'] for case in results), reference_words=count,
-                wer=sum(case['word_errors'] for case in results)/count if count else None, cases=results)
+                wer=sum(case['word_errors'] for case in results)/count if count else None,
+                subsets=summarize_subsets(results), cases=results)
 
 
 def main():

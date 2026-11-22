@@ -37,3 +37,11 @@
 .organized .session-pending { margin: 0 0 10px; }
 .session-sr { clip-path: inset(50%); position: absolute; height: 1px; width: 1px; overflow: hidden; white-space: nowrap; }
 @media (max-width: 470px) { .session-dialog { padding: 19px; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  #selection-confirm:not([hidden]), #selection-manual-label:not([hidden]),
+  #selection-choices:not([hidden]) {
+    animation: session-in 180ms var(--motion-ease) both;
+  }
+  .session-choice { transition: background-color 150ms ease, border-color 150ms ease; }
+}

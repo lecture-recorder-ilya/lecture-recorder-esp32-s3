@@ -45,9 +45,9 @@ class EvaluationTests(unittest.TestCase):
      audio.writeframes(signal)
    manifest = directory / 'manifest.json'
    manifest.write_text(json.dumps([
-       dict(id='speech', audio=speech.name, reference='не больше пяти',
+       dict(id='speech', audio=speech.name, subset='clean', reference='не больше пяти',
             critical_phrases=['не больше']),
-       dict(id='noise', audio=noise.name, reference=''),
+       dict(id='noise', audio=noise.name, subset='control', reference=''),
    ]))
    clean = [
        dict(id='speech', audio_sha256=audio_sha256(speech), text='не больше пяти'),
@@ -64,6 +64,11 @@ class EvaluationTests(unittest.TestCase):
    self.assertAlmostEqual(summary['wer'], 1 / 3)
    self.assertEqual(summary['hallucinated_words'], 2)
    self.assertEqual(summary['failed_noise_cases'], 1)
+   subsets = reports['Другой движок']['subsets']
+   self.assertEqual(subsets['clean']['clips'], 1)
+   self.assertAlmostEqual(subsets['clean']['wer'], 1 / 3)
+   self.assertEqual(subsets['control']['hallucinated_words'], 2)
+   self.assertIsNone(subsets['control']['wer'])
    other[1]['audio_sha256'] = audio_sha256(speech)
    second.write_text(json.dumps(other))
    with self.assertRaisesRegex(ValueError, 'SHA-256'):

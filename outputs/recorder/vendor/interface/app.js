@@ -53,8 +53,11 @@
  const meter=document.querySelector('#level'),meterLabel=meter.nextElementSibling;
  meterLabel.id='capture-level-title';
  meter.setAttribute('aria-labelledby',meterLabel.id);
- const levels=create('div','capture-level');
- levels.append(meterLabel,meter);
+ const levels=create('div','capture-level'),meterTrack=create('div','capture-meter-track');
+ meterTrack.setAttribute('aria-hidden','true');
+ meterTrack.append(create('span','capture-meter-fill'));
+ meter.classList.add('capture-meter-native');
+ levels.append(meterLabel,meterTrack,meter);
  const inputs=create('div','capture-inputs');
  const sourceStatus=create('p','muted');
  sourceStatus.id='phone-sync-status';
@@ -69,7 +72,8 @@
   details.querySelector('summary').focus({preventScroll:true});
   details.scrollIntoView({block:'nearest'});
  };
- inputs.append(transportLabel,document.querySelector('#usbstatus'),wifiSettings,sourceStatus);
+ const usbStatus=document.querySelector('#usbstatus');
+ inputs.append(transportLabel,usbStatus,wifiSettings,sourceStatus);
  const recovery=create('p','hero-help');
  recovery.hidden=true;
  originalRow.remove();
@@ -82,10 +86,15 @@
   primary.hidden=running;stop.hidden=!running;
   if((running&&focus===primary)||(!running&&focus===stop)) (running?stop:primary).focus({preventScroll:true});
   recording.classList.toggle('is-recording',Boolean(s.recording));
-  wifiSettings.hidden=transport.value!=='wifi';
+  const wifi=transport.value==='wifi';
+  usbStatus.hidden=wifi;
+  wifiSettings.hidden=!wifi||running;
   sourceStatus.hidden=!sourceStatus.textContent;
-  recovery.hidden=!s.reconnecting;
-  recovery.textContent=s.reconnecting?'Запись продолжится в том же файле. Пропущенный звук заменяется тишиной.':'';
+  meterTrack.style.setProperty('--signal-scale',String(Math.min(1,Math.max(0,meter.value/100))));
+  const hint=s.reconnecting?'Запись продолжится в том же файле. Пропущенный звук заменяется тишиной.'
+   :!running&&!wifi&&!s.usb_present?'Подключи микрофон по USB или выбери Wi‑Fi.':'';
+  recovery.hidden=!hint;
+  if(recovery.textContent!==hint)recovery.textContent=hint;
  };
  livePanel.classList.remove('card');livePanel.classList.add('monitor-card');
  const utilities=create('div','record-utilities');

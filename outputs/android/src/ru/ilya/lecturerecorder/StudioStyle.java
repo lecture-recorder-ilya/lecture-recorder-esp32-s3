@@ -11,6 +11,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.view.View;
 import android.view.animation.PathInterpolator;
 import android.widget.TextView;
@@ -62,6 +63,7 @@ final class StudioStyle {
     static void settle(View view) {
         view.animate().cancel();
         view.setAlpha(1f);
+        view.setTranslationX(0);
         view.setTranslationY(0);
         view.setScaleX(1f);
         view.setScaleY(1f);
@@ -88,6 +90,42 @@ final class StudioStyle {
 
     static Drawable control(Context context, int color, int radius) {
         return new RippleDrawable(ColorStateList.valueOf(0x28ffffff), surface(context, color, radius), null);
+    }
+
+    static void enterPage(View view, int direction) {
+        settle(view);
+        if (!ValueAnimator.areAnimatorsEnabled()) return;
+        view.setAlpha(.78f);
+        view.setTranslationX(direction * dp(view.getContext(), 10));
+        view.animate().alpha(1f).translationX(0).setDuration(220).setInterpolator(MOTION).start();
+    }
+
+    static void moveSelection(View view, float destination, boolean animate) {
+        view.animate().cancel();
+        if (animate && ValueAnimator.areAnimatorsEnabled()) {
+            view.animate().translationX(destination).setDuration(240).setInterpolator(MOTION).start();
+        } else {
+            view.setTranslationX(destination);
+        }
+    }
+
+    static Drawable lessonOption(Context context) {
+        GradientDrawable selected = surface(context, ACTIVE, 12);
+        selected.setStroke(dp(context, 1), ACCENT);
+        GradientDrawable normal = surface(context, CONTROL, 12);
+        normal.setStroke(dp(context, 1), LINE);
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{android.R.attr.state_checked}, selected);
+        states.addState(new int[0], normal);
+        return new RippleDrawable(ColorStateList.valueOf(0x24ffffff), states, null);
+    }
+
+    static void recordIcon(TextView button, boolean recording) {
+        Drawable icon = new TabIcon(recording ? 4 : 3, INK);
+        int size = dp(button.getContext(), 15);
+        icon.setBounds(0, 0, size, size);
+        button.setCompoundDrawablesRelative(icon, null, null, null);
+        button.setCompoundDrawablePadding(dp(button.getContext(), 10));
     }
 
     static void tabIcon(TextView tab, int index, int color) {
@@ -130,7 +168,7 @@ final class StudioStyle {
                     float x = 3 + 3 * i;
                     canvas.drawLine(x, 9 - heights[i], x, 9 + heights[i], paint);
                 }
-            } else {
+            } else if (index == 2) {
                 for (int i = 0; i < 3; i++) {
                     float y = 4 + 5 * i;
                     float knob = i == 1 ? 11 : 6;
@@ -138,6 +176,10 @@ final class StudioStyle {
                     canvas.drawLine(knob + 2, y, 16, y, paint);
                     canvas.drawCircle(knob, y, 1.8f, paint);
                 }
+            } else if (index == 3) {
+                canvas.drawCircle(9, 9, 6.5f, paint);
+            } else {
+                canvas.drawRoundRect(3, 3, 15, 15, 2.5f, 2.5f, paint);
             }
             canvas.restore();
         }

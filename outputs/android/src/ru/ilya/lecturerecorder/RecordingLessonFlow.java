@@ -19,10 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 final class RecordingLessonFlow {
     private final Activity activity;
     private final SharedPreferences profile;
+    private final Consumer<String> onSaved;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private AlertDialog dialog;
     private String checkedGroup = "";
@@ -30,8 +32,9 @@ final class RecordingLessonFlow {
     private boolean pendingChecked;
     private String lastRecording = "";
 
-    RecordingLessonFlow(Activity activity) {
+    RecordingLessonFlow(Activity activity, Consumer<String> onSaved) {
         this.activity = activity;
+        this.onSaved = onSaved;
         profile = MireaSchedule.profile(activity);
     }
 
@@ -159,6 +162,8 @@ final class RecordingLessonFlow {
         options.setOnCheckedChangeListener((layout, id) -> {
             manual.setVisibility(id == own.getId() ? View.VISIBLE : View.GONE);
             if (id == own.getId()) StudioStyle.enter(manual, false);
+            View selected = layout.findViewById(id);
+            if (selected != null) StudioStyle.changeAction(selected);
         });
 
         AlertDialog choice = new AlertDialog.Builder(activity)
@@ -187,6 +192,7 @@ final class RecordingLessonFlow {
                 Store.finishLesson(activity, name, lesson);
                 pendingChecked = false;
                 choice.dismiss();
+                onSaved.accept(name);
                 boolean analyze = android.os.Process.is64Bit() && !PhoneAnalysisService.busy() && PhoneModels.ready(activity);
                 Toast.makeText(activity, analyze ? "Запись сохранена · начинаю расшифровку" : "Запись сохранена", Toast.LENGTH_SHORT).show();
                 if (analyze) PhoneAnalysisService.request(activity, name, Store.recordingTitle(activity, name));
@@ -246,7 +252,11 @@ final class RecordingLessonFlow {
         option.setId(View.generateViewId());
         option.setText(title);
         option.setMinHeight(dp(48));
-        option.setPadding(dp(4), dp(5), dp(5), dp(5));
+        option.setPadding(dp(12), dp(10), dp(12), dp(10));
+        RadioGroup.LayoutParams size = new RadioGroup.LayoutParams(-1, -2);
+        size.bottomMargin = dp(6);
+        option.setLayoutParams(size);
+        option.setBackground(StudioStyle.lessonOption(activity));
         option.setTextColor(StudioStyle.TEXT);
         option.setButtonTintList(ColorStateList.valueOf(recommended ? StudioStyle.GOOD : StudioStyle.ACCENT));
         if (recommended) option.setTypeface(Typeface.DEFAULT_BOLD);

@@ -7,7 +7,7 @@
   if(!Number.isFinite(Number(seconds))||Number(seconds)<0)return;
   bindAudio(card);
   const audio=card.audio;card.pendingSeek=Number(seconds);
-  if(card.audioTools?.contains(audio))card.audioTools.open=true;
+  if(!card.readerRoot?.isConnected&&card.audioTools?.contains(audio))card.audioTools.open=true;
   if(audio.readyState){audio.currentTime=Math.min(card.pendingSeek,Number.isFinite(audio.duration)?audio.duration:card.pendingSeek);card.pendingSeek=null;}
   audio.play().then(()=>{if(card.readerNotice)card.readerNotice.textContent=''}).catch(()=>{if(card.readerNotice)card.readerNotice.textContent='Не удалось включить звук. Нажми воспроизведение в плеере или проверь аудиофайл.'});
  }
@@ -36,7 +36,38 @@
    b.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const keys=Object.keys(buttons),i=keys.indexOf(key);const next=e.key==='Home'?0:e.key==='End'?keys.length-1:(i+(e.key==='ArrowRight'?1:-1)+keys.length)%keys.length;show(keys[next]);buttons[keys[next]].focus()};
   }
   const badge=node('span',report.draft?'Текст появляется по мере обработки':'Разбор готов','reader-badge');
-  top.append(tabs,badge);root.append(top,notice,panel);parent.append(root);
+  const playback=node('div',undefined,'reader-playback');
+  if(card.playerDock?.isConnected&&card.audioTools){
+   card.audioTools.append(card.audio);
+   card.playerDock.remove();
+  }
+  const play=node('button','Слушать','secondary reader-play');
+  play.type='button';
+  const timecode=node('span','','reader-position');
+  const seekRange=node('input',undefined,'reader-seek');
+  seekRange.type='range';seekRange.min='0';seekRange.step='0.25';seekRange.value='0';
+  seekRange.setAttribute('aria-label','Позиция воспроизведения');
+  const updatePlayback=()=>{
+   const label=card.audio.paused?'Слушать':'Пауза';
+   if(play.textContent!==label)play.textContent=label;
+   const duration=card.audio.duration,available=Number.isFinite(duration)&&duration>0;
+   seekRange.disabled=!available;
+   if(available&&Number(seekRange.max)!==duration)seekRange.max=duration;
+   seekRange.value=card.audio.currentTime;
+   const position=clock(card.audio.currentTime);
+   const total=available?' / '+clock(duration):'';
+   const time=position+total;
+   if(timecode.textContent!==time){
+    timecode.textContent=time;
+    seekRange.setAttribute('aria-valuetext',time);
+   }
+  };
+  play.onclick=()=>{if(card.audio.paused)seek(card,card.audio.currentTime||0);else card.audio.pause()};
+  seekRange.oninput=()=>{if(!seekRange.disabled)card.audio.currentTime=Number(seekRange.value)};
+  for(const event of ['play','pause','ended','loadedmetadata','durationchange','timeupdate'])card.audio.addEventListener(event,updatePlayback,{signal});
+  updatePlayback();
+  playback.append(play,seekRange,timecode);
+  top.append(tabs,badge);root.append(top,playback,notice,panel);parent.append(root);
   card.readerRoot=root;card.workflowBadge=badge;
   const caption=node('p','Нажми на фразу, чтобы услышать её в записи.','reader-caption');
   const toolbar=node('div',undefined,'reader-toolbar');
@@ -49,31 +80,81 @@
   const footer=node('div',undefined,'reader-footer');
   const download=node('a','Скачать текст с таймкодами');download.href='/transcript-export/'+encodeURIComponent(name);download.download=name.replace(/\.wav$/,'.txt');footer.append(download);
   const itemNodes=new Map();
+  let reviewIndex=-1;
+  const reviewNavigation=node('div',undefined,'reader-review-navigation');
+  const reviewPosition=node('span','','reader-review-position');
+  reviewPosition.setAttribute('role','status');
+  const reviewPrevious=node('button','Предыдущая','secondary reader-step-prev');
+  const reviewNext=node('button','Следующая','secondary reader-step-next');
+  reviewPrevious.type=reviewNext.type='button';
+  reviewPrevious.onclick=()=>jumpReview(reviewIndex-1);
+  reviewNext.onclick=()=>jumpReview(reviewIndex+1);
+  reviewNavigation.append(reviewPosition,reviewPrevious,reviewNext);
   function counts(){buttons.review.textContent='Проверить'+(pending()?' · '+pending():'');}
+  function updateReviewNavigation(){
+   const count=itemNodes.size;
+   reviewPosition.textContent=count?(reviewIndex<0?count+' фрагм.':String(reviewIndex+1)+' из '+count):'';
+   reviewNavigation.hidden=!count;
+   reviewPrevious.disabled=reviewIndex<=0;
+   reviewNext.disabled=reviewIndex>=count-1;
+   if(state.tab==='review'){
+    let index=0;
+    for(const item of itemNodes.values())item.row.classList.toggle('is-review-target',index++===reviewIndex);
+   }
+  }
+  function jumpReview(index){
+   const item=Array.from(itemNodes.values())[index];
+   if(!item)return;
+   reviewIndex=index;
+   updateReviewNavigation();
+   item.line.focus({preventScroll:true});
+   item.row.scrollIntoView({block:'nearest',behavior:motion()});
+  }
   function renderRows(){
    const previous=timeline.scrollTop;timeline.replaceChildren();itemNodes.clear();
    const query=state.query.trim().toLocaleLowerCase('ru');
    const visible=rows.filter(r=>(state.tab!=='review'||r.needs_review&&!r.reviewed)&&(!query||r.text.toLocaleLowerCase('ru').includes(query)));
-   for(const segment of visible){
+   for(const [index,segment] of visible.entries()){
     const row=node('article',undefined,'segment transcript-row'+(segment.needs_review?' needs-review':'')+(segment.reviewed?' is-reviewed':''));
     row.dataset.start=segment.start;row.dataset.end=segment.end;row.dataset.segment=segment.id;
     const line=node('button',undefined,'transcript-line');line.type='button';const timed=Number.isFinite(segment.start);line.setAttribute('aria-label',(timed?clock(segment.start):'Без таймкода')+'. '+segment.text);if(!timed)line.disabled=true;
     const time=node('span',timed?clock(segment.start):'—','transcript-time');time.title=segment.timing==='audio_excerpt'?'Начало аудиофрагмента; время отдельных слов может отличаться':'Слушать с этого момента';
-    const copy=node('span',segment.text,'transcript-copy');line.append(time,copy);line.onclick=()=>{const selected=window.getSelection();if(selected?.toString()&&selected.containsNode(line,true))return;seek(card,segment.start)};row.append(line);
+    const copy=node('span',segment.text,'transcript-copy');line.append(time,copy);
+    line.onfocus=()=>{if(state.tab==='review'){reviewIndex=index;updateReviewNavigation()}};
+    line.onclick=()=>{
+     const selected=window.getSelection();
+     if(selected?.toString()&&selected.containsNode(line,true))return;
+     if(state.tab==='review'){reviewIndex=index;updateReviewNavigation()}
+     seek(card,segment.start);
+    };
+    row.append(line);
     if(segment.needs_review||segment.reviewed){
      const reviewBar=node('div',undefined,'transcript-review');
      const label=node('span',segment.reviewed?'Проверено по записи':'Проверь по записи','review-label');
      const reasons=(segment.quality?.reasons||[]).join(' · ');if(reasons&&!segment.reviewed){label.title=reasons;reviewBar.append(label,node('span',reasons,'review-reasons'))}else reviewBar.append(label);
-     const acknowledge=node('button',segment.reviewed?'Отменить проверку':'Проверено по записи','review-action');acknowledge.type='button';
-     acknowledge.onclick=async()=>{acknowledge.disabled=true;try{const value=await post('/transcript-review',{file:name,key:segment.review_key,reviewed:!segment.reviewed});segment.reviewed=value.reviewed;counts();renderRows();const next=timeline.querySelector('.review-action');next?.focus();notice.textContent=value.reviewed?'Проверка сохранена. Исходный текст не изменён.':'Отметка проверки снята.'}catch(e){notice.textContent=e.message;acknowledge.disabled=false}};
+     const acknowledge=node('button',segment.reviewed?'Отменить проверку':'Подтвердить по записи','review-action');acknowledge.type='button';
+     acknowledge.onclick=async()=>{
+      acknowledge.disabled=true;
+      try{
+       const value=await post('/transcript-review',{file:name,key:segment.review_key,reviewed:!segment.reviewed});
+       segment.reviewed=value.reviewed;
+       counts();renderRows();
+       if(state.tab==='review'&&itemNodes.size)jumpReview(Math.min(index,itemNodes.size-1));
+       else if(state.tab==='review')buttons.review.focus();
+       else itemNodes.get(segment.id)?.row.querySelector('.review-action')?.focus();
+       notice.textContent=value.reviewed?'Отметка сохранена.':'Отметка снята.';
+      }catch(e){notice.textContent=e.message;acknowledge.disabled=false}
+     };
      if(segment.review_key)reviewBar.append(acknowledge);row.append(reviewBar);
     }
     if(segment.original_text&&segment.original_text!==segment.text){const details=node('details',undefined,'transcript-original');details.append(node('summary','Исходное распознавание'),node('p',segment.original_text));row.append(details)}
     timeline.append(row);itemNodes.set(segment.id,{row,line,segment});
    }
    empty.hidden=visible.length>0;
-   empty.textContent=query?'Совпадений не найдено.':state.tab==='review'?'Все отмеченные места проверены. Это не гарантирует точность остальных фраз.':report.draft?'Распознавание началось. Первые фразы появятся здесь.':'Разборчивой речи не обнаружено. Можно прослушать исходную запись.';
+   empty.textContent=query?'Совпадений не найдено.':state.tab==='review'?'Фраз для проверки пока нет.':report.draft?'Распознавание началось. Первые фразы появятся здесь.':'Разборчивой речи не обнаружено. Можно прослушать исходную запись.';
    if(!visible.length)timeline.append(empty);
+   reviewIndex=Math.min(reviewIndex,visible.length-1);
+   updateReviewNavigation();
    timeline.scrollTop=previous;highlight();
   }
   let activeId=null;
@@ -91,7 +172,21 @@
    const summary=node('section',undefined,'reader-summary');
    if(report.draft){summary.append(node('h4','Готовим конспект'),node('p','Сначала распознаём запись целиком. Уже готовый текст доступен на вкладке «Текст».','muted'));return summary}
    if(report.overview)summary.append(node('h4','Главное за пару'),node('p',report.overview));
-   if(report.summary?.length){summary.append(node('h4','Ключевые мысли'));const list=node('ul');for(const point of report.summary)list.append(node('li',point));summary.append(list)}
+   if(report.summary?.length){
+    summary.append(node('h4','Ключевые мысли'));
+    const list=node('ul'),evidence=new Map((report.summary_evidence||[]).map(item=>[item.quote,item]));
+    for(const point of report.summary){
+     const item=node('li',point),source=evidence.get(point);
+     if(Number.isFinite(source?.start)){
+      const playQuote=node('button','Слушать · '+clock(source.start),'reader-chapter summary-listen');
+      playQuote.type='button';
+      playQuote.onclick=()=>seek(card,source.start);
+      item.append(playQuote);
+     }
+     list.append(item);
+    }
+    summary.append(list);
+   }
    if(!report.overview&&!report.summary?.length)summary.append(node('p','Недостаточно разборчивой речи для содержательного конспекта.','muted'));
    if(report.sections?.length){summary.append(node('h4','Темы по времени'));const chapters=node('div',undefined,'reader-chapters');for(const section of report.sections){const b=node('button',clock(section.start)+' · '+section.title,'reader-chapter');b.onclick=()=>{show('text');seek(card,section.start)};chapters.append(b)}summary.append(chapters)}
    if(report.homework?.length){summary.append(node('h4','Что задано'));for(const task of report.homework){const p=node('article');p.append(node('p',task.task));if(task.quote){const quote=node('blockquote',task.quote);p.append(quote)}const b=node('button','Проверить по записи · '+clock(task.start),'reader-chapter');b.onclick=()=>{show('text');seek(card,task.start)};p.append(b);summary.append(p)}}
@@ -105,12 +200,14 @@
    state.tab=tab;counts();
    for(const [key,b]of Object.entries(buttons)){b.setAttribute('aria-selected',key===tab?'true':'false');b.tabIndex=key===tab?0:-1}
    panel.setAttribute('aria-labelledby',buttons[tab].id);panel.replaceChildren();
+   panel.classList.remove('is-entering');
+   requestAnimationFrame(()=>panel.classList.add('is-entering'));
    if(tab==='summary')panel.append(summary());
-   else{caption.textContent=tab==='review'?'Прослушай выделенные фрагменты и отметь проверенные. Метки основаны на сигналах распознавания, а не на гарантированной вероятности ошибки.':'Нажми на фразу, чтобы услышать её в записи.';panel.append(caption,toolbar,timeline,footer);renderRows();timeline.scrollTop=state.scroll;
+   else{caption.textContent=tab==='review'?'Прослушай отмеченные фразы и подтверди те, что проверил.':'Нажми на фразу, чтобы услышать её в записи.';panel.append(caption,toolbar);if(tab==='review'){reviewIndex=-1;panel.append(reviewNavigation)}panel.append(timeline,footer);renderRows();timeline.scrollTop=state.scroll;
     if(report.quality?.unassessed)panel.append(node('p','Для '+report.quality.unassessed+' фрагм. оценка качества распознавания недоступна.','reader-caption'));
    }
   }
-  search.oninput=()=>{state.query=search.value;renderRows()};
+  search.oninput=()=>{state.query=search.value;reviewIndex=-1;renderRows()};
   show(state.tab);
  }
  function refreshCard(card,job){
@@ -120,8 +217,11 @@
  }
  function initImport(){
   const library=document.querySelector('#view-library');if(!library)return;
-  const form=node('form',undefined,'lecture-import card');form.id='lecture-import';
-  const headline=node('div',undefined,'import-heading');headline.append(node('h3','Загрузить запись пары'),node('p','Выбери аудио с телефона или диктофона. Распознавание и конспект готовятся на этом Mac.','muted'));form.append(headline);
+  const importPanel=node('details',undefined,'lecture-import-panel card');
+  importPanel.append(node('summary','Импорт аудио'));
+  const form=node('form',undefined,'lecture-import');form.id='lecture-import';
+  const headline=node('div',undefined,'import-heading');headline.append(node('p','Выбери аудиозапись. Расшифровка и конспект готовятся на этом Mac.','muted'));form.append(headline);
+  importPanel.append(form);
   const picker=node('input');picker.type='file';picker.id='lecture-audio-file';picker.accept='audio/*,.wav,.mp3,.m4a,.aac,.flac,.ogg,.opus,.webm,.mp4,.caf,.aif,.aiff';picker.className='import-file-input';
   const choose=node('button','Выбрать аудиозапись','import-choose');choose.type='button';choose.onclick=()=>picker.click();
   const drop=node('div',undefined,'import-drop');drop.tabIndex=0;drop.setAttribute('aria-label','Выбрать или перетащить аудиозапись');const filename=node('span','WAV, MP3, M4A и другие форматы · до 2 ГБ','import-filename');drop.append(choose,filename,picker);form.append(drop);
@@ -137,12 +237,12 @@
   const actions=node('div',undefined,'import-actions');const submit=node('button','Загрузить и подготовить конспект');submit.type='submit';submit.disabled=true;
   const cancel=node('button','Отменить загрузку','secondary');cancel.type='button';cancel.hidden=true;cancel.onclick=()=>upload?.abort();actions.append(submit,cancel);form.append(actions);
   const progress=node('progress');progress.max=100;progress.hidden=true;progress.setAttribute('aria-label','Загрузка записи');const message=node('p','','import-message');message.setAttribute('role','status');const jobs=node('div',undefined,'import-jobs');form.append(progress,message,jobs);
-  library.querySelector('.view-intro').after(form);
+  library.querySelector('.view-intro').after(importPanel);
   const shortcuts=document.querySelector('#view-record .record-shortcuts');
   if(shortcuts){
    const shortcut=node('button','Импорт аудио','secondary');
    shortcut.type='button';
-   shortcut.onclick=()=>{window.showLectureView?.('library');choose.focus({preventScroll:true});form.scrollIntoView({block:'start',behavior:motion()})};
+   shortcut.onclick=()=>{window.showLectureView?.('library');importPanel.open=true;choose.focus({preventScroll:true});importPanel.scrollIntoView({block:'start',behavior:motion()})};
    shortcuts.prepend(shortcut);
   }
   const open=name=>{window.showLectureView?.('library');window.revealCalendarFile?.(name);const card=typeof cards!=='undefined'?cards.get(name):null;if(card){card.details.open=true;card.li.closest('#files>li>details')?.setAttribute('open','');card.li.scrollIntoView({block:'start',behavior:motion()});update()}};

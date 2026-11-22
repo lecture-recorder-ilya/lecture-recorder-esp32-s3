@@ -68,6 +68,7 @@ public final class SummaryStateTest {
         File history = new File(new File(root, "phone-note-history"), NAME);
         if (args[1].equals("replace")) {
             checkEvidence();
+            checkPhrases();
             JSONArray oldSegments = segments(OLD_TEXT);
             oldSegments.getJSONObject(0).put("review_key", OLD_KEY);
             JSONObject oldReport = new JSONObject()
@@ -152,6 +153,18 @@ public final class SummaryStateTest {
             require(archive(history).equals(Store.read(mac)), "Finishing re-archived or altered the previous result");
             System.out.println("PASS: separate JVM resumed summary from disk and preserved the previous result");
         }
+    }
+
+    private static void checkPhrases() throws Exception {
+        PhonePhrases builder = new PhonePhrases();
+        builder.accept(new JSONArray()
+                .put(new JSONObject().put("word", "…").put("start", 0).put("end", .04))
+                .put(new JSONObject().put("word", "Нет.").put("start", 1).put("end", 1.35))
+                .put(new JSONObject().put("word", ".").put("start", 5).put("end", 5.04)));
+        JSONArray result = builder.finish();
+        require(result.length() == 1 && "Нет.".equals(result.getJSONObject(0).getString("text")),
+                "Punctuation-only noise must not create a transcript");
+        require(result.getJSONObject(0).getDouble("start") == 1, "Speech timestamp must be preserved");
     }
 
     private static void checkEvidence() throws Exception {
@@ -254,6 +267,7 @@ def main():
         subprocess.run(
             [java_bin / "javac", "-encoding", "UTF-8", "-cp", jar, "-d", root,
              SOURCE / "LectureNotes.java", SOURCE / "Store.java", SOURCE / "PhoneSummaryEvidence.java",
+             SOURCE / "PhonePhrases.java",
              *(root / name for name in sources)],
             check=True,
         )

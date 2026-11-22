@@ -24,6 +24,16 @@ class GuardTests(unittest.TestCase):
   ctc=[{'text':'Речь','start':0,'confidence':.95},{'text':'Вопрос?','start':8,'confidence':.95}]
   rnnt=[{'text':'Речь','start':0,'confidence':.99},{'text':'ещё','start':1,'confidence':.99}]
   self.assertIs(choose_candidate(ctc,rnnt),ctc)
+ def test_acoustic_refinement_flags_conflicting_numbers_and_negations(self):
+  from asr_guard import refine_words
+  for old,new in [('не','ни'),('пять','шесть'),('три','плюс'),('задачу','20')]:
+   primary=[dict(text=t,start=i,confidence=c) for i,(t,c) in enumerate([('слово',.99),(old,.68),('сказано',.99)])]
+   alternative=[dict(text=t,start=i,confidence=.99) for i,t in enumerate(['слово',new,'сказано'])]
+   result,changes,_=refine_words(primary,(),alternative)
+   self.assertEqual(result[1]['text'],old)
+   self.assertTrue(result[1]['needs_review'])
+   self.assertFalse(changes)
+   self.assertNotIn('needs_review',primary[1])
  def test_preparation_does_not_edit_input(self):
   import numpy as np
   x=np.full(16000,.03,dtype=np.float32);before=x.copy();y=prepare(x);self.assertTrue(np.array_equal(x,before));self.assertLess(np.std(y[4000:]),1e-5)
