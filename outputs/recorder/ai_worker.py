@@ -58,6 +58,18 @@ def selected_notes(notes, response, limit=12):
     return [notes[i] for i in indices] if indices else notes[:limit]
 
 
+CONDITION_START = re.compile(r'^(?:(?:если|когда),?|при условии,? что)\s+')
+CONSEQUENCE = re.compile(r'^то\s+(?!(?:есть|же|самое|что)(?:\s|$))')
+
+
+def open_condition(text):
+    text = normalized(text)
+    start = CONDITION_START.match(text)
+    return (bool(start) and not text.endswith('?')
+            and (text.endswith((',', ';', ':', '…', '...'))
+                 or not re.search(r'[,;:]\s*\S|\sто\s+', text[start.end():])))
+
+
 def summary_anchor(item, texts):
     anchor = highlight_anchor(item, texts)
     if not anchor:
@@ -74,7 +86,16 @@ def summary_anchor(item, texts):
         if last+1 == len(rows) or re.search(r'[.!?…][»"\)\]]*$', rows[last]['text']) or rows[last+1]['start']-rows[last]['end'] > 2:
             break
         last += 1
-    return dict(quote=' '.join(row['text'] for row in rows[first:last+1]),
+    selected = rows[first:last+1]
+    quote = ' '.join(row['text'] for row in selected)
+    if any(not -.25 <= right['start'] - left['end'] <= 2
+           for left, right in zip(selected, selected[1:])):
+        return None
+    if CONSEQUENCE.match(normalized(quote)) or open_condition(quote):
+        return None
+    if CONDITION_START.match(normalized(quote)) and any(row.get('needs_review') for row in selected):
+        return None
+    return dict(quote=quote,
                 start=rows[first]['start'], end=rows[last]['end'], segment_id=rows[first]['id'])
 
 
@@ -116,20 +137,28 @@ UNSET_DEADLINE = re.compile(
     r'\b(?:срок|дат[ау])\s+(?:(?:ещ[её]|пока)\s+)*(?:'
     r'не\s+(?:утвержд[её]н\w*|определ[её]н\w*|извест\w*|назнач\w*)|'
     r'(?:уточним|сообщу|назову)\s+(?:позже|потом))\b')
+TENTATIVE_WORD = r'(?:возможно|вероятно|ориентировочно|примерно|приблизительно|около|предварительно)'
 TENTATIVE_DEADLINE_PREFIX = re.compile(
-    r'\b(?:не|возможно|вероятно|ориентировочно)[,\s]+(?:(?:к|до|в|на)\s+)?$')
-TENTATIVE_DEADLINE = re.compile(r'\b(?:возможно|вероятно|ориентировочно)\b|^не\s+(?:к|до|в|на)\b')
+    r'\b(?:не|' + TENTATIVE_WORD + r')[,\s]+(?:(?:к|до|в|на)\s+)?$')
+TENTATIVE_DEADLINE_SUFFIX = re.compile(
+    r'^\s*,?\s*(?:(?:это\s+)?(?:пока\s+)?' + TENTATIVE_WORD + r'\b|не\s+(?:надо|нужно)\b)')
+TENTATIVE_DEADLINE = re.compile(r'\b' + TENTATIVE_WORD + r'\b|^не\s+(?:к|до|в|на)\b')
+REPLACED_DEADLINE = re.compile(
+    r'(\b(?:к|до)\s+[\w./:-]+(?:\s+\w+)?\s+)не\s+(?:надо|нужно)'
+    r'(?=\s*,\s*(?:а\s+)?(?:сдайте|сдать)\s+(?:к|до)\s+)')
 
 
 def grounded_deadline(value, quote):
+    quote = normalized(quote)
     if not isinstance(value, str) or not value.strip() or UNSET_DEADLINE.search(quote):
         return None
     phrase = normalized(value)
     if TENTATIVE_DEADLINE.search(phrase):
         return None
-    pattern = r'(?<!\w)' + re.escape(phrase) + r'(?!\w)'
+    pattern = r'(?<!\w)(?<!\d[.,:/-])' + re.escape(phrase) + r'(?!\w|[.,:/-]\d)'
     for match in re.finditer(pattern, quote):
-        if not TENTATIVE_DEADLINE_PREFIX.search(quote[:match.start()]):
+        if (not TENTATIVE_DEADLINE_PREFIX.search(quote[:match.start()])
+                and not TENTATIVE_DEADLINE_SUFFIX.search(quote[match.end():])):
             return value.strip()
     return None
 
@@ -200,7 +229,8 @@ def validate_part(part, segments):
             continue
         if not re.search(r'подготовьте|прочитайте|решите|выучите|изучите|сдайте|напишите|повторите|сделайте|выполните|нужно (?:решить|прочитать|подготовить|написать|сдать|выучить|сделать)', quote):
             continue
-        if re.search(r'\?|например|допустим|в качестве примера|не (?:нужно|надо|будет|реш|дел|сда)|задани[ея] нет', quote):
+        task_context = REPLACED_DEADLINE.sub(r'\1', quote)
+        if re.search(r'\?|например|допустим|в качестве примера|не (?:нужно|надо|будет|реш|дел|сда)|задани[ея] нет', task_context):
             continue
         result['homework'].append(dict(anchor, task=anchor['quote'],
                                        deadline=grounded_deadline(item.get('deadline'), quote)))
