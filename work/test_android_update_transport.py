@@ -54,7 +54,7 @@ public class JSONObject {private final Map<String,Object> fields=new HashMap<>()
 }''',
    'org/json/JSONArray.java':'''package org.json; public class JSONArray {public int length(){return 0;}public String toString(){return "[]";}}''',
    'ru/ilya/lecturerecorder/CaptureService.java':'''package ru.ilya.lecturerecorder; import android.content.*; class CaptureService {static boolean recording=false;static boolean paired(Context c){return !c.getSharedPreferences("settings",0).getString("sync_token","").isEmpty();}}''',
-   'ru/ilya/lecturerecorder/Store.java':'''package ru.ilya.lecturerecorder;import java.io.*;import android.content.Context;import org.json.*;class Store{static String hash(File f){return "";}static JSONArray list(Context c){return new JSONArray();}static File file(Context c,String n){return new File(n);}static void acknowledge(Context c,String n,String sha){}}''',
+   'ru/ilya/lecturerecorder/Store.java':'''package ru.ilya.lecturerecorder;import java.io.*;import android.content.Context;import org.json.*;class Store{static String hash(File f){return "";}static JSONArray list(Context c){return new JSONArray();}static File transferFile(Context c,String n){return new File(n);}static void acknowledge(Context c,String n,String sha){}}''',
    'ru/ilya/lecturerecorder/LectureNotes.java':'''package ru.ilya.lecturerecorder;import android.content.Context;import org.json.*;class LectureNotes{static JSONObject index(Context c){return new JSONObject();}static String save(Context c,byte[] b){return "";}}''',
    'ru/ilya/lecturerecorder/Harness.java':r'''package ru.ilya.lecturerecorder;
 import java.io.*;import java.util.*;import java.nio.charset.StandardCharsets;import java.nio.file.Files;

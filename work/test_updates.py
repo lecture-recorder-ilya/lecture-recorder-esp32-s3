@@ -148,8 +148,10 @@ class Notes(unittest.TestCase):
    with patch('phone_sync.request',side_effect=request):
     self.assertEqual(phone_notes.push('fixture','token',root),1);self.assertEqual(phone_notes.push('fixture','token',root),0)
     self.assertTrue(calls[0]['report']['draft']);self.assertNotIn('secret',calls[0]['report']);self.assertNotIn('private',calls[0]['report']['segments'][0])
-    final=p.with_name(p.name.replace('.live.json','.json'));final.write_text(json.dumps({'segments':[{'text':'готовый текст'}],'summary':['тема']}))
+    evidence=[{'quote':'готовый текст','segment_id':0,'start':0,'end':1}]
+    final=p.with_name(p.name.replace('.live.json','.json'));final.write_text(json.dumps({'segments':[{'text':'готовый текст','start':0,'end':1}],'summary':['готовый текст'],'summary_evidence':evidence}))
     self.assertEqual(phone_notes.push('fixture','token',root),1);self.assertFalse(calls[-1]['report']['draft'])
+    self.assertEqual(calls[-1]['report']['summary_evidence'],evidence)
  def test_newer_draft_cannot_replace_final(self):
   with tempfile.TemporaryDirectory() as d:
    root=Path(d);(root/'analysis').mkdir();stem='lecture-2026-10-12-12-00-00-123000'

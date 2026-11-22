@@ -127,6 +127,7 @@ public final class SummaryStateTest {
             report.put("summary", new JSONArray().put(NEW_TEXT)).put("homework", new JSONArray());
             System.out.println("PASS: replacement guards, pending transcript, lesson metadata, archive and Mac copy");
         } else {
+            checkEditedEvidence(context);
             JSONObject pending = read(target);
             JSONObject report = pending.getJSONObject("report");
             require(report.optBoolean("local_summary_pending") && !report.has("summary"), "Restart lost pending state");
@@ -153,6 +154,43 @@ public final class SummaryStateTest {
             require(archive(history).equals(Store.read(mac)), "Finishing re-archived or altered the previous result");
             System.out.println("PASS: separate JVM resumed summary from disk and preserved the previous result");
         }
+    }
+
+    private static void checkEditedEvidence(Context context) throws Exception {
+        String name = "lecture-2026-11-22-10-01-02.wav";
+        String before = "Первый закон описывает опыт.";
+        String after = "Второй закон описывает опыт.";
+        JSONObject segment = new JSONObject().put("id", 17).put("text", before).put("start", 0).put("end", 4);
+        JSONObject next = new JSONObject().put("text", "Следует вывод.").put("start", 4).put("end", 7);
+        JSONObject anchor = new JSONObject().put("quote", before + " Следует вывод.")
+                .put("segment_id", 17).put("start", 0).put("end", 7);
+        JSONObject assignment = new JSONObject().put("quote", before).put("task", before)
+                .put("segment_id", 0).put("start", 0).put("end", 4);
+        JSONObject raw = new JSONObject().put("report", new JSONObject()
+                .put("segments", new JSONArray().put(segment).put(next))
+                .put("summary", new JSONArray().put(anchor.getString("quote")).put("Отдельный вывод").put(before))
+                .put("summary_evidence", new JSONArray().put(anchor))
+                .put("homework", new JSONArray().put(assignment)));
+        TranscriptEdits.Line line = new TranscriptEdits.Line(segment, 0, true, new JSONObject());
+        TranscriptEdits.save(context, name, line, 0, "Второй");
+        JSONObject edits = TranscriptEdits.read(TranscriptEdits.file(context, name));
+        JSONObject view = new JSONObject(raw.toString());
+        TranscriptEdits.apply(view, edits, true);
+        JSONObject report = view.getJSONObject("report");
+        require(after.equals(report.getJSONArray("segments").getJSONObject(0).getString("text")), "Word edit lost");
+        require((after + " Следует вывод.").equals(report.getJSONArray("summary").getString(0)), "Stale summary after word edit");
+        require((after + " Следует вывод.").equals(report.getJSONArray("summary_evidence").getJSONObject(0).getString("quote")), "Stale evidence");
+        require("Отдельный вывод".equals(report.getJSONArray("summary").getString(1)) && after.equals(report.getJSONArray("summary").getString(2)), "Legacy exact quote");
+        require(after.equals(report.getJSONArray("homework").getJSONObject(0).getString("task")), "Stale task after edit");
+        require(7 == report.getJSONArray("summary_evidence").getJSONObject(0).getInt("end"), "Lost audio anchor");
+        require(LectureNotes.summary(view).contains(after) && !LectureNotes.summary(view).contains(before), "Stale export");
+        JSONObject mac = new JSONObject(raw.toString());
+        TranscriptEdits.apply(mac, edits, false);
+        require(mac.toString().equals(raw.toString()), "Phone edit changed independent Mac note");
+        TranscriptEdits.save(context, name, line, 0, "Первый");
+        JSONObject restored = new JSONObject(raw.toString());
+        TranscriptEdits.apply(restored, TranscriptEdits.read(TranscriptEdits.file(context, name)), true);
+        require(restored.toString().equals(raw.toString()), "Undo lost the original quote");
     }
 
     private static void checkPhrases() throws Exception {

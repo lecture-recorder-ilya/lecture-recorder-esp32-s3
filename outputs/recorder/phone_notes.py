@@ -32,7 +32,7 @@ def documents(root, errors=None):
                     raise ValueError('Некорректные строки расшифровки')
                 clean = {k: report[k] for k in ('subject', 'topic', 'teacher', 'overview')
                          if isinstance(report.get(k), str) and report[k].strip()}
-                clean.update({k: report[k] for k in ('summary', 'homework', 'formulas', 'warnings', 'sections')
+                clean.update({k: report[k] for k in ('summary', 'summary_evidence', 'homework', 'formulas', 'warnings', 'sections')
                               if isinstance(report.get(k), list)})
                 clean['segments'] = []
                 for row in rows:
