@@ -574,7 +574,7 @@ public class MainActivity extends Activity {
  @Override public void onResume(){super.onResume();resumed=true;audioPage.setActive(selectedPage==AUDIO_PAGE);timer.removeCallbacksAndMessages(null);if(!getSharedPreferences("settings",0).getString("sync_token","").isEmpty())startForegroundService(CaptureService.command(this,"SYNC"));refresh();}
  @Override public void onPause(){resumed=false;stopPresenceCheck();transport.close();audioPage.setActive(false);timer.removeCallbacksAndMessages(null);super.onPause();}
  private boolean handleBack(){
-  if(selectedPage==AUDIO_PAGE)return audioPage.closeDropdown()||audioPage.closeFolders();
+  if(selectedPage==AUDIO_PAGE)return audioPage.closeDropdown();
   return selectedPage==0&&transport.close();
  }
  @Override public void onBackPressed(){
