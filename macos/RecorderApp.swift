@@ -34,13 +34,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         NSApp.mainMenu = menu
         window = NSWindow(contentRect: NSRect(x:0, y:0, width:880, height:840), styleMask:[.titled,.closable,.miniaturizable,.resizable], backing:.buffered, defer:false)
         window.title = "Запись лекций"
+        window.appearance = NSAppearance(named: .darkAqua)
+        let background = NSColor(srgbRed: 16 / 255, green: 19 / 255, blue: 28 / 255, alpha: 1)
+        window.backgroundColor = background
         window.center(); window.delegate = self
         view = WKWebView(frame: window.contentView!.bounds)
+        view.underPageBackgroundColor = background
         view.uiDelegate = self
         view.navigationDelegate = self
         view.autoresizingMask = [.width,.height]
         window.contentView!.addSubview(view)
-        view.loadHTMLString("<html><meta charset='utf-8'><style>body{font:18px -apple-system;display:grid;place-content:center;height:90vh;color-scheme:light dark}p{opacity:.6;font-size:14px}</style><body>Запускаю библиотеку…<p>Записи и тексты загружаются с этого Mac.</p></body></html>", baseURL: nil)
+        view.loadHTMLString("""
+            <!doctype html><html lang="ru"><meta charset="utf-8">
+            <style>
+            html{color-scheme:dark;background:#10131c;color:#a9b3c9}
+            body{margin:0;min-height:100vh;display:grid;place-items:center;font:15px system-ui}
+            </style>
+            <body><p role="status">Открываю приложение…</p></body></html>
+            """, baseURL: nil)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps:true)
         probe(startIfMissing: true)
