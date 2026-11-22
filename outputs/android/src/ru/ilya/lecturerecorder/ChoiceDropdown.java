@@ -56,7 +56,7 @@ final class ChoiceDropdown {
         button.setMinHeight(dp(52));
         button.setMinimumHeight(dp(52));
         button.setPadding(dp(12), 0, dp(12), 0);
-        button.setSingleLine();
+        button.setMaxLines(2);
         button.setEllipsize(TextUtils.TruncateAt.END);
         button.setBackground(new RippleDrawable(ColorStateList.valueOf(0x28ffffff), surface(StudioStyle.CONTROL), null));
         button.setOnClickListener(view -> { if (!close()) open(); });
@@ -115,14 +115,16 @@ final class ChoiceDropdown {
         ViewGroup.LayoutParams layout = list.getLayoutParams();
         int limit = dp(240);
         if (heightLimit != null) limit = Math.min(limit, Math.max(dp(58), heightLimit.getAsInt()));
-        layout.height = Math.min(limit, dp(52) * entries.size() + dp(6) + dp(1) * (entries.size() - 1));
+        layout.height = Math.min(limit, rowHeight() * entries.size() + dp(6) + dp(1) * (entries.size() - 1));
         list.setLayoutParams(layout);
     }
 
     boolean close() {
         if (!isOpen()) return false;
         list.animate().cancel();
+        boolean returnFocus = list.hasFocus() && !button.isInTouchMode();
         list.setVisibility(View.GONE);
+        if (returnFocus) button.requestFocus();
         updateButton();
         if (expansion != null) expansion.accept(false);
         if (Build.VERSION.SDK_INT >= 33 && backCallback != null) {
@@ -139,9 +141,8 @@ final class ChoiceDropdown {
         refreshOptions();
         updateButton();
         if (expansion != null) expansion.accept(true);
-        list.setTranslationY(-dp(8));
-        list.setAlpha(0f);
-        list.animate().translationY(0f).alpha(1f).setDuration(160).start();
+        StudioStyle.enter(list, true);
+        if (!button.isInTouchMode()) list.requestFocus();
         if (Build.VERSION.SDK_INT >= 33) {
             android.window.OnBackInvokedDispatcher dispatcher = button.findOnBackInvokedDispatcher();
             if (dispatcher != null) {
@@ -169,6 +170,10 @@ final class ChoiceDropdown {
         drawable.setColor(color);
         drawable.setCornerRadius(dp(12));
         return drawable;
+    }
+
+    private int rowHeight() {
+        return dp(context.getResources().getConfiguration().fontScale > 1.25f ? 72 : 52);
     }
 
     private int dp(int value) {
@@ -220,9 +225,9 @@ final class ChoiceDropdown {
             super(context);
             setGravity(Gravity.CENTER_VERTICAL);
             setPadding(dp(14), 0, dp(12), 0);
-            setLayoutParams(new AbsListView.LayoutParams(-1, dp(52)));
+            setLayoutParams(new AbsListView.LayoutParams(-1, rowHeight()));
             title.setTextSize(15);
-            title.setSingleLine();
+            title.setMaxLines(2);
             title.setEllipsize(TextUtils.TruncateAt.END);
             addView(title, new LinearLayout.LayoutParams(0, -2, 1));
             detail.setTextSize(14);

@@ -119,3 +119,19 @@
     transition: background-color 170ms var(--motion-ease), border-color 170ms var(--motion-ease), color 170ms var(--motion-ease);
   }
 }
+
+.organized .library-recent { margin: 10px 0; }
+.library-recent h3 { margin: 0 0 6px; }
+.library-recent ul { margin: 0; }
+.library-recent li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.library-recent li span { flex: 1 1 180px; min-width: 0; overflow-wrap: anywhere; }
+.library-recent li:last-child { border: 0; padding-bottom: 0; }
+.organized .library-recent button { margin: 0; }
+.organized .library-recent button, .organized .reader-review-navigation button,
+.organized .lecture-reader .review-action, .organized .lecture-import button,
+.lecture-import-panel > summary { min-height: 44px; }
+.organized .transcript-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.import-filename { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 850px) {
+  #files > li > details > ul > li, .lecture-import-panel { scroll-margin-block-start: 78px; }
+}

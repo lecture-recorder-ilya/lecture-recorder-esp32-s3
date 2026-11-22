@@ -24,12 +24,15 @@ body{margin:0;background:#121212;color:#f4eee8;font:16px system-ui}main{max-widt
 <dialog id="recording-selection-dialog" class="session-dialog" aria-labelledby="selection-title">
  <h2 id="selection-title">К какой паре относится запись?</h2>
  <p id="selection-details" class="muted"></p>
+ <p id="selection-operation" class="muted" role="status"></p>
  <form id="selection-form">
   <p id="selection-note" class="muted" role="status">Загружаю расписание…</p>
+  <button type="button" id="selection-retry" class="secondary" hidden>Повторить загрузку расписания</button>
   <fieldset id="selection-choices" hidden><legend class="session-sr">Пары в этот день</legend></fieldset>
   <label id="selection-manual-label" for="selection-manual" hidden>Название пары<input id="selection-manual" maxlength="160" placeholder="Например, Математический анализ" autocomplete="off"></label>
-  <div class="session-actions session-edit"><button type="button" id="selection-name" class="secondary">Указать название</button><button type="button" id="selection-outside" class="secondary">Сохранить вне расписания</button></div>
-  <div class="session-actions"><button type="button" id="selection-delete" class="session-text-danger">Удалить запись</button><button type="submit" id="selection-save" disabled>Сохранить запись</button></div>
+  <div class="session-actions session-edit"><button type="button" id="selection-name" class="secondary">Указать название</button><button type="button" id="selection-outside" class="secondary">Без пары</button></div>
+  <div class="session-actions"><button type="button" id="selection-later" class="secondary">Позже</button><button type="submit" id="selection-save" disabled>Сохранить запись</button></div>
+  <button type="button" id="selection-delete" class="session-text-danger">Удалить запись</button>
  </form>
  <section id="selection-confirm" hidden>
   <p>Удалить эту запись? Восстановить её после удаления нельзя.</p>
@@ -46,6 +49,8 @@ const cards=new Map();
 function prettyLesson(label){return label.replace(/^\d{4}-\d{2}-\d{2}/,value=>new Intl.DateTimeFormat('ru',{day:'numeric',month:'long',year:'numeric'}).format(new Date(value+'T12:00:00')))}
 const lessonGroups=new Map();
 let inFlight=false;
+let stopping=false;
+let stopError='';
 let vocabularyFile=null;
 const vocabularyBox=document.createElement('div');vocabularyBox.innerHTML='<label for="asr-terms">Фамилии и термины этой записи</label><input id="asr-terms" maxlength="300" placeholder="Точные слова через запятую"><button id="save-asr-terms" type="button">Сохранить подсказки</button><span id="asr-terms-status" class="muted"></span>';
 $('#speech-model').parentElement.after(vocabularyBox);
@@ -53,14 +58,23 @@ $('#save-asr-terms').disabled=true;
 $('#save-asr-terms').onclick=async()=>{try{const file=vocabularyFile;if(!file)return;await post('/asr-vocabulary',{file,terms:$('#asr-terms').value});$('#asr-terms-status').textContent='Сохранено для этой записи'}catch(e){$('#asr-terms-status').textContent=e.message}};
 $('#speech-model').onchange=async()=>{try{await post('/ai-settings',{speech:$('#speech-model').value});await update()}catch(e){$('#error').textContent=e.message;await update()}};
 async function post(path,body){const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});const value=await r.json();if(!r.ok)throw Error(value.error||'Ошибка');return value}
-async function action(path){if(inFlight)return;inFlight=true;try{
+async function action(path){if(inFlight||stopping)return;inFlight=true;
+ if(path==='/stop'){
+  stopping=true;
+  stopError='';
+  $('#error').textContent='';
+  $('#status').textContent='Сохраняю аудио…';
+  $('#stop').focus();
+  $('#stop').setAttribute('aria-disabled','true');
+ }
+ try{
  const body={transport:$('#transport').value,ssid:$('#hotspot-ssid').value,password:path==='/setup-hotspot'?$('#hotspot-password').value:''};
  await post(path,body);$('#error').textContent='';
  if(path==='/check-wifi'){$('#wifi-result').textContent='Связь есть · микрофон готов';$('#wifi-result').className='good';$('#transport').value='wifi';localStorage.setItem('transport','wifi')}
  if(path==='/pair')$('#wifi-result').textContent='Подключи Mac к резервной сети ESP.';
  if(path==='/setup-hotspot'){$('#wifi-result').textContent='ESP подключилась к телефону. Подключи Mac к той же сети и проверь связь.';$('#hotspot-password').value=''}
  await update();
- }catch(e){$('#error').textContent=e.message;if(path==='/check-wifi'){$('#wifi-result').textContent='Нет связи. Проверь выбранную сеть и питание ESP.';$('#wifi-result').className='error'}}finally{inFlight=false}}
+ }catch(e){if(path==='/stop'){stopping=false;stopError='Не удалось завершить запись. Повтори попытку.';$('#stop').removeAttribute('aria-disabled');}$('#error').textContent=path==='/stop'?stopError:e.message;if(path==='/check-wifi'){$('#wifi-result').textContent='Нет связи. Проверь выбранную сеть и питание ESP.';$('#wifi-result').className='error'}}finally{inFlight=false}}
 for(const [id,path] of [['start','/start'],['stop','/stop'],['pair','/pair'],['check','/check-wifi'],['setup','/setup-hotspot'],['reserve-check','/check-wifi']])$('#'+id).onclick=()=>action(path);
 $('#transport').value=localStorage.getItem('transport')||'usb';$('#transport').onchange=e=>{localStorage.setItem('transport',e.target.value);update()};
 $('#auto-ai').onchange=async e=>{try{await post('/ai-settings',{auto:e.target.checked})}catch(error){$('#error').textContent=error.message}};
@@ -95,9 +109,10 @@ let updating=false;
 async function update(){if(updating)return;updating=true;try{
  const response=await fetch('/status',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Status unavailable');const s=await response.json();studyStatus=s;
  let phoneStatus=$('#phone-sync-status');if(!phoneStatus){phoneStatus=document.createElement('p');phoneStatus.id='phone-sync-status';phoneStatus.className='muted';$('#status').parentNode.append(phoneStatus)}phoneStatus.textContent=s.phone_sync?(s.phone_sync.connected?s.phone_sync.message:'Телефон не подключён'):'';
+ if(!s.recording&&!s.busy){stopping=false;stopError='';$('#stop').removeAttribute('aria-disabled');}
  const running=Boolean(s.recording||s.busy),source=$('#transport');
  const needsUsb=!s.usb_present&&source.value==='usb';
- const status=s.reconnecting?'Связь потеряна · переподключаю ESP…':s.busy?'Подключаю ESP…':s.recording?'Идёт запись':needsUsb?'Подключи микрофон':'Готово к записи';
+ const status=stopping?'Сохраняю аудио…':s.reconnecting?'Связь потеряна · переподключаю ESP…':s.busy?'Подключаю ESP…':s.recording?'Идёт запись':needsUsb?'Подключи микрофон':'Готово к записи';
  if($('#status').textContent!==status)$('#status').textContent=status;
  const sec=s.recording||s.busy?Math.floor(s.seconds||0):0;$('#timer').textContent=[Math.floor(sec/3600),Math.floor(sec/60)%60,sec%60].map(v=>String(v).padStart(2,'0')).join(':');
  $('#level').value=s.level>0?Math.max(0,100+20*Math.log10(s.level/32768)):0;
@@ -105,7 +120,7 @@ async function update(){if(updating)return;updating=true;try{
  $('#start').disabled=running||needsUsb;$('#stop').disabled=!running;source.disabled=running;if(running&&s.transport)source.value=s.transport;
  window.syncRecordingControls?.(s,focusedControl);window.syncRecordingPreview?.(s);window.updateRecordingSelection?.(s);
  for(const id of ['pair','setup','check','reserve-check'])$('#'+id).disabled=s.recording||s.busy||inFlight;
- if(s.error)$('#error').textContent=s.error;else $('#error').textContent=s.missing_seconds?'Пропущено '+s.missing_seconds+' с звука из-за потери связи.':'';
+ if(stopError||s.error)$('#error').textContent=stopError||s.error;else $('#error').textContent=s.missing_seconds?'Пропущено '+s.missing_seconds+' с звука из-за потери связи.':'';
  $('#usbstatus').textContent=s.usb_present?'USB подключён':'USB не подключён';
  $('#network').hidden=!s.wifi.ssid||s.wifi.mode!=='hotspot';$('#ssid').textContent=s.wifi.ssid;$('#password').textContent=s.wifi.password;
  $('#ap-password-row').hidden=!s.wifi.password;$('#reserve-network').hidden=!s.wifi.password;$('#reserve-ssid').textContent=s.wifi.ssid;$('#reserve-password').textContent=s.wifi.password;
@@ -142,6 +157,7 @@ async function update(){if(updating)return;updating=true;try{
  orderedGroups.forEach((group,i)=>{if($('#files').children[i]!==group.li)$('#files').insertBefore(group.li,$('#files').children[i]||null)});
  for(const [key,group] of lessonGroups)if(!group.list.children.length){group.li.remove();lessonGroups.delete(key)}
  window.refreshLectureCalendar?.(s);
+ window.LectureWorkflow?.refreshLibrary(s);
  }catch(e){$('#error').textContent='Нет связи с приложением записи.'}finally{updating=false}}
 $('#reload-app').onclick=async()=>{
  const button=$('#reload-app'),message=$('#reload-message');button.disabled=true;

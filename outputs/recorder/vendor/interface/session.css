@@ -63,3 +63,19 @@
   .session-choice { transition: background-color 150ms ease, border-color 150ms ease; }
   .session-saved:not([hidden]) { animation: session-in 180ms var(--motion-ease) both; }
 }
+
+#selection-operation:empty { display: none; }
+#selection-form #selection-delete { margin: 12px 0 0; }
+.organized .session-dialog button, .session-choice, .session-library button { min-height: 44px; }
+.session-choice { box-sizing: border-box; overflow-wrap: anywhere; }
+.session-choice:focus-within { outline: 2px solid var(--accent); outline-offset: -2px; }
+.session-library h3 { margin: 0 0 6px; }
+.session-library ul { margin: 0; }
+.session-library li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+.session-library li:last-child { border-bottom: 0; padding-bottom: 0; }
+.session-library li button { margin: 0; }
+.organized button[aria-disabled="true"] { opacity: .65; cursor: wait; }
+.organized .session-edit button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--active);
+}

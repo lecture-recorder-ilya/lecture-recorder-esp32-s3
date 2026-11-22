@@ -10,6 +10,11 @@
  const confirm=$('#selection-confirm');
  const saveSelection=$('#selection-save');
  const note=$('#selection-note');
+ const operation=$('#selection-operation');
+ const retry=$('#selection-retry');
+ const manualChoice=$('#selection-name');
+ const outsideChoice=$('#selection-outside');
+ const library=$('#view-library');
  const settings=$('#view-settings');
  const record=$('#view-record');
  const card=el('section',undefined,'card settings-card session-profile-card');
@@ -23,6 +28,11 @@
  const continueSelection=el('button','Выбрать пару для записи','secondary session-pending');
  continueSelection.type='button';
  continueSelection.hidden=true;
+ const pendingLibrary=el('section',undefined,'session-library card');
+ pendingLibrary.hidden=true;
+ const pendingList=el('ul');
+ pendingLibrary.append(el('h3','Пара ещё не выбрана'),pendingList);
+ library.querySelector('.view-intro').after(pendingLibrary);
  const savedRecording=el('section',undefined,'session-saved');
  savedRecording.hidden=true;
  const savedText=el('div',undefined,'session-saved-copy');
@@ -42,7 +52,18 @@
  let profile=null;
  let status=null;
  let active='';
- let ignored='';
+ let pendingStamp='';
+ let scheduleRequest;
+ let returnFocus;
+ const deferred=new Set();
+ try{for(const file of JSON.parse(localStorage.getItem('lecture-deferred')||'[]'))deferred.add(file);}catch{}
+ const keepDeferred=()=>{
+  try{localStorage.setItem('lecture-deferred',JSON.stringify([...deferred]));}catch{}
+ };
+ const defer=()=>{
+  deferred.add(active);
+  keepDeferred();
+ };
  let selected=null;
  let slots=[];
  let selecting=false;
@@ -90,6 +111,8 @@
 
  function updateSave(){
   saveSelection.disabled=selecting||(selected==='manual'?!manual.value.trim():selected===null);
+  manualChoice.setAttribute('aria-pressed',String(selected==='manual'));
+  outsideChoice.setAttribute('aria-pressed',String(selected==='outside'));
  }
  function showOptions(rows,suggested){
   slots=rows;
@@ -129,29 +152,76 @@
   slots=[];
   manual.value='';
   $('#selection-manual-label').hidden=true;
-  $('#selection-details').textContent='';
+  $('#selection-details').textContent='Аудио сохранено на этом Mac.';
   selectionForm.hidden=false;
   confirm.hidden=true;
   $('#selection-error').textContent='';
-  note.textContent=profile?.group?'Загружаю расписание…':'Проверяю доступное расписание…';
+  operation.textContent='';
   showOptions([],null);
   updateSave();
+  returnFocus=document.activeElement;
   selectionDialog.showModal();
-  fetch('/recording-selection?file='+encodeURIComponent(name),{cache:'no-store'}).then(async response=>{
+  loadSchedule();
+ }
+ async function loadSchedule(){
+  scheduleRequest?.abort();
+  const request=new AbortController(),name=active;
+  scheduleRequest=request;
+  note.textContent='Загружаю расписание… Можно указать название или сохранить без пары.';
+  retry.hidden=true;
+  try{
+   const response=await fetch('/recording-selection?file='+encodeURIComponent(name),{cache:'no-store',signal:request.signal});
    const value=await response.json();
    if(!response.ok)throw Error(value.error||'Расписание недоступно');
-   if(active!==name||!selectionDialog.open)return;
+   if(request.signal.aborted||active!==name||!selectionDialog.open)return;
    const date=new Date(value.date+'T12:00:00Z');
    const day=new Intl.DateTimeFormat('ru',{day:'numeric',month:'long',timeZone:'UTC'}).format(date);
-   $('#selection-details').textContent=day+' · начало в '+value.start+' · '+timeLabel(value.seconds);
-   if(selected===null)selected=value.suggested;
+   $('#selection-details').textContent='Аудио сохранено · '+day+' · '+value.start+' · '+timeLabel(value.seconds);
+   const previous=slots[selected];
+   if(previous){
+    const index=value.choices.findIndex(row=>row.date===previous.date&&row.start===previous.start&&row.subject===previous.subject&&row.type===previous.type);
+    selected=index<0?null:index;
+   }else if(selected===null)selected=value.suggested??'outside';
    showOptions(value.choices,value.suggested);
-   note.textContent=value.note||(value.choices.length?'Проверь предложение или выбери другую пару.':'В расписании на этот день нет занятий. Можно указать название вручную.');
+   retry.hidden=!value.note;
+   note.textContent=(previous&&selected===null?'Расписание обновилось. Выбери пару ещё раз.':'')||(value.note?value.note+' Можно указать название или сохранить без пары.':'')||(value.choices.length?'Проверь предложение или выбери другую пару.':'В расписании на этот день нет занятий. Можно указать название вручную.');
    updateSave();
-  }).catch(error=>{if(active===name&&selectionDialog.open)note.textContent=error.message});
+  }catch(error){
+   if(!request.signal.aborted&&active===name&&selectionDialog.open){
+    note.textContent='Расписание недоступно. Можно указать название или сохранить без пары.';
+    retry.hidden=false;
+    if(selected===null)selected='outside';
+    updateSave();
+   }
+  }
  }
- function updateSavedRecording(pending){
-  const visible=Boolean(lastSaved&&status?.files?.includes(lastSaved)&&!pending.length&&!status.recording&&!status.busy);
+ retry.onclick=loadSchedule;
+ function updatePendingLibrary(pending){
+  if(status&&deferred.size){
+   const resolved=[...deferred].filter(file=>!pending.includes(file)&&status?.file!==file);
+   if(resolved.length){for(const file of resolved)deferred.delete(file);keepDeferred();}
+  }
+  const stamp=pending.join('|');
+  if(stamp===pendingStamp)return;
+  pendingStamp=stamp;
+  pendingLibrary.hidden=!pending.length;
+  pendingList.replaceChildren(...pending.map(name=>{
+   const item=el('li');
+   const timestamp=name.match(/^lecture-(\d{4}-\d{2}-\d{2})-(\d{2})-(\d{2})/);
+   if(timestamp){
+    const date=new Intl.DateTimeFormat('ru',{day:'numeric',month:'long',timeZone:'UTC'}).format(new Date(timestamp[1]+'T12:00:00Z'));
+    item.append(el('span','Запись от '+date+' в '+timestamp[2]+':'+timestamp[3]));
+   }
+   const choose=el('button','Выбрать пару','secondary');
+   choose.type='button';
+   if(item.firstChild)choose.setAttribute('aria-label','Выбрать пару · '+item.firstChild.textContent);
+   choose.onclick=()=>openSelection(name);
+   item.append(choose);
+   return item;
+  }));
+ }
+ function updateSavedRecording(){
+  const visible=Boolean(lastSaved&&status?.files?.includes(lastSaved)&&!status.recording&&!status.busy);
   savedRecording.hidden=!visible;
   if(!visible)return;
   const lesson=status.lessons?.[lastSaved],job=status.ai?.jobs?.[lastSaved];
@@ -174,27 +244,39 @@
  }
  function reconcile(){
   const pending=status?.pending_lessons||[];
-  continueSelection.hidden=!pending.length;
-  updateSavedRecording(pending);
+  continueSelection.hidden=!pending.length||status?.recording||status?.busy;
+  updatePendingLibrary(pending);
+  for(const button of pendingList.querySelectorAll('button'))button.disabled=Boolean(status?.recording||status?.busy);
+  updateSavedRecording();
   if(profileDialog.open||selectionDialog.open||status?.recording||status?.busy)return;
   if(profile&&!profile.configured){openProfile();return;}
-  if(pending.length&&pending[0]!==ignored)openSelection(pending[0]);
+  const unassigned=pending.find(file=>!deferred.has(file));
+  if(unassigned)openSelection(unassigned);
  }
  window.updateRecordingSelection=value=>{status=value;reconcile()};
  openSaved.onclick=()=>window.LectureWorkflow?.openRecording(lastSaved);
  continueSelection.onclick=()=>{
-  ignored='';
-  reconcile();
+  const file=status?.pending_lessons?.[0];
+  if(file&&!selectionDialog.open)openSelection(file);
+ };
+ $('#selection-later').onclick=()=>{
+  defer();
+  selectionDialog.close();
  };
  selectionDialog.addEventListener('cancel',event=>{
   if(selecting){event.preventDefault();return;}
-  ignored=active;
+  if(!confirm.hidden){event.preventDefault();showConfirm(false);return;}
+  defer();
  });
  selectionDialog.addEventListener('close',()=>{
+  scheduleRequest?.abort();
   active='';
+  if(returnFocus?.closest('.session-library')&&returnFocus.isConnected)returnFocus.focus({preventScroll:true});
+  else if(!record.hidden&&!continueSelection.hidden)continueSelection.focus({preventScroll:true});
+  else if(returnFocus instanceof HTMLElement&&returnFocus.offsetWidth)returnFocus.focus({preventScroll:true});
   if(status)setTimeout(reconcile,0);
  });
- $('#selection-name').onclick=()=>{
+ manualChoice.onclick=()=>{
   selected='manual';
   for(const radio of choices.querySelectorAll('input'))radio.checked=false;
   $('#selection-manual-label').hidden=false;
@@ -210,6 +292,9 @@
   const file=active;
   selecting=true;
   $('#selection-error').textContent='';
+  operation.textContent=action==='save'?'Сохраняю выбранную пару…':'Удаляю запись…';
+  choices.disabled=true;
+  manual.disabled=true;
   for(const button of selectionDialog.querySelectorAll('button'))button.disabled=true;
   try{
    const result=await post('/recording-selection',{file,action,lesson});
@@ -219,13 +304,18 @@
     focusSaved=true;
     try{localStorage.setItem('lecture-last-saved',lastSaved);}catch{}
    }
-   ignored=file;
+   deferred.delete(file);
+   keepDeferred();
+   if(status)status={...status,pending_lessons:status.pending_lessons.filter(name=>name!==file)};
    selectionDialog.close();
    await update();
   }catch(error){
-   $('#selection-error').textContent=error.message;
+   $('#selection-error').textContent=error instanceof TypeError?'Нет связи с приложением записи. Проверь, что оно запущено, и повтори действие.':error.message;
   }finally{
    selecting=false;
+   operation.textContent='';
+   choices.disabled=false;
+   manual.disabled=false;
    for(const button of selectionDialog.querySelectorAll('button'))button.disabled=false;
    updateSave();
   }
@@ -233,8 +323,14 @@
  selectionForm.onsubmit=event=>{
   event.preventDefault();
   if(selected==='manual'&&manual.value.trim())decide('save',{subject:manual.value.trim()});
+  else if(selected==='outside')decide('save',null);
   else if(Number.isInteger(selected)&&slots[selected])decide('save',slots[selected]);
  };
- $('#selection-outside').onclick=()=>decide('save',null);
+ outsideChoice.onclick=()=>{
+  selected='outside';
+  for(const radio of choices.querySelectorAll('input'))radio.checked=false;
+  $('#selection-manual-label').hidden=true;
+  updateSave();
+ };
  $('#selection-discard').onclick=()=>decide('discard');
 })();

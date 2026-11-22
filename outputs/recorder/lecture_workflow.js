@@ -85,16 +85,26 @@
   const reviewPosition=node('span','','reader-review-position');
   reviewPosition.setAttribute('role','status');
   const reviewPrevious=node('button','Предыдущая','secondary reader-step-prev');
-  const reviewNext=node('button','Следующая','secondary reader-step-next');
+  const reviewNext=node('button','Следующий фрагмент','secondary reader-step-next');
+  const reviewInText=node('button','К фрагменту в тексте','secondary reader-step-text');
+  reviewInText.type='button';
+  reviewInText.onclick=()=>{
+   const item=Array.from(itemNodes.values())[reviewIndex];
+   show('text');
+   if(item)focusFragment(itemNodes.get(item.segment.id));
+   else buttons.text.focus();
+  };
   reviewPrevious.type=reviewNext.type='button';
   reviewPrevious.onclick=()=>jumpReview(reviewIndex-1);
   reviewNext.onclick=()=>jumpReview(reviewIndex+1);
-  reviewNavigation.append(reviewPosition,reviewPrevious,reviewNext);
+  reviewNavigation.append(reviewPosition,reviewPrevious,reviewNext,reviewInText);
   function counts(){buttons.review.textContent='Проверить'+(pending()?' · '+pending():'');}
   function updateReviewNavigation(){
    const count=itemNodes.size;
    reviewPosition.textContent=count?(reviewIndex<0?count+' фрагм.':String(reviewIndex+1)+' из '+count):'';
-   reviewNavigation.hidden=!count;
+   reviewPosition.hidden=!count;
+   reviewPrevious.hidden=reviewNext.hidden=!count;
+   reviewInText.textContent=reviewIndex<0?'Весь текст':'К фрагменту в тексте';
    reviewPrevious.disabled=reviewIndex<=0;
    reviewNext.disabled=reviewIndex>=count-1;
    if(state.tab==='review'){
@@ -107,7 +117,12 @@
    if(!item)return;
    reviewIndex=index;
    updateReviewNavigation();
-   item.line.focus({preventScroll:true});
+   focusFragment(item);
+  }
+  function focusFragment(item){
+   if(!item)return;
+   if(item.line.disabled){item.row.tabIndex=-1;item.row.focus({preventScroll:true});}
+   else item.line.focus({preventScroll:true});
    item.row.scrollIntoView({block:'nearest',behavior:motion()});
   }
   function renderRows(){
@@ -244,10 +259,10 @@
   importPanel.append(form);
   const picker=node('input');picker.type='file';picker.id='lecture-audio-file';picker.accept='audio/*,.wav,.mp3,.m4a,.aac,.flac,.ogg,.opus,.webm,.mp4,.caf,.aif,.aiff';picker.className='import-file-input';
   const choose=node('button','Выбрать аудиозапись','import-choose');choose.type='button';choose.onclick=()=>picker.click();
-  const drop=node('div',undefined,'import-drop');drop.tabIndex=0;drop.setAttribute('aria-label','Выбрать или перетащить аудиозапись');const filename=node('span','WAV, MP3, M4A и другие форматы · до 2 ГБ','import-filename');drop.append(choose,filename,picker);form.append(drop);
+  const drop=node('div',undefined,'import-drop');const filename=node('span','WAV, MP3, M4A и другие форматы · до 2 ГБ','import-filename');drop.append(choose,filename,picker);form.append(drop);
   let selected=null,upload=null;
   function select(file){selected=file||null;filename.textContent=selected?selected.name+' · '+(selected.size/1024/1024).toFixed(1)+' МБ':'WAV, MP3, M4A и другие форматы · до 2 ГБ';submit.disabled=!selected;message.textContent='';if(selected&&!title.value)title.value=selected.name.replace(/\.[^.]+$/,'')}
-  picker.onchange=()=>select(picker.files[0]);drop.onkeydown=e=>{if(e.target===drop&&(e.key==='Enter'||e.key===' ')){e.preventDefault();picker.click()}};
+  picker.onchange=()=>select(picker.files[0]);
   drop.ondragover=e=>{if(e.dataTransfer.types.includes('Files')){e.preventDefault();drop.classList.add('drag-over')}};drop.ondragleave=()=>drop.classList.remove('drag-over');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag-over');if(!upload)select(e.dataTransfer.files[0])};
   const fields=node('div',undefined,'import-fields');
   const input=(caption,type,id)=>{const label=node('label',caption),i=node('input');i.type=type;i.id=id;i.maxLength=160;label.append(i);fields.append(label);return i};
@@ -258,11 +273,49 @@
   const cancel=node('button','Отменить загрузку','secondary');cancel.type='button';cancel.hidden=true;cancel.onclick=()=>upload?.abort();actions.append(submit,cancel);form.append(actions);
   const progress=node('progress');progress.max=100;progress.hidden=true;progress.setAttribute('aria-label','Загрузка записи');const message=node('p','','import-message');message.setAttribute('role','status');const jobs=node('div',undefined,'import-jobs');form.append(progress,message,jobs);
   library.querySelector('.view-intro').after(importPanel);
+  const openImport=()=>{
+   window.showLectureView?.('library');
+   importPanel.open=true;
+   choose.focus({preventScroll:true});
+   importPanel.scrollIntoView({block:'start',behavior:motion()});
+  };
+  const recent=node('section',undefined,'card library-recent');
+  recent.hidden=true;
+  const recentList=node('ul');
+  recent.append(node('h3','Последние записи'),recentList);
+  importPanel.before(recent);
+  let recentStamp;
+  refreshLibrary=status=>{
+   const names=(status.files||[]).filter(name=>name!==status.file||!status.recording&&!status.busy).slice(0,3);
+   const entries=names.map(name=>[name,status.lessons?.[name]?.title||status.lessons?.[name]?.subject||status.lessons?.[name]?.label||name]);
+   const stamp=JSON.stringify(entries);
+   if(stamp===recentStamp)return;
+   recentStamp=stamp;
+   recent.hidden=false;
+   recentList.replaceChildren(...entries.map(([name,title])=>{
+    const item=node('li');
+    const label=node('span',title);
+    const open=node('button','Открыть','secondary');
+    open.type='button';
+    open.setAttribute('aria-label','Открыть запись · '+title);
+    open.onclick=()=>openRecording(name);
+    item.append(label,open);
+    return item;
+   }));
+   if(!entries.length){
+    const empty=node('li');
+    const importAudio=node('button','Импортировать аудио','secondary');
+    importAudio.type='button';
+    importAudio.onclick=openImport;
+    empty.append(node('span','Записей пока нет. Запиши пару или импортируй аудиофайл.'),importAudio);
+    recentList.append(empty);
+   }
+  };
   const shortcuts=document.querySelector('#view-record .record-shortcuts');
   if(shortcuts){
    const shortcut=node('button','Импорт аудио','secondary');
    shortcut.type='button';
-   shortcut.onclick=()=>{window.showLectureView?.('library');importPanel.open=true;choose.focus({preventScroll:true});importPanel.scrollIntoView({block:'start',behavior:motion()})};
+   shortcut.onclick=openImport;
    shortcuts.prepend(shortcut);
   }
   const pendingOpen=new Set();let stamp='',polling=false;
@@ -274,7 +327,7 @@
      if(job.status==='error'){const retry=node('button','Повторить','secondary');retry.type='button';retry.onclick=async()=>{retry.disabled=true;try{await post('/imports/retry',{id:job.id});stamp='';await poll()}catch(e){message.textContent=e.message}finally{retry.disabled=false}};row.append(retry)}
      if(job.status==='ready'){const b=node('button','Открыть пару','secondary');b.type='button';b.onclick=()=>openRecording(job.file);row.append(b)}jobs.append(row);
     }}
-    for(const job of value.jobs||[])if(job.status==='ready'&&pendingOpen.has(job.id)&&typeof cards!=='undefined'&&cards.has(job.file)){pendingOpen.delete(job.id);openRecording(job.file)}
+    for(const job of value.jobs||[])if(job.status==='ready'&&pendingOpen.has(job.id)&&typeof cards!=='undefined'&&cards.has(job.file)){pendingOpen.delete(job.id);if(!library.hidden&&importPanel.open)openRecording(job.file)}
    }catch{}finally{polling=false}
   }
   form.onsubmit=e=>{e.preventDefault();if(!selected||upload)return;if(selected.size===0||selected.size>2*1024**3){message.textContent='Выбери непустую запись размером до 2 ГБ.';return}
@@ -288,6 +341,7 @@
   };
   const loop=async()=>{if(!document.hidden)await poll();setTimeout(loop,2000)};loop();
  }
- window.LectureWorkflow={renderReader,refreshCard,seek,clock,openRecording};
+ let refreshLibrary=()=>{};
+ window.LectureWorkflow={renderReader,refreshCard,seek,clock,openRecording,refreshLibrary:status=>refreshLibrary(status)};
  initImport();
 })();

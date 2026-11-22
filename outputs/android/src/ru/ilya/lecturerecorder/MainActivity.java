@@ -41,6 +41,7 @@ public class MainActivity extends Activity {
  private boolean lastRecording;
  private boolean microphonePermissionDenied;
  private Button recordAction;
+ private boolean stoppingRecording;
  private Button recentRecording;
  private Button pendingLesson;
  private TextView recordState;
@@ -155,9 +156,9 @@ public class MainActivity extends Activity {
  @Override public void onCreate(Bundle saved){
   super.onCreate(saved);if(saved!=null){pendingPhoto=saved.getString("pending_photo");selectedPage=saved.getInt("page",0);if(selectedPage==3)selectedPage=AUDIO_PAGE;deviceExpanded=saved.getBoolean("device_expanded");deviceCharge=saved.getInt("device_charge",-1);}try{CaptureService.provision(this);if(!CaptureService.recording)Store.recover(this);}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
   getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(bg);getWindow().getDecorView().setSystemUiVisibility(0);
-  if(saved!=null)lastSavedRecording=saved.getString("last_saved_recording","");
+  lastSavedRecording=getPreferences(MODE_PRIVATE).getString("last_saved_recording","");
+  if(saved!=null)stoppingRecording=saved.getBoolean("stopping_recording");
   lessonFlow=new RecordingLessonFlow(this,this::showSavedRecording,()->{
-   showPage(0);
    refreshPendingLesson(CaptureService.recording);
   });
   LinearLayout root=column();root.setBackgroundColor(bg);setContentView(root);
@@ -184,9 +185,15 @@ public class MainActivity extends Activity {
   hero.addView(duration,new LinearLayout.LayoutParams(-1,dp(74)));
 
   recordAction=button("Начать запись",()->{
-   if(recordingActionShown!=CaptureService.recording)return;
-   if(recordingActionShown)startForegroundService(CaptureService.command(this,"STOP"));
-   else begin();
+   if(stoppingRecording||recordingActionShown!=CaptureService.recording)return;
+   if(!recordingActionShown){begin();return;}
+   try{
+    startForegroundService(CaptureService.command(this,"STOP"));
+    stoppingRecording=true;
+    showStoppingRecording();
+   }catch(RuntimeException error){
+    recordState.setText("Не удалось остановить запись. Повтори попытку.");
+   }
   },true);
   recordAction.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
   recordAction.setPadding(dp(16),dp(12),dp(16),dp(12));
@@ -355,9 +362,11 @@ public class MainActivity extends Activity {
  }
  @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grant){super.onRequestPermissionsResult(code,permissions,grant);if(code==EspPairing.BLUETOOTH_PERMISSION){if(devicePairing!=null)devicePairing.permissionResult(grant);return;}if(code==9){for(int result:grant)if(result!=0)return;if(grant.length>0)checkFirmware();return;}if(code==8){microphonePermissionDenied=grant.length>0&&grant[0]!=0;if(grant.length>0&&grant[0]==0)begin();else refreshConnection();return;}if(code==5&&grant.length>0){for(int g:grant)if(g!=0){startForegroundService(CaptureService.command(this,"SYNC"));return;}transfer();}if(code==3&&grant.length>0){for(int g:grant)if(g!=0)return;begin();}}
  @Override protected void onActivityResult(int code,int result,Intent data){super.onActivityResult(code,result,data);if(code==EspPairing.ENABLE_BLUETOOTH){if(devicePairing!=null)devicePairing.bluetoothEnableResult(result);return;}if(code==7&&result==RESULT_OK&&data!=null&&data.getData()!=null){android.net.Uri uri=data.getData();try{getContentResolver().takePersistableUriPermission(uri,data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}AudioImport.start(this,uri);return;}if(code==4&&result==RESULT_OK)begin();if(code==6&&result==RESULT_OK){final String id=pendingPhoto;pendingPhoto=null;new Thread(()->{try{BoardPhotos.markReady(this,id);BoardPhotos.finish(this,id);runOnUiThread(()->{Toast.makeText(this,"Фото сохранено · будет перенесено и разобрано на Mac",1).show();transfer();});}catch(Exception e){runOnUiThread(()->Toast.makeText(this,e.getMessage(),1).show());}},"Save board photo").start();}else if(code==6){BoardPhotos.cancel(this,pendingPhoto);pendingPhoto=null;}}
- @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putString("pending_photo",pendingPhoto);out.putInt("page",selectedPage);out.putBundle("audio_page",audioPage.snapshot());out.putBoolean("device_expanded",deviceExpanded);out.putInt("device_charge",deviceCharge);out.putFloat("device_rotation",deviceModel.rotation());out.putString("last_saved_recording",lastSavedRecording);}
+ @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putString("pending_photo",pendingPhoto);out.putInt("page",selectedPage);out.putBundle("audio_page",audioPage.snapshot());out.putBoolean("device_expanded",deviceExpanded);out.putInt("device_charge",deviceCharge);out.putFloat("device_rotation",deviceModel.rotation());out.putBoolean("stopping_recording",stoppingRecording);}
  private void showSavedRecording(String file){
   lastSavedRecording=file;
+  getPreferences(MODE_PRIVATE).edit().putString("last_saved_recording",file).apply();
+  if(!CaptureService.recording)recordState.setText("Запись сохранена");
   refreshSavedRecording(CaptureService.recording);
   refreshPendingLesson(CaptureService.recording);
  }
@@ -689,8 +698,15 @@ public class MainActivity extends Activity {
   if(presenceCheck!=null){presenceCheck.interrupt();presenceCheck=null;}
   nextPresenceCheck=0;
  }
+ private void showStoppingRecording(){
+  recordState.setText("Сохраняю аудио…");
+  recordAction.setText("Сохраняю…");
+  recordAction.setEnabled(false);
+ }
  private void refresh(){
   boolean active=CaptureService.recording;
+  if(!active)stoppingRecording=false;
+  else if("Сохраняю запись…".equals(CaptureService.status))stoppingRecording=true;
   if(selectedPage==0)refreshConnection();
   long seconds=active?CaptureService.samples/16000:0;duration.setText(String.format(Locale.US,"%02d:%02d:%02d",seconds/3600,seconds/60%60,seconds%60));
   boolean pairingAvailable=!active&&firmwareQuery==null&&devicePairing==null;
@@ -711,7 +727,9 @@ public class MainActivity extends Activity {
    }
   }
   refreshSavedRecording(active);
-  recordAction.setEnabled(active||firmwareQuery==null);
+  if(stoppingRecording){
+   if(recordAction.isEnabled())showStoppingRecording();
+  }else recordAction.setEnabled(active||firmwareQuery==null);
   transport.setEnabled(!active);
   meter.setRecording(active&&selectedPage==0);
   if(selectedPage==SETTINGS_PAGE)refreshSyncSettings(active);

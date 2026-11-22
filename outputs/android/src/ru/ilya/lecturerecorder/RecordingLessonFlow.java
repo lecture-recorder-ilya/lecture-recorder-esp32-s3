@@ -31,6 +31,7 @@ final class RecordingLessonFlow {
     private final Consumer<String> onSaved;
     private final Runnable onDeferred;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
+    private final ExecutorService saves = Executors.newSingleThreadExecutor();
     private AlertDialog dialog;
     private String checkedGroup = "";
     private boolean disposed;
@@ -170,12 +171,20 @@ final class RecordingLessonFlow {
         long seconds = Math.max(0, (Store.audio(activity, name).length() - 44) / 32000);
         String group = profile.getString("group", "");
         LinearLayout content = pane();
-        TextView status = text("Запись от " + Store.recordingTitle(name), 14, StudioStyle.MUTED);
+        TextView status = text("Аудио сохранено на телефоне · " + Store.recordingTitle(name), 14, StudioStyle.MUTED);
         content.addView(status);
         TextView hint = text(group.isEmpty() ? "Укажи предмет вручную или сохрани запись без пары." : "Загружаю расписание группы " + group + "…",
                 14, StudioStyle.MUTED);
         hint.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         content.addView(hint);
+        Button retry = new Button(activity);
+        retry.setText("Повторить загрузку расписания");
+        retry.setAllCaps(false);
+        retry.setMinimumHeight(dp(48));
+        retry.setTextColor(StudioStyle.ACCENT);
+        retry.setBackground(StudioStyle.control(activity, StudioStyle.CONTROL, 12));
+        retry.setVisibility(View.GONE);
+        content.addView(retry);
         RadioGroup options = new RadioGroup(activity);
         options.setPadding(0, dp(6), 0, dp(6));
         content.addView(options);
@@ -183,6 +192,16 @@ final class RecordingLessonFlow {
         EditText manual = edit("Название предмета");
         manual.setVisibility(View.GONE);
         content.addView(manual);
+        TextView saveStatus = text("", 14, StudioStyle.MUTED);
+        saveStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        saveStatus.setVisibility(View.GONE);
+        content.addView(saveStatus);
+        Button delete = new Button(activity, null, android.R.attr.borderlessButtonStyle);
+        delete.setText("Удалить запись");
+        delete.setAllCaps(false);
+        delete.setTextColor(StudioStyle.RECORDING);
+        delete.setMinimumHeight(dp(48));
+        content.addView(delete);
         RadioButton outside = option("Без пары", false);
         RadioButton own = option("Указать предмет вручную", false);
         options.addView(outside);
@@ -204,16 +223,19 @@ final class RecordingLessonFlow {
                 .setTitle("К какой паре отнести запись?")
                 .setView(scroll(content))
                 .setPositiveButton("Сохранить", null)
-                .setNegativeButton("Удалить запись", null)
-                .setNeutralButton("Позже", (dismissed, button) -> defer(name))
+                .setNegativeButton("Позже", (dismissed, button) -> defer(name))
                 .create();
         choice.setOnCancelListener(cancelled -> defer(name));
         show(choice, content, true);
-        Button later = choice.getButton(AlertDialog.BUTTON_NEUTRAL);
+        Button later = choice.getButton(AlertDialog.BUTTON_NEGATIVE);
+        Button save = choice.getButton(AlertDialog.BUTTON_POSITIVE);
+        boolean[] saving = {false};
+        boolean[] scheduleFailed = {false};
         later.setAllCaps(false);
         later.setTextColor(StudioStyle.MUTED);
         later.setContentDescription("Выбрать пару позже");
-        choice.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
+        save.setOnClickListener(view -> {
+            if (saving[0]) return;
             RadioButton selected = options.findViewById(options.getCheckedRadioButtonId());
             int index = (Integer) selected.getTag();
             String title = manual.getText().toString().trim();
@@ -229,18 +251,51 @@ final class RecordingLessonFlow {
                         .put("date", start.toLocalDate().toString())
                         .put("start", start.toLocalTime().withSecond(0).withNano(0).toString())
                         .put("end", "").put("type", "").put("group", group).put("source", "manual");
-                Store.finishLesson(activity, name, lesson);
-                resolve(name);
-                choice.dismiss();
-                onSaved.accept(name);
-                boolean analyze = android.os.Process.is64Bit() && !PhoneAnalysisService.busy() && PhoneModels.ready(activity);
-                Toast.makeText(activity, analyze ? "Запись сохранена · начинаю расшифровку" : "Запись сохранена", Toast.LENGTH_SHORT).show();
-                if (analyze) PhoneAnalysisService.request(activity, name, Store.recordingTitle(activity, name));
+                JSONObject selectedLesson = lesson;
+                saving[0] = true;
+                choice.setCancelable(false);
+                save.setEnabled(false);
+                later.setEnabled(false);
+                delete.setEnabled(false);
+                for (int i = 0; i < options.getChildCount(); i++) options.getChildAt(i).setEnabled(false);
+                manual.setEnabled(false);
+                retry.setEnabled(false);
+                saveStatus.setTextColor(StudioStyle.MUTED);
+                saveStatus.setText("Сохраняю выбранную пару…");
+                saveStatus.setVisibility(View.VISIBLE);
+                saves.execute(() -> {
+                    try {
+                        Store.finishLesson(activity, name, selectedLesson);
+                        activity.runOnUiThread(() -> {
+                            if (disposed) return;
+                            resolve(name);
+                            choice.dismiss();
+                            onSaved.accept(name);
+                            boolean analyze = android.os.Process.is64Bit() && !PhoneAnalysisService.busy()
+                                    && PhoneModels.ready(activity);
+                            if (analyze) PhoneAnalysisService.request(activity, name, Store.recordingTitle(activity, name));
+                        });
+                    } catch (Exception error) {
+                        activity.runOnUiThread(() -> {
+                            if (disposed || dialog != choice) return;
+                            saving[0] = false;
+                            choice.setCancelable(true);
+                            save.setEnabled(true);
+                            later.setEnabled(true);
+                            delete.setEnabled(true);
+                            for (int i = 0; i < options.getChildCount(); i++) options.getChildAt(i).setEnabled(true);
+                            manual.setEnabled(true);
+                            retry.setEnabled(scheduleFailed[0]);
+                            saveStatus.setTextColor(StudioStyle.RECORDING);
+                            saveStatus.setText("Не удалось сохранить выбор. Повтори попытку. " + error.getMessage());
+                        });
+                    }
+                });
             } catch (Exception error) {
                 Toast.makeText(activity, error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
-        choice.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> {
+        delete.setOnClickListener(view -> {
             AlertDialog confirmationDialog = new AlertDialog.Builder(activity).setTitle("Удалить эту запись?")
                 .setMessage("Аудио будет удалено с телефона.")
                 .setNegativeButton("Оставить", null)
@@ -257,34 +312,46 @@ final class RecordingLessonFlow {
         });
         if (group.isEmpty()) return;
 
-        worker.execute(() -> {
-            try {
-                String calendar = MireaSchedule.load(activity.getApplicationContext(), group);
-                List<MireaSchedule.Lesson> result = MireaSchedule.lessons(calendar, start.toLocalDate());
-                activity.runOnUiThread(() -> {
-                    if (disposed || dialog != choice || !choice.isShowing()) return;
-                    lessons.addAll(result);
-                    int recommended = MireaSchedule.suggestion(lessons, start, seconds);
-                    boolean unchanged = !userChose[0] && options.getCheckedRadioButtonId() == outside.getId();
-                    hint.setText(lessons.isEmpty() ? "В расписании на этот день занятий нет."
-                            : recommended >= 0 ? "Предложение по времени начала записи · Москва"
-                            : "Выбери занятие из расписания на день записи · Москва");
-                    for (int i = 0; i < lessons.size(); i++) {
-                        MireaSchedule.Lesson lesson = lessons.get(i);
-                        RadioButton button = option(lesson.subject + "\n" + lesson.detail() + (i == recommended ? " · предложено" : ""),
-                                i == recommended);
-                        button.setTag(i);
-                        options.addView(button, i);
-                        if (i == recommended && unchanged) options.check(button.getId());
-                    }
-                    if (!lessons.isEmpty()) StudioStyle.enter(options, false);
-                });
-            } catch (Exception error) {
-                activity.runOnUiThread(() -> {
-                    if (!disposed && dialog == choice) hint.setText("Расписание недоступно. Запись можно сохранить вручную.");
-                });
-            }
-        });
+        Runnable loadSchedule = () -> {
+            scheduleFailed[0] = false;
+            retry.setVisibility(View.GONE);
+            hint.setText("Загружаю расписание. Можно выбрать предмет вручную или сохранить без пары.");
+            worker.execute(() -> {
+                try {
+                    String calendar = MireaSchedule.load(activity.getApplicationContext(), group);
+                    List<MireaSchedule.Lesson> result = MireaSchedule.lessons(calendar, start.toLocalDate());
+                    activity.runOnUiThread(() -> {
+                        if (disposed || dialog != choice || !choice.isShowing()) return;
+                        lessons.addAll(result);
+                        int recommended = MireaSchedule.suggestion(lessons, start, seconds);
+                        boolean unchanged = !saving[0] && !userChose[0] && options.getCheckedRadioButtonId() == outside.getId();
+                        hint.setText(lessons.isEmpty() ? "В расписании на этот день занятий нет."
+                                : recommended >= 0 ? "Предложение по времени начала записи · Москва"
+                                : "Выбери занятие из расписания на день записи · Москва");
+                        for (int i = 0; i < lessons.size(); i++) {
+                            MireaSchedule.Lesson lesson = lessons.get(i);
+                            RadioButton button = option(lesson.subject + "\n" + lesson.detail() + (i == recommended ? " · предложено" : ""),
+                                    i == recommended);
+                            button.setTag(i);
+                            button.setEnabled(!saving[0]);
+                            options.addView(button, i);
+                            if (i == recommended && unchanged) options.check(button.getId());
+                        }
+                        if (!lessons.isEmpty()) StudioStyle.enter(options, false);
+                    });
+                } catch (Exception error) {
+                    activity.runOnUiThread(() -> {
+                        if (disposed || dialog != choice) return;
+                        scheduleFailed[0] = true;
+                        hint.setText("Расписание недоступно. Можно указать предмет или сохранить без пары.");
+                        retry.setEnabled(!saving[0]);
+                        retry.setVisibility(View.VISIBLE);
+                    });
+                }
+            });
+        };
+        retry.setOnClickListener(view -> loadSchedule.run());
+        loadSchedule.run();
     }
 
     private RadioButton option(String title, boolean recommended) {
@@ -322,6 +389,8 @@ final class RecordingLessonFlow {
         confirm.setBackground(StudioStyle.control(activity, destructive ? StudioStyle.RECORDING : StudioStyle.ACCENT, 12));
         Button cancel = value.getButton(AlertDialog.BUTTON_NEGATIVE);
         cancel.setAllCaps(false);
+        cancel.setMinimumHeight(dp(48));
+        confirm.setMinimumHeight(dp(48));
         cancel.setTextColor(destructive || !"Удалить запись".contentEquals(cancel.getText())
                 ? StudioStyle.MUTED : StudioStyle.RECORDING);
     }
@@ -365,5 +434,6 @@ final class RecordingLessonFlow {
         disposed = true;
         if (dialog != null) dialog.dismiss();
         worker.shutdownNow();
+        saves.shutdown();
     }
 }
