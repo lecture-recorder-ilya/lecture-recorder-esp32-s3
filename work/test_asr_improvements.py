@@ -118,6 +118,13 @@ class PhraseTests(unittest.TestCase):
   for words in ([word('Другое.',0)],[dict(text='Текст.',start=float('nan'),end=1)],[]):
    rows=phrase_rows('Текст.',self.recognition(words),0,0,8)
    self.assertEqual(rows[0]['text'],'Текст.');self.assertEqual(rows[0]['timing'],'audio_excerpt');self.assertNotIn('words',rows[0])
+ def test_removed_boilerplate_does_not_reset_remaining_word_time(self):
+  words=[word('Подписывайтесь',0),word('на',.4),word('канал.',.8),
+         word('Задача',4),word('семнадцать.',4.4)]
+  rows=phrase_rows('Задача семнадцать.',self.recognition(words),0,0,7)
+  self.assertEqual([row['text'] for row in rows],['Задача семнадцать.'])
+  self.assertEqual(rows[0]['start'],4)
+  self.assertEqual(rows[0]['timing'],'asr_words')
  def test_long_unpunctuated_text_is_readable_without_lost_words(self):
   words=[word('слово'+str(i),i*.4) for i in range(50)];text=' '.join(w['text'] for w in words)
   rows=phrase_rows(text,self.recognition(words),0,0,22)
@@ -149,6 +156,42 @@ class DecoderTests(unittest.TestCase):
   decoder=Decoder()
   with patch.object(decoder,'_load') as load:
    self.assertEqual(decoder.transcribe(np.zeros(16000),speech=[]),'');load.assert_not_called()
+ def test_repeated_phrase_does_not_hide_the_next_sentence(self):
+  decoder=Decoder()
+  model=SimpleNamespace(recognize=lambda *_args, **_kwargs: SimpleNamespace(
+   tokens=['Да',' да',' да',' да',' да.',' Задача',' семнадцать.'],
+   timestamps=[.4,.7,1.0,1.3,1.6,3.1,3.5],logprobs=[-.02]*7))
+  with patch('speech_gate.anchored_speech_ranges',side_effect=lambda _,core:core),patch.object(decoder,'_load',return_value=model):
+   text=decoder.transcribe(np.ones(5*16000,dtype=np.float32)*.018,speech=[(.3,4.2)])
+  rows=phrase_rows(text,decoder.last,0,0,5)
+  self.assertEqual([row['text'] for row in rows],['Задача семнадцать.'])
+  self.assertEqual(rows[0]['words'][-1]['word'],'семнадцать.')
+  self.assertLess(rows[0]['recognition']['unrecognized_audio'][0]['end'],rows[0]['start'])
+ def test_original_is_retried_only_after_both_clean_passes_miss(self):
+  samples=np.ones(3*16000,dtype=np.float32)*.03
+  for other in ('семнадцать','семь'):
+   with self.subTest(second_decoder=other):
+    decoder=Decoder()
+    calls=[]
+    def load(kind):
+     def recognize(audio,**_):
+      has_signal=bool(np.any(audio))
+      calls.append((kind,has_signal))
+      token='семнадцать' if kind=='ctc' else other
+      return SimpleNamespace(tokens=[token] if has_signal else [],
+                             timestamps=[.4] if has_signal else [],logprobs=[-.02] if has_signal else [])
+     return SimpleNamespace(recognize=recognize)
+    with patch('speech_gate.anchored_speech_ranges',side_effect=lambda _,core:core), \
+         patch('speech_audio.enhance_audio',side_effect=lambda audio,*_,**__:np.zeros_like(audio)), \
+         patch.object(decoder,'_load',side_effect=load):
+     result=decoder.transcribe(samples,speech=[(.3,2.0)])
+    self.assertEqual(calls,[('ctc',False),('rnnt',False),('ctc',True),('rnnt',True)])
+    if other=='семнадцать':
+     self.assertEqual(result,'семнадцать')
+     self.assertTrue(decoder.last['word_evidence'][0]['needs_review'])
+    else:
+     self.assertEqual(result,'')
+    self.assertTrue(np.all(samples==np.float32(.03)))
 
 class AnalysisTests(unittest.TestCase):
  def test_summary_prompt_excludes_word_arrays_without_losing_flags(self):

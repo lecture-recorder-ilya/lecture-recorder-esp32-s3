@@ -1,7 +1,7 @@
 import math
 import re
 from asr_guard import MIN_UNRECOGNIZED_VOICE, join_words, lexical
-from speech_quality import clean_asr_text, usable
+from speech_quality import clean_asr_text, repetition, usable
 
 SENTENCE_END = re.compile(r'[.!?…][»"\)\]]*$')
 CLAUSE_END = re.compile(r'[,;:—][»"\)\]]*$')
@@ -62,7 +62,7 @@ def _attach_unrecognized_audio(rows, gaps, offset, start, end):
 
 
 def phrase_rows(text, recognition, offset, start, end, first_id=0):
-    gaps = recognition.get('unrecognized_voice', [])
+    gaps = list(recognition.get('unrecognized_voice', []))
     if gaps:
         recognition = dict(recognition)
         recognition.pop('unrecognized_voice')
@@ -71,8 +71,10 @@ def phrase_rows(text, recognition, offset, start, end, first_id=0):
                                and all(type(word.get(key)) in (int, float) and math.isfinite(word[key])
                                        for key in ('start', 'end'))
                                and 0 <= word['start'] < word['end'] for word in words)
-    if (not valid or lexical(text) != ''.join(lexical(word['text']) for word in words)
-            or any(a['start'] > b['start'] for a, b in zip(words, words[1:]))):
+    aligned = valid and lexical(text) == ''.join(lexical(word['text']) for word in words)
+    if valid and not aligned:
+        aligned = lexical(text) == lexical(clean_asr_text(join_words(words)))
+    if not aligned or any(a['start'] > b['start'] for a, b in zip(words, words[1:])):
         row = dict(id=first_id, start=round(start, 3), end=round(end, 3), text=text,
                    timing='audio_excerpt', needs_review=bool(recognition.get('needs_review')),
                    recognition=dict(recognition, audio_offset=offset))
@@ -102,4 +104,6 @@ def phrase_rows(text, recognition, offset, start, end, first_id=0):
                    words=timed, timing='asr_words', needs_review=details['needs_review'], recognition=details)
         if usable(row):
             rows.append(row)
+        elif repetition(value):
+            gaps.append((left - offset, right - offset))
     return _attach_unrecognized_audio(rows, gaps, offset, start, end)
