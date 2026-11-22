@@ -183,7 +183,7 @@ final class AudioTranscriptPage extends LinearLayout {
             addTranscriptPanel(transcriptPanel);
             addSummaryPanel(panels);
             showSummary(state != null && state.getBoolean("show_summary"));
-        } else addRecordingDropdown(playbackHost);
+        } else addRecordingDropdown(playbackHost, details);
 
         if (state != null) {
             String name = state.getString("recording");
@@ -417,14 +417,13 @@ final class AudioTranscriptPage extends LinearLayout {
         return dismiss;
     }
 
-    private void addRecordingDropdown(FrameLayout body) {
+    private void addRecordingDropdown(FrameLayout body, LinearLayout details) {
         View audioDismiss = addDropdownDismiss(body);
         recordingDropdown.setHeightLimit(() -> body.getHeight() - dp(12));
         recordingDropdown.setExpansionListener(open -> {
             int accessibility = open ? View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
                     : View.IMPORTANT_FOR_ACCESSIBILITY_AUTO;
-            audioPanel.setImportantForAccessibility(accessibility);
-            transcriptPanel.setImportantForAccessibility(accessibility);
+            details.setImportantForAccessibility(accessibility);
             int scrim = selected == null ? 0 : 0x44000000;
             int visibility = open ? View.VISIBLE : View.GONE;
             audioDismiss.setBackgroundColor(scrim);
