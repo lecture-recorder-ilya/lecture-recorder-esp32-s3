@@ -5,11 +5,21 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 final class PhoneCtc {
     private static final int WIDTH = 5;
     private static final int LABELS = 5;
     private static final double EMPTY = Double.NEGATIVE_INFINITY;
+
+    private static final Pattern LETTER_END = Pattern.compile("(\\p{L})[.!?…]+");
+
+    static boolean weakOpeningLetter(String word, String firstToken, double logProbability, double duration) {
+        if (duration < 1 || logProbability >= Math.log(.45)) return false;
+        Matcher letter = LETTER_END.matcher(word);
+        return letter.matches() && letter.group(1).equals(firstToken.replace("▁", ""));
+    }
 
     static int[] alignment(float[][] logits, int steps, int blank) {
         List<Path> beam = new ArrayList<>();

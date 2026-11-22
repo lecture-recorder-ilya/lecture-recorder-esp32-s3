@@ -60,8 +60,8 @@ final class PhoneSpeechWindow {
         for (int i = 0; i < wave.length; i++) wave[i] = Math.max(-1f, Math.min(1f, wave[i] * gain));
     }
 
-    static boolean constant(float[] wave) {
-        for (int i = 1; i < wave.length; i++) if (wave[i] != wave[0]) return false;
+    static boolean constant(float[] wave, int length) {
+        for (int i = 1; i < length; i++) if (wave[i] != wave[0]) return false;
         return true;
     }
 

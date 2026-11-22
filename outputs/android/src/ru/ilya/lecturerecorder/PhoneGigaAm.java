@@ -22,6 +22,8 @@ import java.util.Map;
 
 final class PhoneGigaAm {
     private static final int RATE = PcmWave.SAMPLE_RATE;
+    private static final int ONSET_PAD = 10240;
+    private static final Pattern CONTENT = Pattern.compile("[\\p{L}\\p{N}]");
     private static final int CORE = 18 * RATE;
     private static final int EDGE = 2 * RATE;
     private static final int BLANK = 256;
@@ -65,7 +67,7 @@ final class PhoneGigaAm {
                         end = left + PhoneSpeechWindow.boundary(raw, (int) (end - left));
                     }
                     int length = (int) (Math.min(total, end + EDGE) - left);
-                    if (length >= 400 && !PhoneSpeechWindow.constant(raw)) {
+                    if (length >= 400 && !PhoneSpeechWindow.constant(raw, length)) {
                         raw = Arrays.copyOf(raw, length);
                         float level = PhoneSpeechWindow.level(raw);
                         float[] wave = raw.clone();
@@ -73,6 +75,15 @@ final class PhoneGigaAm {
                         double first = start / (double) RATE, last = end / (double) RATE;
                         double offset = left / (double) RATE;
                         JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);
+                        if (words.length() == 1 && words.getJSONObject(0).optBoolean("verify_onset")) {
+                            job.check();
+                            float[] shifted = new float[ONSET_PAD + wave.length];
+                            System.arraycopy(wave, 0, shifted, ONSET_PAD, wave.length);
+                            JSONArray check = recognize(environment, frontend, acoustic, shifted, tokens,
+                                    0, 0, shifted.length / (double) RATE, true);
+                            if (hasSpeechAfterPadding(check)) words.getJSONObject(0).put("needs_review", true);
+                            else words = new JSONArray();
+                        }
                         if (shouldRefine(level, words)) {
                             job.check();
                             float[] clean = PhoneSpeechWindow.clean(raw);
@@ -148,7 +159,25 @@ final class PhoneGigaAm {
             pieces++;
         }
         appendWord(result, word, wordStart, wordEnd, confidence, pieces, start, end);
+        if (steps > 0 && alignment != null && result.length() == 1) {
+            JSONObject only = result.getJSONObject(0);
+            int onset = alignment[0];
+            if (onset != BLANK && onset != 0 && only.getDouble("start") == left
+                    && PhoneCtc.weakOpeningLetter(only.getString("word"), tokens[onset], logits[0][onset],
+                                                  only.getDouble("end") - left)) {
+                only.put("verify_onset", true);
+            }
+        }
         return result;
+    }
+
+    private static boolean hasSpeechAfterPadding(JSONArray check) throws Exception {
+        double earliest = ONSET_PAD / (double) RATE - 3 * FRAME_SECONDS;
+        for (int i = 0; i < check.length(); i++) {
+            JSONObject word = check.getJSONObject(i);
+            if (word.getDouble("start") >= earliest && CONTENT.matcher(word.getString("word")).find()) return true;
+        }
+        return false;
     }
 
     private static void appendWord(JSONArray result, StringBuilder word, double wordStart, double wordEnd,
