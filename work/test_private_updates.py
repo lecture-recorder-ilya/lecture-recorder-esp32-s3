@@ -197,6 +197,29 @@ class AndroidChannels(unittest.TestCase):
             self.assertEqual(self.transfer({}), expected)
             self.assertEqual(self.transfer(dict(installed_package=PREVIEW)), [])
 
+    def test_each_channel_retries_immediately_after_transport_failure(self):
+        self.refresh(self.assets)
+        for package, payload in ((STABLE, self.stable), (PREVIEW, self.preview)):
+            for failed_at in ('status', 'upload'):
+                with self.subTest(package=package, failed_at=failed_at):
+                    endpoint = 'http://fixture'
+                    digest = hashlib.sha256(payload).hexdigest()
+                    def status():
+                        return io.BytesIO(json.dumps(dict(installed_package=package)).encode())
+                    gets = [ConnectionResetError(), status()] if failed_at == 'status' else [status(), status()]
+                    uploads = [ConnectionResetError(), {'sha256': digest}] if failed_at == 'upload' else [{'sha256': digest}]
+                    phone_updates.LAST.clear()
+                    with patch.object(phone_sync, 'request', side_effect=gets) as get, \
+                         patch.object(phone_sync, 'request_file', side_effect=uploads) as upload, \
+                         patch.object(phone_updates.time, 'monotonic', return_value=100):
+                        with self.assertRaises(ConnectionResetError):
+                            phone_updates.push(endpoint, 'fixture', self.work)
+                        phone_updates.push(endpoint, 'fixture', self.work)
+                        phone_updates.push(endpoint, 'fixture', self.work)
+                    self.assertEqual(get.call_count, 2)
+                    self.assertEqual(upload.call_count, len(uploads))
+                    self.assertEqual(upload.call_args.kwargs['expected_digest'], digest)
+
     def test_absent_channel_is_withdrawn_without_substitution(self):
         self.refresh(self.assets)
         self.refresh({ASSETS[STABLE]: self.stable})

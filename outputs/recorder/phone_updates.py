@@ -25,10 +25,14 @@ def cached_update(work, package):
 
 
 def push(base, token, work=WORK):
-    from phone_sync import request, request_file, state
     key = (base, token)
     if time.monotonic()-LAST.get(key, -300) < 60: return
+    check_phone(base, token, work)
     LAST[key] = time.monotonic()
+
+
+def check_phone(base, token, work):
+    from phone_sync import request, request_file, state
     if not any((cache_folder(work, package) / 'ready.json').is_file() for package in ASSETS):
         return
     try:
