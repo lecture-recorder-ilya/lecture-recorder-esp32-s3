@@ -47,7 +47,7 @@ final class PhoneGigaAm {
                                 RandomAccessFile input) throws Exception {
         long total = PcmWave.seekData(input) / 2;
         long data = input.getFilePointer();
-        int workers = total >= 90L * RATE && Runtime.getRuntime().availableProcessors() >= 4 ? 2 : 1;
+        int workers = total >= 90L * RATE && Runtime.getRuntime().availableProcessors() >= 6 ? 2 : 1;
         try {
             return transcribe(context, job, model, input, total, data, workers);
         } catch (OrtException error) {
@@ -63,7 +63,7 @@ final class PhoneGigaAm {
         String[] tokens = readTokens(context);
         OrtEnvironment environment = OrtEnvironment.getEnvironment();
         try (OrtSession.SessionOptions options = new OrtSession.SessionOptions()) {
-            options.setIntraOpNumThreads(workers == 1 ? 4 : 2);
+            options.setIntraOpNumThreads(4);
             options.setInterOpNumThreads(1);
             options.addConfigEntry("session.intra_op.allow_spinning", "0");
             try (OrtSession frontend = environment.createSession(readFrontend(context), options);
