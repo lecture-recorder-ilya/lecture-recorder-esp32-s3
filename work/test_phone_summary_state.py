@@ -80,6 +80,7 @@ public final class SummaryStateTest {
         File history = new File(new File(root, "phone-note-history"), NAME);
         if (args[1].equals("replace")) {
             checkEvidence();
+            checkLogicReview();
             checkRecordingNames(context);
             checkApprovedAcousticModel(context);
             checkPhrases();
@@ -168,6 +169,31 @@ public final class SummaryStateTest {
             require(archive(history).equals(Store.read(mac)), "Finishing re-archived or altered the previous result");
             System.out.println("PASS: separate JVM resumed summary from disk and preserved the previous result");
         }
+    }
+
+    private static void checkLogicReview() throws Exception {
+        JSONArray rows = new JSONArray();
+        String[] examples = {
+            "Функция возрастает на данном промежутке определения.",
+            "Функция не возрастает на данном промежутке определения.",
+            "В этом примере сопротивление проводника равно пяти омам.",
+            "В этом примере сопротивление проводника равно 5 омам.",
+            "В этом примере сопротивление проводника равно пять омам.",
+            "В этом примере сопротивление проводника равно 6 омам.",
+            "В другом примере сопротивление проводника равно 7 омам."
+        };
+        for (int i = 0; i < examples.length; i++)
+            rows.put(new JSONObject().put("start", i * 20).put("end", i * 20 + 5).put("text", examples[i]));
+        String before = rows.toString();
+        JSONArray review = PhoneLogicReview.evaluate(rows);
+        require(review.length() == 2, "Report only nearby mismatches of the same wording");
+        JSONObject negation = review.getJSONObject(0), number = review.getJSONObject(1);
+        require(negation.getInt("before") == 0 && negation.getInt("after") == 1 && negation.optBoolean("negation"),
+                "A changed negation must retain both transcript anchors");
+        require(number.getInt("before") == 4 && number.getInt("after") == 5 && number.optBoolean("numbers"),
+                "Equivalent written forms should not be flagged");
+        require(before.equals(rows.toString()), "Logical review must preserve the recognized text");
+        System.out.println("PASS: logical review detects mismatches and preserves words and timestamps");
     }
 
     private static void checkSummaryCheckpoint(Context context, boolean firstProcess) throws Exception {
@@ -432,7 +458,7 @@ def main():
             [java_bin / "javac", "-encoding", "UTF-8", "-cp", jar, "-d", root,
              SOURCE / "LectureNotes.java", SOURCE / "Store.java", SOURCE / "PhoneSummaryEvidence.java",
              SOURCE / "PhonePhrases.java", SOURCE / "TranscriptEdits.java", SOURCE / "PhoneModels.java",
-             SOURCE / "PhoneSummaryProgress.java",
+             SOURCE / "PhoneSummaryProgress.java", SOURCE / "PhoneLogicReview.java",
              *(root / name for name in sources)],
             check=True,
         )

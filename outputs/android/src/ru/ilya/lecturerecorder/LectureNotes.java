@@ -46,7 +46,8 @@ final class LectureNotes {
   for(int i=0;i<segments.length();i++)segments.getJSONObject(i).put("review_key",reviewPrefix+i);
   document.put("file",name);
   if(lesson.length()>0)document.put("lesson",lesson);
-  report.put("segments",segments).put("asr_engine",recognizer).put(SUMMARY_PENDING,true);
+  report.put("segments",segments).put("logic_review",PhoneLogicReview.evaluate(segments))
+   .put("asr_engine",recognizer).put(SUMMARY_PENDING,true);
   saveLocal(c,document,true);
   return document;
  }

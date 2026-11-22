@@ -78,6 +78,7 @@ final class TranscriptEdits {
             }
         }
         if (!changed) return;
+        report.remove("logic_review");
         JSONArray points = report.optJSONArray("summary");
         JSONArray sources = report.optJSONArray("summary_evidence");
         String overview = report.optString("overview");

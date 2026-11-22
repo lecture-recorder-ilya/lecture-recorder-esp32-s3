@@ -210,8 +210,43 @@ public class LectureReaderActivity extends Activity {
         TextView heading = heading(report.optString("topic", LectureNotes.title(document)), 24);
         body.addView(heading, spaced(-1, -2, 4));
         if ("summary".equals(tab)) renderSummary(report);
-        else renderTranscript(report, "review".equals(tab));
+        else {
+            boolean checking = "review".equals(tab);
+            if (checking) renderLogicReview(report);
+            renderTranscript(report, checking);
+        }
         scroll.post(() -> scroll.scrollTo(0, offset));
+    }
+
+    private void renderLogicReview(JSONObject report) {
+        JSONArray segments = report.optJSONArray("segments");
+        if (segments == null) return;
+        JSONArray review = report.optJSONArray("logic_review");
+        if (review == null) {
+            try { review = PhoneLogicReview.evaluate(segments); }
+            catch (org.json.JSONException invalid) { return; }
+        }
+        if (review.length() == 0) return;
+        body.addView(heading("Проверить по записи", 18), spaced(-1, -2, 10));
+        for (int i = 0; i < review.length(); i++) {
+            JSONObject finding = review.optJSONObject(i);
+            if (finding == null) continue;
+            JSONObject earlier = segments.optJSONObject(finding.optInt("before", -1));
+            JSONObject later = segments.optJSONObject(finding.optInt("after", -1));
+            if (earlier == null || later == null) continue;
+            LinearLayout group = card();
+            boolean numbers = finding.optBoolean("numbers"), negation = finding.optBoolean("negation");
+            String message = numbers && negation ? "В похожих фразах различаются числа и отрицание"
+                    : numbers ? "В похожих фразах различаются числа" : "В похожих фразах различается отрицание";
+            group.addView(text(message, 15, MUTED));
+            for (JSONObject row : new JSONObject[]{earlier, later}) {
+                int position = (int) (row.optDouble("start") * 1000);
+                group.addView(text(row.optString("text"), 16, TEXT), spaced(-1, -2, 8));
+                group.addView(button("Слушать с " + clock(position / 1000.0), () -> playAt(position)),
+                        spaced(-2, dp(48), 4));
+            }
+            body.addView(group, spaced(-1, -2, 8));
+        }
     }
 
     private void renderSummary(JSONObject report) {
