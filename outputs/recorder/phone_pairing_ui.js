@@ -27,6 +27,50 @@
  const error=el('p','','error');error.setAttribute('role','alert');
  box.append(heading,state,help,start,session,disconnect,disconnectConfirm,error);
  document.querySelector('#view-settings').querySelector('.view-intro').after(box);
+ const diagnostics=el('section',undefined,'card settings-card');diagnostics.id='phone-sync-diagnostics';
+ const last=el('dd'),queue=el('dd'),reason=el('p');reason.setAttribute('role','status');
+ const fields=el('dl');
+ fields.append(el('dt','Последняя попытка'),last,el('dt','Очередь передачи'),queue);
+ const retry=el('button','Повторить сейчас','secondary');retry.type='button';retry.disabled=true;
+ const feedback=el('p','','muted');feedback.setAttribute('role','status');feedback.hidden=true;
+ diagnostics.append(el('h2','Синхронизация с телефоном'),fields,reason,retry,feedback);
+ box.after(diagnostics);
+ let refreshing=false,retrying=false,attempt=0;
+ const plurals=new Intl.PluralRules('ru');
+ const dateFormat=new Intl.DateTimeFormat('ru-RU',{dateStyle:'short',timeStyle:'medium'});
+ function renderDiagnostics(d){
+  last.textContent=d.last_attempt?dateFormat.format(new Date(d.last_attempt*1000)):'Попыток ещё не было';
+  queue.textContent=d.pending==null?'Нет сведений с телефона':(d.connected?'':'При последней связи · ')+d.pending+' '+({one:'файл',few:'файла'}[plurals.select(d.pending)]||'файлов');
+  if(d.failed)queue.textContent+=' · ждут повтора: '+d.failed;
+  reason.textContent=d.reason;
+  retry.disabled=!d.can_retry||d.retry_requested||retrying;
+  feedback.textContent=d.retry_requested?'Повтор запрошен. Mac проверит соединение.':'';
+  feedback.hidden=!feedback.textContent;
+ }
+ async function refreshDiagnostics(){
+  if(refreshing||retrying||document.hidden)return;
+  refreshing=true;const previous=attempt;
+  try{
+   const r=await fetch('/phone-sync',{cache:'no-store',signal:AbortSignal.timeout(3000)});
+   if(!r.ok)throw Error();
+   const value=await r.json();
+   if(!retrying&&previous===attempt)renderDiagnostics(value);
+  }catch{if(!retrying&&previous===attempt)reason.textContent='Нет связи с приложением Mac.'}
+  finally{refreshing=false}
+ }
+ retry.onclick=async()=>{
+  if(retrying)return;
+  retrying=true;attempt++;retry.disabled=true;
+  try{
+   const next=await post('/phone-sync/retry');
+   retrying=false;renderDiagnostics(next);
+   if(next.retry_accepted&&!next.retry_requested){feedback.textContent='Mac начал повторную попытку.';feedback.hidden=false}
+   setTimeout(refreshDiagnostics,600);
+  }catch{
+   retrying=false;retry.disabled=false;
+   feedback.textContent='Не удалось запросить повтор. Попробуй ещё раз.';feedback.hidden=false;
+  }
+ };
  let value=null,busy=false,polling=false;
  function render(next){
   value=next;
@@ -57,7 +101,7 @@
  keep.onclick=()=>{disconnectConfirm.hidden=true;disconnect.hidden=false};
  forget.onclick=async()=>{await act('/phone-pairing/forget');disconnectConfirm.hidden=true};
  async function poll(){
-  if(polling)return;polling=true;
+  if(polling)return;polling=true;refreshDiagnostics();
   try{if(!busy&&!document.hidden){const response=await fetch('/phone-pairing',{cache:'no-store',signal:AbortSignal.timeout(3000)});if(response.ok)render(await response.json());else state.textContent='Подключение временно недоступно'}}catch{state.textContent='Нет связи с приложением Mac'}finally{polling=false;setTimeout(poll,value?.active?1000:5000)}
  }
  poll();

@@ -218,9 +218,15 @@ class Handler(BaseHTTPRequestHandler):
                     return self.reply({'error': 'Конспект ещё не готов.'}, 404)
                 report = annotate(report, study_store.notes(name).get('transcript_review', {}))
                 return self.reply(markdown(report).encode(), mime='text/markdown; charset=utf-8')
-            if route.path in ('/phone-pairing', '/phone_pairing_ui.js'):
+            if route.path in ('/phone-pairing', '/phone-sync', '/phone_pairing_ui.js'):
                 if self.headers.get('Host') not in (f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}'):
                     return self.reply({'error':'Запрос отклонён'},403)
+                if route.path == '/phone-sync':
+                    import phone_sync
+                    try:
+                        return self.reply(phone_sync.status())
+                    except OSError:
+                        return self.reply({'error':'Не удалось прочитать состояние обмена.'},503)
                 if route.path == '/phone-pairing':
                     return self.reply(self.server.pairing.public())
                 return self.reply((ROOT/'phone_pairing_ui.js').read_bytes(),mime='text/javascript; charset=utf-8')
@@ -455,6 +461,14 @@ class Handler(BaseHTTPRequestHandler):
                 self.reply({'ok':True})
                 threading.Thread(target=self.server.shutdown,daemon=True).start()
                 return
+            if self.path == '/phone-sync/retry':
+                if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
+                    return self.reply({'error':'Запрос отклонён'},403)
+                import phone_sync
+                try:
+                    return self.reply(phone_sync.request_retry(),202)
+                except OSError:
+                    return self.reply({'error':'Не удалось сохранить запрос на повтор.'},503)
             if self.path.startswith('/phone-pairing/'):
                 if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
                     return self.reply({'error':'Запрос отклонён'},403)

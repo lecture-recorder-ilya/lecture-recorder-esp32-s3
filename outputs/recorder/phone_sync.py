@@ -4,10 +4,12 @@ from pathlib import Path
 from urllib.request import Request,urlopen
 from urllib.error import URLError,HTTPError
 from http.client import IncompleteRead
+import phone_diagnostics as diagnostics
 
 ROOT=Path(__file__).resolve().parent;WORK=ROOT.parent.parent/'work'
 CONFIG=WORK/'phone-sync.json';LEDGER=WORK/'phone-imports.json';FILES=ROOT/'recordings'
-state={'connected':False,'message':'Ожидаю телефон · Wi-Fi / Bluetooth / USB','imported':0};started=False
+state={'connected':False,'imported':0};started=False
+worker_owns_status=False
 STATUS=WORK/'phone-sync-status.json'
 MAX_NOTE_BYTES = 2 * 1024 * 1024
 WAKE=threading.Event()
@@ -16,9 +18,38 @@ REVOKED=set()
 def revoke(token):
  REVOKED.add(token)
  WAKE.set()
+def saved_status():
+ try:
+  value=json.loads(STATUS.read_text())
+  return value if isinstance(value,dict) else {}
+ except (OSError,ValueError):return {}
+
+def profile_stamp():
+ try:return CONFIG.stat().st_mtime_ns
+ except FileNotFoundError:return None
+
 def status():
- try:return json.loads(STATUS.read_text())
- except (OSError,ValueError):return dict(state)
+ stamp=profile_stamp()
+ snapshot=dict(state) if worker_owns_status else saved_status()
+ if snapshot.get('profile_stamp',stamp)!=stamp:snapshot={}
+ return diagnostics.public(snapshot,stamp is not None,(WORK/'phone-sync-retry').exists())
+
+def request_retry():
+ if profile_stamp() is None:return dict(status(),retry_accepted=False)
+ (WORK/'phone-sync-retry').touch()
+ WAKE.set()
+ return dict(status(),retry_accepted=True)
+
+def consume_retry(retries):
+ try:(WORK/'phone-sync-retry').unlink()
+ except FileNotFoundError:return
+ retries.entries.clear()
+
+def save_status():
+ try:atomic(STATUS,state)
+ except OSError:
+  # При заполненном диске действующий процесс всё ещё может показать состояние и повторить обмен.
+  pass
 def atomic(path,value):
  temp=path.with_suffix(path.suffix+'.tmp')
  with temp.open('w') as f:json.dump(value,f,ensure_ascii=False,indent=2);f.flush();os.fsync(f.fileno())
@@ -171,7 +202,10 @@ def import_audio(item,base,token,files,ledger_path,device):
  if name not in ledger:
   gaps=[{'start':float(g['start']),'duration':float(g['seconds'])} for g in item.get('gaps',[])]
   if gaps:atomic(target.with_suffix('.gaps.json'),gaps)
-  atomic(target.with_suffix('.phone.json'),dict(source='android',source_name=remote,sha256=sha,started_ms=item.get('started_ms'),error=item.get('error','')))
+  capture_error=item.get('error') or ''
+  if capture_error and capture_error not in ('Микрофон телефона недоступен','На телефоне мало свободного места','Микрофон прервал запись. Сохранён доступный звук','Некорректный поток ESP'):
+   capture_error='Телефон сообщил об ошибке записи'
+  atomic(target.with_suffix('.phone.json'),dict(source='android',source_name=remote,sha256=sha,started_ms=item.get('started_ms'),error=capture_error))
   import lesson_schedule
   if item.get('lesson_decided') is True:
    lesson = item.get('lesson')
@@ -225,7 +259,7 @@ def candidates(cfg):
      command(['-s',serial,'forward','tcp:8781','tcp:8780']);base='http://127.0.0.1:8781'
      try:
       with request(base,token,'/list',timeout=2) as response:json.load(response)
-     except HTTPError:continue
+     except HTTPError as error:error.close();continue
      except OSError:
       command(['-s',serial,'shell','am','start','-n','ru.ilya.lecturerecorder/.MainActivity'])
       time.sleep(.5)
@@ -258,7 +292,7 @@ class RetryQueue:
  def waiting(self,item,now):return self.entries.get(self.key(item),{}).get('after',0)>now
  def failed(self,item,error,now):
   key=self.key(item);attempts=self.entries.get(key,{}).get('attempts',0)+1
-  self.entries[key]={'attempts':attempts,'after':now+min(300,10*2**min(attempts-1,5)),'message':str(error)[:160]}
+  self.entries[key]={'attempts':attempts,'after':now+min(300,10*2**min(attempts-1,5)),'reason':diagnostics.reason(error)}
  def succeeded(self,item):self.entries.pop(self.key(item),None)
  def retain(self,items):
   active={self.key(item) for item in items}
@@ -274,60 +308,85 @@ def sync_once(cfg,retries,now=None):
  now=time.monotonic() if now is None else now
  token=cfg.get('token')
  if not isinstance(token,str) or not token:raise ValueError('Сначала настрой соединение телефона с Mac')
- last_error=None
+ state.update(connected=False,last_attempt=int(time.time()),reason='searching',active_file=None,issues=[])
+ save_status()
+ last_reason='offline'
  for base,transport in candidates(cfg):
   try:
    with request(base,token,'/list') as response:items=json.load(response)
    if not isinstance(items,list):raise ValueError('Телефон вернул некорректный список')
-   items=[item for item in items if isinstance(item,dict) and isinstance(item.get('name'),str) and re.fullmatch(r'lecture-[0-9-]+\.wav|board-[0-9]{13}-[a-f0-9]{32}\.jpg',item['name']) and isinstance(item.get('sha256'),str)]
-   retries.retain(items);errors=[];copied=0
-   state.update(connected=True,transport=transport,pending=len(items),failed=0,message='Телефон подключён · '+transport)
-   try:push(base,token,device_id=cfg.get('device_id'),offered=items)
-   except Exception as error:
-    if connection_error(error):raise
-    errors.append('Текст: '+str(error)[:120])
+   items=[item for item in items if isinstance(item,dict) and isinstance(item.get('name'),str) and diagnostics.FILE_NAME.fullmatch(item['name']) and isinstance(item.get('sha256'),str)]
+   retries.retain(items);issues=[]
+   state.update(connected=True,transport=transport,pending=len(items),listed=True,failed=len(retries.entries),reason='connected')
+   def send_notes():
+    try:push(base,token,device_id=cfg.get('device_id'),offered=items)
+    except Exception as error:
+     if connection_error(error):raise
+     issues.append('revision' if diagnostics.reason(error)=='revision' else 'text')
+     if isinstance(error,HTTPError):error.close()
+   send_notes()
+   copied=0
    for item in items:
     if retries.waiting(item,now):
-     errors.append(item['name']+': '+retries.entries[retries.key(item)]['message']);continue
-    state['message']='Переношу '+item['name']+' · '+transport;atomic(STATUS,state)
+     issues.append(retries.entries[retries.key(item)]['reason']);continue
+    state.update(reason='transferring',active_file=item['name']);save_status()
     try:import_one(item,base,token,FILES,LEDGER,cfg.get('device_id'))
     except Exception as error:
      if connection_error(error):raise
      retries.failed(item,error,time.monotonic() if fixed_time is None else now)
-     errors.append(item['name']+': '+str(error)[:120]);continue
-    retries.succeeded(item);state['imported']+=1;copied+=1
-   if copied:
-    try:push(base,token,device_id=cfg.get('device_id'),offered=items)
-    except Exception as error:
-     if connection_error(error):raise
-     errors.append('Текст: '+str(error)[:120])
-   try:
-    from phone_updates import push as push_update
-    push_update(base,token)
-   except Exception:
-    state['update_message']='Обновление телефона повторю при следующем подключении'
-   state.update(pending=len(items)-copied,failed=len(retries.entries),errors=list(dict.fromkeys(errors))[:10])
-   state['message']=(('Ожидают переноса: '+str(state['pending'])+' · ' if state['pending'] else '')+'Повторю автоматически · '+errors[0]) if errors else 'Всё перенесено · '+transport
+     if isinstance(error,HTTPError):error.close()
+     issues.append(retries.entries[retries.key(item)]['reason']);continue
+    retries.succeeded(item);state['imported']+=1;copied+=1;state['pending']-=1
+    state['active_file']=None
+   if copied:send_notes()
+   from phone_updates import MESSAGES, push as push_update
+   try:push_update(base,token)
+   except Exception as error:
+    if isinstance(error,HTTPError):error.close()
+    state['update_message']=MESSAGES['retry']
+   state.update(failed=len(retries.entries),active_file=None,issues=list(dict.fromkeys(issues))[:10],reason=issues[0] if issues else 'done')
    return True
-  except Exception as error:last_error=error
- state.update(connected=False,pending=0,failed=len(retries.entries),errors=[],message='Ожидаю телефон · общая Wi-Fi сеть, Bluetooth или USB'+(' · '+str(last_error)[:120] if last_error else ''))
+  except Exception as error:
+   last_reason=diagnostics.reason(error)
+   if isinstance(error,HTTPError):error.close()
+ state.update(connected=False,failed=len(retries.entries),active_file=None,issues=[],reason=last_reason)
  return False
 
+def poll(retries):
+ try:
+  stamp=profile_stamp()
+  if stamp!=state.get('profile_stamp'):
+   state.clear();state.update(imported=0,connected=False,profile_stamp=stamp)
+   retries.entries.clear()
+  consume_retry(retries)
+  if stamp is None:
+   state.update(connected=False,reason='unpaired')
+  else:
+   state['last_attempt']=int(time.time())
+   cfg=json.loads(CONFIG.read_text())
+   queue_pending()
+   sync_once(cfg,retries)
+ except Exception as error:state.update(connected=False,reason=diagnostics.reason(error))
+ save_status()
+
 def loop():
+ global worker_owns_status
  WORK.mkdir(parents=True,exist_ok=True)
  guard=(WORK/'phone-sync.lock').open('a')
  try:fcntl.flock(guard,fcntl.LOCK_EX|fcntl.LOCK_NB)
  except BlockingIOError:guard.close();return
  retries=RetryQueue()
+ previous=saved_status()
+ # Из прежнего журнала переносим только дату и размер известной очереди.
+ if previous.get('profile_stamp')==profile_stamp():
+  for key in ('pending','last_attempt','profile_stamp'):
+   state[key]=diagnostics.count(previous.get(key))
+  state['listed']=previous.get('listed') is True
+ worker_owns_status=True
  while True:
-  try:
-   if not CONFIG.exists():
-    state.update(connected=False,message='Телефон не подключён. Добавь его в настройках Mac.');atomic(STATUS,state)
-    WAKE.wait(10);WAKE.clear();continue
-   queue_pending();cfg=json.loads(CONFIG.read_text())
-   sync_once(cfg,retries)
-  except Exception as error:state.update(connected=False,message='Перенос ожидает подключения · '+str(error)[:120])
-  atomic(STATUS,state);WAKE.wait(10);WAKE.clear()
+  WAKE.clear()
+  poll(retries)
+  WAKE.wait(10)
 def start():
  global started
  if not started:started=True;threading.Thread(target=loop,daemon=True,name='Phone wireless import').start()
