@@ -11,6 +11,16 @@ final class PhoneSpeechWindow {
     private static final float LOW = 1 - (float) Math.exp(-2 * Math.PI * 600 / RATE);
     private static final float MID = 1 - (float) Math.exp(-2 * Math.PI * 2400 / RATE);
 
+    static double trimSilentStart(float[] original, double offset, double start, double end) {
+        if (end - start < .5) return start;
+        int first = Math.max(0, (int) Math.floor((start - offset) * RATE));
+        int last = Math.min(original.length, (int) Math.ceil((end - offset) * RATE));
+        int sound = first;
+        while (sound < last && original[sound] == 0f) sound++;
+        if (sound >= last || sound - first < RATE / 2) return start;
+        return Math.max(start, offset + (sound - 2 * FRAME) / (double) RATE);
+    }
+
     static int boundary(float[] wave, int nominal) {
         int from = Math.max(0, nominal - SEARCH);
         int to = Math.min(wave.length, nominal + SEARCH);

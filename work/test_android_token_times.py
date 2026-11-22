@@ -32,6 +32,15 @@ public class TokenTimeTests {
  public static void main(String[] args)throws Exception {
   JSONArray result;
   switch(args[0]) {
+   case "silence_trim":
+    float[] pcm=new float[32000];
+    pcm[24000]=1f/32768;
+    same(PhoneSpeechWindow.trimSilentStart(pcm,10,10,12),11.46);
+    same(PhoneSpeechWindow.trimSilentStart(pcm,10,11.42,12),11.42);
+    same(PhoneSpeechWindow.trimSilentStart(pcm,10,10,11),10);
+    pcm[0]=1f/32768;
+    same(PhoneSpeechWindow.trimSilentStart(pcm,10,10,12),10);
+    break;
    case "punctuation":
     result=words(125,new int[]{10,124},new int[]{1,2},0,0,5,.8);
     assert result.length()==1;JSONObject w=result.getJSONObject(0);
@@ -144,6 +153,7 @@ class Tests(unittest.TestCase):
         subprocess.run([self.jdk/'bin/java','-ea','-cp',self.cp,'ru.ilya.lecturerecorder.TokenTimeTests',name],check=True)
 
     def test_punctuation_cannot_move_speech(self):self.run_case('punctuation')
+    def test_only_digital_silence_can_move_start(self):self.run_case('silence_trim')
     def test_number_and_mixed_token_keep_speech_boundary(self):self.run_case('numbers')
     def test_neighboring_windows_keep_one_copy(self):self.run_case('seam')
     def test_short_speech_span_keeps_weak_onset_retry(self):self.run_case('onset')

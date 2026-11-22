@@ -91,6 +91,12 @@ final class PhoneGigaAm {
                             JSONArray alternate = recognize(environment, frontend, acoustic, clean, tokens, offset, first, last, true);
                             reconcile(words, alternate);
                         }
+                        for (int i = 0; i < words.length(); i++) {
+                            JSONObject word = words.getJSONObject(i);
+                            double startTime = word.getDouble("start");
+                            double trimmed = PhoneSpeechWindow.trimSilentStart(raw, offset, startTime, word.getDouble("end"));
+                            if (trimmed > startTime) word.put("start", trimmed);
+                        }
                         timeline.accept(words, last);
                     }
                     start = end;
