@@ -22,14 +22,27 @@ def needs_character_check(words, terms, ctc, rnnt, one_window):
     return any(NUMBER.fullmatch(word['text']) for word in words) and shared_unit_marks(ctc, rnnt)
 
 
+SPOKEN_NUMBER_FORMS = re.compile(
+    r'(?:полтор[аы]|полутора|н(?:ол|ул)[ьяюе]|одн(?:а|о|у|ой|ого|ому|им|ом|и|их|ими)'
+    r'|дв(?:е|ух|ум|умя)|тр(?:ех|ем|емя)|четыр(?:ех|ем|ьмя)'
+    r'|(?:пят|шест|сем|восьм|девят|десят)[ию]|(?:один|две|три|четыр|пят|шест|сем|восем|девят)надцат[ию]'
+    r'|(?:двадцат|тридцат)[ию]|(?:пяти|шести|семи|восьми)десяти|(?:пять|шесть|семь|восемь)юдесятью'
+    r'|сорока|девяноста|ста|двести|триста|четыреста|(?:пять|шесть|семь|восемь|девять)сот'
+    r'|(?:двух|трех|четырех|пяти|шести|семи|восьми|девяти)сот'
+    r'|тысяч(?:а|и|е|ей|у|ам|ами|ах)?|(?:миллион|миллиард)(?:а|у|ом|е|ы|ов|ам|ами|ах)?)'
+)
+
+
 def contains_numeric_units(words):
     from asr_guard import lexical
     from asr_units import FORMS
+    from context_review import SPOKEN_NUMBERS
 
     for word in words:
         text = word['text']
         key = lexical(text)
-        if any(char.isdigit() for char in text) or key in FORMS or key.startswith(('рубл', 'доллар', 'процент')):
+        if (any(char.isdigit() for char in text) or key in FORMS or key.startswith(('рубл', 'доллар', 'процент'))
+                or key in SPOKEN_NUMBERS or SPOKEN_NUMBER_FORMS.fullmatch(key)):
             return True
     return False
 

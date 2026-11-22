@@ -57,6 +57,16 @@ class CharacterPrecisionTests(unittest.TestCase):
                 self.outputs(words)
                 self.assertEqual(self.decode()[1], ['ctc', 'rnnt', 'char'])
 
+    def test_spoken_numbers_use_full_precision_without_digits_or_units(self):
+        for numeral in ('пять', 'семьдесят', 'полтора', 'полутора', 'семидесяти', 'четыреста'):
+            with self.subTest(numeral=numeral):
+                self.outputs(['Получается', f' {numeral}.'])
+                self.assertEqual(self.decode()[1], ['ctc', 'rnnt', 'char'])
+
+    def test_similar_conversational_words_leave_fast_pass_enabled(self):
+        self.outputs(['Вот', ' семинар', ' в', ' пятницу.'])
+        self.assertEqual(self.decode()[1], ['ctc', 'rnnt', 'char_fast'])
+
     def test_currency_in_other_pass_or_shared_sign_uses_full_precision(self):
         for accepted, other in (
             (['Читаем', ' строку.'], ['Читаем', ' доллары.']),
