@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
  private final View[] pages=new View[3];
  private final Button[] tabs=new Button[3];
  private AudioTranscriptPage audioPage;
+ private Object systemBackCallback;
  private boolean resumed;
  private static final int accent=StudioStyle.ACCENT,fg=StudioStyle.TEXT,muted=StudioStyle.MUTED,bg=StudioStyle.BACKGROUND,line=StudioStyle.LINE;
  private int dp(int n){return Math.round(getResources().getDisplayMetrics().density*n);}
@@ -126,11 +127,6 @@ public class MainActivity extends Activity {
   addConnectionPanel(record);
   if(saved!=null)deviceModel.setYaw(saved.getFloat("device_rotation",-.30f));
   LinearLayout hero=card(record);
-  GradientDrawable console=new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-   new int[]{0xff1e202b,0xff14161e,0xff171420});
-  console.setCornerRadius(dp(22));
-  console.setStroke(dp(1),line);
-  hero.setBackground(console);
 
   TextView timerLabel=note("Длительность");
   hero.addView(timerLabel);
@@ -148,14 +144,6 @@ public class MainActivity extends Activity {
   hero.addView(meterLabel);
   meter=new RecordingMeter(this);
   hero.addView(meter,new LinearLayout.LayoutParams(-1,dp(68)));
-  View highlight=new View(this);
-  highlight.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-  GradientDrawable prism=new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-   new int[]{0x003d355a,0xffa99afa,0xffeec2dc,0xffffcb9e,0x003d355a});
-  highlight.setBackground(prism);
-  LinearLayout.LayoutParams reflection=new LinearLayout.LayoutParams(-1,dp(1));
-  reflection.setMargins(dp(12),0,dp(12),dp(10));
-  hero.addView(highlight,reflection);
   hero.addView(note("Источник звука"));
   SharedPreferences sourceSettings=getSharedPreferences("settings",0);
   String source=sourceSettings.getString("transport","phone");
@@ -221,6 +209,13 @@ public class MainActivity extends Activity {
   navigation.setMargins(dp(12),0,dp(12),dp(8));
   root.addView(nav,navigation);
   showPage(Math.max(0,Math.min(pages.length-1,selectedPage)));
+  if(Build.VERSION.SDK_INT>=33){
+   android.window.OnBackInvokedCallback callback=()->{
+    if(!handleBack()&&(!isTaskRoot()||!moveTaskToBack(false)))finish();
+   };
+   getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,callback);
+   systemBackCallback=callback;
+  }
   if(Build.VERSION.SDK_INT>=33&&checkSelfPermission("android.permission.POST_NOTIFICATIONS")!=0)requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},2);
  }
  private TextView firmwareStatus;private Button firmwareButton,installUpdate;
@@ -578,9 +573,21 @@ public class MainActivity extends Activity {
  }
  @Override public void onResume(){super.onResume();resumed=true;audioPage.setActive(selectedPage==AUDIO_PAGE);timer.removeCallbacksAndMessages(null);if(!getSharedPreferences("settings",0).getString("sync_token","").isEmpty())startForegroundService(CaptureService.command(this,"SYNC"));refresh();}
  @Override public void onPause(){resumed=false;stopPresenceCheck();transport.close();audioPage.setActive(false);timer.removeCallbacksAndMessages(null);super.onPause();}
- @Override public void onBackPressed(){
-  if(selectedPage==AUDIO_PAGE&&audioPage.closeDropdown()||selectedPage==0&&transport.close())return;
-  super.onBackPressed();
+ private boolean handleBack(){
+  if(selectedPage==AUDIO_PAGE)return audioPage.closeDropdown()||audioPage.closeFolders();
+  return selectedPage==0&&transport.close();
  }
- @Override public void onDestroy(){audioPage.dispose();if(deviceExpansion!=null)deviceExpansion.cancel();if(devicePairing!=null)devicePairing.close();if(firmwareQuery!=null)firmwareQuery.interrupt();if(pairing!=null)pairing.cancel();super.onDestroy();}
+ @Override public void onBackPressed(){
+  if(!handleBack())super.onBackPressed();
+ }
+ @Override public void onDestroy(){
+  if(Build.VERSION.SDK_INT>=33&&systemBackCallback!=null)
+   getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback((android.window.OnBackInvokedCallback)systemBackCallback);
+  audioPage.dispose();
+  if(deviceExpansion!=null)deviceExpansion.cancel();
+  if(devicePairing!=null)devicePairing.close();
+  if(firmwareQuery!=null)firmwareQuery.interrupt();
+  if(pairing!=null)pairing.cancel();
+  super.onDestroy();
+ }
 }

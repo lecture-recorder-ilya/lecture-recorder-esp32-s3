@@ -77,6 +77,12 @@ final class AudioTranscriptPage extends LinearLayout {
     private int position;
     private int duration;
     private String selected;
+    private String activeFolder = "";
+    private final Button backToLibrary;
+    private final LinearLayout workspace;
+    private final AudioFolders folders;
+    private boolean foldersShown;
+    private int returnScroll;
     private String noteRevision;
     private ChoiceDropdown recordingDropdown;
     private Button play;
@@ -100,16 +106,8 @@ final class AudioTranscriptPage extends LinearLayout {
         setOrientation(VERTICAL);
         setBackgroundColor(BACKGROUND);
         setPadding(dp(16), dp(14), dp(16), dp(10));
-
         landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
-        LinearLayout playback = this;
-        LinearLayout columns = null;
-        if (landscape) {
-            columns = new LinearLayout(activity);
-            addView(columns, new LinearLayout.LayoutParams(-1, 0, 1));
-            playback = column();
-            columns.addView(playback, new LinearLayout.LayoutParams(0, -1, 1));
-        } else {
+        if (!landscape) {
             TextView heading = text("Аудио и текст", 28, TEXT);
             heading.setTypeface(Typeface.DEFAULT_BOLD);
             heading.setLetterSpacing(-.025f);
@@ -118,10 +116,14 @@ final class AudioTranscriptPage extends LinearLayout {
         }
 
         recordingDropdown = new ChoiceDropdown(activity, "Выбрать запись", "Сохранённых записей пока нет",
-                this::recordingOptions, option -> {
-                    if (!option.value.equals(selected)) select(option.value, 0, true);
-                });
+                this::recordingOptions, this::chooseRecording);
         LinearLayout picker = new LinearLayout(activity);
+        backToLibrary = button("‹", this::backFromRecording);
+        backToLibrary.setContentDescription("К папкам и записям");
+        backToLibrary.setTextSize(25);
+        LinearLayout.LayoutParams back = new LinearLayout.LayoutParams(dp(48), -1);
+        back.setMarginEnd(dp(8));
+        picker.addView(backToLibrary, back);
         picker.addView(recordingDropdown.button, new LinearLayout.LayoutParams(0, -1, 1));
         importButton = button("Импорт", () -> {
             closeDropdown();
@@ -131,44 +133,61 @@ final class AudioTranscriptPage extends LinearLayout {
         LinearLayout.LayoutParams importAction = new LinearLayout.LayoutParams(-2, -1);
         importAction.setMarginStart(dp(8));
         picker.addView(importButton, importAction);
-        playback.addView(picker, spaced(-1, dp(52), landscape ? 0 : 10));
+        addView(picker, spaced(-1, dp(52), landscape ? 0 : 10));
+
         importStatus = text("", 13, MUTED);
         importStatus.setVisibility(View.GONE);
         importStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        playback.addView(importStatus, spaced(-1, -2, 4));
+        addView(importStatus, spaced(-1, -2, 4));
 
-        FrameLayout body = new FrameLayout(activity);
-        playback.addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
-        LinearLayout details = column();
-        body.addView(details, new FrameLayout.LayoutParams(-1, -1));
+        FrameLayout stage = new FrameLayout(activity);
+        addView(stage, new LinearLayout.LayoutParams(-1, 0, 1));
+        workspace = column();
+        stage.addView(workspace, new FrameLayout.LayoutParams(-1, -1));
+        LinearLayout playback = workspace;
+        LinearLayout columns = null;
+        if (landscape) {
+            columns = new LinearLayout(activity);
+            workspace.addView(columns, new LinearLayout.LayoutParams(-1, 0, 1));
+            playback = column();
+            columns.addView(playback, new LinearLayout.LayoutParams(0, -1, 1));
+        }
 
         audioPanel = card();
         audioPanel.setVisibility(View.GONE);
-        details.addView(audioPanel, spaced(-1, -2, 12));
+        playback.addView(audioPanel, spaced(-1, -2, 12));
         addAudioPanel(audioPanel);
 
         transcriptPanel = card();
         transcriptPanel.setVisibility(View.GONE);
-        View transcriptDismiss = null;
         if (landscape) {
-            FrameLayout transcriptHost = new FrameLayout(activity);
             LinearLayout.LayoutParams panel = new LinearLayout.LayoutParams(0, -1, 2);
             panel.setMarginStart(dp(12));
-            columns.addView(transcriptHost, panel);
-            transcriptHost.addView(transcriptPanel, new FrameLayout.LayoutParams(-1, -1));
-            transcriptDismiss = addDropdownDismiss(transcriptHost);
+            panel.topMargin = dp(12);
+            columns.addView(transcriptPanel, panel);
         } else {
             LinearLayout.LayoutParams panel = new LinearLayout.LayoutParams(-1, 0, 1);
             panel.topMargin = dp(12);
-            details.addView(transcriptPanel, panel);
+            playback.addView(transcriptPanel, panel);
         }
         addTranscriptPanel(transcriptPanel);
-        addRecordingDropdown(body, transcriptDismiss);
 
+        folders = new AudioFolders(activity, this::recordingOptionsAll, this::updateFolderFilter, this::openFolderRecording);
+        stage.addView(folders, new FrameLayout.LayoutParams(-1, -1));
+        addRecordingDropdown(stage);
+
+        String name = state == null ? null : state.getString("recording");
         if (state != null) {
-            String name = state.getString("recording");
+            activeFolder = state.getString("audio_folder", "");
+            returnScroll = state.getInt("folder_return_scroll");
+            folders.setLibraryScroll(state.getInt("folder_library_scroll"));
             if (LectureNotes.valid(name)) select(name, state.getInt("position"), false);
         }
+        if (state == null || state.getBoolean("folders_shown", !LectureNotes.valid(name))) {
+            showFolders(state == null ? "" : state.getString("folder_open", ""),
+                    state == null ? 0 : state.getInt("folder_scroll"));
+        } else hideFolders();
+        updateFolderFilter();
     }
 
     private void addAudioPanel(LinearLayout audio) {
@@ -266,29 +285,86 @@ final class AudioTranscriptPage extends LinearLayout {
         return dismiss;
     }
 
-    private void addRecordingDropdown(FrameLayout body, View transcriptDismiss) {
-        View audioDismiss = addDropdownDismiss(body);
-        recordingDropdown.setHeightLimit(() -> body.getHeight() - dp(12));
+    private void addRecordingDropdown(FrameLayout stage) {
+        View dismiss = addDropdownDismiss(stage);
+        recordingDropdown.setHeightLimit(() -> stage.getHeight() - dp(12));
         recordingDropdown.setExpansionListener(open -> {
             int accessibility = open ? View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
                     : View.IMPORTANT_FOR_ACCESSIBILITY_AUTO;
-            audioPanel.setImportantForAccessibility(accessibility);
-            transcriptPanel.setImportantForAccessibility(accessibility);
-            int scrim = selected == null ? 0 : 0x44000000;
-            int visibility = open ? View.VISIBLE : View.GONE;
-            audioDismiss.setBackgroundColor(scrim);
-            audioDismiss.setVisibility(visibility);
-            if (transcriptDismiss != null) {
-                transcriptDismiss.setBackgroundColor(scrim);
-                transcriptDismiss.setVisibility(visibility);
-            }
+            workspace.setImportantForAccessibility(accessibility);
+            folders.setImportantForAccessibility(accessibility);
+            dismiss.setBackgroundColor(0x44000000);
+            dismiss.setVisibility(open ? View.VISIBLE : View.GONE);
         });
-        FrameLayout.LayoutParams layout = new FrameLayout.LayoutParams(-1, -2);
+        int width = landscape ? dp(Math.min(520, getResources().getConfiguration().screenWidthDp - 32)) : -1;
+        FrameLayout.LayoutParams layout = new FrameLayout.LayoutParams(width, -2);
         layout.topMargin = dp(6);
-        body.addView(recordingDropdown.list, layout);
+        stage.addView(recordingDropdown.list, layout);
+    }
+
+    private void showFolders(String id, int scroll) {
+        closeDropdown();
+        if (prepared && player.isPlaying()) {
+            position = player.getCurrentPosition();
+            player.pause();
+            updatePosition();
+        }
+        playWhenReady = false;
+        workspace.setVisibility(View.GONE);
+        foldersShown = true;
+        backToLibrary.setVisibility(View.GONE);
+        folders.setVisibility(View.VISIBLE);
+        folders.open(id, scroll);
+        recordingDropdown.setSelected(null);
+    }
+
+    private void hideFolders() {
+        foldersShown = false;
+        folders.setVisibility(View.GONE);
+        workspace.setVisibility(View.VISIBLE);
+        backToLibrary.setVisibility(View.VISIBLE);
+    }
+
+    boolean closeFolders() {
+        if (foldersShown) return folders.back();
+        backFromRecording();
+        return true;
+    }
+
+    private void backFromRecording() {
+        showFolders(activeFolder, returnScroll);
+    }
+
+    private void chooseRecording(ChoiceDropdown.Option option) {
+        openFolderRecording(foldersShown ? folders.current() : activeFolder, option.value);
+    }
+
+    private void openFolderRecording(String id, String name) {
+        if (foldersShown) returnScroll = folders.scrollY();
+        activeFolder = id;
+        updateFolderFilter();
+        hideFolders();
+        if (!name.equals(selected)) select(name, 0, true);
+        else recordingDropdown.setSelected(new ChoiceDropdown.Option(name, recordingTitle(name), ""));
+    }
+
+    private void updateFolderFilter() {
+        if (!AudioFolders.exists(activity, activeFolder)) activeFolder = "";
+        backToLibrary.setContentDescription(activeFolder.isEmpty() ? "К папкам и записям" : "Назад в папку");
+        recordingDropdown.refreshOptions();
+    }
+
+    private String recordingTitle(String name) {
+        return AudioFolders.recordingTitle(activity, activeFolder, name, Store.recordingTitle(name));
     }
 
     private List<ChoiceDropdown.Option> recordingOptions() {
+        List<ChoiceDropdown.Option> all = recordingOptionsAll();
+        String scope = foldersShown ? folders.current() : activeFolder;
+        return scope.isEmpty() ? all : AudioFolders.recordingsIn(activity, scope, all);
+    }
+
+    private List<ChoiceDropdown.Option> recordingOptionsAll() {
         TreeMap<String, ChoiceDropdown.Option> options = new TreeMap<>(Collections.reverseOrder());
         for (File file : Store.audioFiles(activity)) {
             long seconds = Math.max(0, file.length() - 44) / (PcmWave.SAMPLE_RATE * 2);
@@ -319,7 +395,7 @@ final class AudioTranscriptPage extends LinearLayout {
         transcript.replace(new ArrayList<>());
         position = initialPosition;
         duration = 0;
-        recordingDropdown.setSelected(new ChoiceDropdown.Option(name, Store.recordingTitle(name), ""));
+        recordingDropdown.setSelected(new ChoiceDropdown.Option(name, recordingTitle(name), ""));
         waveform.setEnvelope(null);
         boolean hasAudio = Store.audio(activity, name).isFile();
         transcriptPanel.setVisibility(View.VISIBLE);
@@ -424,9 +500,11 @@ final class AudioTranscriptPage extends LinearLayout {
 
     private void updatePosition() {
         if (player != null) {
-            times.setText(LectureReaderActivity.clock(position / 1000.0) + " / "
-                    + LectureReaderActivity.clock(duration / 1000.0));
-            play.setText(prepared && player.isPlaying() ? "Пауза" : "Слушать");
+            String elapsed = LectureReaderActivity.clock(position / 1000.0) + " / "
+                    + LectureReaderActivity.clock(duration / 1000.0);
+            if (!TextUtils.equals(times.getText(), elapsed)) times.setText(elapsed);
+            String action = prepared && player.isPlaying() ? "Пауза" : "Слушать";
+            if (!TextUtils.equals(play.getText(), action)) play.setText(action);
         }
         waveform.invalidate();
     }
@@ -616,6 +694,14 @@ final class AudioTranscriptPage extends LinearLayout {
         Bundle state = new Bundle();
         state.putString("recording", selected);
         state.putInt("position", position);
+        state.putString("audio_folder", activeFolder);
+        state.putInt("folder_return_scroll", returnScroll);
+        state.putInt("folder_library_scroll", folders.libraryScroll());
+        state.putBoolean("folders_shown", foldersShown);
+        if (foldersShown) {
+            state.putString("folder_open", folders.current());
+            state.putInt("folder_scroll", folders.scrollY());
+        }
         return state;
     }
 
