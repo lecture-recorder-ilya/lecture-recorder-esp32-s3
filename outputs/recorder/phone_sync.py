@@ -1,4 +1,5 @@
 import fcntl,hashlib,hmac,json,os,re,secrets,shutil,socket,subprocess,threading,time,wave
+from contextlib import contextmanager
 from pathlib import Path
 from urllib.request import Request,urlopen
 from urllib.error import URLError,HTTPError
@@ -86,13 +87,52 @@ def discover_wifi(token):
     if len(parts)==4 and parts[:3]==['LECTURES1',nonce,'8780'] and hmac.compare_digest(parts[3],expected):return 'http://'+peer[0]+':8780'
    except (OSError,ValueError):pass
  return None
-def import_one(item,base,token,files=FILES,ledger_path=LEDGER):
+def source_id(token, device_id=None):
+ if isinstance(device_id,str) and re.fullmatch(r'[a-f0-9]{32}',device_id):
+  return device_id
+ return hmac.new(token.encode(), b'ClipMic import source', hashlib.sha256).hexdigest()
+
+@contextmanager
+def ledger_lock(path):
+ with path.with_suffix(path.suffix+'.lock').open('a') as guard:
+  fcntl.flock(guard,fcntl.LOCK_EX)
+  yield
+
+def local_recording_name(remote, sha, size, files, ledger):
+ for name,entry in ledger.items():
+  if entry.get('source_name',name)==remote and entry.get('sha256')==sha:
+   return name
+ target=files/remote
+ if target.exists():
+  if target.stat().st_size==size and digest(target)==sha:return remote
+  try:validate(target)
+  except (wave.Error,EOFError,ValueError) as error:
+   raise ValueError('На Mac уже есть другой файл с этим именем; телефон сохранён') from error
+  occupied=True
+ else:
+  try:partial=json.loads((files/(remote+'.phone-part.json')).read_text())
+  except (OSError,ValueError):partial={}
+  occupied=remote in ledger or bool(partial and partial.get('sha256')!=sha)
+ if not occupied:return remote
+ # Оставляем дату, время и исходные микросекунды доступными старым парсерам.
+ return remote[:-4]+'-'+str(int(sha,16))+'.wav'
+
+def import_one(item,base,token,files=FILES,ledger_path=LEDGER,device_id=None):
  if re.fullmatch(r'board-[0-9]{13}-[a-f0-9]{32}\.jpg',item.get('name','')):
   import board_photos
   return board_photos.import_one(item,base,token,root=files.parent)
+ with ledger_lock(ledger_path):
+  name=import_audio(item,base,token,files,ledger_path,source_id(token,device_id))
+ queue_pending(ledger_path)
+ return name
+
+def import_audio(item,base,token,files,ledger_path,device):
  name=item.get('name');size=item.get('bytes');sha=item.get('sha256')
  if not isinstance(name,str) or not re.fullmatch(r'lecture-[0-9-]+\.wav',name) or type(size) is not int or not 44<=size<=4_200_000_044 or not isinstance(sha,str) or not re.fullmatch(r'[a-f0-9]{64}',sha):raise ValueError('Некорректные сведения записи')
- files.mkdir(exist_ok=True);target=files/name;ledger=json.loads(ledger_path.read_text()) if ledger_path.exists() else {}
+ files.mkdir(exist_ok=True);ledger=json.loads(ledger_path.read_text()) if ledger_path.exists() else {}
+ remote=name
+ name=local_recording_name(remote,sha,size,files,ledger)
+ target=files/name
  temp=files/(name+'.phone-part');resume_meta=files/(name+'.phone-part.json')
  if target.exists():
   if target.stat().st_size!=size or digest(target)!=sha:raise ValueError('На Mac уже есть другая запись с этим именем; телефон сохранён')
@@ -106,7 +146,7 @@ def import_one(item,base,token,files=FILES,ledger_path=LEDGER):
    if shutil.disk_usage(files).free < size-count+100*1024*1024:
     raise OSError('На Mac недостаточно места; телефон сохранён')
    atomic(resume_meta,identity)
-   with request(base,token,'/file/'+name,extra={'Range':'bytes='+str(count)+'-'} if count else None) as response:
+   with request(base,token,'/file/'+remote,extra={'Range':'bytes='+str(count)+'-'} if count else None) as response:
     if count and response.status!=206:count=0
     elif count and response.headers.get('Content-Range')!='bytes '+str(count)+'-'+str(size-1)+'/'+str(size):raise ValueError('Некорректное продолжение копии')
     with temp.open('ab' if count else 'wb') as f:
@@ -131,7 +171,7 @@ def import_one(item,base,token,files=FILES,ledger_path=LEDGER):
  if name not in ledger:
   gaps=[{'start':float(g['start']),'duration':float(g['seconds'])} for g in item.get('gaps',[])]
   if gaps:atomic(target.with_suffix('.gaps.json'),gaps)
-  atomic(target.with_suffix('.phone.json'),dict(source='android',sha256=sha,started_ms=item.get('started_ms'),error=item.get('error','')))
+  atomic(target.with_suffix('.phone.json'),dict(source='android',source_name=remote,sha256=sha,started_ms=item.get('started_ms'),error=item.get('error','')))
   import lesson_schedule
   if item.get('lesson_decided') is True:
    lesson = item.get('lesson')
@@ -147,13 +187,25 @@ def import_one(item,base,token,files=FILES,ledger_path=LEDGER):
    moment=datetime.fromtimestamp(stamp/1000,ZoneInfo('Europe/Moscow')) if type(stamp) in (int,float) else datetime.now(ZoneInfo('Europe/Moscow'))
    meta={'date':moment.strftime('%Y-%m-%d'),'start':moment.strftime('%H:%M'),'end':'','type':'Лекция','subject':'Загруженная запись','title':str(item.get('title') or item.get('original_name') or 'Запись с телефона')[:160],'imported':True}
    study_store.move(name,meta['date']+' — Загруженные записи',meta)
-  ledger[name]={'sha256':sha,'bytes':size,'queued':False};atomic(ledger_path,ledger)
+  ledger[name]={'sha256':sha,'bytes':size,'queued':False}
+ entry=ledger[name]
+ if entry.get('sha256')!=sha:raise ValueError('Контрольная сумма не совпала с журналом импорта')
+ if device not in entry.get('devices',[]):
+  for other,previous in ledger.items():
+   if other!=name and previous.get('source_name',other)==remote and device in previous.get('devices',[]):
+    previous['devices'].remove(device)
+  entry.setdefault('devices',[]).append(device)
+  entry['source_name']=remote
+  atomic(ledger_path,ledger)
  # A failed acknowledgement is retried against the already verified local copy.
- with request(base,token,'/ack',{'name':name,'sha256':sha}) as r:
+ with request(base,token,'/ack',{'name':remote,'sha256':sha}) as r:
   if not json.load(r).get('ok'):raise ValueError('Телефон не подтвердил очистку')
- queue_pending(ledger_path)
  return name
 def queue_pending(ledger_path=LEDGER):
+ with ledger_lock(ledger_path):
+  _queue_pending(ledger_path)
+
+def _queue_pending(ledger_path):
  ledger=json.loads(ledger_path.read_text()) if ledger_path.exists() else {}
  for name,entry in ledger.items():
   if entry.get('queued'):continue
@@ -230,7 +282,7 @@ def sync_once(cfg,retries,now=None):
    items=[item for item in items if isinstance(item,dict) and isinstance(item.get('name'),str) and re.fullmatch(r'lecture-[0-9-]+\.wav|board-[0-9]{13}-[a-f0-9]{32}\.jpg',item['name']) and isinstance(item.get('sha256'),str)]
    retries.retain(items);errors=[];copied=0
    state.update(connected=True,transport=transport,pending=len(items),failed=0,message='Телефон подключён · '+transport)
-   try:push(base,token)
+   try:push(base,token,device_id=cfg.get('device_id'),offered=items)
    except Exception as error:
     if connection_error(error):raise
     errors.append('Текст: '+str(error)[:120])
@@ -238,14 +290,14 @@ def sync_once(cfg,retries,now=None):
     if retries.waiting(item,now):
      errors.append(item['name']+': '+retries.entries[retries.key(item)]['message']);continue
     state['message']='Переношу '+item['name']+' · '+transport;atomic(STATUS,state)
-    try:import_one(item,base,token)
+    try:import_one(item,base,token,FILES,LEDGER,cfg.get('device_id'))
     except Exception as error:
      if connection_error(error):raise
      retries.failed(item,error,time.monotonic() if fixed_time is None else now)
      errors.append(item['name']+': '+str(error)[:120]);continue
     retries.succeeded(item);state['imported']+=1;copied+=1
    if copied:
-    try:push(base,token)
+    try:push(base,token,device_id=cfg.get('device_id'),offered=items)
     except Exception as error:
      if connection_error(error):raise
      errors.append('Текст: '+str(error)[:120])

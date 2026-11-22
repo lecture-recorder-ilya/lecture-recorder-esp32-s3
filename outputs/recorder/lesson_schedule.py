@@ -22,7 +22,7 @@ def match(moment):
 
 def recording_time(name):
     if not isinstance(name,str):return None
-    m=re.fullmatch(r'lecture-(\d{4}-\d\d-\d\d)-(\d\d)-(\d\d)-(\d\d)-\d+\.wav',name)
+    m=re.fullmatch(r'lecture-(\d{4}-\d\d-\d\d)-(\d\d)-(\d\d)-(\d\d)-\d+(?:-\d+)?\.wav',name)
     if not m:return None
     date,hour,minute,second=m.groups()
     try:return datetime.fromisoformat(date+'T'+hour+':'+minute+':'+second).replace(tzinfo=TZ)

@@ -68,15 +68,42 @@ def documents(root, errors=None):
             yield value, hashlib.sha256(raw).hexdigest()
 
 
-def push(base, token, root=None):
-    from phone_sync import request
+def recording_targets(ledger, device, offered):
+    groups = {}
+    for local, entry in ledger.items():
+        groups.setdefault(entry.get('source_name', local), []).append((local, entry))
+    listed = {item['name']: item.get('sha256') for item in offered}
+    targets = dict.fromkeys(listed)
+    for remote, entries in groups.items():
+        targets.setdefault(remote, None)
+        for local, entry in entries:
+            targets[local] = None
+            if remote in listed:
+                belongs = entry.get('sha256') == listed[remote]
+            else:
+                belongs = device in entry.get('devices', []) or ('devices' not in entry and len(entries) == 1)
+            if belongs:
+                targets[local] = remote
+    return targets
+
+def push(base, token, root=None, *, device_id=None, offered=()):
+    from phone_sync import request, source_id, encode_body
     root = root or Path(__file__).resolve().parent
     with request(base, token, '/notes-index') as response:
         known = json.load(response)
+    ledger = root.parent.parent / 'work/phone-imports.json'
+    entries = json.loads(ledger.read_text()) if ledger.exists() else {}
+    targets = recording_targets(entries, source_id(token, device_id), offered)
     count = 0
     errors = []
     for value, digest in documents(root, errors):
-        if known.get(value['file']) == digest:
+        remote = targets.get(value['file'], value['file'])
+        if remote is None:
+            continue
+        if remote != value['file']:
+            value['file'] = remote
+            digest = hashlib.sha256(encode_body('/notes', value)).hexdigest()
+        if known.get(remote) == digest:
             continue
         with request(base, token, '/notes', value) as response:
             answer = json.load(response)

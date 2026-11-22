@@ -42,6 +42,28 @@ class Tests(unittest.TestCase):
   (self.files/NAME).write_bytes(b'existing')
   with self.assertRaises(ValueError):self.run_import()
   self.assertEqual((self.files/NAME).read_bytes(),b'existing');self.assertEqual(H.ack,0)
+ def test_two_sources_same_time_keep_both_ids_and_route_their_notes(self):
+  import phone_notes,lesson_schedule
+  second=PAYLOAD[:44]+b'\x02\x00'*16000
+  other_sha=hashlib.sha256(second).hexdigest()
+  a='1'*32;b='2'*32
+  with patch('phone_sync.queue_pending'),patch('lesson_schedule.organize'):
+   def receive(data,device):
+    H.data=data
+    item=dict(self.item,sha256=hashlib.sha256(data).hexdigest(),started_ms=1791795600000)
+    return phone_sync.import_one(item,self.base,'fixture',self.files,self.ledger,device)
+   first=receive(PAYLOAD,a);other=receive(second,b)
+   self.assertEqual(receive(second,b),other);self.assertEqual(receive(PAYLOAD,a),first)
+   self.assertEqual(len(H.ranges),2);self.assertEqual(H.ack,4)
+   self.assertEqual(lesson_schedule.recording_time(first),lesson_schedule.recording_time(other))
+   self.assertEqual({p.name:phone_sync.digest(p) for p in self.files.glob('*.wav')},{first:SHA,other:other_sha})
+   ledger=json.loads(self.ledger.read_text())
+   self.assertEqual(phone_notes.recording_targets(ledger,a,()),{first:NAME,other:None})
+   self.assertEqual(phone_notes.recording_targets(ledger,b,()),{first:None,other:NAME})
+   self.assertEqual(phone_notes.recording_targets(ledger,b,[dict(self.item,sha256='0'*64)]),{first:None,other:None})
+   self.assertEqual(receive(second,'3'*32),other)
+   self.assertEqual(len(H.ranges),2);self.assertEqual(len(json.loads(self.ledger.read_text())),2)
+
  def test_truncated_wav_never_ack(self):
   H.data=PAYLOAD[:-100];self.item['bytes']=len(H.data);self.item['sha256']=hashlib.sha256(H.data).hexdigest()
   with self.assertRaises(ValueError):self.run_import()
