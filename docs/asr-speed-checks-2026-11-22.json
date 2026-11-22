@@ -1,0 +1,927 @@
+{
+  "baseline": "7bf5ef88ff949e88704eef43a4c25adb820ffafd",
+  "mac": {
+    "device": "Apple M2, 16 GiB",
+    "baseline": "7bf5ef88ff949e88704eef43a4c25adb820ffafd",
+    "candidate": "58ee730f9491b793d91835486a9a64ff3a758672",
+    "timing": {
+      "wav_sha256": "e4a3fc518a9fd39c4f6c0430d4af1b4ed7cce2024ce8b16ea7a6f808b76487d0",
+      "duration_seconds": 41.592,
+      "segments": 10,
+      "segments_sha256": "4f2b53f375dde4ed86eb078fb857500a94408ef52854b455fa89db999f044994",
+      "before": {
+        "seconds": [
+          11.608,
+          11.604,
+          11.608,
+          11.631
+        ],
+        "median_seconds": 11.608,
+        "first_saved_seconds": [
+          6.828,
+          6.835,
+          6.84,
+          6.882
+        ],
+        "median_first_saved_seconds": 6.8375
+      },
+      "after": {
+        "seconds": [
+          7.912,
+          8.612,
+          7.967,
+          7.966
+        ],
+        "median_seconds": 7.9665,
+        "first_saved_seconds": [
+          5.162,
+          5.403,
+          5.186,
+          5.195
+        ],
+        "median_first_saved_seconds": 5.1905
+      }
+    },
+    "speech_detector": {
+      "clips": 92,
+      "same_ranges": 92,
+      "seconds": [
+        5.987,
+        1.161
+      ]
+    },
+    "control_manifest_sha256": "5eace2c3911a018f0dfad92237cedcccd71f262ef633513c5ebbbf1b446cd8ad",
+    "control": {
+      "wav": 92,
+      "reference_words": 1001,
+      "before": {
+        "word_errors": 177,
+        "word_error_breakdown": {
+          "substitutions": 56,
+          "deletions": 69,
+          "insertions": 52
+        },
+        "hallucinated_words": 0,
+        "numeric_tokens": {
+          "missed": 9,
+          "extra": 7
+        },
+        "negations": {
+          "missed": 3,
+          "extra": 2
+        }
+      },
+      "after": {
+        "word_errors": 175,
+        "word_error_breakdown": {
+          "substitutions": 55,
+          "deletions": 67,
+          "insertions": 53
+        },
+        "hallucinated_words": 0,
+        "numeric_tokens": {
+          "missed": 9,
+          "extra": 7
+        },
+        "negations": {
+          "missed": 3,
+          "extra": 2
+        }
+      },
+      "changed_text": 3,
+      "identical_segments": 89
+    },
+    "control_by_subset": {
+      "modeled_room_6db": {
+        "wav": 24,
+        "words": 260,
+        "word_errors": [
+          64,
+          64
+        ]
+      },
+      "openstt_lectures": {
+        "wav": 24,
+        "words": 260,
+        "word_errors": [
+          42,
+          42
+        ]
+      },
+      "mtedx_public_talks": {
+        "wav": 18,
+        "words": 331,
+        "word_errors": [
+          53,
+          53
+        ]
+      },
+      "golos_farfield": {
+        "wav": 24,
+        "words": 150,
+        "word_errors": [
+          18,
+          16
+        ]
+      },
+      "no_speech": {
+        "wav": 2,
+        "words": 0,
+        "word_errors": [
+          0,
+          0
+        ]
+      }
+    },
+    "new_golos": {
+      "wav": 15,
+      "reference_words": 122,
+      "before": {
+        "word_errors": 19,
+        "word_error_breakdown": {
+          "substitutions": 13,
+          "deletions": 6,
+          "insertions": 0
+        },
+        "hallucinated_words": 0,
+        "numeric_tokens": {
+          "missed": 10,
+          "extra": 11
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "after": {
+        "word_errors": 15,
+        "word_error_breakdown": {
+          "substitutions": 12,
+          "deletions": 2,
+          "insertions": 1
+        },
+        "hallucinated_words": 0,
+        "numeric_tokens": {
+          "missed": 10,
+          "extra": 11
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "changed_text": 5,
+      "identical_segments": 10,
+      "changed_ids": [
+        "golos-0170",
+        "golos-0171",
+        "golos-0290",
+        "golos-0560",
+        "golos-0977"
+      ],
+      "worse_ids": []
+    },
+    "new_openstt": {
+      "wav": 3,
+      "reference_words": 28,
+      "before": {
+        "word_errors": 5,
+        "word_error_breakdown": {
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 2
+        },
+        "hallucinated_words": 0,
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 1
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "after": {
+        "word_errors": 5,
+        "word_error_breakdown": {
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 2
+        },
+        "hallucinated_words": 0,
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 1
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "changed_text": 0,
+      "identical_segments": 3
+    },
+    "esc50_sets": [
+      {
+        "wav": 8,
+        "reference_words": 0,
+        "before": {
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "after": {
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "changed_text": 0,
+        "identical_segments": 8
+      },
+      {
+        "wav": 16,
+        "reference_words": 0,
+        "before": {
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "after": {
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "changed_text": 0,
+        "identical_segments": 16
+      }
+    ],
+    "recovery": [
+      {
+        "mode": "resume",
+        "calls": [
+          377472,
+          57472
+        ],
+        "first_saved": 3,
+        "segments": 10,
+        "frames": 665472,
+        "seconds": 5.7313
+      },
+      {
+        "mode": "reuse",
+        "calls": [],
+        "first_saved": 3,
+        "segments": 10,
+        "frames": 665472,
+        "seconds": 0.0316
+      }
+    ]
+  },
+  "android": {
+    "runtime": "Android Java, ONNX Runtime JNI, JVM на Mac M2",
+    "baseline": "7bf5ef88ff949e88704eef43a4c25adb820ffafd",
+    "candidate": "42f310700bc4988a43c6fb8b947fffa86a75f81a",
+    "control": {
+      "wav": 99,
+      "reference_words": 1110,
+      "before": {
+        "word_errors": 171,
+        "word_error_breakdown": {
+          "substitutions": 66,
+          "deletions": 35,
+          "insertions": 70
+        },
+        "hallucinated_words": 0,
+        "numeric_tokens": {
+          "missed": 10,
+          "extra": 8
+        },
+        "negations": {
+          "missed": 4,
+          "extra": 1
+        }
+      },
+      "after": {
+        "word_errors": 171,
+        "word_error_breakdown": {
+          "substitutions": 66,
+          "deletions": 35,
+          "insertions": 70
+        },
+        "hallucinated_words": 0,
+        "numeric_tokens": {
+          "missed": 10,
+          "extra": 8
+        },
+        "negations": {
+          "missed": 4,
+          "extra": 1
+        }
+      },
+      "changed_text": 0,
+      "identical_segments": 99
+    },
+    "control_sources": {
+      "PhoneGigaAm": "bd2d9cc537d4e11a3b1d292dddb98a43944c5ecbba61d84b4498caf385035c76",
+      "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+      "PhoneSpeechWindow": "fee15485fa144073838e8d50e4506bc00d04ece65d7af474da9720f9ba6b16f4",
+      "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+      "PhoneCtc": "d9e67f48deb599fa2a1207f2784397eebcb2187e90f2a35a85889bf1c4af999f"
+    },
+    "gap_probe": {
+      "wav_sha256": "b961a237219d9d86d10919a7b437e50808100e8c3146a18ca01c283c50684e6f",
+      "words": 12,
+      "primary_calls": [
+        2,
+        1
+      ],
+      "equal_segments": true
+    },
+    "short_speech": {
+      "wav": 52,
+      "reference_words": 123,
+      "before": {
+        "word_errors": 47,
+        "word_error_breakdown": {
+          "substitutions": 27,
+          "deletions": 7,
+          "insertions": 13
+        },
+        "hallucinated_words": 0,
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 1
+        },
+        "negations": {
+          "missed": 11,
+          "extra": 0
+        }
+      },
+      "after": {
+        "word_errors": 47,
+        "word_error_breakdown": {
+          "substitutions": 27,
+          "deletions": 7,
+          "insertions": 13
+        },
+        "hallucinated_words": 0,
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 1
+        },
+        "negations": {
+          "missed": 11,
+          "extra": 0
+        }
+      },
+      "changed_text": 0,
+      "identical_segments": 52
+    },
+    "target_word_hits": {
+      "не": [
+        19,
+        8,
+        8
+      ],
+      "три": [
+        19,
+        16,
+        16
+      ],
+      "да": [
+        14,
+        8,
+        8
+      ]
+    },
+    "short_manifest_sha256": "44001f99db189913e15cc8fc0c9a0008f3b16594bb5527e489272d953cea08a4",
+    "noise": {
+      "wav": 24,
+      "reference_words": 0,
+      "before": {
+        "word_errors": 0,
+        "word_error_breakdown": {
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0
+        },
+        "hallucinated_words": 7,
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "after": {
+        "word_errors": 0,
+        "word_error_breakdown": {
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0
+        },
+        "hallucinated_words": 2,
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "changed_text": 5,
+      "identical_segments": 19
+    },
+    "false_words_after": {
+      "esc50-3-rain": "а.",
+      "esc50-3-vacuum_cleaner": "Да."
+    },
+    "noise_before_after": [
+      [
+        3,
+        4
+      ],
+      [
+        0,
+        2
+      ]
+    ],
+    "rechecks_noise": 5,
+    "rechecks_speech_control": 0
+  },
+  "tests": [
+    {
+      "file": "test_power_budget.py",
+      "code": 0,
+      "tests": 5
+    },
+    {
+      "file": "test_speech_gate.py",
+      "code": 0,
+      "tests": 6
+    },
+    {
+      "file": "test_asr_pipeline.py",
+      "code": 0,
+      "tests": 8
+    },
+    {
+      "file": "test_qwen_pipeline.py",
+      "code": 0,
+      "tests": 5
+    },
+    {
+      "file": "test_asr_guard.py",
+      "code": 0,
+      "tests": 10
+    },
+    {
+      "file": "test_asr_improvements.py",
+      "code": 0,
+      "tests": 23
+    },
+    {
+      "file": "test_beam_alignment.py",
+      "code": 0,
+      "tests": 6
+    },
+    {
+      "file": "test_quality_refinement.py",
+      "code": 0,
+      "tests": 8
+    },
+    {
+      "file": "test_asr_units.py",
+      "code": 0,
+      "tests": 3
+    },
+    {
+      "file": "test_term_hints.py",
+      "code": 0,
+      "tests": 6
+    },
+    {
+      "file": "test_asr_evaluation.py",
+      "code": 0,
+      "tests": 7
+    },
+    {
+      "file": "test_context_review.py",
+      "code": 0,
+      "tests": 13
+    },
+    {
+      "file": "test_stock_speech.py",
+      "code": 0,
+      "tests": 5
+    }
+  ],
+  "revisions": {
+    "Golos": "c93949f7140beef4adc404e7b54841e957f81c54",
+    "ESC-50": "33c8ce9eb2cf0b1c2f8bcf322eb349b6be34dbb6"
+  },
+  "public_cases": [
+    {
+      "id": "golos-0170",
+      "corpus": "Golos",
+      "source_id": 170,
+      "set": "golos_new_units",
+      "source_sha256": "5a66e1369a09e1016b378f6d61f735d48f7f094e367659059250f5a383f53861",
+      "reference_sha256": "84b1d3b84ed1bedb59de59e7faeafc6ab1586be299424aaf74489929cbdecfea",
+      "wav_sha256": "4ecfbdd170d6b4efc3ed22d6966190b10a10c82e7df3727c54dd06ebc5a88da4"
+    },
+    {
+      "id": "golos-0171",
+      "corpus": "Golos",
+      "source_id": 171,
+      "set": "golos_new_units",
+      "source_sha256": "97a2f33dde3c75758ffb91d92a454966cb7ff48282dab4241370129afa23b923",
+      "reference_sha256": "ce5990a140e445cc076dc76740434780c4dd1f968488c7a2c3eaa7e8c67ef115",
+      "wav_sha256": "04660bdf265c6d3c81fd805bf64d5254f54b09e686c7669af77288849890c38b"
+    },
+    {
+      "id": "golos-0195",
+      "corpus": "Golos",
+      "source_id": 195,
+      "set": "golos_new_units",
+      "source_sha256": "b6a31ce6b9eaccfe508d891171e903328f9d0f2c0f4e5230ad5d7b8fef8d4c8a",
+      "reference_sha256": "f8c839c3b4130e5cbd5593fff1bf9da9a26e105567e14d4c9a786ac353581f08",
+      "wav_sha256": "3b4212b5f726fd97bf36058dd2cd7e5bf93456a1c16dbdcaaa4f2ae4f378f733"
+    },
+    {
+      "id": "golos-0240",
+      "corpus": "Golos",
+      "source_id": 240,
+      "set": "golos_new_units",
+      "source_sha256": "42f350863e2e6d367c6906e47e6184a51ea43593da82eddefcc26e2409d6a5b9",
+      "reference_sha256": "1033f5a94022f1a7e5bb9befd5095aa3ade55d385ea45e74f664ddbb91d8827d",
+      "wav_sha256": "13f21a733aad7a72de34f1dff224ec54a6325fb987eb73d1dbdf4ea9f3cca600"
+    },
+    {
+      "id": "golos-0290",
+      "corpus": "Golos",
+      "source_id": 290,
+      "set": "golos_new_units",
+      "source_sha256": "4d6080bb56c27588174c5a625f80fc17d334625cf0c5cc2fa91623cdb0d074bd",
+      "reference_sha256": "f3de8b166e1bcd8c24e45453f344e10faa7c85ba83c025d8d0fa31f835ef9cfb",
+      "wav_sha256": "fa224f5777c10c52d5058c1447eac7c41d9e52771ac5d427e4f0deaa96402d52"
+    },
+    {
+      "id": "golos-0335",
+      "corpus": "Golos",
+      "source_id": 335,
+      "set": "golos_new_units",
+      "source_sha256": "49624febad77b768136bec787e822d558e1eecadb0f869cc1083e48f9fe1c9fe",
+      "reference_sha256": "4338538682b71024bdda12743f1696a1a0000482f7f8a6c0ea959e6b64a010b1",
+      "wav_sha256": "923132b306710d6329c098e83dee728c10cafa86ba06b68b89701a51dbc6de90"
+    },
+    {
+      "id": "golos-0520",
+      "corpus": "Golos",
+      "source_id": 520,
+      "set": "golos_new_units",
+      "source_sha256": "3dc3498a756c9f9f9398e87677a381ce9c39641976e09d14c297226732f3029f",
+      "reference_sha256": "e2e1c7e87af361a94fb034addc41e6ca583facfb71ac14e5ce94499d8cad1b92",
+      "wav_sha256": "7ae10c3f29c2049af846b235ba3abafa3d1cd94821e2fcc8d5847a9a5cca4b4d"
+    },
+    {
+      "id": "golos-0560",
+      "corpus": "Golos",
+      "source_id": 560,
+      "set": "golos_new_units",
+      "source_sha256": "9d59093c5b5142503100535897e4f5baa1c47b6e240b51675c133463c4b0a90e",
+      "reference_sha256": "dbe2ca8236ccaad4b337efd710cb2061df0fcdf494c1d61797144330bdda6905",
+      "wav_sha256": "f9d830d771c689dd5b8792ec84e9824887fa6f10cba19bf4815005bf5bd4adaa"
+    },
+    {
+      "id": "golos-0654",
+      "corpus": "Golos",
+      "source_id": 654,
+      "set": "golos_new_units",
+      "source_sha256": "0ed069e88e3f29d0cf126c1bdbb5141f87a020448e6bed096e15bb56daa8bda4",
+      "reference_sha256": "543bf410814ed49ce492ec722d27472ca270a473e253a07503d60120ef415dc2",
+      "wav_sha256": "3518e719c4c55e97b16b0df8893a8421b68e0308c2c6c899ea202c15b2948f86"
+    },
+    {
+      "id": "golos-0807",
+      "corpus": "Golos",
+      "source_id": 807,
+      "set": "golos_new_units",
+      "source_sha256": "3d0c5d1678719e9688710bbc693072646b71cd7d4d447dc0e1098212e4b25048",
+      "reference_sha256": "284e87bc8ab91b724a3fb417e0bdb808d93749d0373059a4ba972c5720533aca",
+      "wav_sha256": "3700785218de64c59565baca0b9aeda6340ca9e07239a485510e713ec89c5d6c"
+    },
+    {
+      "id": "golos-0903",
+      "corpus": "Golos",
+      "source_id": 903,
+      "set": "golos_new_units",
+      "source_sha256": "66a8aaf88bb99befbeb260d1025dc688ff523930424f7144fd7448c358c4c892",
+      "reference_sha256": "9c40751dbe7a2b274840f59a70924f432022b86bbdeb2f3af45b66778c241b2a",
+      "wav_sha256": "a73caab130919ef6ae7805b5cbef37d8b99eb9d155337b35c1e617ed3d671fe2"
+    },
+    {
+      "id": "golos-0976",
+      "corpus": "Golos",
+      "source_id": 976,
+      "set": "golos_new_units",
+      "source_sha256": "79f6e2124cc54bdcb94f86bfade858327d164db938f20440cdc2e746f0d68612",
+      "reference_sha256": "9bf1470cc5ae3d6791c089e14555e7d2e006bd190a7c7927bcc270d6e266d80f",
+      "wav_sha256": "e8383e5fdbab365462274e9d192c3e873de123df06473f693a621625b3a76210"
+    },
+    {
+      "id": "golos-0977",
+      "corpus": "Golos",
+      "source_id": 977,
+      "set": "golos_new_units",
+      "source_sha256": "49487ad48a97e37f12cd425d4b926fe1dddb68f639c9861188f6aae5196ef39e",
+      "reference_sha256": "4b43115ab6a4c385405797877e842ffb114f1095aefcdde6216a4d506df21667",
+      "wav_sha256": "07ed486b68abc312d686404f91720c607cb4839daf588b979496b54f26fc1deb"
+    },
+    {
+      "id": "golos-0994",
+      "corpus": "Golos",
+      "source_id": 994,
+      "set": "golos_new_units",
+      "source_sha256": "2f4a4573e07f338083e6e97b8e40f722b5bc15346899d9008336b8a96203a3df",
+      "reference_sha256": "2e2d96627dac121db04394ef4ff015fca17f9bc78cc714a53229e3d8950634f2",
+      "wav_sha256": "3311b284b4f4d166bec5128ca4a0f505c155507c1f731682925f0675786b843a"
+    },
+    {
+      "id": "golos-1031",
+      "corpus": "Golos",
+      "source_id": 1031,
+      "set": "golos_new_units",
+      "source_sha256": "72b77720c996c0f3f3e9aec1195a9b129d87bd0a8e7e4f67ea7df997b694813d",
+      "reference_sha256": "e4160c2e9834db8dca3d9eaffd5e412c2bb6741de7635e738e71b61fcea27c84",
+      "wav_sha256": "038f94a14e13e7c493fba2b8fff005d649bdcf818dc2551482fe99077ab09470"
+    },
+    {
+      "id": "esc50-keyboard_typing",
+      "corpus": "ESC-50",
+      "source_id": "5-205090-A-32.wav",
+      "set": "esc_diagnostic",
+      "source_sha256": "5a8f193f14fa649248b1d645ce6dae97f5c105015b3351ffaf86406e998c36d3",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "f72dc926f75b55a39b87ef2987f88613981c253bde641f3165dc8932f4840b72"
+    },
+    {
+      "id": "esc50-mouse_click",
+      "corpus": "ESC-50",
+      "source_id": "5-219318-A-31.wav",
+      "set": "esc_diagnostic",
+      "source_sha256": "b98ad73cbc140b63e7b6bb37aab8974e2f60a357c07038ffdbacef1048fab8e6",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "a93b65c87a90f59c78eba10b0d1b9da4d293089d126f8967ba021c3971280865"
+    },
+    {
+      "id": "esc50-rain",
+      "corpus": "ESC-50",
+      "source_id": "5-181766-A-10.wav",
+      "set": "esc_diagnostic",
+      "source_sha256": "608fcc0bef32512e2a984c7d3d2cac8ea161f6337ec0056850a6d34f07f8db35",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "1e6956ae83df3901fd603010cb5a0bbe8a788765875eb879522a999c680dac8f"
+    },
+    {
+      "id": "esc50-clock_tick",
+      "corpus": "ESC-50",
+      "source_id": "5-201194-A-38.wav",
+      "set": "esc_diagnostic",
+      "source_sha256": "61599b9d388e887b0318d4b008ca3f545b28f327ba3ecb12afdff7a128162c28",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "963a23279417fd9ed59961950223a7d34e1a1958f82205a58899fc263ba5c956"
+    },
+    {
+      "id": "esc50-footsteps",
+      "corpus": "ESC-50",
+      "source_id": "5-234263-A-25.wav",
+      "set": "esc_diagnostic",
+      "source_sha256": "b83813a8a07ac187c280204b4ac4a015c0cff5a84bf5a7b7e3aa03b6e726910d",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "ced5e1a2bfdf7b080131a34e92f7735b1975277fa850d78c7b8d5dd1d7629822"
+    },
+    {
+      "id": "esc50-vacuum_cleaner",
+      "corpus": "ESC-50",
+      "source_id": "5-182007-A-36.wav",
+      "set": "esc_diagnostic",
+      "source_sha256": "3da75e2e43452c3d1bc595b46a51e7a04bc6be977fc5b11e7adaa5e8e5877b0f",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "5f2bfe93c7f07ab757f9994a4681782ba0f54c452f29ca9647ebd5732bc30f23"
+    },
+    {
+      "id": "esc50-door_wood_knock",
+      "corpus": "ESC-50",
+      "source_id": "5-218980-A-30.wav",
+      "set": "esc_diagnostic",
+      "source_sha256": "c917686cc7048be91d4dec61539344094a01233e649989264187388c9e95f82f",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "e25fe41b63f847de0d73b6f2369909bc585203aecce149eaf3faf43666674a89"
+    },
+    {
+      "id": "esc50-washing_machine",
+      "corpus": "ESC-50",
+      "source_id": "5-141683-A-35.wav",
+      "set": "esc_diagnostic",
+      "source_sha256": "c8ac3bafa369ff4bcfef515f00060c963f4c19d9275ada75edbc8cdb9c1ad591",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "59d47d86905ab911fef384699a8b2b572b68d35d03eb3416b4c092a397301a1a"
+    },
+    {
+      "id": "esc50-3-keyboard_typing",
+      "corpus": "ESC-50",
+      "source_id": "3-125548-A-32.wav",
+      "set": "esc_holdout",
+      "source_sha256": "786c0ab915c44c716dd70971fc8f80f0cc501164423095e3e5c97929b3796f7d",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "7adc7e9c94c49af642ea4db2739de74445877a4b2055e8a0f05d52739cbc3dee"
+    },
+    {
+      "id": "esc50-3-mouse_click",
+      "corpus": "ESC-50",
+      "source_id": "3-155556-A-31.wav",
+      "set": "esc_holdout",
+      "source_sha256": "56000e917f3a0a68d1f1bace969a733e573655c8b9cd55153d0ab38ea63584ee",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "f1e0e528ead328234f3fa8e0dc23ab9c890ed249a90f14eb05d646a9ee00de57"
+    },
+    {
+      "id": "esc50-3-rain",
+      "corpus": "ESC-50",
+      "source_id": "3-132852-A-10.wav",
+      "set": "esc_holdout",
+      "source_sha256": "5d4960883ceabe28c008721ea3b5f5206a6f0234cacd4c1af81dd7594b4d3503",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "81aab8adaa922981f87d75b8fa0fe4845e3ecc7e02a0593769f9197196d78942"
+    },
+    {
+      "id": "esc50-3-clock_tick",
+      "corpus": "ESC-50",
+      "source_id": "3-142593-A-38.wav",
+      "set": "esc_holdout",
+      "source_sha256": "8eb0915dab65e09fd489c3ccac93e620892cb795abe4b16e7a103c5bbc92446b",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "72811a6a996f4bfde9d8e0be926ea3e6aced42ea0b4ccf66d50fe588a586a6db"
+    },
+    {
+      "id": "esc50-3-footsteps",
+      "corpus": "ESC-50",
+      "source_id": "3-103597-A-25.wav",
+      "set": "esc_holdout",
+      "source_sha256": "4d1fca3296291bcb12ca41ebf0a1f7edb2e2c8213cc04d61e8ebb62b98bf5638",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "23a4ade4c8855378af405183494f5c876a6917983507cb946cc78e862a509a42"
+    },
+    {
+      "id": "esc50-3-vacuum_cleaner",
+      "corpus": "ESC-50",
+      "source_id": "3-152020-A-36.wav",
+      "set": "esc_holdout",
+      "source_sha256": "7ddbf7a38dc48773279a392aa8914c313481422b21ccbb221bb2f8321f39f06c",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "7d5a287f0124deef341b70fb37950137330074c05175a44c2f817dd7542d12f6"
+    },
+    {
+      "id": "esc50-3-door_wood_knock",
+      "corpus": "ESC-50",
+      "source_id": "3-144510-A-30.wav",
+      "set": "esc_holdout",
+      "source_sha256": "c7fbb4cbda9d1f2950bf205212115a372b840382228c3baeb6451ae83366ee34",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "44a17c17ae77e89b1ebfbd9e7dcd969cd434598ddf1a502293e652a7265d5f2b"
+    },
+    {
+      "id": "esc50-3-washing_machine",
+      "corpus": "ESC-50",
+      "source_id": "3-135469-A-35.wav",
+      "set": "esc_holdout",
+      "source_sha256": "bb1ff8796acc0e66158abc5dfb1c97d6046eaf10eba825258486ef67c5a65703",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "dc477bf6a3644fb881961cbf44242ee21e8cb34535180f0572bd63ef7c260aa3"
+    },
+    {
+      "id": "esc50-4-keyboard_typing",
+      "corpus": "ESC-50",
+      "source_id": "4-158653-A-32.wav",
+      "set": "esc_holdout",
+      "source_sha256": "125691734898f9db80100600cb63a65203ac0948b4a234e136f0e369bffe3b6b",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "121ca3235521a043ead10c997dc27255db23c4771f459236bdf8e71ceedd0489"
+    },
+    {
+      "id": "esc50-4-mouse_click",
+      "corpus": "ESC-50",
+      "source_id": "4-192068-A-31.wav",
+      "set": "esc_holdout",
+      "source_sha256": "fad199981761a1aa7392db104c045f6091986c26f549f6ef59d3f12425fd13dd",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "2c8c84794840b5024e2f9f09731c43a7849a0dca56aa73a42f8e3c4cb97d75b1"
+    },
+    {
+      "id": "esc50-4-rain",
+      "corpus": "ESC-50",
+      "source_id": "4-160999-A-10.wav",
+      "set": "esc_holdout",
+      "source_sha256": "c85ef3d5cbd86ba80a7f089277d66f165e36b8dcf8070643ddc7ec73eb4f5dcb",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "6497599c7d6c03f4d677f3ef4d056b0f91da34f3ea387f7d368c2d87086a5450"
+    },
+    {
+      "id": "esc50-4-clock_tick",
+      "corpus": "ESC-50",
+      "source_id": "4-175945-A-38.wav",
+      "set": "esc_holdout",
+      "source_sha256": "e21894f4cd41eeb1423fe7d6eadda4dfd32cbd686c639bbadbf3ab3bbb90bc28",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "d943b6a53e118f4a2d12061216abc7cfc8c57aa5b974057218128edd23c70f4c"
+    },
+    {
+      "id": "esc50-4-footsteps",
+      "corpus": "ESC-50",
+      "source_id": "4-117627-A-25.wav",
+      "set": "esc_holdout",
+      "source_sha256": "bee53dc6ab282257b4a70a852d6235104ec74bdb380f0a83b706f1ab88b356ca",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "a64fbe550913bf3bf50a0969fbc0a4acdab172e508ae3f496d050d3253950e38"
+    },
+    {
+      "id": "esc50-4-vacuum_cleaner",
+      "corpus": "ESC-50",
+      "source_id": "4-146200-A-36.wav",
+      "set": "esc_holdout",
+      "source_sha256": "41db87e753f13f238ba7f8ffca60421d08f8ab3e315c4d79f0557caed80ee9d8",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "ba473bc9fe0f4b3bbd9831a2ed9e08e60a3cb20f0c105e698cb3218fa6eab180"
+    },
+    {
+      "id": "esc50-4-door_wood_knock",
+      "corpus": "ESC-50",
+      "source_id": "4-182034-A-30.wav",
+      "set": "esc_holdout",
+      "source_sha256": "8548390103bfa9097087ea552b42e6b493697f9fbe0b9d78a1aefdbf8b18219f",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "928c17264c5ef02ccc7a855544c559343c62bd94a44d8e861284e809a81d9ccb"
+    },
+    {
+      "id": "esc50-4-washing_machine",
+      "corpus": "ESC-50",
+      "source_id": "4-218199-A-35.wav",
+      "set": "esc_holdout",
+      "source_sha256": "02b6d846aff2d55f6372e5cebd1056db799b8a2487953d774d537bfa3bde7ddd",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "49ac402715787ae718c3345368755326b7b130c80954e0f487f925400bd6a9c8"
+    }
+  ]
+}
