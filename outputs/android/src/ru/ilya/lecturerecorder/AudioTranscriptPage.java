@@ -198,7 +198,8 @@ final class AudioTranscriptPage extends LinearLayout {
 
     private void addAudioPanel(LinearLayout audio) {
         waveform = new Waveform(activity);
-        audio.addView(waveform, new LinearLayout.LayoutParams(-1, dp(landscape ? 54 : 94)));
+        boolean largeText = getResources().getConfiguration().fontScale > 1.25f;
+        audio.addView(waveform, new LinearLayout.LayoutParams(-1, dp(landscape || largeText ? 58 : 94)));
         waveStatus = text("", 13, MUTED);
         audio.addView(waveStatus);
 
@@ -286,7 +287,7 @@ final class AudioTranscriptPage extends LinearLayout {
     private void addTranscriptPanel(LinearLayout box) {
         LinearLayout header = new LinearLayout(activity);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView heading = text("Расшифровка", 18, TEXT);
+        TextView heading = text("Текст", 18, TEXT);
         heading.setTypeface(Typeface.DEFAULT_BOLD);
         header.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
         transcriptSpinner = new ProgressBar(activity);
@@ -625,8 +626,9 @@ final class AudioTranscriptPage extends LinearLayout {
     private void updateVisibleTranscript() {
         boolean filtered = reviewFilter.isChecked();
         transcript.replace(filtered ? reviewRows : transcriptRows);
-        reviewFilter.setText(filtered ? "Только сомнительные (" + reviewRows.size() + ") · снять для полного текста"
-                : "Показать сомнительные (" + reviewRows.size() + ")");
+        String filterLabel = "Сомнительные (" + reviewRows.size() + ")";
+        reviewFilter.setText(filterLabel);
+        reviewFilter.setContentDescription("Показать сомнительные (" + reviewRows.size() + ")");
         reviewNavigation.setVisibility(filtered && !reviewRows.isEmpty() ? View.VISIBLE : View.GONE);
         updateReviewNavigation();
     }
@@ -939,6 +941,8 @@ final class AudioTranscriptPage extends LinearLayout {
             setGravity(Gravity.TOP);
             setPadding(0, dp(10), 0, dp(10));
             time.setTextSize(13);
+            time.setSingleLine(true);
+            time.setAutoSizeTextTypeUniformWithConfiguration(8, 13, 1, android.util.TypedValue.COMPLEX_UNIT_SP);
             time.setTextColor(ACCENT);
             time.setTypeface(Typeface.MONOSPACE);
             time.setBackground(StudioStyle.control(activity, StudioStyle.ACTIVE, 12));
@@ -949,8 +953,10 @@ final class AudioTranscriptPage extends LinearLayout {
             badges.addView(time, new LinearLayout.LayoutParams(-1, dp(48)));
             review.setGravity(Gravity.CENTER);
             review.setPadding(0, dp(3), 0, 0);
-            badges.addView(review, new LinearLayout.LayoutParams(-1, -2));
-            LinearLayout.LayoutParams badge = new LinearLayout.LayoutParams(dp(68), -2);
+            review.setSingleLine(true);
+            review.setAutoSizeTextTypeUniformWithConfiguration(8, 10, 1, android.util.TypedValue.COMPLEX_UNIT_SP);
+            badges.addView(review, new LinearLayout.LayoutParams(-1, dp(22)));
+            LinearLayout.LayoutParams badge = new LinearLayout.LayoutParams(dp(74), -2);
             badge.rightMargin = dp(8);
             addView(badges, badge);
             words.setLineSpacing(dp(3), 1);
