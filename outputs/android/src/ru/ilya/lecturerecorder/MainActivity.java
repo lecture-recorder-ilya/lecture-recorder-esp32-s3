@@ -123,7 +123,7 @@ public class MainActivity extends Activity {
    tabs[i].setBackground(StudioStyle.control(this,active?StudioStyle.ACTIVE:Color.TRANSPARENT,16));
    StudioStyle.tabIcon(tabs[i],i,color);
   }
-  meter.setRecording(index==0&&CaptureService.recording);
+  meter.setRecording(CaptureService.recording);
   audioPage.setActive(resumed&&index==AUDIO_PAGE);
   if(index==0&&resumed)refreshConnection();
   if(index==SETTINGS_PAGE)refreshSyncSettings(CaptureService.recording);
@@ -633,7 +633,7 @@ public class MainActivity extends Activity {
   }
   recordAction.setEnabled(active||firmwareQuery==null);
   transport.setEnabled(!active);
-  meter.setRecording(active&&selectedPage==0);
+  meter.setRecording(active);
   if(selectedPage==SETTINGS_PAGE)refreshSyncSettings(active);
   mireaProfileStatus.setText(lessonFlow.profileLabel());
   lessonFlow.refresh(active);
