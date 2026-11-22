@@ -7,6 +7,7 @@ import threading
 import lesson_schedule
 from asr_policy import selected_model
 from transcript_cache import WHISPER_ENGINE
+from power_budget import DEFAULT_ECONOMICAL
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -24,7 +25,7 @@ configuration = json.loads(CONFIG.read_text()) if CONFIG.exists() else {}
 auto = configuration.get('auto', True)
 speech = configuration.get('speech', 'auto')
 paused = configuration.get('paused', False)
-economical = configuration.get('economical', True)
+economical = configuration.get('economical', DEFAULT_ECONOMICAL)
 
 def save_settings():
     write(CONFIG, {'auto':auto, 'speech':speech, 'paused':paused, 'economical':economical})

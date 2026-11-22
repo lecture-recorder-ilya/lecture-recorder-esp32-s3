@@ -4,16 +4,18 @@ import time
 from pathlib import Path
 
 CONFIG = Path(__file__).resolve().parents[2] / 'work/ai-settings.json'
+DEFAULT_ECONOMICAL = False
+ECONOMICAL_DUTY = .65
 
 def economical():
     try:
-        return json.loads(CONFIG.read_text()).get('economical', True)
+        return json.loads(CONFIG.read_text()).get('economical', DEFAULT_ECONOMICAL)
     except (OSError, ValueError):
-        return True
+        return DEFAULT_ECONOMICAL
 
 class Budget:
     def __init__(self, synchronize=lambda: None, clock=time.monotonic,
-                 sleep=time.sleep, enabled=economical, burst=1.0, duty=.2):
+                 sleep=time.sleep, enabled=economical, burst=1.0, duty=ECONOMICAL_DUTY):
         self.synchronize, self.clock, self.sleep, self.enabled = synchronize, clock, sleep, enabled
         self.burst, self.duty = burst, duty
         self.started = clock()
