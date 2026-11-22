@@ -20,8 +20,9 @@ final class PhoneCtc {
         for (int t = 0; t < steps; t++) {
             float[] scores = logits[t];
             Arrays.fill(labels, -1);
+            float blankFloor = scores[blank] - 7;
             for (int id = 1; id < scores.length; id++) {
-                if (id == blank) continue;
+                if (id == blank || scores[id] < blankFloor) continue;
                 for (int k = 0; k < labels.length; k++) {
                     if (labels[k] == -1 || scores[id] > scores[labels[k]]) {
                         System.arraycopy(labels, k, labels, k + 1, labels.length - k - 1);
@@ -30,18 +31,21 @@ final class PhoneCtc {
                     }
                 }
             }
+            // A label below the blank threshold cannot be extended from any path.
+            float floor = labels[0] < 0 ? Float.POSITIVE_INFINITY
+                    : Math.max(scores[blank], scores[labels[0]]) - 7;
             Map<String, Path> expanded = new HashMap<>();
             for (Path path : beam) {
                 Path same = expanded.computeIfAbsent(path.tokens, Path::new);
                 Emission best = path.best();
-                same.blank.add(path.total() + scores[blank], best.viterbi + scores[blank], best.trace);
+                same.blank.add(path.rank + scores[blank], best.viterbi + scores[blank], best.trace);
                 int last = path.tokens.isEmpty() ? -1 : path.tokens.charAt(path.tokens.length() - 1);
                 if (last >= 0) {
                     same.spoken.add(path.spoken.total + scores[last], path.spoken.viterbi + scores[last], path.spoken.trace);
                 }
                 for (int id : labels) {
-                    if (id < 0 || scores[id] < Math.max(scores[blank], scores[labels[0]]) - 7) break;
-                    double source = id == last ? path.blank.total : path.total();
+                    if (id < 0 || scores[id] < floor) break;
+                    double source = id == last ? path.blank.total : path.rank;
                     if (source == EMPTY) continue;
                     Emission previous = id == last ? path.blank : best;
                     String key = path.tokens + (char) id;
@@ -52,8 +56,9 @@ final class PhoneCtc {
                 }
             }
             beam = new ArrayList<>(expanded.values());
+            for (Path path : beam) path.rank = sum(path.blank.total, path.spoken.total);
             beam.sort((a, b) -> {
-                int rank = Double.compare(b.total(), a.total());
+                int rank = Double.compare(b.rank, a.rank);
                 return rank != 0 ? rank : a.tokens.compareTo(b.tokens);
             });
             if (beam.size() > WIDTH) beam.subList(WIDTH, beam.size()).clear();
@@ -101,7 +106,7 @@ final class PhoneCtc {
         final Emission spoken = new Emission();
 
         Path(String tokens) { this.tokens = tokens; }
-        double total() { return sum(blank.total, spoken.total); }
+        double rank;
         Emission best() { return blank.viterbi > spoken.viterbi ? blank : spoken; }
     }
 

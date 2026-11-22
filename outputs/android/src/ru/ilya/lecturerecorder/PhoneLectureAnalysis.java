@@ -55,16 +55,29 @@ final class PhoneLectureAnalysis {
                 recognizer = "vosk-small-ru";
             }
             job.check();
+            if (LectureNotes.hasSameFinishedTranscript(document, segments, recognizer)) {
+                PhoneSummaryProgress.clear(context, name);
+                return;
+            }
             document = LectureNotes.saveTranscript(context, name, title, document, segments, recognizer);
         }
 
         JSONObject report = document.getJSONObject("report");
-        if (!report.optBoolean(LectureNotes.SUMMARY_PENDING)) return;
-        job.check();
-        File text = PhoneModels.text(context, job);
-        summarize(context, job, text, document);
-        job.check();
-        LectureNotes.saveSummary(context, document);
+        if (report.optBoolean(LectureNotes.SUMMARY_PENDING)) {
+            job.check();
+            JSONArray segments = report.getJSONArray("segments");
+            PhoneSummaryProgress progress = PhoneSummaryProgress.open(context, name, segments);
+            if (progress.next < segments.length()) {
+                File model = PhoneModels.text(context, job);
+                summarize(context, job, model, document, segments, progress);
+            }
+            job.check();
+            if (progress.summary.length() == 0 && progress.homework.length() == 0)
+                throw new IOException("Не нашёл уверенных пунктов. Расшифровка сохранена");
+            report.put("summary", progress.summary).put("summary_evidence", progress.sources).put("homework", progress.homework);
+            LectureNotes.saveSummary(context, document);
+        }
+        PhoneSummaryProgress.clear(context, name);
     }
 
     static JSONArray transcribeVosk(Context context, PhoneAnalysisService.Job job, String name, File speech)
@@ -95,15 +108,8 @@ final class PhoneLectureAnalysis {
         return phrases.finish();
     }
 
-    private static void summarize(Context context, PhoneAnalysisService.Job job, File model, JSONObject document)
-            throws Exception {
-        JSONObject report = document.getJSONObject("report");
-        JSONArray segments = report.getJSONArray("segments");
-        JSONArray summary = new JSONArray();
-        JSONArray sources = new JSONArray();
-        JSONArray homework = new JSONArray();
-        Set<String> points = new HashSet<>();
-        Set<String> tasks = new HashSet<>();
+    private static void summarize(Context context, PhoneAnalysisService.Job job, File model, JSONObject document,
+                                  JSONArray segments, PhoneSummaryProgress progress) throws Exception {
         job.update("Загружаю модель конспекта");
         EngineConfig config = new EngineConfig(model.getPath(), new Backend.CPU(4, null),
                 null, null, 4096, null, context.getCacheDir().getPath());
@@ -115,7 +121,7 @@ final class PhoneLectureAnalysis {
                 String topic = inferTopic(initialized, conversationConfig, job, segments);
                 if (!topic.isEmpty()) LectureNotes.saveTopic(context, document, topic);
             }
-            for (int first = 0; first < segments.length(); ) {
+            for (int first = progress.next; first < segments.length(); ) {
                 job.check();
                 job.update("Составляю конспект · " + (100 * first / segments.length()) + "%");
                 StringBuilder input = new StringBuilder(
@@ -126,33 +132,38 @@ final class PhoneLectureAnalysis {
                         + "Строки с отметкой сомнения пропусти. Других сведений не добавляй. "
                         + "Верни ровно две строки KEY: и TASK: с номерами через запятую. Если оснований нет, оставь пусто.\nФразы:\n");
                 int next = first;
+                boolean canContribute = false;
                 while (next < segments.length() && input.length() < 2200 && next - first < 36) {
                     JSONObject row = segments.getJSONObject(next);
                     input.append(next - first + 1).append(". ");
                     if (row.optBoolean("needs_review")) input.append("[сомнение] ");
+                    else canContribute = true;
                     input.append(JSONObject.quote(row.getString("text"))).append('\n');
                     next++;
                 }
-                try (Conversation conversation = initialized.createConversation(conversationConfig)) {
-                    job.conversation = conversation;
-                    try {
-                        job.check();
-                        Message answer = conversation.sendMessage(input.toString(), Collections.emptyMap(),
-                                null, null, null, 64, new ThinkingConfig(false));
-                        StringBuilder response = new StringBuilder();
-                        for (Content item : answer.getContents().getContents()) {
-                            if (item instanceof Content.Text) response.append(((Content.Text) item).getText());
+                if (canContribute) {
+                    try (Conversation conversation = initialized.createConversation(conversationConfig)) {
+                        job.conversation = conversation;
+                        try {
+                            job.check();
+                            Message answer = conversation.sendMessage(input.toString(), Collections.emptyMap(),
+                                    null, null, null, 64, new ThinkingConfig(false));
+                            StringBuilder response = new StringBuilder();
+                            for (Content item : answer.getContents().getContents()) {
+                                if (item instanceof Content.Text) response.append(((Content.Text) item).getText());
+                            }
+                            job.check();
+                            PhoneSummaryEvidence.add(response.toString(), first, next, segments, progress.summary,
+                                    progress.sources, progress.homework, progress.points, progress.tasks);
+                        } finally {
+                            job.conversation = null;
                         }
-                        PhoneSummaryEvidence.add(response.toString(), first, next, segments, summary, sources, homework, points, tasks);
-                    } finally {
-                        job.conversation = null;
                     }
                 }
+                progress.checkpoint(next);
                 first = next;
             }
         }
-        if (summary.length() == 0 && homework.length() == 0) throw new IOException("Не нашёл уверенных пунктов. Расшифровка сохранена");
-        report.put("summary", summary).put("summary_evidence", sources).put("homework", homework);
     }
 
     private static String inferTopic(Engine engine, ConversationConfig config, PhoneAnalysisService.Job job,

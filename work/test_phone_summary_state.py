@@ -37,6 +37,9 @@ final class BoardPhotos {{
     static void recover(Context context) {{ throw new UnsupportedOperationException(); }}
 }}
 """,
+    "Log.java": """package android.util;
+public final class Log { public static int w(String tag, String message, Throwable error) { return 0; } }
+""",
     "PhoneAnalysisService.java": f"""package {PACKAGE};
 final class PhoneAnalysisService {{
     static final class Job {{
@@ -71,6 +74,7 @@ public final class SummaryStateTest {
     public static void main(String[] args) throws Exception {
         File root = new File(args[0]);
         Context context = new Context(root);
+        checkSummaryCheckpoint(context, args[1].equals("replace"));
         File target = LectureNotes.file(context, NAME, true);
         File mac = LectureNotes.file(context, NAME, false);
         File history = new File(new File(root, "phone-note-history"), NAME);
@@ -164,6 +168,46 @@ public final class SummaryStateTest {
             require(archive(history).equals(Store.read(mac)), "Finishing re-archived or altered the previous result");
             System.out.println("PASS: separate JVM resumed summary from disk and preserved the previous result");
         }
+    }
+
+    private static void checkSummaryCheckpoint(Context context, boolean firstProcess) throws Exception {
+        String name = "lecture-2026-11-23-15-01-00.wav";
+        String quote = "Производная определяет скорость изменения функции.";
+        String task = "К следующей паре решите задачу номер пять";
+        JSONArray rows = new JSONArray()
+                .put(new JSONObject().put("text", quote).put("start", 0).put("end", 4))
+                .put(new JSONObject().put("text", task).put("start", 4).put("end", 7))
+                .put(new JSONObject().put("text", quote).put("start", 7).put("end", 11));
+        PhoneSummaryProgress progress = PhoneSummaryProgress.open(context, name, rows);
+        if (firstProcess) {
+            require(progress.next == 0, "A new summary must start at the beginning");
+            PhoneSummaryEvidence.add("KEY: 1\nTASK: 2", 0, 2, rows, progress.summary,
+                    progress.sources, progress.homework, progress.points, progress.tasks);
+            progress.checkpoint(2);
+            return;
+        }
+        require(progress.next == 2 && progress.summary.length() == 1 && progress.sources.length() == 1,
+                "The new process must recover the cursor and the exact citation");
+        require(progress.homework.length() == 1 && progress.tasks.contains(task), "Homework was not restored");
+        JSONObject finished = new JSONObject().put("report",
+                new JSONObject().put("segments", new JSONArray(rows.toString())).put("summary", progress.summary)
+                .put("asr_engine", "gigaam-v3"));
+        finished.getJSONObject("report").getJSONArray("segments").getJSONObject(0).put("review_key", "original");
+        require(LectureNotes.hasSameFinishedTranscript(finished, rows, "gigaam-v3"),
+                "Identical text and timing should reuse the finished summary");
+        require(!LectureNotes.hasSameFinishedTranscript(finished, rows, "vosk-small-ru"),
+                "A model change must rebuild the summary");
+        PhoneSummaryEvidence.add("KEY: 1", 2, 3, rows, progress.summary,
+                progress.sources, progress.homework, progress.points, progress.tasks);
+        require(progress.summary.length() == 1 && quote.equals(progress.summary.getString(0)),
+                "Resuming must preserve deduplication");
+        rows.getJSONObject(0).put("text", "Отредактированный текст");
+        require(PhoneSummaryProgress.open(context, name, rows).next == 0, "Changed transcript reused a checkpoint");
+        require(!LectureNotes.hasSameFinishedTranscript(finished, rows, "gigaam-v3"),
+                "A changed transcript must rebuild the summary");
+        PhoneSummaryProgress.clear(context, name);
+        require(PhoneSummaryProgress.open(context, name, rows).next == 0, "Finished checkpoint was retained");
+        System.out.println("PASS: summary resumed in a new process with unchanged citations and no duplicates");
     }
 
     private static void checkApprovedAcousticModel(Context context) throws Exception {
@@ -388,6 +432,7 @@ def main():
             [java_bin / "javac", "-encoding", "UTF-8", "-cp", jar, "-d", root,
              SOURCE / "LectureNotes.java", SOURCE / "Store.java", SOURCE / "PhoneSummaryEvidence.java",
              SOURCE / "PhonePhrases.java", SOURCE / "TranscriptEdits.java", SOURCE / "PhoneModels.java",
+             SOURCE / "PhoneSummaryProgress.java",
              *(root / name for name in sources)],
             check=True,
         )

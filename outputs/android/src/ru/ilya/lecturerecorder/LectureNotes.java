@@ -13,6 +13,23 @@ final class LectureNotes {
  static File file(Context c,String name,boolean local){return new File(local?localRoot(c):root(c),name+".json");}
  private static File localRoot(Context c){File f=new File(c.getFilesDir(),"phone-notes");f.mkdirs();return f;}
 
+ static boolean hasSameFinishedTranscript(JSONObject document, JSONArray segments, String recognizer)throws JSONException{
+  if(document==null||segments.length()==0)return false;
+  JSONObject report=document.getJSONObject("report");
+  if(report.optBoolean(SUMMARY_PENDING)||report.optBoolean("draft")
+    ||!recognizer.equals(report.optString("asr_engine")))return false;
+  JSONArray summary=report.optJSONArray("summary"),homework=report.optJSONArray("homework");
+  if((summary==null||summary.length()==0)&&(homework==null||homework.length()==0))return false;
+  JSONArray saved=report.optJSONArray("segments");
+  if(saved==null||saved.length()!=segments.length())return false;
+  for(int i=0;i<saved.length();i++){
+   JSONObject row=new JSONObject(saved.getJSONObject(i).toString());
+   row.remove("review_key");
+   if(!row.toString().equals(segments.getJSONObject(i).toString()))return false;
+  }
+  return true;
+ }
+
  static JSONObject saveTranscript(Context c,String name,String title,JSONObject document,
                                   JSONArray segments,String recognizer)throws Exception{
   if(segments.length()==0)throw new IOException("В записи не удалось распознать русскую речь");

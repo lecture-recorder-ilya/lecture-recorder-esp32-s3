@@ -73,7 +73,7 @@ final class PhoneGigaAm {
                         double first = start / (double) RATE, last = end / (double) RATE;
                         double offset = left / (double) RATE;
                         JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);
-                        if (level < .05f || weak(words)) {
+                        if (words.length() > 1 && (level < .05f || weak(words))) {
                             job.check();
                             float[] clean = PhoneSpeechWindow.clean(raw);
                             JSONArray alternate = recognize(environment, frontend, acoustic, clean, tokens, offset, first, last, true);
