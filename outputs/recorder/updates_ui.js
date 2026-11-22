@@ -1,6 +1,7 @@
 (() => {
  const box=document.createElement('section');box.className='card settings-card';
  const title=document.createElement('h2');title.textContent='Обновления';
+ const installed=document.createElement('p');installed.className='muted';installed.hidden=true;
  const message=document.createElement('p');message.className='muted';message.setAttribute('role','status');
  const authMessage=document.createElement('p');authMessage.className='muted';
  const code=document.createElement('p');code.style.cssText='font-size:24px;font-weight:700;letter-spacing:3px;user-select:all';
@@ -15,10 +16,12 @@
  async function action(route){try{await post(route);await poll(false)}catch(error){authMessage.textContent=error.message}}
  login.onclick=()=>action('/update-auth/start');cancel.onclick=()=>action('/update-auth/cancel');logout.onclick=()=>action('/update-auth/disconnect');
  button.onclick=async()=>{button.disabled=true;try{await post('/check-updates');message.textContent='Проверяю…'}catch(error){message.textContent='Не удалось проверить: '+error.message}finally{button.disabled=false}};
- controls.append(login,cancel,logout,button);box.append(title,message,authMessage,code,verification,installation,controls);document.querySelector('#view-settings').append(box);
+ controls.append(login,cancel,logout,button);box.append(title,installed,message,authMessage,code,verification,installation,controls);document.querySelector('#view-settings').append(box);
  async function poll(repeat=true){try{
   const r=await fetch('/app-info',{cache:'no-store',signal:AbortSignal.timeout(5000)});if(!r.ok)return;
   const value=await r.json(),auth=value.update_auth||{},status=value.updates?.message||'';
+  installed.hidden=!value.version;
+  if(value.version)installed.textContent='Установлена версия '+value.version;
   message.textContent=/HTTP|SSL|Errno|urlopen|timed out|Offline|certificate/i.test(status)?'Не удалось проверить обновления. Попробуй позже.':status;
   authMessage.textContent=auth.message||'Вход в GitHub доступен после установки новой версии Mac.';
   login.hidden=!!auth.pending||!!auth.authorized;login.disabled=!auth.configured;

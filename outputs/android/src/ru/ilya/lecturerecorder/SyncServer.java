@@ -8,10 +8,12 @@ import java.security.MessageDigest;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 final class SyncServer {
  private final ServerSocket server;private final Context context;private DatagramSocket discovery;
- volatile long lastUse=System.currentTimeMillis();volatile int clients=0;
+ private volatile long lastUse=System.nanoTime();
+ private final AtomicInteger clients=new AtomicInteger();
  static volatile String status="Ожидаю Mac · Wi-Fi / Bluetooth / USB";
  private final Map<String,Long> nonces=new HashMap<>();
  private final java.util.concurrent.Semaphore updateTransfer=new java.util.concurrent.Semaphore(1);
@@ -19,6 +21,8 @@ final class SyncServer {
   discovery=new DatagramSocket(null);discovery.setReuseAddress(true);discovery.bind(new InetSocketAddress(8783));new Thread(()->discover(),"Mac discovery").start();
  }
  String secret(){return context.getSharedPreferences("settings",0).getString("sync_token","");}
+ boolean hasClients(){return clients.get()>0;}
+ boolean idleFor(long now,long period){return !hasClients()&&now-lastUse>=period;}
  static String hash(byte[] b)throws Exception{byte[] h=MessageDigest.getInstance("SHA-256").digest(b);return hex(h);}
  static String hex(byte[] b){StringBuilder s=new StringBuilder();for(byte v:b)s.append(String.format(Locale.US,"%02x",v&255));return s.toString();}
  static String sign(String key,String value)throws Exception{Mac m=Mac.getInstance("HmacSHA256");m.init(new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8),"HmacSHA256"));return hex(m.doFinal(value.getBytes(StandardCharsets.UTF_8)));}
@@ -38,7 +42,7 @@ final class SyncServer {
   if(!MessageDigest.isEqual(sign(key,signed).getBytes(StandardCharsets.US_ASCII),supplied.getBytes(StandardCharsets.US_ASCII)))return false;
   nonces.put(nonce,now);return true;
  }
- void handle(InputStream in,OutputStream out,boolean local){clients++;lastUse=System.currentTimeMillis();try{
+ void handle(InputStream in,OutputStream out,boolean local){clients.incrementAndGet();try{
   String[] first=line(in).split(" ");if(first.length!=3)throw new IOException();Map<String,String> h=new HashMap<>();String l;int total=0;while(!(l=line(in)).isEmpty()){total+=l.length();if(total>16384)throw new IOException();int k=l.indexOf(':');if(k>0)h.put(l.substring(0,k).toLowerCase(Locale.US),l.substring(k+1).trim());}
   if(first[0].equals("POST")&&first[1].equals("/app-update")){
    int length=Integer.parseInt(h.getOrDefault("content-length","0"));String expected=h.getOrDefault("x-lecture-body-sha256","");
@@ -65,5 +69,5 @@ final class SyncServer {
    status="Переношу запись на Mac…";out.write(("HTTP/1.1 "+(offset>0?"206 Partial Content":"200 OK")+"\r\nContent-Length: "+(f.length()-offset)+"\r\n"+(offset>0?"Content-Range: bytes "+offset+"-"+(f.length()-1)+"/"+f.length()+"\r\n":"")+"Connection: close\r\n\r\n").getBytes(StandardCharsets.US_ASCII));try(RandomAccessFile source=new RandomAccessFile(f,"r")){source.seek(offset);byte[] b=new byte[65536];int n;while((n=source.read(b))>0)out.write(b,0,n);}out.flush();return;}
   if(first[0].equals("POST")&&first[1].equals("/ack")){JSONObject j=new JSONObject(new String(body,StandardCharsets.UTF_8));Store.acknowledge(context,j.getString("name"),j.getString("sha256"));status="Запись сохранена на Mac · очередь переноса очищена";reply(out,200,"{\"ok\":true}".getBytes());return;}
   reply(out,404,"{}".getBytes());
- }catch(Exception ignored){status="Связь прервалась · запись остаётся на телефоне";}finally{clients--;lastUse=System.currentTimeMillis();}}
+ }catch(Exception ignored){status="Связь прервалась · запись остаётся на телефоне";}finally{lastUse=System.nanoTime();clients.decrementAndGet();}}
 }

@@ -300,7 +300,10 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/app-info':
             if self.headers.get('Host') not in (f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}'):
                 return self.reply({'error': 'Запрос отклонён'}, 403)
-            return self.reply({'generation': GENERATION, 'pid': os.getpid(), 'project':str(PROJECT.resolve()), 'updates': dict(update_manager.STATE), 'update_auth': update_manager.AUTH.public()})
+            installed = update_manager.read(PROJECT / 'release.json').get('version', '')
+            return self.reply({'generation': GENERATION, 'pid': os.getpid(), 'project': str(PROJECT.resolve()),
+                               'version': installed, 'updates': dict(update_manager.STATE),
+                               'update_auth': update_manager.AUTH.public()})
         if self.path == '/status' or self.path.startswith(('/recordings/', '/analysis/', '/export/')):
             return self.proxy()
         self.reply({'error': 'Не найдено'}, 404)

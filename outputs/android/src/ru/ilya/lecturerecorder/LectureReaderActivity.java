@@ -452,10 +452,18 @@ public class LectureReaderActivity extends Activity {
         if (scroll != null) state.putInt("reader_scroll", scroll.getScrollY());
     }
 
+    @Override protected void onStart() {
+        super.onStart();
+        if (note != null) CaptureService.screenStarted();
+    }
+
     @Override public void onResume() {
         super.onResume();
         foreground = true;
-        if (note != null) refresh();
+        if (note != null) {
+            CaptureService.resumeSync(this);
+            refresh();
+        }
     }
 
     @Override public void onPause() {
@@ -466,6 +474,11 @@ public class LectureReaderActivity extends Activity {
             toggle.setText("Продолжить");
         }
         super.onPause();
+    }
+
+    @Override protected void onStop() {
+        if (note != null) CaptureService.screenStopped();
+        super.onStop();
     }
 
     @Override public void onDestroy() {

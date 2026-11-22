@@ -208,6 +208,15 @@ class HttpTests(unittest.TestCase):
     def post(self, path, value):
         with self.get(path, data=json.dumps(value).encode(), headers={'Content-Type': 'application/json'}) as r:
             return json.load(r)
+    def test_app_info_reports_installed_version_during_update(self):
+        project = Path(self.temp.name)
+        (project / 'release.json').write_text('{"version":"0.5.6"}')
+        with patch('app_server.PROJECT', project), patch.dict(app_server.update_manager.STATE, version='0.5.7'):
+            with self.get('/app-info') as response:
+                info = json.load(response)
+        self.assertEqual(info['version'], '0.5.6')
+        self.assertEqual(info['updates']['version'], '0.5.7')
+
     def test_range_and_head_through_application_proxy(self):
         with self.get('/recordings/' + NAME, headers={'Range': 'bytes=44-63'}) as r:
             self.assertEqual(r.status, 206)

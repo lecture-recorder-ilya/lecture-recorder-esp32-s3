@@ -21,16 +21,27 @@ public class CaptureService extends Service {
  static volatile String linkSource="";
  static volatile boolean recording=false;static volatile String status="Готово к записи",current="";static volatile long samples=0;
  static volatile int peak=0;
+ private static final long SYNC_IDLE_NANOS=TimeUnit.SECONDS.toNanos(60);
+ private static int visibleScreens;
+ private static long lastScreenStopped=System.nanoTime();
  private boolean phoneMicrophone;
  private boolean destroyed;
  private int foregroundType=-1;
  private volatile boolean stop=false;private volatile Socket socket;private SyncServer server;private BleSync bleSync;private PowerManager.WakeLock syncWake;private WifiManager.WifiLock wifi;private WifiManager.MulticastLock multicast;private NsdManager nsd;private NsdManager.DiscoveryListener discovery;private volatile String discovered="";private Handler timer=new Handler(Looper.getMainLooper());
  static void provision(Context c)throws Exception{File f=new File(c.getFilesDir(),"provision.json");if(!f.exists())return;JSONObject j=new JSONObject(Store.read(f));android.content.SharedPreferences.Editor e=c.getSharedPreferences("settings",0).edit();for(String k:new String[]{"ip","hostname","token","sync_token","ble_address"})if(j.has(k))e.putString(k,j.getString(k));if(!e.commit())throw new IOException("Настройки не сохранены");if(!f.delete())throw new IOException("Настройки не закрыты");}
  static Intent command(Context c,String action){android.content.SharedPreferences prefs=c.getSharedPreferences("settings",0);String key=prefs.getString("service_key","");if(key.isEmpty()){key=UUID.randomUUID().toString();if(!prefs.edit().putString("service_key",key).commit())throw new IllegalStateException("Не удалось сохранить настройки записи");}return new Intent(c,CaptureService.class).setAction(action).putExtra("auth",key);}
+ static void screenStarted(){visibleScreens++;}
+ static void screenStopped(){if(--visibleScreens==0)lastScreenStopped=System.nanoTime();}
+ static boolean paired(Context context){
+  return !context.getSharedPreferences("settings",0).getString("sync_token","").isEmpty();
+ }
+ static void resumeSync(Activity activity){
+  if(paired(activity))activity.startForegroundService(command(activity,"SYNC"));
+ }
  @Override public void onCreate(){super.onCreate();try{provision(this);Store.recover(this);}catch(Exception e){status="Восстановление: "+e.getMessage();}
   NotificationManager n=getSystemService(NotificationManager.class);n.createNotificationChannel(new NotificationChannel("record","Запись лекции",NotificationManager.IMPORTANCE_LOW));
  }
- private void notifyState(){Intent open=new Intent(this,MainActivity.class);PendingIntent p=PendingIntent.getActivity(this,0,open,PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);Notification.Builder n=new Notification.Builder(this,"record").setSmallIcon(ru.ilya.lecturerecorder.R.drawable.icon).setContentTitle(recording?"Идёт запись лекции":"Перенос записей на Mac").setContentText(recording?status:SyncServer.status).setContentIntent(p).setOngoing(true);
+ private void notifyState(){Intent open=new Intent(this,MainActivity.class);PendingIntent p=PendingIntent.getActivity(this,0,open,PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);Notification.Builder n=new Notification.Builder(this,"record").setSmallIcon(ru.ilya.lecturerecorder.R.drawable.icon).setContentTitle(recording?"Идёт запись лекции":"Связь с Mac").setContentText(recording?status:SyncServer.status).setContentIntent(p).setOnlyAlertOnce(true).setOngoing(true);
   if(recording)n.addAction(new Notification.Action.Builder(null,"Остановить и сохранить",PendingIntent.getService(this,1,command(this,"STOP"),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT)).build());
   int type=Build.VERSION.SDK_INT>=30&&recording&&phoneMicrophone
    ?ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE:ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
@@ -41,8 +52,7 @@ public class CaptureService extends Service {
   }else getSystemService(NotificationManager.class).notify(1,notification);
  }
  @Override public int onStartCommand(Intent intent,int flags,int id){String secret=getSharedPreferences("settings",0).getString("service_key","");if(intent==null||secret.isEmpty()||!secret.equals(intent.getStringExtra("auth"))){if(!recording)stopSelf();return START_NOT_STICKY;}
-  boolean paired=!getSharedPreferences("settings",0).getString("sync_token","").isEmpty();
-  try{if(paired&&server==null)server=new SyncServer(this);}catch(Exception e){status="Перенос: "+e.getMessage();}
+  try{if(paired(this)&&server==null)server=new SyncServer(this);}catch(Exception e){status="Перенос: "+e.getMessage();}
   String action=intent.getAction();
   if(("START".equals(action)||"START_PHONE".equals(action))&&!recording){
    phoneMicrophone="START_PHONE".equals(action);
@@ -60,7 +70,27 @@ public class CaptureService extends Service {
   }
   else if("STOP".equals(action)){stop=true;status="Сохраняю запись…";try{if(socket!=null){socket.getOutputStream().write('x');socket.close();}}catch(Exception ignored){}}
   try{if(server!=null&&bleSync==null&&(Build.VERSION.SDK_INT<31||(checkSelfPermission("android.permission.BLUETOOTH_ADVERTISE")==0&&checkSelfPermission("android.permission.BLUETOOTH_CONNECT")==0)))bleSync=new BleSync(this,server);}catch(Exception ignored){}
-  notifyState();timer.removeCallbacksAndMessages(null);timer.postDelayed(new Runnable(){public void run(){if(!recording&&!pending()&&server!=null&&server.clients==0&&System.currentTimeMillis()-server.lastUse>60000){stopSelf();return;}if(server!=null&&server.clients>0){if(syncWake==null)syncWake=getSystemService(PowerManager.class).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"lectures:sync");if(!syncWake.isHeld())syncWake.acquire(120000);}else if(syncWake!=null&&syncWake.isHeld())syncWake.release();notifyState();timer.postDelayed(this,5000);}},5000);return START_NOT_STICKY;
+  notifyState();
+  timer.removeCallbacksAndMessages(null);
+  timer.postDelayed(this::maintainSync,5000);
+  return START_NOT_STICKY;
+ }
+ private void maintainSync(){
+  long now=System.nanoTime();
+  if(!recording&&visibleScreens==0&&now-lastScreenStopped>=SYNC_IDLE_NANOS
+    &&!pending()&&(server==null||server.idleFor(now,SYNC_IDLE_NANOS))){
+   stopSelf();
+   return;
+  }
+  if(server!=null&&server.hasClients()){
+   if(syncWake==null)syncWake=getSystemService(PowerManager.class)
+     .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"lectures:sync");
+   if(!syncWake.isHeld())syncWake.acquire(120000);
+  }else if(syncWake!=null&&syncWake.isHeld()){
+   syncWake.release();
+  }
+  notifyState();
+  timer.postDelayed(this::maintainSync,5000);
  }
  private void runCapture(boolean phone){
   PowerManager.WakeLock awake=getSystemService(PowerManager.class).newWakeLock(

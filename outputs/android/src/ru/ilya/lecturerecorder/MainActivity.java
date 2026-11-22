@@ -44,6 +44,7 @@ public class MainActivity extends Activity {
  private int selectedPage=0;
  private boolean pageShown;
  private static final int AUDIO_PAGE=1;
+ private static final int SETTINGS_PAGE=2;
  private final View[] pages=new View[3];
  private final Button[] tabs=new Button[3];
  private AudioTranscriptPage audioPage;
@@ -119,6 +120,7 @@ public class MainActivity extends Activity {
   meter.setRecording(index==0&&CaptureService.recording);
   audioPage.setActive(resumed&&index==AUDIO_PAGE);
   if(index==0&&resumed)refreshConnection();
+  if(index==SETTINGS_PAGE)refreshSyncSettings(CaptureService.recording);
   if(entering)StudioStyle.enter(pages[index],!pageShown);
   pageShown=true;
  }
@@ -177,7 +179,24 @@ public class MainActivity extends Activity {
 
   Button photo=button("Сфотографировать доску",this::takeBoardPhoto);
   record.addView(photo);
-  LinearLayout settingsPage=page(host,2,"Настройки");
+  LinearLayout settingsPage=page(host,SETTINGS_PAGE,"Настройки");
+  LinearLayout mac=card(settingsPage);
+  mac.addView(heading("Телефон и Mac",18));
+  macStatus=note("");
+  macStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+  mac.addView(macStatus);
+  connectMac=button("Подключить Mac",this::pairPhone);
+  mac.addView(connectMac);
+  LinearLayout updates=card(settingsPage);
+  updates.addView(heading("Обновления",18));
+  try { updates.addView(note("Установлена версия "+getPackageManager().getPackageInfo(getPackageName(),0).versionName)); }
+  catch (android.content.pm.PackageManager.NameNotFoundException ignored) {}
+  updateStatus=note("");
+  updateStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+  updates.addView(updateStatus);
+  installUpdate=button("Установить обновление",()->AppUpdates.install(this),true);
+  installUpdate.setVisibility(View.GONE);
+  updates.addView(installUpdate);
   LinearLayout connection=card(settingsPage);
   connection.addView(heading("Микрофон ESP",18));
   firmwareButton=button("Проверить версию прошивки",this::checkFirmware);
@@ -186,12 +205,6 @@ public class MainActivity extends Activity {
   firmwareStatus.setVisibility(View.GONE);
   firmwareStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
   connection.addView(firmwareStatus);
-  LinearLayout updates=card(settingsPage);
-  try { updates.addView(heading("Версия приложения · "+getPackageManager().getPackageInfo(getPackageName(),0).versionName,18)); }
-  catch (android.content.pm.PackageManager.NameNotFoundException ignored) {}
-  installUpdate=button("Установить обновление",()->AppUpdates.install(this),true);
-  installUpdate.setVisibility(View.GONE);
-  updates.addView(installUpdate);
   audioPage=new AudioTranscriptPage(this,saved==null?null:saved.getBundle("audio_page"),this::chooseAudio);
   pages[AUDIO_PAGE]=audioPage;
   host.addView(audioPage,new FrameLayout.LayoutParams(-1,-1));
@@ -226,7 +239,8 @@ public class MainActivity extends Activity {
   }
   if(Build.VERSION.SDK_INT>=33&&checkSelfPermission("android.permission.POST_NOTIFICATIONS")!=0)requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},2);
  }
- private TextView firmwareStatus;private Button firmwareButton,installUpdate;
+ private TextView firmwareStatus,macStatus,updateStatus;
+ private Button firmwareButton,connectMac,installUpdate;
  private Thread firmwareQuery;
  private String pendingPhoto;
  private MacPairing pairing;
@@ -578,12 +592,31 @@ public class MainActivity extends Activity {
   stop.setEnabled(active);stop.setVisibility(active?View.VISIBLE:View.GONE);
   transport.setEnabled(!active);
   meter.setRecording(active&&selectedPage==0);
-  AppUpdates.check(this,false);
-  installUpdate.setVisibility(AppUpdates.ready(this)?View.VISIBLE:View.GONE);installUpdate.setEnabled(!active);
+  if(selectedPage==SETTINGS_PAGE)refreshSyncSettings(active);
   timer.postDelayed(()->refresh(),1000);
  }
- @Override public void onResume(){super.onResume();resumed=true;audioPage.setActive(selectedPage==AUDIO_PAGE);timer.removeCallbacksAndMessages(null);if(!getSharedPreferences("settings",0).getString("sync_token","").isEmpty())startForegroundService(CaptureService.command(this,"SYNC"));refresh();}
+ private void refreshSyncSettings(boolean recording){
+  boolean paired=CaptureService.paired(this);
+  String macName=getSharedPreferences("settings",0).getString("paired_mac","").trim();
+  String connection="Mac ещё не сопряжён";
+  String action="Подключить Mac";
+  if(paired){
+   connection=macName.isEmpty()?"Mac сопряжён":"Сопряжён с «"+macName+"»";
+   action="Сменить Mac";
+  }
+  if(!connection.contentEquals(macStatus.getText()))macStatus.setText(connection);
+  if(!action.contentEquals(connectMac.getText()))connectMac.setText(action);
+  connectMac.setEnabled(!recording);
+  boolean available=AppUpdates.ready(this);
+  String message=AppUpdates.message(this,available);
+  if(!message.contentEquals(updateStatus.getText()))updateStatus.setText(message);
+  installUpdate.setVisibility(available?View.VISIBLE:View.GONE);
+  installUpdate.setEnabled(!recording);
+ }
+ @Override protected void onStart(){super.onStart();CaptureService.screenStarted();}
+ @Override public void onResume(){super.onResume();resumed=true;audioPage.setActive(selectedPage==AUDIO_PAGE);timer.removeCallbacksAndMessages(null);CaptureService.resumeSync(this);refresh();}
  @Override public void onPause(){resumed=false;stopPresenceCheck();transport.close();audioPage.setActive(false);timer.removeCallbacksAndMessages(null);super.onPause();}
+ @Override protected void onStop(){CaptureService.screenStopped();super.onStop();}
  private boolean handleBack(){
   if(selectedPage==AUDIO_PAGE)return audioPage.closeDropdown();
   return selectedPage==0&&transport.close();

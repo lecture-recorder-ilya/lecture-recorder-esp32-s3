@@ -14,34 +14,43 @@ import java.security.MessageDigest;
 import java.util.*;
 
 final class AppUpdates {
- static final String REPO="lecture-recorder-ilya/lecture-recorder-esp32-s3";
- static volatile String status="Проверяю обновления приложения…";
+ private static final String INSTALL_PERMISSION="Разреши установку из этого приложения, затем повтори.";
+ private static volatile String installMessage="";
  static File apk(Context c){return new File(new File(c.getFilesDir(),"updates"),"update.apk");}
- static synchronized void check(Context c,boolean force){
-  if(ready(c)){status="Обновление получено от Mac · нажми «Установить»";return;}
-  if(c.getSharedPreferences("updates",0).contains("rejected_digest")){status=c.getSharedPreferences("updates",0).getString("rejected_message","APK отклонён · нужна совместимая подпись");return;}
-  if(c.getSharedPreferences("settings",0).getString("sync_token","").isEmpty()){status="Подключи Mac в настройках · вход в GitHub нужен только на Mac";return;}
-  status="Обновления приходят через Mac · включи на нём приложение и войди в GitHub";
-  if(force&&!CaptureService.recording)c.startForegroundService(CaptureService.command(c,"SYNC"));
+ static String message(Context c,boolean available){
+  if(available){
+   if(CaptureService.recording)return "Обновление готово. Установи его после записи.";
+   String issue=installMessage;
+   if(!issue.isEmpty()&&(!INSTALL_PERMISSION.equals(issue)||!c.getPackageManager().canRequestPackageInstalls()))return issue;
+   return "Обновление получено с Mac и готово к установке.";
+  }
+  SharedPreferences prefs=c.getSharedPreferences("updates",0);
+  if(prefs.contains("rejected_digest"))return prefs.getString("rejected_message","Телефон отклонил обновление.");
+  if(!CaptureService.paired(c))return "Подключи Mac, чтобы получать новые версии.";
+  return "Жду обновление от Mac. Оно появится здесь автоматически.";
  }
- static JSONObject info(Context c)throws Exception{
+ static synchronized JSONObject info(Context c)throws Exception{
   android.content.SharedPreferences p=c.getSharedPreferences("updates",0);
   PackageInfo installed=c.getPackageManager().getPackageInfo(c.getPackageName(),0);
+  boolean available=ready(c);
   return new JSONObject().put("installed_package",c.getPackageName())
    .put("installed_tag","v"+installed.versionName).put("installed_code",installed.versionCode)
-   .put("sha256",ready(c)?p.getString("sha256",""):"").put("recording",CaptureService.recording)
-   .put("rejected_digest",p.getString("rejected_digest","")).put("message",status);
+   .put("sha256",available?p.getString("sha256",""):"").put("recording",CaptureService.recording)
+   .put("rejected_digest",p.getString("rejected_digest","")).put("message",message(c,available));
  }
  static synchronized int receive(Context c,File temp,String sha)throws Exception{
   if(CaptureService.recording)throw new IOException("Обновление будет передано после записи");
   int code;
   try{code=verify(c,temp);}catch(Exception e){
-   status=e.getMessage();c.getSharedPreferences("updates",0).edit().putString("rejected_digest",sha).putString("rejected_message",status).commit();throw e;
+   c.getSharedPreferences("updates",0).edit().putString("rejected_digest",sha)
+    .putString("rejected_message",e.getMessage()).commit();
+   throw e;
   }
   File target=apk(c);target.getParentFile().mkdirs();
   if(!temp.renameTo(target))throw new IOException("Не удалось сохранить APK");
   if(!c.getSharedPreferences("updates",0).edit().putString("sha256",sha).putInt("code",code).remove("rejected_digest").remove("rejected_message").commit())throw new IOException("Не удалось сохранить сведения об APK");
-  status="Обновление получено от Mac · нажми «Установить»";return code;
+  installMessage="";
+  return code;
  }
 
  private static Set<String> signatures(PackageInfo p)throws Exception{
@@ -55,16 +64,17 @@ final class AppUpdates {
   if(!signatures(current).equals(signatures(next)))throw new IOException("Подпись обновления отличается · нужен ключ автора");
   return next.versionCode;
  }
- static boolean ready(Context c){try{
+ static synchronized boolean ready(Context c){try{
   android.content.SharedPreferences prefs=c.getSharedPreferences("updates",0);
   if(!apk(c).isFile()||!prefs.contains("sha256"))return false;
   if(prefs.getInt("code",0)<=c.getPackageManager().getPackageInfo(c.getPackageName(),0).versionCode){apk(c).delete();prefs.edit().remove("sha256").remove("code").apply();return false;}
   return true;
  }catch(Exception e){return false;}}
  static void install(Activity activity){try{
+  installMessage="";
   if(CaptureService.recording)throw new IOException("Сначала останови и сохрани запись");
   File file=apk(activity);if(!Store.hash(file).equals(activity.getSharedPreferences("updates",0).getString("sha256","")))throw new IOException("APK изменился; проверь обновление повторно");verify(activity,file);
-  if(!activity.getPackageManager().canRequestPackageInstalls()){activity.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+activity.getPackageName())));status="Разреши установку для приложения, затем нажми «Установить»";return;}
+  if(!activity.getPackageManager().canRequestPackageInstalls()){activity.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+activity.getPackageName())));installMessage=INSTALL_PERMISSION;return;}
   Intent intent=new Intent(Intent.ACTION_VIEW);intent.setDataAndType(Uri.parse("content://"+activity.getPackageName()+".updates/update.apk"),"application/vnd.android.package-archive");intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);activity.startActivity(intent);
- }catch(Exception e){status=e.getMessage();}}
+ }catch(Exception e){installMessage=e.getMessage()==null?"Не удалось открыть установку обновления.":e.getMessage();}}
 }
