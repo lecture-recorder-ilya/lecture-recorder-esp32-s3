@@ -36,12 +36,13 @@
  heading(views.record,'Новая запись','Выбери источник звука и начни запись.');
  views.record.append(recording);
  recording.classList.add('recorder-hero');livePanel.classList.remove('card');livePanel.classList.add('monitor-card');
- const previewPanel=create('details','card preview-panel');previewPanel.append(create('summary','','Расшифровка и контроль звука'),livePanel);views.record.append(previewPanel);let previousActive=null;window.syncRecordingPreview=s=>{const active=Boolean(s.recording);if(active!==previousActive){if(active)previewPanel.open=true;else if(previousActive===true)previewPanel.open=false;previousActive=active;}};
+ const utilities=create('div','record-utilities');
+ const previewPanel=create('details','card preview-panel');previewPanel.append(create('summary','','Расшифровка и контроль звука'),livePanel);utilities.append(previewPanel);let previousActive=null;window.syncRecordingPreview=s=>{const active=Boolean(s.recording);if(active!==previousActive){if(active)previewPanel.open=true;else if(previousActive===true)previewPanel.open=false;previousActive=active;}};
  liveLabel.lastChild.textContent='Показывать, что слышит микрофон';
  livePanel.querySelector('p').id='live-preview-caption';
  livePanel.querySelector('p').textContent='Предварительная расшифровка появится после начала записи.';
  const scheduleDetails=create('details','card schedule-card');scheduleDetails.append(create('summary','','Расписание занятий'));
- schedule.classList.remove('card');scheduleDetails.append(schedule);views.record.append(scheduleDetails);
+ schedule.classList.remove('card');scheduleDetails.append(schedule);utilities.append(scheduleDetails);views.record.append(utilities);
  footnote.textContent='Можно закрыть приложение — запись продолжится. Перед отключением микрофона нажми «Завершить запись».';
  views.record.append(footnote);
  document.querySelector('#start').textContent='Начать запись';document.querySelector('#stop').textContent='Завершить запись';

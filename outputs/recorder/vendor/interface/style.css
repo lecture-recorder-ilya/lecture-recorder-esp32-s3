@@ -123,6 +123,8 @@ body.organized{-webkit-font-smoothing:antialiased} .organized main{max-width:122
 .organized .nav-button[aria-current=page]:hover { border-color: var(--accent-line); }
 .view-intro { margin: 36px 0 22px; }
 .view-intro h2 { font-size: clamp(27px, 4vw, 36px); letter-spacing: -.035em; }
+.record-utilities { display: grid; gap: 12px; margin: 18px 0; }
+.organized .record-utilities .card { margin: 0; }
 .recorder-hero {
   background: linear-gradient(135deg, #252c43, var(--panel) 58%) !important;
 }
@@ -139,8 +141,26 @@ body.organized{-webkit-font-smoothing:antialiased} .organized main{max-width:122
   color: var(--ink);
 }
 .organized .recorder-hero #stop:not(:disabled):hover { background: #ffc9bf; }
+.recorder-hero:not(.is-recording) #stop:disabled,
+.recorder-hero.is-recording #start:disabled { display: none; }
 .timer-caption { font-size: 12px; letter-spacing: 0; }
 .organized button:active:not(:disabled) { transform: translateY(1px); }
+
+@media (min-width: 700px) {
+  #view-record .view-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 20px;
+  }
+  #view-record .view-intro > p { grid-column: 1; }
+  .organized #view-record .import-shortcut {
+    grid-area: 1 / 2 / 3 / 3;
+    align-self: end;
+    margin: 0 !important;
+  }
+  .record-utilities { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .record-utilities .preview-panel[open] { grid-column: 1 / -1; }
+}
 
 @keyframes view-entry {
   from { opacity: .84; transform: translateY(7px); }
