@@ -50,6 +50,7 @@ import android.content.Context;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashSet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -66,6 +67,7 @@ public final class SummaryStateTest {
         File mac = LectureNotes.file(context, NAME, false);
         File history = new File(new File(root, "phone-note-history"), NAME);
         if (args[1].equals("replace")) {
+            checkEvidence();
             JSONArray oldSegments = segments(OLD_TEXT);
             oldSegments.getJSONObject(0).put("review_key", OLD_KEY);
             JSONObject oldReport = new JSONObject()
@@ -152,6 +154,31 @@ public final class SummaryStateTest {
         }
     }
 
+    private static void checkEvidence() throws Exception {
+        JSONArray rows = new JSONArray();
+        String point = "Если функция непрерывна, то предел совпадает с её значением";
+        String assignment = "К следующей паре решите задачу номер пять";
+        for (String quote : new String[]{point, "Сомнительный термин из записи", assignment,
+                "Например, на дом решите другую задачу", "На дом не надо решать задачу восемь",
+                "На дом решили задачу девять", "Сейчас решите задачу два"}) {
+            rows.put(new JSONObject().put("text", quote).put("start", rows.length() * 2)
+                    .put("end", rows.length() * 2 + 1));
+        }
+        rows.getJSONObject(1).put("needs_review", true);
+        JSONArray points = new JSONArray(), sources = new JSONArray(), tasks = new JSONArray();
+        PhoneSummaryEvidence.add("KEY: 1,2,99\nTASK: 3,4,5,6", 0, 7, rows,
+                points, sources, tasks, new HashSet<>(), new HashSet<>());
+        require(points.length() == 1 && point.equals(points.getString(0)), "Summary must keep a complete verified quote");
+        JSONObject source = sources.getJSONObject(0);
+        require(point.equals(source.getString("quote")) && source.getInt("start") == 0, "Quote must link to its audio");
+        require(tasks.length() == 1 && assignment.equals(tasks.getJSONObject(0).getString("quote")), "Only explicit, supported homework is kept");
+
+        PhoneSummaryEvidence.add("KEY: 7 — придуманный вывод\nTASK: 7", 0, 7, rows,
+                points, sources, tasks, new HashSet<>(), new HashSet<>());
+        require(points.length() == 1 && tasks.length() == 1, "Reject free text and classwork");
+        System.out.println("PASS: verbatim quotes, timestamps, uncertainty and explicit homework");
+    }
+
     private static JSONArray segments(String text) throws Exception {
         return new JSONArray().put(new JSONObject().put("text", text).put("start", 5).put("end", 9)
                 .put("needs_review", true));
@@ -203,7 +230,8 @@ def main():
             (root / name).write_text(source, encoding="utf-8")
         subprocess.run(
             [java_bin / "javac", "-encoding", "UTF-8", "-cp", jar, "-d", root,
-             SOURCE / "LectureNotes.java", SOURCE / "Store.java", *(root / name for name in sources)],
+             SOURCE / "LectureNotes.java", SOURCE / "Store.java", SOURCE / "PhoneSummaryEvidence.java",
+             *(root / name for name in sources)],
             check=True,
         )
         data = root / "data"

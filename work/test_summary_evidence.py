@@ -23,6 +23,20 @@ class SummaryTests(unittest.TestCase):
   notes=[s['text'] for s in self.rows];self.assertEqual(selected_notes(notes,{'selected':[1,1,True,-1,99,'выдумка']}),[notes[1]])
   self.assertEqual(selected_notes(notes,{'summary':['Придуманный факт']}),notes)
   self.assertEqual(selected_notes(notes,{'selected':[]}),notes)
+ def test_homework_uses_source_quote_and_no_invented_deadline(self):
+  source=self.rows[1]['text']
+  result={'homework':[{'task':'Решить десять задач','deadline':'В четверг','quote':source,'segment_id':1}]}
+  self.assertEqual(validate_part(result,self.rows)['homework'],
+                   [dict(task=source,quote=source,start=4,end=6,segment_id=1,deadline=None)])
+  uncertain=[self.rows[0],dict(self.rows[1],needs_review=True)]
+  self.assertEqual(validate_part(result,uncertain)['homework'],[])
+ def test_homework_example_and_classwork_are_not_assigned(self):
+  for source in ('Например, на следующую пару решите задачи пять и шесть.',
+                 'Решите задачи пять и шесть сейчас.',
+                 'На следующую пару не нужно решать задачи пять и шесть.'):
+   rows=[dict(id=0,start=0,end=3,text=source)]
+   result={'homework':[{'task':source,'quote':source,'segment_id':0}]}
+   self.assertEqual(validate_part(result,rows)['homework'],[])
  def test_excerpt_cannot_drop_conditions_or_negation(self):
   value=validate_part({'summary':[{'quote':'она достигает максимума','segment_id':0}]},self.rows)
   self.assertEqual(value['summary'],[self.rows[0]['text']])

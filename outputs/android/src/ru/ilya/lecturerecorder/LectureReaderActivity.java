@@ -232,6 +232,7 @@ public class LectureReaderActivity extends Activity {
 
         String overview = report.optString("overview");
         JSONArray points = report.optJSONArray("summary");
+        JSONArray sources = report.optJSONArray("summary_evidence");
         boolean hasPoints = points != null && points.length() > 0;
         if (!overview.isEmpty()) {
             TextView lead = text(overview, 16, 0xff27231f);
@@ -249,7 +250,19 @@ public class LectureReaderActivity extends Activity {
                 row.setPadding(0, dp(10), 0, dp(10));
                 TextView marker = text("•", 16, ACCENT);
                 row.addView(marker, new LinearLayout.LayoutParams(dp(18), -2));
-                row.addView(text(points.optString(index), 16, TEXT), new LinearLayout.LayoutParams(0, -2, 1));
+                String point = points.optString(index);
+                LinearLayout content = new LinearLayout(this);
+                content.setOrientation(LinearLayout.VERTICAL);
+                content.addView(text(point, 16, TEXT));
+                JSONObject source = sources == null ? null : sources.optJSONObject(index);
+                if (source != null && point.equals(source.optString("quote"))) {
+                    int start = (int) (source.optDouble("start", -1) * 1000);
+                    if (start >= 0) {
+                        content.addView(button("Слушать с " + clock(start / 1000.0), () -> playAt(start)),
+                                spaced(-2, dp(48), 6));
+                    }
+                }
+                row.addView(content, new LinearLayout.LayoutParams(0, -2, 1));
                 list.addView(row);
             }
             body.addView(list, spaced(-1, -2, 14));
