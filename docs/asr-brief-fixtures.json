@@ -1,0 +1,1046 @@
+{
+  "revisions": {
+    "mTEDx": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+    "Golos": "c93949f7140beef4adc404e7b54841e957f81c54",
+    "ESC-50": "33c8ce9eb2cf0b1c2f8bcf322eb349b6be34dbb6"
+  },
+  "public_cases": [
+    {
+      "corpus": "mTEDx",
+      "id": "6hoeGxsHS6c_0023",
+      "source_id": "6hoeGxsHS6c_0023",
+      "set": "recorded-context",
+      "source_sha256": "6ec441cf25e2abeb433cfddf0fe79c3736bc6f90d4ec9fab16e555f24f8a7ea3",
+      "reference_sha256": "554b05321dc35f8fe0062ba280b7729ae9816ab30dbf3fe5fbf6e0905a98faeb",
+      "wav_sha256": "3d9562c07d30756cf9c3cf353d5790d2b0e51f007eed64bd9ca00425b1ef73e8"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "CPci7a8l-oU_0101",
+      "source_id": "CPci7a8l-oU_0101",
+      "set": "recorded-context",
+      "source_sha256": "1206ee53f2fbd5fd2f7bf25428044bae0d0e8d50f86dc092542db69e5c28d626",
+      "reference_sha256": "9fa3f969ecb4317776941ffd4c8b188709c0bc038eda6b591a5ed5a610887fd1",
+      "wav_sha256": "e98b4be2b28e1dd883a2352bbf99f90020d27993295410be67bbb5896fb2d804"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "a1F_YF36bII_0032",
+      "source_id": "a1F_YF36bII_0032",
+      "set": "recorded-context",
+      "source_sha256": "0f8bb7815835401f95a0a2906aea6732337bccf5aa68d10aa6a83e8c15858a96",
+      "reference_sha256": "ced1044ded88cdc4a943a138764e426f10008e5287c868649bb4634dc798ac21",
+      "wav_sha256": "108e7157b22078cf0c9bd658c88a1690a607d56f536c4c73f27dbff75360f034"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "cPhc8OVB2Rk_0126",
+      "source_id": "cPhc8OVB2Rk_0126",
+      "set": "recorded-context",
+      "source_sha256": "e4608cbe2e56c306d7abaa8076598803278b8a0e9947f4cea5ab3c8c2a986216",
+      "reference_sha256": "d8636ed144bf02ef3819263ad0db806fda4888456f3023cead41daf0b7bb6f70",
+      "wav_sha256": "94ddafb28903a732d78df5f4b36d03fc41b30e095b1f5c26656aeff92208dc43"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "cPhc8OVB2Rk_0078",
+      "source_id": "cPhc8OVB2Rk_0078",
+      "set": "recorded-context",
+      "source_sha256": "4f507ad1c68c28b47e3425dfa2d0fef3607dd34ecf0b39af62c2b73a4b6a3229",
+      "reference_sha256": "7798cbb1872e3cd7b71805256a95e7a39bbd3c3d72cf23560bdfd9348fad9580",
+      "wav_sha256": "30c0ca84bb4c49bd41c406eda5074ac6aecb017c34882aa5dcd86cac490ef9c1"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "7hkxVyhoMoQ_0065",
+      "source_id": "7hkxVyhoMoQ_0065",
+      "set": "recorded-context",
+      "source_sha256": "45eb63d498576ebcbc7673f55f1cafabed121534904717447b4819ef8c9148d8",
+      "reference_sha256": "9d25a123d84b01ad1868ff80e05ef24a713cc02c5b75fce7fc43a6c1ab281a79",
+      "wav_sha256": "042126d1da5a8ffb6fcbce43937993e5c9fa189221a7a27d89ea854adf30213d"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "6hoeGxsHS6c_0141",
+      "source_id": "6hoeGxsHS6c_0141",
+      "set": "recorded-context",
+      "source_sha256": "88ee960cf042f2973cdbe231767668f54870cce3302186cdbd1dab30ebd617fe",
+      "reference_sha256": "3cf7297e1cada6dc6e3e4682c29d806d6f2d15d4836d85259107b9a8e3d1ec5e",
+      "wav_sha256": "da9af833f9652e005dd4042c9c9df701bc76dc073c0eacb214d972bdf6c27dff"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "dll-jtmrD70_0111",
+      "source_id": "dll-jtmrD70_0111",
+      "set": "recorded-context",
+      "source_sha256": "c8eff1997955020b48cf2253fe4adccaa6b8870f4376e38ae787c0c8dfb2daf6",
+      "reference_sha256": "aeb7f3f8b6697f4e81ddc33bbb3c60856dc9220a17e4cff1ddb58f220a399e3b",
+      "wav_sha256": "77ecb58966662e548c389cf1ed7a3a9139355668a3e9ea369954a2345df746ee"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "6hoeGxsHS6c_0000",
+      "source_id": "6hoeGxsHS6c_0000",
+      "set": "recorded-context",
+      "source_sha256": "2f3ea6ea544669a6fc91af8e4b00abc46f56f40b717fdf9d5c7309873f23c9df",
+      "reference_sha256": "1674d2d22d067b69d55e1efeba31cca92a4161d252a1ec285a2fdddfdd478cbd",
+      "wav_sha256": "d1351218d1c4b7a0fefbee082b2fd2d22aa57e2681735162e4aca581066d344a"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "CPci7a8l-oU_0092",
+      "source_id": "CPci7a8l-oU_0092",
+      "set": "recorded-context",
+      "source_sha256": "d2feaae67c3cb338c982e2fdb0450dd453d3486bc8c46c516d84a73a364061af",
+      "reference_sha256": "ea7a812a66d5ba3e57e3f70ddac683e480addaf5ed2f9f32c64f67b1c7ec5943",
+      "wav_sha256": "dc31a460583ec286a1d7e004748fca1c8a492a83ec9358f675074834687a3804"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "7hkxVyhoMoQ_0040",
+      "source_id": "7hkxVyhoMoQ_0040",
+      "set": "recorded-context",
+      "source_sha256": "ba92c50f9b8c72e899a08bd0e3888d445a6665e58aac1ca66272f421dc468754",
+      "reference_sha256": "e30b040219f133a76def125e8c32b775f24eb9c92b73c2bbe10b4812c4486c2c",
+      "wav_sha256": "a23337e027c22a0ec5792c9d16073421dad3282c4e713461afa499f63f7b0c4c"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "B0f6kt4rnpM_0036",
+      "source_id": "B0f6kt4rnpM_0036",
+      "set": "recorded-context",
+      "source_sha256": "e712382afb1b2fdbd58ae674137bdda956e5b80f3694a5b9485689488b4ad8eb",
+      "reference_sha256": "257be560c18edd9eda6d78fd0ebe9150e2d3e6e1ed1db18133cc1c89899c8375",
+      "wav_sha256": "8d6f03c4a9d3602250327fd56d2137a10b795d542f4710926abf00f68f312054"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "6hoeGxsHS6c_0080",
+      "source_id": "6hoeGxsHS6c_0080",
+      "set": "new_short_utterances",
+      "source_sha256": "be55e228ccc423e8f36e9e441e485d2649ac8936281a032073ff9960a6e72776",
+      "reference_sha256": "c6fee580e2e9adad46012f43ea1768a212c355327208a9be086685100342d3c9",
+      "wav_sha256": "18edbd2b02e3ef9371bcc3695a327f7255952dc2bcc0a8bae18701186ce0d533"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "6hoeGxsHS6c_0130",
+      "source_id": "6hoeGxsHS6c_0130",
+      "set": "new_short_utterances",
+      "source_sha256": "839f7cdbc1f8896de81d30b0bc6244cef0936844d474d6373521d1f0716e0008",
+      "reference_sha256": "dc244a19163d15110aa4214aa7c551cd32d3a9498632c5b894201095d86d8d56",
+      "wav_sha256": "586ae999b0f2b3463835549a4dbfac697f86f30476c040e0aa07742f380cbf04"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "6hoeGxsHS6c_0163",
+      "source_id": "6hoeGxsHS6c_0163",
+      "set": "new_short_utterances",
+      "source_sha256": "000e2ead3d8a232d1c6a0909b71f47aa96696495f1628a4f6ba340d239c3707e",
+      "reference_sha256": "0a90c7ed0bfaa6764465b6dbcb49d69f93fc829eb5117ad144c41e61b885b097",
+      "wav_sha256": "165238096e2527ecfad97529e90fe3a21d84376b3a36a1831dccf629af7a9604"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "7hkxVyhoMoQ_0110",
+      "source_id": "7hkxVyhoMoQ_0110",
+      "set": "new_short_utterances",
+      "source_sha256": "f308c53a1d3848a3fdafda521605df274e8d20573fe0d21e1cfcda57860f01da",
+      "reference_sha256": "ae6d3e9a19271fc2054ab86880a7de26d85c13e57e60ee98bceb490d8150fc29",
+      "wav_sha256": "22b6017917f8254986a1dc53e5aaf3940055aec5187ea7acb871c2a7f5dd7a0e"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "As7ngXw-X8U_0110",
+      "source_id": "As7ngXw-X8U_0110",
+      "set": "new_short_utterances",
+      "source_sha256": "87399e8d956813fe51eef3ecc08a555d756bc0989d5515afcf99a49e4fa159cc",
+      "reference_sha256": "1a3e58b7a2b5f1189e17b4a78f20f37d9a535c526c4a8bb856047ede5bb68150",
+      "wav_sha256": "c0e4ae7a72e263a1d7ee2c913c61cb63e62a875bca32514a13b49bf24fee0851"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "As7ngXw-X8U_0118",
+      "source_id": "As7ngXw-X8U_0118",
+      "set": "new_short_utterances",
+      "source_sha256": "0ece0cf47cc6475e1fe1b55d687406ecd03851f81e9149cd43a906042a4a9bab",
+      "reference_sha256": "d34921bc56be01bba3a15fae2d5bc8d5a5e717c50b6682d2b25a52b704f3968b",
+      "wav_sha256": "155c1ac7f6d32d6ed3c110428d290e7754ea60f7f57119d277e4cd27fcb7b2bc"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "a1F_YF36bII_0000",
+      "source_id": "a1F_YF36bII_0000",
+      "set": "new_short_utterances",
+      "source_sha256": "62a4e4e84cc352cec4bbdbaa446d407238835af62a1344a72ba69766b831cef8",
+      "reference_sha256": "92d6a4ecc0932cf01546d2935fe13ce8b839badfd28336e54b9072186c2241b5",
+      "wav_sha256": "47a174424c6d205fc5a7635573734075223788e69eaa234b796f1837ac4d4696"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "cPhc8OVB2Rk_0004",
+      "source_id": "cPhc8OVB2Rk_0004",
+      "set": "new_short_utterances",
+      "source_sha256": "2c1ecd98d0eb22a5594938b8e6d3413d3114cc3fb5f9328c181d18d9af3e5be9",
+      "reference_sha256": "4fbd73ad3ecd1dbab7e3b43f43d460dea7b70223b2565b2f560c852a6aab4a90",
+      "wav_sha256": "86f5cc17fe4b525ab4192b5449c2972198fecd0c43184345bda15e3db4e34e53"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "cPhc8OVB2Rk_0020",
+      "source_id": "cPhc8OVB2Rk_0020",
+      "set": "new_short_utterances",
+      "source_sha256": "268fa8b36777eea29e3ae79018cf7361595cf2c491f5a29437c2615fb603087f",
+      "reference_sha256": "e5b3ec9beeff555dae965b303e601366a5ea0c8891321a8326d30c37d688da80",
+      "wav_sha256": "e3f25d238f8561dc3b97c7e92c743f792122cd9047b2f0172235ceee85f1e3f9"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "cPhc8OVB2Rk_0028",
+      "source_id": "cPhc8OVB2Rk_0028",
+      "set": "new_short_utterances",
+      "source_sha256": "daa41bbc5c7fa0052022cb22894b333a330f59d24bb1278502f08a018d7a404e",
+      "reference_sha256": "65a72da168c7cb8520280f888f5b16f57fc9e2957d78fbdf772e01192beac476",
+      "wav_sha256": "40105e88141821cc5224ae07266ecc090ca3634557e5f9b2813a79a05651f726"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "cPhc8OVB2Rk_0051",
+      "source_id": "cPhc8OVB2Rk_0051",
+      "set": "new_short_utterances",
+      "source_sha256": "6fe75031722d4aae8bbe782bc5d5d7d66416237cd97c1468ff60ee972ef519a1",
+      "reference_sha256": "2d93884b966aea51b4477ce647137b8941bd897e636d691ed514b3588432b793",
+      "wav_sha256": "120aa102ce738d2f2c13c0aecfdb20c203d90b3855e2d199c6ead5e60e6c6a85"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "cPhc8OVB2Rk_0054",
+      "source_id": "cPhc8OVB2Rk_0054",
+      "set": "new_short_utterances",
+      "source_sha256": "b5c742d691a8c45166f36b185d8e2cbf8b6f4a346e8ed6f76b9dfcf71e609c53",
+      "reference_sha256": "c459a8469cdbbecff79942d9c527c74d984a82e9e8cd03fbbd15ab214011db3a",
+      "wav_sha256": "9becb694275cc1e590f8fe53851b66d88f78f4f7bcb5fef6f5362e52fa6993f6"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "cPhc8OVB2Rk_0056",
+      "source_id": "cPhc8OVB2Rk_0056",
+      "set": "new_short_utterances",
+      "source_sha256": "1f0e905c5e4f936663dff300703a71cce75f649a6ac22ad6e19be1ff8ddff233",
+      "reference_sha256": "11f5c7ac07c1f238815d315f860cfa84242f4b2cc9a429471e7295104b876f14",
+      "wav_sha256": "7501cf396c5f08026381accc8382f10dbe43ec2c23167b6caf8fcbaebd7578ad"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "cPhc8OVB2Rk_0110",
+      "source_id": "cPhc8OVB2Rk_0110",
+      "set": "new_short_utterances",
+      "source_sha256": "777626d25274abfc649aa5ba3e78a923c114375f54d9d2f4948d8c87c61706ae",
+      "reference_sha256": "c00deb69ec22881e4d2b61196b5cb5814796e6799e5412e2b4791e339da59bbf",
+      "wav_sha256": "6bcdbe392d5e437213276ba8ffed187741ebfe8d4ff202ba2aef391bf3551118"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "cPhc8OVB2Rk_0113",
+      "source_id": "cPhc8OVB2Rk_0113",
+      "set": "new_short_utterances",
+      "source_sha256": "bc180c8ebf0c3f6e5c015e2403e36f62c96cde904e24bd62c7d69b10be7da563",
+      "reference_sha256": "ce176461c229765427baefd65767ec0f0fd209be2395b988ca307f50a5c054d7",
+      "wav_sha256": "a22e2d7e8c79285eecdc66e5ff772c3c70fbdfcf3678b1ea071dc8cfaf9b575b"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "dll-jtmrD70_0002",
+      "source_id": "dll-jtmrD70_0002",
+      "set": "new_short_utterances",
+      "source_sha256": "14373ff2221eb62bb7af4d0f4b158b105714c3ffb973c6c4b51e9ceb3ccb97c9",
+      "reference_sha256": "4d596bca8d97985255189915181ae2803f746d194478ffc55db80967d0636cc9",
+      "wav_sha256": "4ea0cc22ab8f3419a41537141d208e94d4c9d2d29ee2c5cccdd53e59e5331660"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "dll-jtmrD70_0074",
+      "source_id": "dll-jtmrD70_0074",
+      "set": "new_short_utterances",
+      "source_sha256": "40ff121c076295fcae26b2f6b495d8597203040132a12f82bbe632ef19540ebd",
+      "reference_sha256": "7c2f90047f195a468b0e0a4229c52e4e09b0ee6defbd58f62f84811cff90643e",
+      "wav_sha256": "fb83d7db749e6b11ca1bbee5d937199c62b55404590bf83b86492a993f4db5f3"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "dll-jtmrD70_0075",
+      "source_id": "dll-jtmrD70_0075",
+      "set": "new_short_utterances",
+      "source_sha256": "373d4880fe706991f947f657d1d0928866ec63b780234ebbc152760277920709",
+      "reference_sha256": "a44e8429a8e7f3bb2cfe794921847c184ec93c8301ee359acabd96ac8cde2518",
+      "wav_sha256": "42a07441094c120019c9be7c5d12363559fbfb045027df2a926ab997e30e06bc"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "dll-jtmrD70_0098",
+      "source_id": "dll-jtmrD70_0098",
+      "set": "new_short_utterances",
+      "source_sha256": "0706220c804b0d12af7729a22695cade47052b7f8bd052e2443158a264607de8",
+      "reference_sha256": "0e463ce0e4aff9890c9c61de2757bd8de77c3097ec9881e038f5d3799dbe74b8",
+      "wav_sha256": "eb7ac7a955126cb954829cce5a32e577504bb4f126ece5e4f84e91398bae902c"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "dll-jtmrD70_0139",
+      "source_id": "dll-jtmrD70_0139",
+      "set": "new_short_utterances",
+      "source_sha256": "a38ddc3a9de99fb7a4db07450e5c0c8cf1c5eb01a29ac3f0d0810e08e4d57136",
+      "reference_sha256": "8fb4ad606d08a62ff801b78d415ba9e371104acef14de60258cf35805c0a73a6",
+      "wav_sha256": "ee5c3705fdfa246701d00f5712c0e7430de1e15bd62f71011f8167111336b094"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "dll-jtmrD70_0144",
+      "source_id": "dll-jtmrD70_0144",
+      "set": "new_short_utterances",
+      "source_sha256": "3eb5411743d8048724c7012fe3852f6ddfa21d1d40addb3d8c61cd32c6113c0c",
+      "reference_sha256": "37de03ff3839840b1771e0667e1f134be1cf88e78dfc83ee3f2bab73e2230834",
+      "wav_sha256": "c265c4dd83391dbd04fd1da9f0022864eb432399840c03150c9ab82397c8d96b"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "dll-jtmrD70_0180",
+      "source_id": "dll-jtmrD70_0180",
+      "set": "new_short_utterances",
+      "source_sha256": "b0381486953b6e7c95d7bba593e6b2be8c8665055ce1cb06eb19591cb8d90235",
+      "reference_sha256": "5dfae5c9e5418e5106fd18112b637a3082d3eab143f452eb43526b8266a7dd6b",
+      "wav_sha256": "c860bed38f67e42d24edf7265cd93fbb022583944e05707ddaaef0ec88661d03"
+    },
+    {
+      "corpus": "mTEDx",
+      "id": "dll-jtmrD70_0185",
+      "source_id": "dll-jtmrD70_0185",
+      "set": "new_short_utterances",
+      "source_sha256": "ef8707548142a8aa1ebe16401a941ef025feb6fc6be5c7cef3f0ea2e651183fd",
+      "reference_sha256": "335205edb4daf772f109d56cc363226fc6575285f00bfb5eca89aea43f6451a2",
+      "wav_sha256": "800b45a2ca157b9b9dd71ba7962942756d0c6b2d207b173dca2a4e7bf794484a"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1100",
+      "source_id": 1100,
+      "set": "new_farfield_short",
+      "source_sha256": "b4561c651fbd422c3e33456b78b255c3347de3edfa719bd7512ff8e10ceb1d09",
+      "reference_sha256": "1703ede965a82f65ddc58a98a43b3fcd4c6c96632a674efca9980e10f6f61acf",
+      "wav_sha256": "351b55e635cad0a0d7340c7fda6343f46c0e250c92474984d08cf9fc99ce424c"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1101",
+      "source_id": 1101,
+      "set": "new_farfield_short",
+      "source_sha256": "e5a3309f5f5cfff6d2b84c76497358ae1e76d4116943c8638a3a95a1f9826c87",
+      "reference_sha256": "850d21ac67d418edaabf9c20a7f83d5b32a86cfa5484f4935890f1f5ca254ba2",
+      "wav_sha256": "0051594874ca56491ff64ec9bc6342d8d9eb75057274fb6ffdccb17f6f6b1f02"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1108",
+      "source_id": 1108,
+      "set": "new_farfield_short",
+      "source_sha256": "a3a9e31e63e740d3e8e3f698a784a2c7525389c90f9beab08d58eac6db164079",
+      "reference_sha256": "effeab0cebf3bef19b5afadad1f7e2d37cccf2657ec034da84c272340d4fba2c",
+      "wav_sha256": "f51434bad2401e77a324986e4d219e4d075e8df53e7d9946383e7beb53da76e9"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1114",
+      "source_id": 1114,
+      "set": "new_farfield_short",
+      "source_sha256": "38e336c4c59bef0569ad6e2674fa81ec006db4c308e48261beae9960a7b9f5d5",
+      "reference_sha256": "83ad2f053713a46337bd9bd75f20440296ff7e40806186aae28f2bd815f693ac",
+      "wav_sha256": "74f0c2d31694ab6301ec847b1e08033f296011e5246cfe07c2b311542ff1b292"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1115",
+      "source_id": 1115,
+      "set": "new_farfield_short",
+      "source_sha256": "101fa0b10620e764ce8873526c4692c91c0869ebefdc884936587ee0b81e1244",
+      "reference_sha256": "61a3b555dccd801256146f73ac9f416cd8056fdb138ae9c462e4ef4a0222c2e5",
+      "wav_sha256": "661c3de528eaaf6f00bf6fd3354f39aea1ac650c73a76120100d9034bdca6bbe"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1117",
+      "source_id": 1117,
+      "set": "new_farfield_short",
+      "source_sha256": "0290123ff1a7257c6c1d4b8da571ea9bd2a9ef7ae764388ee2c8880ec178c696",
+      "reference_sha256": "3b493ca3341fb1a3aa7f8524d83f4e8d7e3bafed0bd485422ffb9f16a163911a",
+      "wav_sha256": "1e6e882270fb3496b6113683cda2703744b3daebe32f1881d5a5b4b8f0748c8f"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1123",
+      "source_id": 1123,
+      "set": "new_farfield_short",
+      "source_sha256": "ce5c11e253eed02a050844e73dc350b1e11cc9d000519c09630af40dc41385a2",
+      "reference_sha256": "932ca105aedb2456ccfa899ada487b6fc140dd4db5c7f38ea1f965f7a3b43d2f",
+      "wav_sha256": "10851557594d22f64cce0284c92f8a0b96999ccb26e846be6372c07ba9f16ca6"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1128",
+      "source_id": 1128,
+      "set": "new_farfield_short",
+      "source_sha256": "b8404c41e165067e627b43a73ae7e0e69c186d471165da4cf61562c2298de54f",
+      "reference_sha256": "ec72745f4afa2b5e22b0c2791d6fd569769f70fc91d9ac66aa95f90a786c8c61",
+      "wav_sha256": "8a4bfaf401dfa863a612bfabade6ee0c47972b1142f9aedbe8914ee062398405"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1131",
+      "source_id": 1131,
+      "set": "new_farfield_short",
+      "source_sha256": "39b1491937f8be673479fbbd2ab4f2d413a589395a04e13299420b5a0177d377",
+      "reference_sha256": "044acafae0509abdfbf553732d0d658198f5cd5119d12e7c771bb6995608f00d",
+      "wav_sha256": "53c4f5392d344940361577b005efdebd35878a2a24711f909a63d1fd834a8384"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1133",
+      "source_id": 1133,
+      "set": "new_farfield_short",
+      "source_sha256": "566b35073109b3eb5fa7397ce90e66a5d6e139c4a89ad4d05d50d01d6462ac83",
+      "reference_sha256": "ece45c16d326cf130ff360f8fec29aba1020f83500bdf0400b76c10a7549a537",
+      "wav_sha256": "de3125d29755a9e1e0412400cba3947ae940d5767815a44fc2bfd83850756524"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1138",
+      "source_id": 1138,
+      "set": "new_farfield_short",
+      "source_sha256": "68b125503bace543beea352fb7e5a798c5e9564322ced42c19c8b719a75f0ac8",
+      "reference_sha256": "a1c46c164d9efccfd58305995da83657ea2704a6b5b212c20d30afb073da5a42",
+      "wav_sha256": "90c217facf00c54611bfd1c0607bfb383af54abb42d98608a0bf16a44d536cac"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1143",
+      "source_id": 1143,
+      "set": "new_farfield_short",
+      "source_sha256": "169145cff4cfe7a92fd327fb121c57c4d7af4e9e79791d3b32dd19f711e32c8a",
+      "reference_sha256": "e05c34d1a5721019605d4975dde7656bd00303c44f2c438e19eadfdf676b0517",
+      "wav_sha256": "6564e541fa2805b9c8cafe37516a111d541c972eca11e3dac7681597b67df69d"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1151",
+      "source_id": 1151,
+      "set": "new_farfield_short",
+      "source_sha256": "97a98408c139b2a6ca506a3796db2eaabc1ead6d9e835ba428cc0c0c685db343",
+      "reference_sha256": "9e63cae0e64cd06fb0d5038ef7caaf897e18316d182c7860ea6fcf4d4402c04c",
+      "wav_sha256": "a9a715782aa6bec40d1ee23a5c880072fd56e048a41ae3aae65a5c59e8342e5c"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1154",
+      "source_id": 1154,
+      "set": "new_farfield_short",
+      "source_sha256": "ca60b671174ca8149a66d9bfb16712db91bd7006dbcdf6df36f420840dd7f413",
+      "reference_sha256": "662c60e9cf85095bed142264e8984a8837b2eee6b6c5f27f69e8b1c3ce4af1b8",
+      "wav_sha256": "c3cda0d8ec0264199c838551773f3db96f0a66fc554b3c0c1d837c81f573f8b2"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1162",
+      "source_id": 1162,
+      "set": "new_farfield_short",
+      "source_sha256": "56b184cc961e7977bf30b2b1110407a3adf6aeaaad62a17bc33e5c990201773e",
+      "reference_sha256": "ac0e33d3c4008fcae73c211d4d41064a975cb117babe376588b93ea110e73a3f",
+      "wav_sha256": "5e985bee385e60741de13c1f15f7256e5e5664cfd5f4f415288ecaa25d43cdcf"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1164",
+      "source_id": 1164,
+      "set": "new_farfield_short",
+      "source_sha256": "ec45b7a10982982daae5365d5e57de76830b0c6b5ca4c003131ff3b7c148635c",
+      "reference_sha256": "181cff2993d668a0b0def2944d03afe78d2852a651f84dc23bcadaa8c60f6066",
+      "wav_sha256": "eaa08586cc3e92d39fdbb26808e5f75970c2f4d393b7f5596aadfb787e954d9a"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1165",
+      "source_id": 1165,
+      "set": "new_farfield_short",
+      "source_sha256": "18ae09332ff3b8232cdb346359df666d0fb36e2cb63f20e7739e2bb3823c3d39",
+      "reference_sha256": "28ae093f6f7d4c1b06ff01ad53e097c3667390de33165bf887228c6d1e481602",
+      "wav_sha256": "25ca83c792f2bdcae77876b9569144f88de3f78603c71ce19803c60645285f36"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1166",
+      "source_id": 1166,
+      "set": "new_farfield_short",
+      "source_sha256": "25b33b612d76251ccf4f3718c15ce71dbc16f3eddc959d9a136a30a63f985cb9",
+      "reference_sha256": "4b78fceddaf0c4215387738c791d9857573e04b1984a33bc92d3c6cd3e563231",
+      "wav_sha256": "817620d10bf6f63d7984388a48e642b959a706335f511375b0c300fd1d69b6ce"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1175",
+      "source_id": 1175,
+      "set": "new_farfield_short",
+      "source_sha256": "4edc9376cc9202ae1ad322ae93d9a83bb5b2f343397a104d5beecfcd69adb196",
+      "reference_sha256": "68c2a70d6731554ac29b4b5d949adf944ff53113365b21963193aac4f00c2cba",
+      "wav_sha256": "ec7c4db69d2bc15ad54b55d2b8127a7cd0c85190266a14c0ec2f2a16d7afc340"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1176",
+      "source_id": 1176,
+      "set": "new_farfield_short",
+      "source_sha256": "8b664b7b8dda55672f048a5e683990ac3ab466229397ec425cff3881e2de6deb",
+      "reference_sha256": "2ed874fcabdcb4fcf110cf1d6c5fa6b24fb6d28035df3cc0014ed36e01a40386",
+      "wav_sha256": "141f0f86447a773256344b1a231effc6d7af0e27c6633a47986ccbba53f2e523"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1178",
+      "source_id": 1178,
+      "set": "new_farfield_short",
+      "source_sha256": "d0e1ea0bd37ecf42cf8d7e11fc46b8bba7abb5d7800085f5b581d3fc1d2a431a",
+      "reference_sha256": "e2feb5d29d3dba801ba844f53e9004d16a48d3a93c27af3b4f55061d8c930d94",
+      "wav_sha256": "06e0b0236c2b6d4f8ba35631cdd51cc2e8e73a8bfae8040b1b880ef413fbb56e"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1187",
+      "source_id": 1187,
+      "set": "new_farfield_short",
+      "source_sha256": "88cf906405231e44543b2821830aaf23b4e2ad8488dc454033d75ae24fb8cb47",
+      "reference_sha256": "c3c681a4a667bb26936c2cbe02a223f2815961007d402ef0ac05dd42f66d5d3c",
+      "wav_sha256": "f4ab33943df37550ba31024a8cd702f270afa177c60079e72759956c0eb69449"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1188",
+      "source_id": 1188,
+      "set": "new_farfield_short",
+      "source_sha256": "a5208e4a62d4fea8086e76ea2d189ecf3042e8ae67f474937f5aad9240a58ab0",
+      "reference_sha256": "ada3c061c67c2070d4aaf1b6806c6dd3e6c844236e35221c1b5fccd580ab91b1",
+      "wav_sha256": "805853c5b20b24cf4d01f2244ea293b20504dac83abad9f640699e2c84153cba"
+    },
+    {
+      "corpus": "Golos",
+      "id": "golos-1193",
+      "source_id": 1193,
+      "set": "new_farfield_short",
+      "source_sha256": "55cad92faa3447366618836a6b7bf078534d54845d990ab18b76c4e0f5379756",
+      "reference_sha256": "3411e25cc49fc6c808aa87b6d6775bd971474d5c529350b62ca161a768419096",
+      "wav_sha256": "c020897ede901d9141487c7de78d470b28ee46bd1ecc7c85827d70acb3c5a48c"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-1-18631-A-23",
+      "source_id": "1-18631-A-23.wav",
+      "set": "new_noise",
+      "source_sha256": "cdbd39617f2955d86ec18a4032ecd9090369c23f3d8c6d650f62e9e1ee19ea6a",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "dee0d7f8cb4a9e592c4fc4e0fec7b814544a0e82b527fe9aa8cb17cab8d7acfb",
+      "category": "breathing"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-1-19111-A-24",
+      "source_id": "1-19111-A-24.wav",
+      "set": "new_noise",
+      "source_sha256": "ab2afe6d0ee0de5edc1f0107448077919c6ac94dcf59243497e6fcb333685438",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "9c8b811cc18adfb90fba9060da68192a2ad892c2ec362bf140f2d3c800e2f057",
+      "category": "coughing"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-1-26143-A-21",
+      "source_id": "1-26143-A-21.wav",
+      "set": "new_noise",
+      "source_sha256": "8e32762c8c48e5414dbecc2979833748cb838ba476bac75d2a512262ef842eb0",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "751f233d4064fc0332227cc7777380136ed6c1ccda434252c6eda836e49fff5c",
+      "category": "sneezing"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-1-20545-A-28",
+      "source_id": "1-20545-A-28.wav",
+      "set": "new_noise",
+      "source_sha256": "417d56b2057b5e2b4e73eeffbef13a333e788fce95e9622ddad47e1867886c27",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "2e78946b306b19ea51ed9ce5eb710fe179eec175d042ca8465dd262ddae344fc",
+      "category": "snoring"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-1-104089-A-22",
+      "source_id": "1-104089-A-22.wav",
+      "set": "new_noise",
+      "source_sha256": "2b6ec14aafc6ed98c833c5c7e56780d283f3ceaea0d4c3c142b2f49fcc2fd215",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "e5fcacb27fdedb2b458dae9328326f635a2e11c9a7a2fc5cacf2c4267ab76720",
+      "category": "clapping"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-1-17092-A-27",
+      "source_id": "1-17092-A-27.wav",
+      "set": "new_noise",
+      "source_sha256": "e33131d7061ffa8e8fa234083dfd5c95b7da7d233f4d5ffaf2c34758f936964e",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "85dd6d2ccee6d944d7776a670c341fa50934c8fa91fa5a1f1df04042ca5b674e",
+      "category": "brushing_teeth"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-1-17367-A-10",
+      "source_id": "1-17367-A-10.wav",
+      "set": "new_noise",
+      "source_sha256": "d732acd2e0c7c40405968010f49f250740c86998fc416eff2ed5330fc8c89dea",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "c509cb3a5d00d9e7c47122929956bd9e8b23cd32f991c2b0915f7534c47eccc6",
+      "category": "rain"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-1-101336-A-30",
+      "source_id": "1-101336-A-30.wav",
+      "set": "new_noise",
+      "source_sha256": "e738266e395e378102f74e0920b05ff5937543788420d5b2a6b8d3df8bdb3910",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "b2f143e0c855ce6e8a4a03b6626e9c7c7b672af56a813925a4d2bd38d7ee98a2",
+      "category": "door_wood_knock"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-2-50774-A-23",
+      "source_id": "2-50774-A-23.wav",
+      "set": "new_noise",
+      "source_sha256": "904b4b8ef9936cd620d2ae7cb2c973eef8721bdeedd82ff3f6f01efee4d12dd1",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "ae982df16f2d85026c2549130ce7086891007c235a277e90f4241f063b4604e1",
+      "category": "breathing"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-2-108017-A-24",
+      "source_id": "2-108017-A-24.wav",
+      "set": "new_noise",
+      "source_sha256": "0835f06693f5560d89f59de280351f1afbb90b839edacde718bb336726a5fa25",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "05fd4b82671f458e154b8cd3e299319959c3af15f0e83998e9aa9827a841de19",
+      "category": "coughing"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-2-109505-A-21",
+      "source_id": "2-109505-A-21.wav",
+      "set": "new_noise",
+      "source_sha256": "93f6ffc756ec82bf5e6be83ccc070415138b60fa00408734a78753089567e489",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "2f03139ce8794cde94abe4bbfc5be9b6e0e8d0736866a2026c40138db0f8525f",
+      "category": "sneezing"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-2-110417-A-28",
+      "source_id": "2-110417-A-28.wav",
+      "set": "new_noise",
+      "source_sha256": "e90de80301191bd0dec7b67e93f326eb072b50e35abeb0435a72e6e4d2c5b7c2",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "d21abef99276c24b7054302271fe44a6ed60a5bff7789c2f80b9a821e8dded05",
+      "category": "snoring"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-2-25292-A-22",
+      "source_id": "2-25292-A-22.wav",
+      "set": "new_noise",
+      "source_sha256": "a34f340fe36d0d55a5b47f69593e7f49d7ac59e68e26571f53784b79e37722eb",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "5318d255ad90bb6f0fcb160fadb48b12188e9c04c0cdb42268aff34e98e9bfd1",
+      "category": "clapping"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-2-73544-A-27",
+      "source_id": "2-73544-A-27.wav",
+      "set": "new_noise",
+      "source_sha256": "1b975b204b54fdae01d980b65437a79fe335e8fed965792e70dc12c45504b3dd",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "4c88191a509c3648a4dd59b6b3828aff72e455accfb591c4d9b825410dbee674",
+      "category": "brushing_teeth"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-2-101676-A-10",
+      "source_id": "2-101676-A-10.wav",
+      "set": "new_noise",
+      "source_sha256": "ef456a67e12d2e2c84513e9eb8bea769e343cd5e0bfe65a34dc96c526f260838",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "82ef301d40cbad3a4051cc88390516f5f7357177cdc514ae19890d3e13f1101b",
+      "category": "rain"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-2-114254-A-30",
+      "source_id": "2-114254-A-30.wav",
+      "set": "new_noise",
+      "source_sha256": "5717c5c7a3bce7f38c9c444ef54f4c702cca53a6e368a6dc5b1cfb8388f7f9eb",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "bae1ab7471927d8c2612d60a8e0bc0777d35886d8dafa309af7ceba29fe2e8e0",
+      "category": "door_wood_knock"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-keyboard_typing",
+      "source_id": "5-205090-A-32.wav",
+      "set": "environmental_sound",
+      "source_sha256": "5a8f193f14fa649248b1d645ce6dae97f5c105015b3351ffaf86406e998c36d3",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "f72dc926f75b55a39b87ef2987f88613981c253bde641f3165dc8932f4840b72",
+      "category": "keyboard_typing"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-mouse_click",
+      "source_id": "5-219318-A-31.wav",
+      "set": "environmental_sound",
+      "source_sha256": "b98ad73cbc140b63e7b6bb37aab8974e2f60a357c07038ffdbacef1048fab8e6",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "a93b65c87a90f59c78eba10b0d1b9da4d293089d126f8967ba021c3971280865",
+      "category": "mouse_click"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-rain",
+      "source_id": "5-181766-A-10.wav",
+      "set": "environmental_sound",
+      "source_sha256": "608fcc0bef32512e2a984c7d3d2cac8ea161f6337ec0056850a6d34f07f8db35",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "1e6956ae83df3901fd603010cb5a0bbe8a788765875eb879522a999c680dac8f",
+      "category": "rain"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-clock_tick",
+      "source_id": "5-201194-A-38.wav",
+      "set": "environmental_sound",
+      "source_sha256": "61599b9d388e887b0318d4b008ca3f545b28f327ba3ecb12afdff7a128162c28",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "963a23279417fd9ed59961950223a7d34e1a1958f82205a58899fc263ba5c956",
+      "category": "clock_tick"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-footsteps",
+      "source_id": "5-234263-A-25.wav",
+      "set": "environmental_sound",
+      "source_sha256": "b83813a8a07ac187c280204b4ac4a015c0cff5a84bf5a7b7e3aa03b6e726910d",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "ced5e1a2bfdf7b080131a34e92f7735b1975277fa850d78c7b8d5dd1d7629822",
+      "category": "footsteps"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-vacuum_cleaner",
+      "source_id": "5-182007-A-36.wav",
+      "set": "environmental_sound",
+      "source_sha256": "3da75e2e43452c3d1bc595b46a51e7a04bc6be977fc5b11e7adaa5e8e5877b0f",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "5f2bfe93c7f07ab757f9994a4681782ba0f54c452f29ca9647ebd5732bc30f23",
+      "category": "vacuum_cleaner"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-door_wood_knock",
+      "source_id": "5-218980-A-30.wav",
+      "set": "environmental_sound",
+      "source_sha256": "c917686cc7048be91d4dec61539344094a01233e649989264187388c9e95f82f",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "e25fe41b63f847de0d73b6f2369909bc585203aecce149eaf3faf43666674a89",
+      "category": "door_wood_knock"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-washing_machine",
+      "source_id": "5-141683-A-35.wav",
+      "set": "environmental_sound",
+      "source_sha256": "c8ac3bafa369ff4bcfef515f00060c963f4c19d9275ada75edbc8cdb9c1ad591",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "59d47d86905ab911fef384699a8b2b572b68d35d03eb3416b4c092a397301a1a",
+      "category": "washing_machine"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-3-keyboard_typing",
+      "source_id": "3-125548-A-32.wav",
+      "set": "environmental_sound",
+      "source_sha256": "786c0ab915c44c716dd70971fc8f80f0cc501164423095e3e5c97929b3796f7d",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "7adc7e9c94c49af642ea4db2739de74445877a4b2055e8a0f05d52739cbc3dee",
+      "category": "keyboard_typing"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-3-mouse_click",
+      "source_id": "3-155556-A-31.wav",
+      "set": "environmental_sound",
+      "source_sha256": "56000e917f3a0a68d1f1bace969a733e573655c8b9cd55153d0ab38ea63584ee",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "f1e0e528ead328234f3fa8e0dc23ab9c890ed249a90f14eb05d646a9ee00de57",
+      "category": "mouse_click"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-3-rain",
+      "source_id": "3-132852-A-10.wav",
+      "set": "environmental_sound",
+      "source_sha256": "5d4960883ceabe28c008721ea3b5f5206a6f0234cacd4c1af81dd7594b4d3503",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "81aab8adaa922981f87d75b8fa0fe4845e3ecc7e02a0593769f9197196d78942",
+      "category": "rain"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-3-clock_tick",
+      "source_id": "3-142593-A-38.wav",
+      "set": "environmental_sound",
+      "source_sha256": "8eb0915dab65e09fd489c3ccac93e620892cb795abe4b16e7a103c5bbc92446b",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "72811a6a996f4bfde9d8e0be926ea3e6aced42ea0b4ccf66d50fe588a586a6db",
+      "category": "clock_tick"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-3-footsteps",
+      "source_id": "3-103597-A-25.wav",
+      "set": "environmental_sound",
+      "source_sha256": "4d1fca3296291bcb12ca41ebf0a1f7edb2e2c8213cc04d61e8ebb62b98bf5638",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "23a4ade4c8855378af405183494f5c876a6917983507cb946cc78e862a509a42",
+      "category": "footsteps"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-3-vacuum_cleaner",
+      "source_id": "3-152020-A-36.wav",
+      "set": "environmental_sound",
+      "source_sha256": "7ddbf7a38dc48773279a392aa8914c313481422b21ccbb221bb2f8321f39f06c",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "7d5a287f0124deef341b70fb37950137330074c05175a44c2f817dd7542d12f6",
+      "category": "vacuum_cleaner"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-3-door_wood_knock",
+      "source_id": "3-144510-A-30.wav",
+      "set": "environmental_sound",
+      "source_sha256": "c7fbb4cbda9d1f2950bf205212115a372b840382228c3baeb6451ae83366ee34",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "44a17c17ae77e89b1ebfbd9e7dcd969cd434598ddf1a502293e652a7265d5f2b",
+      "category": "door_wood_knock"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-3-washing_machine",
+      "source_id": "3-135469-A-35.wav",
+      "set": "environmental_sound",
+      "source_sha256": "bb1ff8796acc0e66158abc5dfb1c97d6046eaf10eba825258486ef67c5a65703",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "dc477bf6a3644fb881961cbf44242ee21e8cb34535180f0572bd63ef7c260aa3",
+      "category": "washing_machine"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-4-keyboard_typing",
+      "source_id": "4-158653-A-32.wav",
+      "set": "environmental_sound",
+      "source_sha256": "125691734898f9db80100600cb63a65203ac0948b4a234e136f0e369bffe3b6b",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "121ca3235521a043ead10c997dc27255db23c4771f459236bdf8e71ceedd0489",
+      "category": "keyboard_typing"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-4-mouse_click",
+      "source_id": "4-192068-A-31.wav",
+      "set": "environmental_sound",
+      "source_sha256": "fad199981761a1aa7392db104c045f6091986c26f549f6ef59d3f12425fd13dd",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "2c8c84794840b5024e2f9f09731c43a7849a0dca56aa73a42f8e3c4cb97d75b1",
+      "category": "mouse_click"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-4-rain",
+      "source_id": "4-160999-A-10.wav",
+      "set": "environmental_sound",
+      "source_sha256": "c85ef3d5cbd86ba80a7f089277d66f165e36b8dcf8070643ddc7ec73eb4f5dcb",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "6497599c7d6c03f4d677f3ef4d056b0f91da34f3ea387f7d368c2d87086a5450",
+      "category": "rain"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-4-clock_tick",
+      "source_id": "4-175945-A-38.wav",
+      "set": "environmental_sound",
+      "source_sha256": "e21894f4cd41eeb1423fe7d6eadda4dfd32cbd686c639bbadbf3ab3bbb90bc28",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "d943b6a53e118f4a2d12061216abc7cfc8c57aa5b974057218128edd23c70f4c",
+      "category": "clock_tick"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-4-footsteps",
+      "source_id": "4-117627-A-25.wav",
+      "set": "environmental_sound",
+      "source_sha256": "bee53dc6ab282257b4a70a852d6235104ec74bdb380f0a83b706f1ab88b356ca",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "a64fbe550913bf3bf50a0969fbc0a4acdab172e508ae3f496d050d3253950e38",
+      "category": "footsteps"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-4-vacuum_cleaner",
+      "source_id": "4-146200-A-36.wav",
+      "set": "environmental_sound",
+      "source_sha256": "41db87e753f13f238ba7f8ffca60421d08f8ab3e315c4d79f0557caed80ee9d8",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "ba473bc9fe0f4b3bbd9831a2ed9e08e60a3cb20f0c105e698cb3218fa6eab180",
+      "category": "vacuum_cleaner"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-4-door_wood_knock",
+      "source_id": "4-182034-A-30.wav",
+      "set": "environmental_sound",
+      "source_sha256": "8548390103bfa9097087ea552b42e6b493697f9fbe0b9d78a1aefdbf8b18219f",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "928c17264c5ef02ccc7a855544c559343c62bd94a44d8e861284e809a81d9ccb",
+      "category": "door_wood_knock"
+    },
+    {
+      "corpus": "ESC-50",
+      "id": "esc50-4-washing_machine",
+      "source_id": "4-218199-A-35.wav",
+      "set": "environmental_sound",
+      "source_sha256": "02b6d846aff2d55f6372e5cebd1056db799b8a2487953d774d537bfa3bde7ddd",
+      "reference_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wav_sha256": "49ac402715787ae718c3345368755326b7b130c80954e0f487f925400bd6a9c8",
+      "category": "washing_machine"
+    }
+  ],
+  "cuts": [
+    {
+      "source_id": "6hoeGxsHS6c_0023",
+      "target": "не",
+      "start_frame": 0,
+      "end_frame": 3520,
+      "wav_sha256": {
+        "isolated": "c84b4e01eb58aeaf153259af063a899d0f4e54e5ff949566eb8a11eff080d4f5",
+        "center-5s": "9ebe71b162e762d3e1766aacc6c96976a0548fda153cc78a07ee0bce70f84e8d",
+        "quiet-center-5s": "627c55257acd17ae5912bc84509bb7278f21244e2c90e68830931a5758c69f81",
+        "start-5s": "8dbfb5d469561b1e2bb98233f7131ecb841ef2da4a2387e45c61a108253e976b",
+        "end-5s": "a12e79aec8cdbe5bd50361d7368a0015240cfa3c95d1f7db501280d2d184e15e"
+      }
+    },
+    {
+      "source_id": "CPci7a8l-oU_0101",
+      "target": "не",
+      "start_frame": 2880,
+      "end_frame": 6080,
+      "wav_sha256": {
+        "isolated": "dc1890b973bbee83e34ebc18422ac4c3979e6dac3fa4613010f8e45bb1a6a3f1",
+        "center-5s": "e109921020008a11f7172750d0eb38d299fb11f64afc783c9cde49faf6c5571b",
+        "quiet-center-5s": "2949391dec9211ff6ba85bc20767771b639af6e055421db7e6a3895510035047",
+        "start-5s": "1b35d7a1425d9a7860e8c182ed9a39e046995c559d81ac3a245e29918775767c",
+        "end-5s": "fb64ccacf6f221e1f01e82bfb78707265e821d76cbcb6ac2105be121eb804c0a"
+      }
+    },
+    {
+      "source_id": "cPhc8OVB2Rk_0126",
+      "target": "не",
+      "start_frame": 13760,
+      "end_frame": 16960,
+      "wav_sha256": {
+        "isolated": "21b4ac087b2cfee58609c6c7643ce8a7ff50a0b77e3559ccfafe6b30f09d45d3",
+        "center-5s": "1c18e13d7bfa7ab85a0cd33482326e99a6dec41427ad503dfb9c7345b18d7584",
+        "quiet-center-5s": "363a474dc15daba5977177f9ae9e4ede86b968c02ad15342d6b93475f49cf0d2",
+        "start-5s": "e4d128496b8c306a784db7e28cdb3650203c94b4f86c58d850f4b45de68db489",
+        "end-5s": "d595dce1d92bde535e0dbae53adc4dcac4a1a515ec95bbb120810f18a413040f"
+      }
+    },
+    {
+      "source_id": "cPhc8OVB2Rk_0078",
+      "target": "три",
+      "start_frame": 8640,
+      "end_frame": 13120,
+      "wav_sha256": {
+        "isolated": "b1bbdd93c9b2f4492f816c763e139c0f2c8be4ccf8d1e6ca463e994fb7c097b0",
+        "center-5s": "aeca19b50daa13787a9341539db501b9cce861fca690207c3f969b93c01d2238",
+        "quiet-center-5s": "b92b21a9f02775c0b2fc8901353d4d0961c8d8402492bcd1725d4ca82a337656",
+        "start-5s": "c556366c359d036166223e1adc160576230877da8cf7c502c3f1cfe319fde182",
+        "end-5s": "fc178cf6848caeac7b7841936d831021e9bf2eaa493d9db5af726023e585640e"
+      }
+    },
+    {
+      "source_id": "6hoeGxsHS6c_0141",
+      "target": "три",
+      "start_frame": 56640,
+      "end_frame": 60480,
+      "wav_sha256": {
+        "isolated": "45df4ed4d982d75f906e6ddeeaeec27da58b19b0e2db4ba75c6ac048f3b7d365",
+        "center-5s": "8136bd85bd81d38e23ef9797c22e97e80303b34f259109022ae57acf50c617b8",
+        "quiet-center-5s": "0689832cca7982a42e2ad00693196831b33607ba01fdb04d718bebe1e0694ea9",
+        "start-5s": "17ea4a5d075d6c76630ffedd89026ed59e8cc74373c14e56e91c403c7c555767",
+        "end-5s": "cd356efc5796fa61f8ad1b7f89c4318ea6ca0b7832b0a9added4f77765d6fd48"
+      }
+    },
+    {
+      "source_id": "dll-jtmrD70_0111",
+      "target": "три",
+      "start_frame": 38720,
+      "end_frame": 42560,
+      "wav_sha256": {
+        "isolated": "8a802b655e29903c831977c6dcb2106c57e8e1c073d9afff5ebc7793b0bbce0c",
+        "center-5s": "13c775f4d071a17ad08b553c69b1d5126febaad2253196e309da4dc8087eacf5",
+        "quiet-center-5s": "89d5e035e7a83c79f0f84c10cca6e7b48b681fe1c0ee6fd60e7334af98aa6dcf",
+        "start-5s": "15731fc4f503d5e4bc936bceb359097df9d7052689b4cb344b2ba9334e28ab28",
+        "end-5s": "69146c0cb81ee9cd9b08954a9291e4414024bba0022c440774d69b030887ff8c"
+      }
+    },
+    {
+      "source_id": "6hoeGxsHS6c_0000",
+      "target": "да",
+      "start_frame": 0,
+      "end_frame": 2880,
+      "wav_sha256": {
+        "isolated": "b071502dd03f6315041b6c96b8941e4c1b54e1a2c4994f6fbffe581a03ea9d0a",
+        "center-5s": "ac451f6106d671dc22dc5bd6747fe3880bb980b03af36cf3e1f998cf6acc91de",
+        "quiet-center-5s": "a2e32d3875dabcd8f347dc9df2f589f92219cc7eed6e7d31d65d1d7ccf0d31cf",
+        "start-5s": "aaf47b67d25a355d1044adf3860e9978223758b2dca489da8f0164bbc01b81b9",
+        "end-5s": "c955f4e24c34a118cf4155494122e9f8980675ed3086a8cfc75f414fd4e1cfe0"
+      }
+    },
+    {
+      "source_id": "7hkxVyhoMoQ_0040",
+      "target": "да",
+      "start_frame": 6080,
+      "end_frame": 9920,
+      "wav_sha256": {
+        "isolated": "75be4d252900806b039b3246e94121004bf730da906b2bb83eedf1891014077b",
+        "center-5s": "11cb7478dc1b997240996353ab9aa1cb3bdec064f5cb2b0afde0cb5d273c161f",
+        "quiet-center-5s": "3a001b0dc052728075f1ad384e3a9d9b3b691a380ce4c1455b0707da9473f00c",
+        "start-5s": "41d002b959a1cbdb72fddb18bb000971d082e34df765587972fda66b5cf89536",
+        "end-5s": "82c5d41be4cef02280acd74bec38ec97ebcdc810c2367459e6ea8e04e4ee977e"
+      }
+    }
+  ]
+}
