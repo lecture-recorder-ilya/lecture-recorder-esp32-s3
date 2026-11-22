@@ -25,9 +25,12 @@ class ExportTests(unittest.TestCase):
             text=markdown(new)
             self.assertIn('Источник [0:12.500–0:16.750]',text)
             self.assertIn('Исходная привязка [0:01.250–0:04.500]',text)
+            path.with_suffix('.md').write_text(text,encoding='utf-8')
             restored=restore(path,revision);text=markdown(restored)
             self.assertEqual(path.read_bytes(),before)
             self.assertIn('Источник [0:01.250–0:04.500]: «Значение икс равно пятидесяти.»',text)
+            self.assertEqual(path.with_suffix('.md').read_text(),text+'\n')
+            self.assertNotIn('Источник [0:12.500',path.with_suffix('.md').read_text())
             self.assertEqual(len(versions(path)),2)
 
     def test_unresolved_source_never_exports_invented_zero(self):

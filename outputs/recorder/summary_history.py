@@ -32,5 +32,12 @@ def restore(path,revision):
     if hashlib.sha256(payload).hexdigest()!=revision:raise ValueError('Архив конспекта повреждён')
     value=json.loads(payload)
     if not isinstance(value,dict):raise ValueError('Некорректный архив конспекта')
-    write_bytes(path,payload)
+    from transcript_quality import markdown
+    export=path.with_suffix('.md');temporary=export.with_suffix('.md.tmp')
+    try:
+        temporary.write_text(markdown(value)+'\n',encoding='utf-8')
+        write_bytes(path,payload)
+        temporary.replace(export)
+    finally:
+        if temporary.is_file():temporary.unlink()
     return value
