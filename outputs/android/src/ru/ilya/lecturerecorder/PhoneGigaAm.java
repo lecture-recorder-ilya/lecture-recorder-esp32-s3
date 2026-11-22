@@ -43,6 +43,7 @@ final class PhoneGigaAm {
         long total = PcmWave.seekData(input) / 2;
         long data = input.getFilePointer();
         PhonePhrases phrases = new PhonePhrases();
+        PhoneWordTimeline timeline = new PhoneWordTimeline(phrases, EDGE / (double) RATE);
         String[] tokens = readTokens(context);
         OrtEnvironment environment = OrtEnvironment.getEnvironment();
         try (OrtSession.SessionOptions options = new OrtSession.SessionOptions()) {
@@ -90,12 +91,13 @@ final class PhoneGigaAm {
                             JSONArray alternate = recognize(environment, frontend, acoustic, clean, tokens, offset, first, last, true);
                             reconcile(words, alternate);
                         }
-                        phrases.accept(words);
+                        timeline.accept(words, last);
                     }
                     start = end;
                 }
             }
         }
+        timeline.finish();
         return phrases.finish();
     }
 
@@ -129,8 +131,9 @@ final class PhoneGigaAm {
         StringBuilder word = new StringBuilder();
         double wordStart = left;
         double wordEnd = left;
+        double textStart = left, textEnd = left, openingTextEnd = left;
         double confidence = 0;
-        int pieces = 0;
+        int pieces = 0, speechPieces = 0;
         int previous = BLANK;
         for (int frame = 0; frame < steps && frame < logits.length; frame++) {
             float[] scores = logits[frame];
@@ -145,26 +148,37 @@ final class PhoneGigaAm {
             if (!emit) continue;
             String token = tokens[best];
             if (token.startsWith("▁")) {
-                appendWord(result, word, wordStart, wordEnd, confidence, pieces, start, end);
+                appendWord(result, word, speechPieces > 0 ? wordStart : textStart,
+                        speechPieces > 0 ? wordEnd : textEnd, textStart, textEnd,
+                        confidence, pieces, start, end);
                 word.setLength(0);
-                pieces = 0;
+                pieces = speechPieces = 0;
                 confidence = 0;
                 token = token.substring(1);
             }
             if (token.isEmpty()) continue;
-            if (pieces == 0) wordStart = left + frame * FRAME_SECONDS;
-            wordEnd = Math.min(audioEnd, left + (frame + 1) * FRAME_SECONDS);
+            if (pieces == 0) textStart = left + frame * FRAME_SECONDS;
+            textEnd = Math.min(audioEnd, left + (frame + 1) * FRAME_SECONDS);
+            if (result.length() == 0) openingTextEnd = textEnd;
+            // Пунктуация остаётся в тексте и уверенности, но не растягивает речь.
+            if (CONTENT.matcher(token).find()) {
+                if (speechPieces++ == 0) wordStart = left + frame * FRAME_SECONDS;
+                wordEnd = textEnd;
+            }
             word.append(token);
             confidence += Math.exp(scores[best]);
             pieces++;
         }
-        appendWord(result, word, wordStart, wordEnd, confidence, pieces, start, end);
+        appendWord(result, word, speechPieces > 0 ? wordStart : textStart,
+                speechPieces > 0 ? wordEnd : textEnd, textStart, textEnd,
+                confidence, pieces, start, end);
         if (steps > 0 && alignment != null && result.length() == 1) {
             JSONObject only = result.getJSONObject(0);
             int onset = alignment[0];
+            // Короткая речевая граница не отменяет проверку старого длинного следа.
             if (onset != BLANK && onset != 0 && only.getDouble("start") == left
                     && PhoneCtc.weakOpeningLetter(only.getString("word"), tokens[onset], logits[0][onset],
-                                                  only.getDouble("end") - left)) {
+                                                  openingTextEnd - left)) {
                 only.put("verify_onset", true);
             }
         }
@@ -181,13 +195,20 @@ final class PhoneGigaAm {
     }
 
     private static void appendWord(JSONArray result, StringBuilder word, double wordStart, double wordEnd,
+                                   double textStart, double textEnd,
                                    double confidence, int pieces, double start, double end) throws Exception {
         if (pieces == 0 || word.length() == 0) return;
-        double midpoint = (wordStart + wordEnd) / 2;
-        if (wordStart < wordEnd && midpoint >= start && midpoint < end) {
+        // Первая буква бывает в нулевом кадре. Окно выбирает последний речевой кадр,
+        // а не середина между этой буквой и концом слова.
+        double speechFrame = Math.max(wordStart, wordEnd - FRAME_SECONDS / 2);
+        double textMidpoint = (textStart + textEnd) / 2;
+        boolean legacyCore = textMidpoint >= start && textMidpoint < end;
+        // Старый проход может лучше разобрать слово из перекрытия. Сверяем его
+        // с соседом до выдачи фраз, вместо потери при новой привязке к кадру.
+        if (wordStart < wordEnd && (legacyCore || speechFrame >= start && speechFrame < end)) {
             result.put(new JSONObject().put("word", word.toString())
                     .put("start", wordStart).put("end", wordEnd)
-                    .put("conf", confidence / pieces));
+                    .put("conf", confidence / pieces).put("_legacy_core", legacyCore));
         }
     }
 
