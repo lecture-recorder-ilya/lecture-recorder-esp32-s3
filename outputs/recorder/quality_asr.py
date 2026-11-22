@@ -5,7 +5,7 @@ import character_weights
 ROOT=Path(__file__).resolve().parent;PROJECT=ROOT.parent.parent
 MODEL=PROJECT/'work/models/gigaam';RNNT=PROJECT/'work/models/gigaam-rnnt'
 CHAR=PROJECT/'work/models/gigaam-beam'
-BASE_ENGINE='GigaAM-v3-3pass-phrases-v14-quiet'
+BASE_ENGINE='GigaAM-v3-3pass-phrases-v15-quiet'
 
 
 def engine_for(fast_character):

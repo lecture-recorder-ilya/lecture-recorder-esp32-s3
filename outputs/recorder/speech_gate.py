@@ -67,14 +67,21 @@ def speech_profile(samples):
 
 
 def _quiet_ranges(samples, probabilities):
-    if max(probabilities, default=0) < .5:
+    peak = max(probabilities, default=0)
+    if peak >= .5:
+        gain, maximum_level = 4, .025
+    elif peak >= .20 and any(first >= .20 and second >= .20 and third >= .20
+                             for first, second, third in zip(probabilities, probabilities[1:], probabilities[2:])):
+        gain, maximum_level = 16, .008
+    else:
         return ()
+
     import numpy as np
     values = np.asarray(samples, dtype=np.float32)
     level = float(np.quantile(np.abs(values), .995))
-    if not .001 <= level <= .025:
+    if not .001 <= level <= maximum_level:
         return ()
-    return tuple(_ranges(_probabilities(values * 4), len(values), _STRICT))
+    return tuple(_ranges(_probabilities(values * gain), len(values), _STRICT))
 
 
 def speech_ranges(samples):

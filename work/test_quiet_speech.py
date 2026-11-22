@@ -50,6 +50,30 @@ class QuietSpeechTests(unittest.TestCase):
                 self.assertFalse(speech_profile(audio).quiet)
                 probabilities.assert_called_once()
 
+    def test_very_quiet_speech_needs_sustained_weak_evidence_and_a_strict_retry(self):
+        audio = self.audio * .3
+        sustained = [.01] * 14 + [.24, .29, .26] + [.02] * 45
+        isolated = [.01] * 14 + [.19, .29, .18] + [.02] * 45
+        strict = [.01] * 14 + [.85] * 22 + [.02] * 26
+        with patch('speech_gate._probabilities', side_effect=[sustained, strict]) as probabilities:
+            profile = speech_profile(audio)
+        self.assertTrue(profile.quiet)
+        self.assertFalse(profile.anchored)
+        self.assertEqual(probabilities.call_count, 2)
+        np.testing.assert_array_equal(probabilities.call_args.args[0], audio * 16)
+        np.testing.assert_array_equal(audio, self.audio * .3)
+
+        with patch('speech_gate._probabilities', side_effect=[sustained, sustained]) as probabilities:
+            self.assertFalse(speech_profile(audio).quiet)
+            self.assertEqual(probabilities.call_count, 2)
+
+        for source, initial in ((audio, isolated), (self.audio * 2, sustained),
+                                (audio * .1, sustained)):
+            with self.subTest(level=source[0], initial=initial[14:17]):
+                with patch('speech_gate._probabilities', return_value=initial) as probabilities:
+                    self.assertFalse(speech_profile(source).quiet)
+                    probabilities.assert_called_once()
+
     def test_agreement_keeps_original_time_and_review_metadata(self):
         text = self.decode()
         self.assertEqual(text, 'Говори, пожалуйста.')
