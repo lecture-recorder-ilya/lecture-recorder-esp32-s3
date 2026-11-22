@@ -11,7 +11,7 @@ def save(path,data):
 
 def run(audio_path,result_path,progress_path):
  import numpy as np
- from speech_gate import speech_ranges,strict_speech_ranges
+ from speech_gate import speech_profile
  from speech_quality import usable,clean_asr_text
  from quality_asr import Decoder,ENGINE
  from power_budget import Budget
@@ -33,13 +33,13 @@ def run(audio_path,result_path,progress_path):
     audio.setpos(read_start);samples=np.frombuffer(audio.readframes(read_end-read_start),dtype='<i2').astype(np.float32)/32768
     emit_start=boundary_at_pause(samples,offset-read_start,rate)/rate
     emit_end=boundary_at_pause(samples,min(total,offset+step)-read_start,rate)/rate
-    core=strict_speech_ranges(samples)
-    ranges=speech_ranges(samples) if core else []
+    profile=speech_profile(samples)
+    ranges=profile.padded
     if ranges:
      first,last=ranges[0][0],ranges[-1][1]
      context=context_for_recording(audio_path.name,offset/rate)
      terms=(context['prompt'] or '').split(', ') if context['prompt'] else []
-     text=clean_asr_text(decoder.transcribe(samples,terms,speech=core,emit_start=emit_start,emit_end=emit_end))
+     text=clean_asr_text(decoder.transcribe(samples,terms,speech=profile,emit_start=emit_start,emit_end=emit_end))
      segments.extend(phrase_rows(text,decoder.last,read_start/rate,
                                  read_start/rate+max(emit_start,first),
                                  min(duration,read_start/rate+min(emit_end,last)),len(segments)))

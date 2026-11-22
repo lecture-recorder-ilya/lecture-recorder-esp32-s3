@@ -16,7 +16,7 @@ from urllib.parse import parse_qs, urlsplit
 from urllib.request import urlopen
 import study_store as store
 from speech_quality import usable, repetition, clean_asr_text
-from speech_gate import speech_ranges,overlaps_speech,clips,supported_words,strict_speech_ranges
+from speech_gate import speech_profile,speech_ranges,overlaps_speech,clips,supported_words,strict_speech_ranges
 from speech_context import context_for_recording
 from asr_policy import selected_model
 from preview_history import PreviewHistory
@@ -291,7 +291,7 @@ def monitor_frame(after):
     pcm=read_pcm(store.audio(status['file']),start,total)
     return {'recording':True,'file':status['file'],'from_frame':start,'to_frame':start+len(pcm)//2,'rate':16000,'pcm':base64.b64encode(pcm).decode()}
 
-QUALITY_DECODER=Decoder()
+QUALITY_DECODER=Decoder(threads=2)
 QUALITY_CURSOR={'file':None,'end':0}
 
 def monitor_quality(name,total,flush=False):
@@ -307,14 +307,14 @@ def monitor_quality(name,total,flush=False):
     read_start=max(0,offset-int(.45*16000));read_end=min(total,end+int(.45*16000))
     pcm=read_pcm(store.audio(name),read_start,read_end)
     samples=np.frombuffer(pcm,dtype='<i2').astype(np.float32)/32768
-    core=strict_speech_ranges(samples)
-    ranges=speech_ranges(samples) if core else []
+    profile=speech_profile(samples)
+    ranges=profile.padded
     if not ranges:
         QUALITY_CURSOR['end']=end
         return {'file':name,'segments':[],'message':'Фоновый звук · подтверждённой речи нет','seconds':end/16000,'speech_detected':False,'model':QUALITY_ENGINE}
     first=ranges[0][0];last=ranges[-1][1]
     context=context_for_recording(name,offset/16000)
-    text=clean_asr_text(QUALITY_DECODER.transcribe(samples,(context['prompt'] or '').split(', ') if context['prompt'] else [],speech=core,emit_start=(offset-read_start)/16000,emit_end=(end-read_start)/16000))
+    text=clean_asr_text(QUALITY_DECODER.transcribe(samples,(context['prompt'] or '').split(', ') if context['prompt'] else [],speech=profile,emit_start=(offset-read_start)/16000,emit_end=(end-read_start)/16000))
     QUALITY_CURSOR['end']=end
     from asr_segments import phrase_rows
     rows=phrase_rows(text,QUALITY_DECODER.last,read_start/16000,

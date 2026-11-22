@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'outputs/recorder'))
-from power_budget import Budget, economical
+from power_budget import Budget, decoder_threads, economical
 
 class PowerTests(unittest.TestCase):
     def test_budget_waits_after_synchronizing_and_preserves_duty(self):
@@ -21,6 +21,16 @@ class PowerTests(unittest.TestCase):
         self.assertAlmostEqual(budget.idle_seconds,1.2 * (.35 / .65))
         self.assertLessEqual(max(v[1] for v in events if v[0]=='sleep'),.5)
         self.assertAlmostEqual(budget.started,now[0])
+    def test_cpu_threads_follow_mode_and_available_cores(self):
+        for cores, cpu, saving, expected in [(8,'arm64',False,4), (8,'arm64',True,2),
+                                            (8,'x86_64',False,2), (1,'arm64',False,1)]:
+            with self.subTest(cores=cores, cpu=cpu, saving=saving), \
+                    patch('power_budget.os.cpu_count',return_value=cores), \
+                    patch('power_budget.platform.machine',return_value=cpu), \
+                    patch('power_budget.platform.system',return_value='Darwin'), \
+                    patch('power_budget.economical',return_value=saving):
+                self.assertEqual(decoder_threads(), expected)
+
     def test_disabled_budget_does_not_sleep_or_sync(self):
         budget=Budget(lambda:self.fail('sync'),lambda:10,
                       lambda _:self.fail('sleep'),lambda:False)

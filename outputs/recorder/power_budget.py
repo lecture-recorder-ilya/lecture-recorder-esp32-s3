@@ -1,5 +1,7 @@
 """Cooperative inference budget; never throttles the audio capture process."""
 import json
+import os
+import platform
 import time
 from pathlib import Path
 
@@ -12,6 +14,12 @@ def economical():
         return json.loads(CONFIG.read_text()).get('economical', DEFAULT_ECONOMICAL)
     except (OSError, ValueError):
         return DEFAULT_ECONOMICAL
+
+def decoder_threads():
+    cores = os.cpu_count() or 1
+    if cores >= 8 and platform.system() == 'Darwin' and platform.machine() == 'arm64' and not economical():
+        return 4
+    return min(cores, 2)
 
 class Budget:
     def __init__(self, synchronize=lambda: None, clock=time.monotonic,

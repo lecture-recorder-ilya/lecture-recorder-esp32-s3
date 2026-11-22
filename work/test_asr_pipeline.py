@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0,str(Path('outputs/recorder').resolve()))
+from speech_gate import SpeechProfile
 from asr_policy import selected_model
 from asr_windows import audio_window,central_segment
 from transcript_cache import identity,prepare,checkpoint,WHISPER_ENGINE
@@ -15,6 +16,10 @@ import ai_worker
 import qwen_transcribe
 from quality_asr import Decoder,ENGINE
 
+
+def voiced_profile(samples):
+ ranges=[(0,len(samples)/16000)]
+ return SpeechProfile(ranges,ranges,ranges)
 
 class PipelineTests(unittest.TestCase):
  def setUp(self):
@@ -64,7 +69,7 @@ class PipelineTests(unittest.TestCase):
  def test_quality_resume_uses_context_and_does_not_repeat_completed_chunk(self):
   expected=identity(self.audio,ENGINE)
   self.cache.write_text(json.dumps(checkpoint(expected,[{'id':0,'start':0,'end':20,'text':'Первая часть.'}],41,320000)))
-  with patch('speech_gate.strict_speech_ranges',side_effect=lambda x:[(0,len(x)/16000)]),patch('speech_gate.speech_ranges',side_effect=lambda x:[(0,len(x)/16000)]),patch.object(Decoder,'transcribe',return_value='Продолжение лекции.') as decode,patch('power_budget.Budget.checkpoint'):
+  with patch('speech_gate.speech_profile',side_effect=voiced_profile),patch.object(Decoder,'transcribe',return_value='Продолжение лекции.') as decode,patch('power_budget.Budget.checkpoint'):
    qwen_transcribe.run(self.audio,self.root/'result.json',self.root/'progress.json')
   self.assertEqual([len(c.args[0]) for c in decode.call_args_list],[23*16000,3*16000])
   self.assertEqual([c.kwargs['emit_start'] for c in decode.call_args_list],[2,2])

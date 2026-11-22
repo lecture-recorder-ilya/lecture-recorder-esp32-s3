@@ -23,10 +23,10 @@ elif mode == 'ai':
     import onnx_asr
     import pymorphy3
     import torch
-    from silero_vad import load_silero_vad
+    from speech_gate import speech_profile
     from transformers import AutoTokenizer, AutoModel, AutoFeatureExtractor, WavLMForXVector
     torch.set_num_threads(1)
-    load_silero_vad()
+    assert not speech_profile(torch.zeros(16000).numpy()).strict
     for folder, name in [('gigaam', 'v3_e2e_ctc.int8.onnx'), ('gigaam-rnnt', 'v3_e2e_rnnt_encoder.onnx'),
                          ('gigaam-rnnt', 'v3_e2e_rnnt_decoder.onnx'), ('gigaam-rnnt', 'v3_e2e_rnnt_joint.onnx'),
                          ('gigaam-beam', 'v3_ctc.onnx')]:
