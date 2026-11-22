@@ -35,6 +35,28 @@ final class LectureNotes {
   return document;
  }
 
+ static void saveTopic(Context c,JSONObject document,String topic)throws Exception{
+  document.getJSONObject("report").put("topic",topic);
+  saveLocal(c,document,false);
+ }
+
+ static String recordingName(JSONObject document,String date){
+  JSONObject lesson=document.optJSONObject("lesson"),report=document.optJSONObject("report");
+  String subject=lesson==null?"":lesson.optString("subject").trim();
+  if(!subject.isEmpty()||report==null)return subject;
+  subject=meaningfulName(report.optString("subject"),date);
+  return subject.isEmpty()?meaningfulName(report.optString("topic"),date):subject;
+ }
+
+ static String meaningfulName(String value,String date){
+  String name=value.trim();
+  String suffix=" · "+date;
+  if(name.endsWith(suffix))name=name.substring(0,name.length()-suffix.length()).trim();
+  if(name.equalsIgnoreCase(date)||valid(name))return "";
+  return name.matches("(?iu)^(?:лекция|запись(?: лекции)?|без темы|без названия|не (?:указан[ао]?|определ[её]н[ао]?)|unknown|[-—]+|null)[.!]?$")
+      ?"":name;
+ }
+
  static void saveSummary(Context c,JSONObject document)throws Exception{
   document.getJSONObject("report").remove(SUMMARY_PENDING);
   saveLocal(c,document,false);

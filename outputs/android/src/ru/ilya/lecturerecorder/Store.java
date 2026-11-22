@@ -23,11 +23,23 @@ final class Store {
   return audio.values();
  }
  static String recordingTitle(Context c,String file){
+  String date=recordingTitle(file);
+  String name=recordingName(c,file);
+  return name.isEmpty()?date:name+" · "+date;
+ }
+ static String recordingName(Context c,String file){
+  String date=recordingTitle(file);
   try{
-   String title=lesson(c,file).optString("subject");
-   if(!title.isEmpty())return title+" · "+recordingTitle(file);
+   String subject=lesson(c,file).optString("subject").trim();
+   if(!subject.isEmpty())return subject;
   }catch(Exception ignored){}
-  return recordingTitle(file);
+  for(boolean local:new boolean[]{true,false}){
+   try{
+    String name=LectureNotes.recordingName(readObject(LectureNotes.file(c,file,local)),date);
+    if(!name.isEmpty())return name;
+   }catch(Exception ignored){}
+  }
+  return "";
  }
  static String recordingTitle(String file){
   String name=file.substring("lecture-".length(),file.length()-".wav".length());

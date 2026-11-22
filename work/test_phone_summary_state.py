@@ -68,6 +68,7 @@ public final class SummaryStateTest {
         File history = new File(new File(root, "phone-note-history"), NAME);
         if (args[1].equals("replace")) {
             checkEvidence();
+            checkRecordingNames(context);
             JSONArray oldSegments = segments(OLD_TEXT);
             oldSegments.getJSONObject(0).put("review_key", OLD_KEY);
             JSONObject oldReport = new JSONObject()
@@ -152,6 +153,21 @@ public final class SummaryStateTest {
             require(archive(history).equals(Store.read(mac)), "Finishing re-archived or altered the previous result");
             System.out.println("PASS: separate JVM resumed summary from disk and preserved the previous result");
         }
+    }
+
+    private static void checkRecordingNames(Context context) throws Exception {
+        String name = "lecture-2026-11-22-12-30-00.wav";
+        String date = Store.recordingTitle(name);
+        JSONObject transcript = LectureNotes.saveTranscript(context, name, date, null, segments(NEW_TEXT), "gigaam-v3");
+        require(date.equals(Store.recordingTitle(context, name)), "A date placeholder became a label");
+        LectureNotes.saveTopic(context, transcript, "Уравнения первого порядка");
+        JSONObject saved = read(LectureNotes.file(context, name, true)).getJSONObject("report");
+        require(saved.optBoolean(LectureNotes.SUMMARY_PENDING), "A topic marked the unfinished summary as ready");
+        require(("Уравнения первого порядка · " + date).equals(Store.recordingTitle(context, name)), "Detected topic missing from picker");
+        File lesson = Store.lessonFile(context, name);
+        Store.write(lesson, new JSONObject().put("subject", "Математика"));
+        require(("Математика · " + date).equals(Store.recordingTitle(context, name)), "Detected topic replaced the selected subject");
+        require(lesson.delete() && LectureNotes.file(context, name, true).delete(), "Could not clean the naming fixture");
     }
 
     private static void checkEvidence() throws Exception {
