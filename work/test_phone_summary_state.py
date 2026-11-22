@@ -69,6 +69,7 @@ public final class SummaryStateTest {
         if (args[1].equals("replace")) {
             checkEvidence();
             checkRecordingNames(context);
+            checkPhrases();
             JSONArray oldSegments = segments(OLD_TEXT);
             oldSegments.getJSONObject(0).put("review_key", OLD_KEY);
             JSONObject oldReport = new JSONObject()
@@ -127,6 +128,7 @@ public final class SummaryStateTest {
             report.put("summary", new JSONArray().put(NEW_TEXT)).put("homework", new JSONArray());
             System.out.println("PASS: replacement guards, pending transcript, lesson metadata, archive and Mac copy");
         } else {
+            checkEditedEvidence(context);
             JSONObject pending = read(target);
             JSONObject report = pending.getJSONObject("report");
             require(report.optBoolean("local_summary_pending") && !report.has("summary"), "Restart lost pending state");
@@ -168,6 +170,81 @@ public final class SummaryStateTest {
         Store.write(lesson, new JSONObject().put("subject", "Математика"));
         require(("Математика · " + date).equals(Store.recordingTitle(context, name)), "Detected topic replaced the selected subject");
         require(lesson.delete() && LectureNotes.file(context, name, true).delete(), "Could not clean the naming fixture");
+    }
+
+    private static void checkEditedEvidence(Context context) throws Exception {
+        String name = "lecture-2026-11-22-10-01-02.wav";
+        String before = "Первый закон описывает опыт.";
+        String after = "Второй закон описывает опыт.";
+        JSONObject segment = new JSONObject().put("id", 17).put("text", before).put("start", 0).put("end", 4);
+        JSONObject next = new JSONObject().put("text", "Следует вывод.").put("start", 4).put("end", 7);
+        JSONObject anchor = new JSONObject().put("quote", before + " Следует вывод.")
+                .put("segment_id", 17).put("start", 0).put("end", 7);
+        JSONObject assignment = new JSONObject().put("quote", before).put("task", before)
+                .put("segment_id", 0).put("start", 0).put("end", 4);
+        JSONObject raw = new JSONObject().put("report", new JSONObject()
+                .put("segments", new JSONArray().put(segment).put(next))
+                .put("summary", new JSONArray().put(anchor.getString("quote")).put("Отдельный вывод").put(before))
+                .put("overview", before + " Следует вывод. Отдельный вывод " + before)
+                .put("summary_evidence", new JSONArray().put(anchor))
+                .put("homework", new JSONArray().put(assignment)));
+        TranscriptEdits.Line line = new TranscriptEdits.Line(segment, 0, true, new JSONObject());
+        TranscriptEdits.save(context, name, line, 0, "Второй");
+        JSONObject edits = TranscriptEdits.read(TranscriptEdits.file(context, name));
+        JSONObject view = new JSONObject(raw.toString());
+        TranscriptEdits.apply(view, edits, true);
+        JSONObject report = view.getJSONObject("report");
+        require(after.equals(report.getJSONArray("segments").getJSONObject(0).getString("text")), "Word edit lost");
+        require((after + " Следует вывод.").equals(report.getJSONArray("summary").getString(0)), "Stale summary after word edit");
+        require((after + " Следует вывод.").equals(report.getJSONArray("summary_evidence").getJSONObject(0).getString("quote")), "Stale evidence");
+        require("Отдельный вывод".equals(report.getJSONArray("summary").getString(1)) && after.equals(report.getJSONArray("summary").getString(2)), "Legacy exact quote");
+        require((after + " Следует вывод. Отдельный вывод " + after).equals(report.getString("overview")), "Stale derived Mac overview");
+        JSONObject authored = new JSONObject(raw.toString());
+        authored.getJSONObject("report").put("overview", "Авторское вступление. " + before);
+        TranscriptEdits.apply(authored, edits, true);
+        require(("Авторское вступление. " + before).equals(authored.getJSONObject("report").getString("overview")), "Overwrote authored overview");
+        require(after.equals(report.getJSONArray("homework").getJSONObject(0).getString("task")), "Stale task after edit");
+        require(7 == report.getJSONArray("summary_evidence").getJSONObject(0).getInt("end"), "Lost audio anchor");
+        require(LectureNotes.summary(view).contains(after) && !LectureNotes.summary(view).contains(before), "Stale export");
+        JSONObject mac = new JSONObject(raw.toString());
+        TranscriptEdits.apply(mac, edits, false);
+        require(mac.toString().equals(raw.toString()), "Phone edit changed independent Mac note");
+        TranscriptEdits.save(context, name, line, 0, "Первый");
+        JSONObject restored = new JSONObject(raw.toString());
+        TranscriptEdits.apply(restored, TranscriptEdits.read(TranscriptEdits.file(context, name)), true);
+        require(restored.toString().equals(raw.toString()), "Undo lost the original quote");
+    }
+
+    private static void checkPhrases() throws Exception {
+        PhonePhrases builder = new PhonePhrases();
+        builder.accept(new JSONArray()
+                .put(new JSONObject().put("word", "…").put("start", 0).put("end", .04))
+                .put(new JSONObject().put("word", "Нет.").put("start", 1).put("end", 1.35))
+                .put(new JSONObject().put("word", ".").put("start", 5).put("end", 5.04)));
+        JSONArray result = builder.finish();
+        require(result.length() == 1 && "Нет.".equals(result.getJSONObject(0).getString("text")),
+                "Punctuation-only noise must not create a transcript");
+        require(result.getJSONObject(0).getDouble("start") == 1, "Speech timestamp must be preserved");
+
+        builder = new PhonePhrases();
+        builder.accept(new JSONArray()
+                .put(new JSONObject().put("word", "Это").put("start", 4).put("end", 4.2))
+                .put(new JSONObject().put("word", "по-русски.").put("start", 4.37).put("end", 4.8)));
+        JSONObject row = builder.finish().getJSONObject(0);
+        TranscriptEdits.Line line = new TranscriptEdits.Line(row, 0, true, new JSONObject());
+        require(line.words.size() == 2 && line.words.get(0).audioStartMillis == 4000
+                && line.words.get(1).audioStartMillis == 4370, "Word seek must keep millisecond timing and hyphens");
+        JSONObject corrections = new JSONObject().put(line.key, new JSONObject().put("original", line.original)
+                .put("words", new JSONObject().put("1", new JSONObject().put("original", "по-русски")
+                        .put("replacement", "на русском"))));
+        TranscriptEdits.Line corrected = new TranscriptEdits.Line(row, 0, true, corrections);
+        require("на русском".equals(corrected.words.get(1).value)
+                && corrected.words.get(1).audioStartMillis == 4370, "A local correction must keep source playback");
+        JSONObject note = new JSONObject().put("report", new JSONObject().put("segments",new JSONArray().put(row)));
+        TranscriptEdits.apply(note, corrections, true);
+        require(!row.has("word_times"), "Rewritten export cannot reuse old offsets");
+        require(new TranscriptEdits.Line(row, 0, true, new JSONObject()).words.get(0).audioStartMillis == -1,
+                "Old transcripts must not invent a word timestamp");
     }
 
     private static void checkEvidence() throws Exception {
@@ -215,6 +292,17 @@ public final class SummaryStateTest {
         PhoneSummaryEvidence.add("KEY: 1,2", 0, 2, adjacent, valid, new JSONArray(),
                 new JSONArray(), new HashSet<>(), new HashSet<>());
         require(valid.length() == 0, "Distant fragments must not be joined");
+        String uncertainNumber = "Сопротивление равно пятнадцати омам.";
+        String unfinishedDate = "На дом решите задачу 15. Срок пока не утверждён.";
+        JSONArray critical = segments(uncertainNumber)
+                .put(new JSONObject().put("text", unfinishedDate).put("start", 12).put("end", 16));
+        JSONArray criticalPoints = new JSONArray(), criticalTasks = new JSONArray();
+        PhoneSummaryEvidence.add("KEY: 1\nTASK: 2", 0, 2, critical, criticalPoints, new JSONArray(),
+                criticalTasks, new HashSet<>(), new HashSet<>());
+        require(criticalPoints.length() == 0, "Uncertain number must not become a confident summary point");
+        require(criticalTasks.length() == 1 && unfinishedDate.equals(criticalTasks.getJSONObject(0).getString("task"))
+                        && !criticalTasks.getJSONObject(0).has("deadline"),
+                "Homework must keep the number and leave the unsettled date unspecified");
         System.out.println("PASS: verbatim quotes, timestamps, uncertainty and explicit homework");
     }
 
@@ -270,6 +358,7 @@ def main():
         subprocess.run(
             [java_bin / "javac", "-encoding", "UTF-8", "-cp", jar, "-d", root,
              SOURCE / "LectureNotes.java", SOURCE / "Store.java", SOURCE / "PhoneSummaryEvidence.java",
+             SOURCE / "PhonePhrases.java", SOURCE / "TranscriptEdits.java",
              *(root / name for name in sources)],
             check=True,
         )

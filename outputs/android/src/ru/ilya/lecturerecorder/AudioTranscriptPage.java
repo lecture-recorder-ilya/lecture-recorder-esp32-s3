@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.LinearGradient;
 import android.graphics.Shader;
@@ -85,6 +86,7 @@ final class AudioTranscriptPage extends LinearLayout {
     private Button summary;
     private final Button importButton;
     private final TextView importStatus;
+    private final TextView recordingHint;
     private TextView times;
     private TextView waveStatus, recordingDate;
     private TextView transcriptStatus;
@@ -94,6 +96,9 @@ final class AudioTranscriptPage extends LinearLayout {
     private ProgressBar transcriptSpinner;
     private TranscriptAdapter transcript;
     private CheckBox reviewFilter;
+    private ListView transcriptList;
+    private Button nextReview;
+    private String reviewKey;
     private List<TranscriptEdits.Line> transcriptRows = Collections.emptyList();
     private List<TranscriptEdits.Line> reviewRows = Collections.emptyList();
     private Waveform waveform;
@@ -135,7 +140,8 @@ final class AudioTranscriptPage extends LinearLayout {
         LinearLayout.LayoutParams importAction = new LinearLayout.LayoutParams(-2, -1);
         importAction.setMarginStart(dp(8));
         picker.addView(importButton, importAction);
-        playback.addView(picker, spaced(-1, dp(52), landscape ? 0 : 10));
+        int pickerHeight = getResources().getConfiguration().fontScale > 1.25f ? 72 : 52;
+        playback.addView(picker, spaced(-1, dp(pickerHeight), landscape ? 0 : 10));
         recordingDate = text("", 12, MUTED);
         recordingDate.setVisibility(View.GONE);
         playback.addView(recordingDate, spaced(-1, -2, 3));
@@ -149,6 +155,9 @@ final class AudioTranscriptPage extends LinearLayout {
         playback.addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
         LinearLayout details = column();
         body.addView(details, new FrameLayout.LayoutParams(-1, -1));
+        recordingHint = text("", 15, MUTED);
+        details.addView(recordingHint, spaced(-1, -2, 12));
+        updateRecordingHint();
 
         audioPanel = card();
         audioPanel.setVisibility(View.GONE);
@@ -177,7 +186,10 @@ final class AudioTranscriptPage extends LinearLayout {
             String name = state.getString("recording");
             if (LectureNotes.valid(name)) {
                 select(name, state.getInt("position"), false);
-                if (!reviewRows.isEmpty()) reviewFilter.setChecked(state.getBoolean("reviewOnly"));
+                if (!reviewRows.isEmpty()) {
+                    reviewKey = state.getString("review_key");
+                    reviewFilter.setChecked(state.getBoolean("reviewOnly"));
+                }
             }
         }
     }
@@ -228,7 +240,13 @@ final class AudioTranscriptPage extends LinearLayout {
                 PhoneAnalysisService.request(activity, selected, Store.recordingTitle(activity, selected), true);
             }
         });
+        transcribe.setBackground(StudioStyle.control(activity, StudioStyle.ACTIVE, 12));
+        transcribe.setTextColor(ACCENT);
         host.addView(transcribe, layout);
+    }
+
+    void openRecording(String name) {
+        if (LectureNotes.valid(name)) select(name, 0, false);
     }
 
     private void addTranscriptStatus(LinearLayout host) {
@@ -264,16 +282,27 @@ final class AudioTranscriptPage extends LinearLayout {
         reviewFilter.setButtonTintList(ColorStateList.valueOf(ACCENT));
         reviewFilter.setMinHeight(dp(48));
         reviewFilter.setVisibility(View.GONE);
-        reviewFilter.setOnCheckedChangeListener((filter, checked) -> updateVisibleTranscript());
         box.addView(reviewFilter, spaced(-1, -2, 4));
 
+        nextReview = button("Следующий сомнительный фрагмент", this::nextReviewFragment);
+        nextReview.setMinHeight(dp(48));
+        nextReview.setVisibility(View.GONE);
+        box.addView(nextReview, spaced(-1, -2, 4));
+
         ListView lines = new ListView(activity);
+        transcriptList = lines;
         transcript = new TranscriptAdapter(activity);
         lines.setAdapter(transcript);
         lines.setDivider(new android.graphics.drawable.ColorDrawable(StudioStyle.LINE));
         lines.setDividerHeight(dp(1));
         if (landscape) lines.setScrollbarFadingEnabled(false);
         box.addView(lines, new LinearLayout.LayoutParams(-1, 0, 1));
+        reviewFilter.setOnCheckedChangeListener((filter, checked) -> {
+            updateVisibleTranscript();
+            int index = reviewIndex(checked ? reviewRows : transcriptRows);
+            if (index >= 0) lines.setSelection(index);
+            if (filter.isShown()) StudioStyle.enter(lines, false);
+        });
     }
 
     private View addDropdownDismiss(FrameLayout host) {
@@ -307,12 +336,29 @@ final class AudioTranscriptPage extends LinearLayout {
         body.addView(recordingDropdown.list, layout);
     }
 
+    private String libraryName(String name, File audio) {
+        String recognized = Store.recordingName(activity, name);
+        if (!recognized.isEmpty()) return recognized;
+        try {
+            JSONObject metadata = Store.readObject(new File(audio.getPath() + ".json"));
+            String title = metadata.optString("title").trim();
+            if (metadata.optBoolean("imported") && !title.isEmpty()) {
+                return title;
+            }
+        } catch (Exception ignored) {
+            // The recording can still be opened with its date as the title.
+        }
+        return "";
+    }
+
     private List<ChoiceDropdown.Option> recordingOptions() {
         TreeMap<String, ChoiceDropdown.Option> options = new TreeMap<>(Collections.reverseOrder());
         for (File file : Store.audioFiles(activity)) {
             long seconds = Math.max(0, file.length() - 44) / (PcmWave.SAMPLE_RATE * 2);
             String name = file.getName();
-            options.put(name, new ChoiceDropdown.Option(name, Store.recordingTitle(activity, name),
+            String label = libraryName(name, file);
+            String date = Store.recordingTitle(name);
+            options.put(name, new ChoiceDropdown.Option(name, label.isEmpty() ? date : label + " · " + date,
                     LectureReaderActivity.clock(seconds)));
         }
         for (boolean local : new boolean[]{true, false}) {
@@ -326,6 +372,13 @@ final class AudioTranscriptPage extends LinearLayout {
         return new ArrayList<>(options.values());
     }
 
+    private void updateRecordingHint() {
+        recordingHint.setVisibility(selected == null ? View.VISIBLE : View.GONE);
+        if (selected == null) recordingHint.setText(recordingOptions().isEmpty()
+                ? "Записей пока нет. Запиши пару или импортируй аудиофайл."
+                : "Выбери запись, чтобы открыть аудио и текст.");
+    }
+
     boolean closeDropdown() {
         return recordingDropdown.close();
     }
@@ -334,13 +387,16 @@ final class AudioTranscriptPage extends LinearLayout {
         releasePlayer();
         if (scan != null) scan.cancel(true);
         selected = name;
+        reviewKey = null;
+        updateRecordingHint();
         noteRevision = null;
         setTranscriptRows(Collections.emptyList());
         position = initialPosition;
         duration = 0;
+        File audioFile = Store.audio(activity, name);
         updateRecordingTitle();
         waveform.setEnvelope(null);
-        boolean hasAudio = Store.audio(activity, name).isFile();
+        boolean hasAudio = audioFile.isFile();
         transcriptPanel.setVisibility(View.VISIBLE);
         waveform.setVisibility(hasAudio ? View.VISIBLE : View.GONE);
         play.setVisibility(hasAudio ? View.VISIBLE : View.GONE);
@@ -378,7 +434,7 @@ final class AudioTranscriptPage extends LinearLayout {
     }
 
     private void updateRecordingTitle() {
-        String name = Store.recordingName(activity, selected);
+        String name = libraryName(selected, Store.audio(activity, selected));
         String date = Store.recordingTitle(selected);
         recordingDropdown.setSelected(new ChoiceDropdown.Option(selected, name.isEmpty() ? date : name, date));
         recordingDate.setText(date);
@@ -467,7 +523,10 @@ final class AudioTranscriptPage extends LinearLayout {
 
     private void refreshTranscript() {
         String importMessage = AudioImport.status;
-        if (!TextUtils.equals(importStatus.getText(), importMessage)) importStatus.setText(importMessage);
+        if (!TextUtils.equals(importStatus.getText(), importMessage)) {
+            importStatus.setText(importMessage);
+            if (!AudioImport.busy) updateRecordingHint();
+        }
         importStatus.setVisibility(importMessage.isEmpty() ? View.GONE : View.VISIBLE);
         importButton.setEnabled(!AudioImport.busy);
         if (selected != null) refreshTranscriptState();
@@ -526,12 +585,43 @@ final class AudioTranscriptPage extends LinearLayout {
         }
         reviewFilter.setVisibility(reviewRows.isEmpty() ? View.GONE : View.VISIBLE);
         if (reviewRows.isEmpty()) reviewFilter.setChecked(false);
-        reviewFilter.setText("Сомнительные фразы (" + reviewRows.size() + ")");
+        if (reviewIndex(reviewRows) < 0) reviewKey = null;
         updateVisibleTranscript();
     }
 
     private void updateVisibleTranscript() {
-        transcript.replace(reviewFilter.isChecked() ? reviewRows : transcriptRows);
+        boolean filtered = reviewFilter.isChecked();
+        transcript.replace(filtered ? reviewRows : transcriptRows);
+        reviewFilter.setText(filtered ? "Только сомнительные (" + reviewRows.size() + ") · снять для полного текста"
+                : "Показать сомнительные (" + reviewRows.size() + ")");
+        nextReview.setVisibility(filtered && !reviewRows.isEmpty() ? View.VISIBLE : View.GONE);
+        updateNextReview();
+    }
+
+    private int reviewIndex(List<TranscriptEdits.Line> rows) {
+        if (reviewKey == null) return -1;
+        for (int i = 0; i < rows.size(); i++) {
+            if (reviewKey.equals(rows.get(i).key)) return i;
+        }
+        return -1;
+    }
+
+    private void updateNextReview() {
+        int current = reviewIndex(reviewRows);
+        nextReview.setEnabled(current < reviewRows.size() - 1);
+        nextReview.setText(current < 0 ? "К первой сомнительной фразе"
+                : current == reviewRows.size() - 1 ? "Последняя сомнительная фраза"
+                : "К следующей фразе · " + (current + 2) + " из " + reviewRows.size());
+    }
+
+    private void nextReviewFragment() {
+        int next = reviewIndex(reviewRows) + 1;
+        if (next >= reviewRows.size()) return;
+        reviewKey = reviewRows.get(next).key;
+        transcript.notifyDataSetChanged();
+        transcriptList.setSelectionFromTop(next, 0);
+        updateNextReview();
+        transcriptList.announceForAccessibility("Фрагмент " + (next + 1) + " из " + reviewRows.size());
     }
 
     private List<TranscriptEdits.Line> readSegments(File note, boolean local, JSONObject corrections) {
@@ -581,6 +671,17 @@ final class AudioTranscriptPage extends LinearLayout {
         replacement.setText(word.value);
         replacement.setSelectAllOnFocus(true);
         sheet.addView(replacement, spaced(-1, dp(50), 12));
+
+        int audioStart = word.audioStartMillis >= 0 ? (int) word.audioStartMillis
+                : Double.isFinite(line.start) && line.start >= 0 ? (int) (line.start * 1000) : -1;
+        if (audioStart >= 0 && Store.audio(activity, recording).isFile()) {
+            String time = LectureReaderActivity.clock(audioStart / 1000.0);
+            String label = word.audioStartMillis >= 0 ? "Слушать с " : "Слушать фразу с ";
+            Button listen = button(label + time, () -> {
+                if (recording.equals(selected) && player != null) seek(audioStart, true);
+            });
+            sheet.addView(listen, spaced(-1, dp(48), 8));
+        }
 
         if (!word.original.equals(word.value)) {
             sheet.addView(button("Вернуть исходное", () ->
@@ -643,6 +744,7 @@ final class AudioTranscriptPage extends LinearLayout {
         if (active == visible) return;
         visible = active;
         if (active) {
+            updateRecordingHint();
             refreshPlayback();
             refreshTranscript();
             return;
@@ -664,6 +766,7 @@ final class AudioTranscriptPage extends LinearLayout {
         state.putString("recording", selected);
         state.putInt("position", position);
         state.putBoolean("reviewOnly", reviewFilter.isChecked());
+        state.putString("review_key", reviewKey);
         return state;
     }
 
@@ -741,6 +844,7 @@ final class AudioTranscriptPage extends LinearLayout {
             TranscriptRow row = reusable == null ? new TranscriptRow() : (TranscriptRow) reusable;
             TranscriptEdits.Line line = getItem(index);
             boolean timed = Double.isFinite(line.start);
+            row.setBackgroundColor(line.key.equals(reviewKey) ? StudioStyle.ACTIVE : Color.TRANSPARENT);
             row.time.setVisibility(timed ? View.VISIBLE : View.GONE);
             row.review.setVisibility(line.needsReview ? View.VISIBLE : View.GONE);
             row.time.setTextColor(line.needsReview ? StudioStyle.WARNING : ACCENT);
@@ -748,7 +852,14 @@ final class AudioTranscriptPage extends LinearLayout {
                 String time = LectureReaderActivity.clock(line.start);
                 row.time.setText(time);
                 row.time.setContentDescription((line.needsReview ? "Сомнительная фраза. " : "") + "Слушать с " + time);
-                row.time.setOnClickListener(view -> seek((int) (Math.max(0, line.start) * 1000), true));
+                row.time.setOnClickListener(view -> {
+                    if (reviewFilter.isChecked()) {
+                        reviewKey = line.key;
+                        notifyDataSetChanged();
+                        updateNextReview();
+                    }
+                    seek((int) (Math.max(0, line.start) * 1000), true);
+                });
             }
             SpannableStringBuilder display = new SpannableStringBuilder();
             int offset = 0;
@@ -761,7 +872,13 @@ final class AudioTranscriptPage extends LinearLayout {
                 display.append(word.value);
                 display.setSpan(new ClickableSpan() {
                     @Override public void onClick(View widget) {
-                        if (recording.equals(selected)) editWord(line, wordIndex);
+                        if (!recording.equals(selected)) return;
+                        if (reviewFilter.isChecked()) {
+                            reviewKey = line.key;
+                            notifyDataSetChanged();
+                            updateNextReview();
+                        }
+                        editWord(line, wordIndex);
                     }
 
                     @Override public void updateDrawState(TextPaint paint) {

@@ -1,12 +1,16 @@
 package ru.ilya.lecturerecorder;
 
+import java.util.regex.Pattern;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 final class PhonePhrases {
+    private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}]");
     private final JSONArray segments = new JSONArray();
     private final StringBuilder text = new StringBuilder();
+    private JSONArray wordTimes = new JSONArray();
     private double start, end, confidence;
     private boolean uncertain, sentenceEnd;
     private int count;
@@ -21,7 +25,11 @@ final class PhonePhrases {
             if (count > 0 && (sentenceEnd || time - end >= .65 || until - start > 8 || count >= 22)) flush();
             if (count == 0) start = time;
             else text.append(' ');
+            int firstChar = text.length();
             text.append(token);
+            if (WORD.matcher(token).find() && Double.isFinite(time) && time >= 0) {
+                wordTimes.put(new JSONArray().put(firstChar).put(text.length()).put(Math.round(time * 1000)));
+            }
             end = until;
             double score = word.optDouble("conf", 1);
             confidence += score;
@@ -38,10 +46,14 @@ final class PhonePhrases {
 
     private void flush() throws JSONException {
         if (count == 0) return;
-        segments.put(new JSONObject().put("start", start).put("end", end).put("text", text.toString())
-                .put("needs_review", uncertain || confidence / count < .78));
+        if (WORD.matcher(text).find()) {
+            segments.put(new JSONObject().put("start", start).put("end", end).put("text", text.toString())
+                    .put("needs_review", uncertain || confidence / count < .78)
+                    .put("word_times", wordTimes));
+        }
         count = 0;
         text.setLength(0);
+        wordTimes = new JSONArray();
         confidence = 0;
         uncertain = false;
         sentenceEnd = false;
