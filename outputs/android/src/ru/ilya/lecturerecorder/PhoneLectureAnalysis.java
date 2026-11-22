@@ -27,6 +27,7 @@ final class PhoneLectureAnalysis {
 
     static void run(Context context, PhoneAnalysisService.Job job, String name, String title,
                     boolean retranscribe) throws Exception {
+        if (retranscribe) job.preview.startSpeech();
         File existing = LectureNotes.file(context, name, true);
         JSONObject document = null;
         if (existing.isFile()) {
@@ -39,7 +40,7 @@ final class PhoneLectureAnalysis {
             }
         }
         if (document == null || retranscribe) {
-            job.preview.startSpeech();
+            if (!retranscribe) job.preview.startSpeech();
             JSONArray segments;
             String recognizer;
             try {
