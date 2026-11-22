@@ -59,10 +59,10 @@ final class TranscriptEdits {
         Store.write(file, document);
     }
 
-    static void apply(JSONObject note, JSONObject corrections, boolean local) throws JSONException {
+    static void apply(JSONObject note, JSONObject corrections, boolean local) throws Exception {
         JSONObject report = note.getJSONObject("report");
         JSONArray rows = report.optJSONArray("segments");
-        if (rows == null || corrections.length() == 0) return;
+        if (rows == null || corrections.length() == 0) { SummarySources.reconcile(report,local,false); return; }
         String[] originals = new String[rows.length()];
         boolean changed = false;
         for (int i = 0; i < rows.length(); i++) {
@@ -77,7 +77,7 @@ final class TranscriptEdits {
                 }
             }
         }
-        if (!changed) return;
+        if (!changed) { SummarySources.reconcile(report,local,false); return; }
         JSONArray points = report.optJSONArray("summary");
         JSONArray sources = report.optJSONArray("summary_evidence");
         String overview = report.optString("overview");
@@ -118,10 +118,11 @@ final class TranscriptEdits {
             // Цитату можно спроецировать, но пересчитывать LaTeX без модели нельзя.
             report.put("formulas", supported);
         }
+        SummarySources.reconcile(report,local,false);
     }
 
     // The Mac writer derives its overview from the first three points, capped at 1500 Unicode characters.
-    private static String summaryOverview(JSONArray points) {
+    static String summaryOverview(JSONArray points) {
         StringBuilder text = new StringBuilder();
         for (int i = 0; i < Math.min(points.length(), 3); i++) {
             if (!(points.opt(i) instanceof String)) return "";

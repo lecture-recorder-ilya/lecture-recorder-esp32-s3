@@ -20,6 +20,7 @@ from transcript_cache import WHISPER_ENGINE,identity,prepare,checkpoint as trans
 from asr_windows import audio_window,central_segment
 from math_formulas import merge as merge_formulas, supported_latex, wanted as math_wanted, NUMBER_WORDS, FUNCTIONS, SAFE
 from transcript_quality import annotate, assess
+from summary_sources import reconcile as reconcile_sources
 
 ROOT = Path(__file__).resolve().parent
 MODELS = ROOT.parent.parent / 'work' / 'models'
@@ -593,6 +594,7 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
     result['final_review'] = final_review
     transcript = result['transcript']
     result = annotate(result)
+    result = reconcile_sources(result,fresh=True)
     save_summary(result_path, result)
     markdown = ['# '+(result['subject'] or 'Предмет не определён'), '', 'Преподаватель: '+(result['teacher'] or 'не определён'), '', '## Конспект', '']
     markdown[4:4] = ['Тема: '+(result.get('topic') or 'не определена'), '', result.get('overview',''), '']

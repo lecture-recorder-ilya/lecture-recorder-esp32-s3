@@ -36,6 +36,7 @@ final class LectureNotes {
  }
 
  static void saveSummary(Context c,JSONObject document)throws Exception{
+  SummarySources.reconcile(document.getJSONObject("report"),true,true);
   document.getJSONObject("report").remove(SUMMARY_PENDING);
   saveLocal(c,document,false);
  }

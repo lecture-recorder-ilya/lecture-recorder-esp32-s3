@@ -118,7 +118,12 @@ def report_for(root, name):
             report = dict(report, draft=True, audio=name, overview='', summary=[])
         elif path.name.endswith('.live.json'):
             report = dict(report, draft=True)
-        return report
+        from summary_sources import reconcile
+        try:
+            decisions=json.loads((root/'study'/(stem+'.notes.json')).read_text()).get('transcript_review',{})
+        except (OSError,ValueError,TypeError):
+            decisions={}
+        return reconcile(annotate(report,decisions))
     return None
 
 

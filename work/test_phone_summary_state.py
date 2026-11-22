@@ -68,6 +68,7 @@ public final class SummaryStateTest {
         File history = new File(new File(root, "phone-note-history"), NAME);
         if (args[1].equals("replace")) {
             checkEvidence();
+            checkSourceBinding();
             checkEditedDerivedData(new Context(new File(root, "derived-data")));
             checkPhrases();
             JSONArray oldSegments = segments(OLD_TEXT);
@@ -216,8 +217,9 @@ public final class SummaryStateTest {
         require(after.equals(report.getJSONArray("segments").getJSONObject(0).getString("text")), "Word edit lost");
         require((after + " Следует вывод.").equals(report.getJSONArray("summary").getString(0)), "Stale summary after word edit");
         require((after + " Следует вывод.").equals(report.getJSONArray("summary_evidence").getJSONObject(0).getString("quote")), "Stale evidence");
-        require("Отдельный вывод".equals(report.getJSONArray("summary").getString(1)) && after.equals(report.getJSONArray("summary").getString(2)), "Legacy exact quote");
-        require((after + " Следует вывод. Отдельный вывод " + after).equals(report.getString("overview")), "Stale derived Mac overview");
+        require(report.getJSONArray("summary").getString(1).equals("Отдельный вывод\nИсточник нужно сверить.")
+                && after.equals(report.getJSONArray("summary").getString(2)), "Legacy exact quote or unverified source");
+        require((after + " Следует вывод. Отдельный вывод\nИсточник нужно сверить. " + after).equals(report.getString("overview")), "Stale derived Mac overview");
         JSONObject authored = new JSONObject(raw.toString());
         authored.getJSONObject("report").put("overview", "Авторское вступление. " + before);
         TranscriptEdits.apply(authored, edits, true);
@@ -227,11 +229,12 @@ public final class SummaryStateTest {
         require(LectureNotes.summary(view).contains(after) && !LectureNotes.summary(view).contains(before), "Stale export");
         JSONObject mac = new JSONObject(raw.toString());
         TranscriptEdits.apply(mac, edits, false);
-        require(mac.toString().equals(raw.toString()), "Phone edit changed independent Mac note");
+        require(before.equals(mac.getJSONObject("report").getJSONArray("segments").getJSONObject(0).getString("text")), "Phone edit changed independent Mac note");
         TranscriptEdits.save(context, name, line, 0, "Первый");
         JSONObject restored = new JSONObject(raw.toString());
         TranscriptEdits.apply(restored, TranscriptEdits.read(TranscriptEdits.file(context, name)), true);
-        require(restored.toString().equals(raw.toString()), "Undo lost the original quote");
+        require(before.equals(restored.getJSONObject("report").getJSONArray("summary").getString(2))
+                && (before + " Следует вывод.").equals(restored.getJSONObject("report").getJSONArray("summary_evidence").getJSONObject(0).getString("quote")), "Undo lost the original quote");
     }
 
     private static void checkPhrases() throws Exception {
@@ -456,6 +459,37 @@ public final class SummaryStateTest {
         System.out.println("PASS: правки Mac/Android, формулы, сроки, новые привязки и старый конспект в истории");
     }
 
+    private static void checkSourceBinding() throws Exception {
+        String quote="Икс не равен пяти.";
+        JSONObject first=new JSONObject().put("id",7).put("start",1).put("end",4).put("text",quote);
+        JSONObject report=new JSONObject().put("segments",new JSONArray().put(first))
+                .put("summary",new JSONArray().put(quote)).put("summary_evidence",new JSONArray().put(
+                    new JSONObject().put("quote",quote).put("segment_id",7).put("start",1).put("end",4)));
+        SummarySources.reconcile(report,false,true);
+        String hash=report.getJSONArray("summary_evidence").getJSONObject(0).getString("source_fingerprint");
+        require(hash.equals("96ef901c669bbe7404464ae8a4b6d7042df5d3e4a2139564526a6217d77ca32f"),"Отпечатки Mac и Java различаются");
+        report.put("segments",new JSONArray().put(new JSONObject().put("id",30).put("start",12).put("end",16).put("text",quote)));
+        SummarySources.reconcile(report,false,false);
+        JSONObject anchor=report.getJSONArray("summary_evidence").getJSONObject(0);
+        require(anchor.getInt("segment_id")==30&&anchor.getInt("start")==12&&anchor.getInt("end")==16,
+                "Сдвиг сегментов оставил старый переход к звуку");
+        require(anchor.getJSONObject("original_source").getInt("start")==1,"Потерян исходный таймкод");
+        report.getJSONArray("segments").put(new JSONObject().put("id",31).put("start",20).put("end",24).put("text",quote));
+        // Убираем точное совпадение старого отпечатка, сохранив два новых варианта.
+        report.getJSONArray("segments").getJSONObject(0).put("start",13).put("end",17);
+        SummarySources.reconcile(report,false,false);anchor=report.getJSONArray("summary_evidence").getJSONObject(0);
+        require(!anchor.has("start")&&anchor.getString("source_status").equals("needs_review")
+                &&report.getJSONArray("summary").getString(0).contains(SummarySources.NOTICE),"Неоднозначный источник открывает старое аудио");
+        report.put("segments",new JSONArray().put(first));SummarySources.reconcile(report,false,false);
+        require(quote.equals(report.getJSONArray("summary").getString(0))
+                &&report.getJSONArray("summary_evidence").getJSONObject(0).getInt("start")==1,"Восстановление версии не вернуло источник");
+        report.put("segments",new JSONArray().put(new JSONObject().put("id",40).put("start",10).put("end",12).put("text","Икс не"))
+                .put(new JSONObject().put("id",41).put("start",12).put("end",15).put("text","равен пяти.")));
+        SummarySources.reconcile(report,false,false);anchor=report.getJSONArray("summary_evidence").getJSONObject(0);
+        require(anchor.getInt("start")==10&&anchor.getInt("end")==15,"Новая нарезка потеряла часть цитаты");
+        System.out.println("PASS: сдвиг, новая нарезка, неоднозначность, восстановление и общий отпечаток источника");
+    }
+
     private static JSONArray segments(String text) throws Exception {
         return new JSONArray().put(new JSONObject().put("text", text).put("start", 5).put("end", 9)
                 .put("needs_review", true));
@@ -508,7 +542,7 @@ def main():
         subprocess.run(
             [java_bin / "javac", "-encoding", "UTF-8", "-cp", jar, "-d", root,
              SOURCE / "LectureNotes.java", SOURCE / "Store.java", SOURCE / "PhoneSummaryEvidence.java",
-             SOURCE / "PhonePhrases.java", SOURCE / "TranscriptEdits.java",
+             SOURCE / "PhonePhrases.java", SOURCE / "TranscriptEdits.java", SOURCE / "SummarySources.java",
              *(root / name for name in sources)],
             check=True,
         )
