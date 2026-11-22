@@ -152,6 +152,35 @@ class Notes(unittest.TestCase):
     final=p.with_name(p.name.replace('.live.json','.json'));final.write_text(json.dumps({'segments':[{'text':'готовый текст','start':0,'end':1}],'summary':['готовый текст'],'summary_evidence':evidence}))
     self.assertEqual(phone_notes.push('fixture','token',root),1);self.assertFalse(calls[-1]['report']['draft'])
     self.assertEqual(calls[-1]['report']['summary_evidence'],evidence)
+ def test_long_russian_transcript_uses_wire_size_and_retries_without_duplicate(self):
+  with tempfile.TemporaryDirectory() as directory:
+   root=Path(directory); analysis=root/'analysis';analysis.mkdir()
+   name='lecture-2026-11-22-10-00-00.wav'
+   text='Длинная фраза из расшифровки занятия. ' * 13000
+   (analysis/(Path(name).stem+'.json')).write_text(json.dumps({'segments':[{'text':text,'start':0,'end':5400}]}))
+   stored={}; sent=[]
+   def serve(request,timeout):
+    if request.full_url.endswith('/notes-index'):
+     return io.BytesIO(json.dumps(stored).encode())
+    body=request.data;document=json.loads(body)
+    self.assertLessEqual(len(body),2*1024*1024)
+    self.assertGreater(len(json.dumps(document).encode()),2*1024*1024)
+    self.assertEqual(document['report']['segments'][0]['text'],text)
+    digest=hashlib.sha256(body).hexdigest();sent.append(digest)
+    stored[document['file']]=digest
+    raise ConnectionResetError('ответ потерян после сохранения')
+   with patch('phone_sync.urlopen',side_effect=serve):
+    with self.assertRaises(ConnectionResetError):phone_notes.push('http://127.0.0.1','fixture',root)
+    self.assertEqual(phone_notes.push('http://127.0.0.1','fixture',root),0)
+   self.assertEqual(sent,[stored[name]])
+
+ def test_transcript_above_actual_wire_limit_is_not_posted(self):
+  with tempfile.TemporaryDirectory() as directory:
+   root=Path(directory);analysis=root/'analysis';analysis.mkdir()
+   (analysis/'lecture-2026-11-22-10-00-00.json').write_text(json.dumps({'segments':[{'text':'я'*(1024*1024)}]}))
+   with patch('phone_sync.urlopen',return_value=io.BytesIO(b'{}')) as network:
+    with self.assertRaisesRegex(ValueError,'Текст слишком большой'):phone_notes.push('http://127.0.0.1','fixture',root)
+   self.assertEqual(network.call_count,1)
  def test_newer_draft_cannot_replace_final(self):
   with tempfile.TemporaryDirectory() as d:
    root=Path(d);(root/'analysis').mkdir();stem='lecture-2026-10-12-12-00-00-123000'

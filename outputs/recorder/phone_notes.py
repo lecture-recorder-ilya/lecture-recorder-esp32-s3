@@ -7,6 +7,7 @@ from pathlib import Path
 
 def documents(root, errors=None):
     import lesson_schedule
+    from phone_sync import encode_body
     from transcript_quality import annotate
     errors = errors if errors is not None else []
     selected = {}
@@ -58,9 +59,7 @@ def documents(root, errors=None):
                     pass
                 lesson = {k: meta[k] for k in ('subject', 'teacher', 'date', 'start') if meta.get(k)}
                 value = {'file': name, 'lesson': lesson, 'report': clean}
-                raw = json.dumps(value).encode()
-                if len(raw) > 2 * 1024 * 1024:
-                    raise ValueError('Текст слишком большой для телефона')
+                raw = encode_body('/notes', value)
                 break
             except (OSError, ValueError, TypeError) as error:
                 errors.append(path.name + ': ' + str(error)[:100])

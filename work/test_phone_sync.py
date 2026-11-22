@@ -1,5 +1,6 @@
 import sys,tempfile,threading,unittest,wave,io,json,hashlib
 from pathlib import Path
+from types import SimpleNamespace
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from unittest.mock import patch
 sys.path.insert(0,str(Path('outputs/recorder').resolve()))
@@ -51,6 +52,33 @@ class Tests(unittest.TestCase):
   self.assertEqual(H.ack,0);self.assertEqual((self.files/(NAME+'.phone-part')).stat().st_size,10000)
   H.cutoff=None;self.run_import()
   self.assertEqual(H.ranges,[None,'bytes=10000-']);self.assertEqual(H.ack,1)
+  self.assertEqual(phone_sync.digest(self.files/NAME),SHA)
+ def test_resume_needs_space_only_for_remaining_bytes(self):
+  H.cutoff=len(PAYLOAD)//2
+  with self.assertRaises(ConnectionError):self.run_import()
+  remaining=len(PAYLOAD)-H.cutoff
+  H.cutoff=None
+  part=self.files/(NAME+'.phone-part')
+  with patch('phone_sync.shutil.disk_usage',return_value=SimpleNamespace(free=100*1024*1024+remaining-1)),self.assertRaises(OSError):
+   self.run_import()
+  self.assertEqual(part.stat().st_size,len(PAYLOAD)//2);self.assertEqual(H.ack,0)
+  with patch('phone_sync.shutil.disk_usage',return_value=SimpleNamespace(free=100*1024*1024+remaining)):
+   self.run_import()
+  self.assertEqual(H.ranges,[None,'bytes='+str(len(PAYLOAD)//2)+'-'])
+  self.assertEqual(phone_sync.digest(self.files/NAME),SHA);self.assertEqual(H.ack,1)
+
+ def test_restart_after_link_cleans_the_partial_without_another_download(self):
+  link=phone_sync.os.link
+  def interrupted(source,target):
+   link(source,target)
+   raise InterruptedError('остановка после публикации WAV')
+  with patch('phone_sync.os.link',side_effect=interrupted),self.assertRaises(InterruptedError):
+   self.run_import()
+  part=self.files/(NAME+'.phone-part');meta=self.files/(NAME+'.phone-part.json')
+  self.assertTrue(part.samefile(self.files/NAME));self.assertEqual(H.ack,0)
+  self.run_import()
+  self.assertEqual(H.ranges,[None]);self.assertEqual(H.ack,1)
+  self.assertFalse(part.exists());self.assertFalse(meta.exists())
   self.assertEqual(phone_sync.digest(self.files/NAME),SHA)
  def test_chosen_lesson_is_saved_before_phone_ack(self):
   lesson={'date':'2026-10-12','start':'11:55','end':'13:25','subject':'Математический анализ','type':'ЛК','group':'ИКБО-01-26','room':'А-001','source':'mirea'}

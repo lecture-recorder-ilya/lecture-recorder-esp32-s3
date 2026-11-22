@@ -8,6 +8,7 @@ ROOT=Path(__file__).resolve().parent;WORK=ROOT.parent.parent/'work'
 CONFIG=WORK/'phone-sync.json';LEDGER=WORK/'phone-imports.json';FILES=ROOT/'recordings'
 state={'connected':False,'message':'Ожидаю телефон · Wi-Fi / Bluetooth / USB','imported':0};started=False
 STATUS=WORK/'phone-sync-status.json'
+MAX_NOTE_BYTES = 2 * 1024 * 1024
 WAKE=threading.Event()
 REVOKED=set()
 
@@ -39,9 +40,18 @@ def auth_headers(token,method,route,body=b'',extra=None,body_digest=None):
  signed='\n'.join((method,route,stamp,nonce,headers.get('Range',''),body_digest or hashlib.sha256(body).hexdigest()))
  headers.update({'X-Lecture-Time':stamp,'X-Lecture-Nonce':nonce,'X-Lecture-Signature':hmac.new(token.encode(),signed.encode(),hashlib.sha256).hexdigest(),'Content-Type':'application/json'})
  return headers
+def encode_body(route, data):
+ body = json.dumps(data).encode()
+ if route == '/notes' and len(body) > MAX_NOTE_BYTES:
+  # Keep the digest of documents already accepted by earlier phones.
+  body = json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+  if len(body) > MAX_NOTE_BYTES:
+   raise ValueError('Текст слишком большой для телефона')
+ return body
+
 def request(base,token,route,data=None,extra=None,timeout=None):
  if token in REVOKED:raise PermissionError('Сопряжение с телефоном удалено')
- body=json.dumps(data).encode() if data is not None else None
+ body=encode_body(route,data) if data is not None else None
  headers=auth_headers(token,'POST' if body is not None else 'GET',route,body or b'',extra)
  return urlopen(Request(base+route,data=body,headers=headers),timeout=timeout if timeout is not None else 300 if route == '/notes' else 60)
 def request_file(base,token,route,path,expected_digest=None):
@@ -83,17 +93,19 @@ def import_one(item,base,token,files=FILES,ledger_path=LEDGER):
  name=item.get('name');size=item.get('bytes');sha=item.get('sha256')
  if not isinstance(name,str) or not re.fullmatch(r'lecture-[0-9-]+\.wav',name) or type(size) is not int or not 44<=size<=4_200_000_044 or not isinstance(sha,str) or not re.fullmatch(r'[a-f0-9]{64}',sha):raise ValueError('Некорректные сведения записи')
  files.mkdir(exist_ok=True);target=files/name;ledger=json.loads(ledger_path.read_text()) if ledger_path.exists() else {}
+ temp=files/(name+'.phone-part');resume_meta=files/(name+'.phone-part.json')
  if target.exists():
   if target.stat().st_size!=size or digest(target)!=sha:raise ValueError('На Mac уже есть другая запись с этим именем; телефон сохранён')
  else:
-  if shutil.disk_usage(files).free<size+100*1024*1024:raise OSError('На Mac недостаточно места; телефон сохранён')
-  temp=files/(name+'.phone-part');resume_meta=files/(name+'.phone-part.json')
   identity={'sha256':sha,'bytes':size}
   try:resume_ok=json.loads(resume_meta.read_text())==identity
   except (OSError,ValueError):resume_ok=False
   if not resume_ok or (temp.exists() and temp.stat().st_size>size):temp.unlink(missing_ok=True)
-  atomic(resume_meta,identity);count=temp.stat().st_size if temp.exists() else 0
+  count=temp.stat().st_size if temp.exists() else 0
   if count<size:
+   if shutil.disk_usage(files).free < size-count+100*1024*1024:
+    raise OSError('На Mac недостаточно места; телефон сохранён')
+   atomic(resume_meta,identity)
    with request(base,token,'/file/'+name,extra={'Range':'bytes='+str(count)+'-'} if count else None) as response:
     if count and response.status!=206:count=0
     elif count and response.headers.get('Content-Range')!='bytes '+str(count)+'-'+str(size-1)+'/'+str(size):raise ValueError('Некорректное продолжение копии')
@@ -108,9 +120,12 @@ def import_one(item,base,token,files=FILES,ledger_path=LEDGER):
   if digest(temp)!=sha:
    temp.unlink(missing_ok=True);resume_meta.unlink(missing_ok=True);raise ValueError('Копия не совпала; телефон сохранён')
   validate(temp)
-  os.link(temp,target);temp.unlink();resume_meta.unlink(missing_ok=True);sync_dir(files)
+  os.link(temp,target)
 
  validate(target)
+ # A restart can leave the partial linked to the already verified library file.
+ if temp.exists() and temp.samefile(target):temp.unlink()
+ if not temp.exists():resume_meta.unlink(missing_ok=True)
  with target.open('rb') as local:os.fsync(local.fileno())
  sync_dir(files)
  if name not in ledger:
