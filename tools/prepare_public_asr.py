@@ -98,11 +98,13 @@ def prepare(output, count, skip=0):
             write_wave(path, audio)
             cases.append({'id': ident, 'audio': path.name, 'reference': reference,
                           'subset': subset, 'source': 'google/fleurs', 'source_file': name, 'sentence_id': sentence,
+                          'synthetic_background': subset == 'room-6db',
                           'source_revision': REVISION, 'audio_sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
     for name, data in (('silence', np.zeros(RATE * 8)), ('noise', .01 * noise(RATE * 8, np.random.default_rng(2026)))):
         path = output / (name + '.wav')
         write_wave(path, data)
         cases.append({'id': name, 'audio': path.name, 'reference': '', 'subset': 'control', 'synthetic': True,
+                      'synthetic_background': name == 'noise',
                       'audio_sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
     manifest = output / 'manifest.json'
     manifest.write_text(json.dumps(cases, ensure_ascii=False, indent=2) + '\n')

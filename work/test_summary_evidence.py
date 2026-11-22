@@ -44,10 +44,46 @@ class SummaryTests(unittest.TestCase):
   value=validate_part({'summary':[{'quote':'равна нулю','segment_id':0}]},rows)
   self.assertEqual(value['summary'],['Функция не равна нулю.'])
  def test_condition_split_between_phrase_rows_is_kept(self):
-  rows=[dict(id=0,start=0,end=7,text='Если функция непрерывна на отрезке,'),
-        dict(id=1,start=7,end=10,text='то она достигает максимума.')]
+  rows=[dict(id=0,start=0,end=7,text='Если определитель равен нулю,'),
+        dict(id=1,start=7,end=10,text='то система не имеет единственного решения.')]
   value=validate_part({'summary':[{'quote':rows[1]['text'],'segment_id':1}]},rows)
-  self.assertEqual(value['summary'],['Если функция непрерывна на отрезке, то она достигает максимума.'])
+  self.assertEqual(value['summary'],['Если определитель равен нулю, то система не имеет единственного решения.'])
+ def test_summary_preserves_number_from_evidence(self):
+  source='Значение сопротивления равно 150 ом.'
+  rows=[dict(id=0,start=0,end=3,text=source)]
+  proposal={'point':'Сопротивление равно 15 ом.', 'quote':source,'segment_id':0}
+  self.assertEqual(validate_part({'summary':[proposal]},rows)['summary'],[source])
+  proposal['quote']='Значение сопротивления равно 15 ом.'
+  self.assertEqual(validate_part({'summary':[proposal]},rows)['summary'],[])
+ def test_uncertain_number_or_negation_does_not_become_a_summary_fact(self):
+  for source in ('Сопротивление равно пятнадцати омам.', 'Этот метод не сходится.'):
+   with self.subTest(source=source):
+    rows=[dict(id=0,start=0,end=3,text=source,needs_review=True)]
+    proposal={'summary':[{'quote':source,'segment_id':0}]}
+    self.assertEqual(validate_part(proposal,rows)['summary'],[])
+    rows[0]['needs_review']=False
+    self.assertEqual(validate_part(proposal,rows)['summary'],[source])
+ def test_deadline_requires_complete_number(self):
+  source='На дом решите задачу 15. Сдайте до 15 ноября.'
+  rows=[dict(id=0,start=0,end=5,text=source)]
+  for deadline, expected in [('до 1', None), ('до 15 ноября', 'до 15 ноября')]:
+   with self.subTest(deadline=deadline):
+    result=validate_part({'homework':[dict(quote=source,segment_id=0,deadline=deadline)]},rows)
+    self.assertEqual(result['homework'][0]['deadline'],expected)
+ def test_tentative_or_negated_deadline_does_not_remove_homework(self):
+  cases=[
+   ('На дом решите задачу 15. Сдайте до пятницы, но срок пока не утверждён.', 'до пятницы', None),
+   ('На дом решите задачу 15. Сдать, возможно, до пятницы.', 'возможно, до пятницы', None),
+   ('На дом решите задачу 15. Сдайте не к пятнице, а к понедельнику.', 'к пятнице', None),
+   ('На дом решите задачу 15. Сдайте не к пятнице, а к понедельнику.', 'к понедельнику', 'к понедельнику'),
+   ('На дом решите задачу 15. Сдайте не позже пятницы.', 'не позже пятницы', 'не позже пятницы'),
+  ]
+  for source, deadline, expected in cases:
+   with self.subTest(deadline=deadline,source=source):
+    rows=[dict(id=0,start=0,end=5,text=source)]
+    result=validate_part({'homework':[dict(quote=source,segment_id=0,deadline=deadline)]},rows)
+    self.assertEqual(result['homework'][0]['quote'],source)
+    self.assertEqual(result['homework'][0]['deadline'],expected)
  def test_equal_timestamps_do_not_mix_source_rows(self):
   rows=[dict(id=0,start=1,end=2,text='Первая мысль.'),dict(id=1,start=1,end=2,text='Вторая мысль.')]
   value=validate_part({'summary':[{'quote':'Вторая мысль.','segment_id':1}]},rows)

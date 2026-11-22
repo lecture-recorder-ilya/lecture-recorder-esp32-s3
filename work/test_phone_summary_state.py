@@ -232,6 +232,17 @@ public final class SummaryStateTest {
         PhoneSummaryEvidence.add("KEY: 1,2", 0, 2, adjacent, valid, new JSONArray(),
                 new JSONArray(), new HashSet<>(), new HashSet<>());
         require(valid.length() == 0, "Distant fragments must not be joined");
+        String uncertainNumber = "Сопротивление равно пятнадцати омам.";
+        String unfinishedDate = "На дом решите задачу 15. Срок пока не утверждён.";
+        JSONArray critical = segments(uncertainNumber)
+                .put(new JSONObject().put("text", unfinishedDate).put("start", 12).put("end", 16));
+        JSONArray criticalPoints = new JSONArray(), criticalTasks = new JSONArray();
+        PhoneSummaryEvidence.add("KEY: 1\nTASK: 2", 0, 2, critical, criticalPoints, new JSONArray(),
+                criticalTasks, new HashSet<>(), new HashSet<>());
+        require(criticalPoints.length() == 0, "Uncertain number must not become a confident summary point");
+        require(criticalTasks.length() == 1 && unfinishedDate.equals(criticalTasks.getJSONObject(0).getString("task"))
+                        && !criticalTasks.getJSONObject(0).has("deadline"),
+                "Homework must keep the number and leave the unsettled date unspecified");
         System.out.println("PASS: verbatim quotes, timestamps, uncertainty and explicit homework");
     }
 

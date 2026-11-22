@@ -10,16 +10,23 @@ from evaluate_asr import audio_sha256, compare_transcripts, score
 class EvaluationTests(unittest.TestCase):
  def test_case_punctuation_and_yo_are_equivalent(self):
   self.assertEqual(score('Ещё одна фраза.','ЕЩЕ одна, фраза!')['wer'],0)
- def test_substitution_insertion_and_deletion_count(self):
-  self.assertEqual(score('один два три','один четыре три')['word_errors'],1)
-  self.assertEqual(score('один два три','один три')['word_errors'],1)
-  self.assertEqual(score('один два три','один два три четыре')['word_errors'],1)
+ def test_alignment_retains_operation_and_reference_position(self):
+  result = score('один два три четыре пять шесть семь',
+                 'один другой три пять шесть семь восемь')
+  self.assertEqual(result['word_errors'], 3)
+  self.assertEqual(result['word_error_breakdown'], {'substitutions': 1, 'deletions': 1, 'insertions': 1})
+  self.assertEqual([(edit['op'], edit['reference_index'], edit['reference'], edit['hypothesis'])
+                    for edit in result['word_edits']],
+                   [('substitutions', 1, 'два', 'другой'), ('deletions', 3, 'четыре', None),
+                    ('insertions', None, None, 'восемь')])
  def test_silence_tracks_invented_words_without_division_by_zero(self):
   result=score('','Спасибо за внимание.');self.assertIsNone(result['wer']);self.assertEqual(result['hallucinated_words'],3)
   self.assertEqual(score('','')['hallucinated_words'],0)
  def test_important_numbers_and_negations_remain_distinct(self):
   self.assertEqual(score('не равно пять','равно шесть')['word_errors'],2)
   self.assertGreater(score('пять','5')['wer'],0)
+  self.assertEqual(score('до тридцати','до двадцати')['numeric_tokens'], {'missed': 1, 'extra': 1})
+  self.assertEqual(score('150 копий','153й год')['numeric_tokens'], {'missed': 1, 'extra': 1})
 
  def test_critical_phrases_count_scope_separately_from_negation_tokens(self):
   result = score('Не применять метод Гаусса. Вектор равен пяти.',

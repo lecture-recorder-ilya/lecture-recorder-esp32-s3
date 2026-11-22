@@ -23,6 +23,43 @@ def distance(left, right):
     return row[-1]
 
 
+EDIT_OPERATIONS = ('substitutions', 'deletions', 'insertions')
+
+
+def word_edits(expected, actual):
+    """Return one minimal alignment, preferring substitution, deletion, insertion on ties."""
+    row = list(range(len(actual) + 1))
+    trace = [bytearray([0] + [3] * len(actual))]
+    for i, value in enumerate(expected, 1):
+        prior, row = row, [i]
+        directions = bytearray([2])
+        for j, other in enumerate(actual, 1):
+            diagonal = prior[j - 1] + (value != other)
+            delete, insert = prior[j] + 1, row[-1] + 1
+            best = min(diagonal, delete, insert)
+            row.append(best)
+            if best == diagonal:
+                directions.append(int(value != other))
+            else:
+                directions.append(2 if best == delete else 3)
+        trace.append(directions)
+    edits = []
+    i, j = len(expected), len(actual)
+    while i or j:
+        direction = trace[i][j]
+        if direction:
+            edits.append({
+                'op': EDIT_OPERATIONS[direction - 1],
+                'reference_index': i - 1 if direction != 3 else None,
+                'hypothesis_index': j - 1 if direction != 2 else None,
+                'reference': expected[i - 1] if direction != 3 else None,
+                'hypothesis': actual[j - 1] if direction != 2 else None,
+            })
+        i -= direction != 3
+        j -= direction != 2
+    return list(reversed(edits))
+
+
 def phrase_count(words, phrase):
     return sum(words[index:index+len(phrase)] == phrase
                for index in range(len(words)-len(phrase)+1))
@@ -32,8 +69,9 @@ NEGATIONS = set('не ни нет без'.split())
 NUMBER_WORDS = set((
     'ноль нуль нуля один одна одно два две двух три трех четыре четырех пять пяти шесть шести '
     'семь семи восемь восьми девять девяти десять десяти одиннадцать двенадцать тринадцать '
-    'четырнадцать пятнадцать шестнадцать семнадцать восемнадцать девятнадцать двадцать '
-    'тридцать сорок пятьдесят шестьдесят семьдесят восемьдесят девяносто сто двести триста '
+    'четырнадцать пятнадцать шестнадцать семнадцать восемнадцать девятнадцать двадцать двадцати '
+    'тридцать тридцати сорок сорока пятьдесят пятидесяти шестьдесят шестидесяти семьдесят семидесяти '
+    'восемьдесят восьмидесяти девяносто девяноста сто двести триста '
     'четыреста пятьсот шестьсот семьсот восемьсот девятьсот тысяча тысячи тысяч '
     'миллион миллиона миллионов миллиард миллиарда миллиардов'
 ).split())
@@ -43,8 +81,12 @@ def count_errors(expected, actual):
     return dict(missed=sum((expected-actual).values()), extra=sum((actual-expected).values()))
 
 
+def numeric_token(word):
+    return word in NUMBER_WORDS or bool(re.fullmatch(r'\d+[а-я]*', word))
+
+
 def numbers(words):
-    return Counter(word for word in words if word.isdecimal() or word in NUMBER_WORDS)
+    return Counter(word for word in words if numeric_token(word))
 
 
 def negations(words):
@@ -54,7 +96,9 @@ def negations(words):
 def score(reference, hypothesis, critical_phrases=()):
     expected, actual = tokens(reference), tokens(hypothesis)
     letters, recognized = ''.join(expected), ''.join(actual)
-    errors = distance(expected, actual)
+    edits = word_edits(expected, actual)
+    counts = Counter(edit['op'] for edit in edits)
+    errors = len(edits)
     critical, found = Counter(), Counter()
     if not isinstance(critical_phrases, (tuple, list)) or not all(isinstance(phrase, str) for phrase in critical_phrases):
         raise ValueError('Критические фразы должны быть списком строк.')
@@ -66,6 +110,7 @@ def score(reference, hypothesis, critical_phrases=()):
         critical[key] = count
         found[key] = phrase_count(actual, words)
     return dict(reference_words=len(expected), word_errors=errors,
+                word_error_breakdown={key: counts[key] for key in EDIT_OPERATIONS}, word_edits=edits,
                 wer=errors/len(expected) if expected else None,
                 cer=distance(letters, recognized)/len(letters) if letters else None,
                 hallucinated_words=len(actual) if not expected else 0,
@@ -101,6 +146,15 @@ def summarize_scores(rows):
                    hallucinated_words=sum(row['hallucinated_words'] for row in rows),
                    noise_cases=sum(not row['reference_words'] for row in rows),
                    failed_noise_cases=sum(row['hallucinated_words'] > 0 for row in rows))
+    summary['word_error_breakdown'] = {
+        kind: sum(row['word_error_breakdown'][kind] for row in rows if row['reference_words'])
+        for kind in EDIT_OPERATIONS
+    }
+    if all('elapsed_seconds' in row and 'duration' in row for row in rows):
+        duration = sum(row['duration'] for row in rows)
+        elapsed = sum(row['elapsed_seconds'] for row in rows)
+        summary.update(duration_seconds=round(duration, 3), elapsed_seconds=round(elapsed, 3),
+                       real_time_factor=elapsed / duration if duration else None)
     for metric in ('critical_phrases', 'numeric_tokens', 'negations'):
         summary[metric] = {kind: sum(row[metric][kind] for row in rows) for kind in ('missed', 'extra')}
     return summary
@@ -154,6 +208,9 @@ def evaluate(manifest, source_root):
     try:
         for case in cases:
             path = manifest.parent/case['audio']
+            sha = audio_sha256(path)
+            if case.get('audio_sha256', sha) != sha:
+                raise ValueError(f"{case['id']}: SHA-256 WAV не совпадает с манифестом.")
             with wave.open(str(path)) as stream:
                 if (stream.getframerate(), stream.getnchannels(), stream.getsampwidth()) != (16000, 1, 2):
                     raise ValueError('Для проверки нужен WAV PCM16 mono 16 кГц.')
@@ -170,19 +227,18 @@ def evaluate(manifest, source_root):
                 elif text:
                     rows.append(dict(start=offset/16000, end=min(len(audio), offset+320000)/16000, text=text))
             text = ' '.join(row['text'] for row in rows)
-            result = dict(id=case['id'], subset=case.get('subset'), audio_sha256=audio_sha256(path),
-                          duration=len(audio)/16000, elapsed_seconds=round(time.monotonic()-started, 3),
+            elapsed = time.monotonic() - started
+            result = dict(id=case['id'], subset=case.get('subset'), audio_sha256=sha,
+                          duration=len(audio)/16000, elapsed_seconds=round(elapsed, 3),
                           reference=case['reference'], text=text, segments=rows,
                           **score(case['reference'], text, case.get('critical_phrases', [])))
             results.append(result)
             print(case['id'], result['word_errors'], '/', result['reference_words'], text, flush=True)
     finally:
         decoder.close()
-    count = sum(case['reference_words'] for case in results)
     return dict(engine=ENGINE, source='synthetic' if all(case.get('synthetic') is True for case in cases) else 'provided',
                 normalization='Нижний регистр, ё→е, без пунктуации; цифры и слова не приравниваются.',
-                word_errors=sum(case['word_errors'] for case in results), reference_words=count,
-                wer=sum(case['word_errors'] for case in results)/count if count else None,
+                **summarize_scores(results),
                 subsets=summarize_subsets(results), cases=results)
 
 

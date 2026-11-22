@@ -20,6 +20,7 @@ from transcript_cache import WHISPER_ENGINE,identity,prepare,checkpoint as trans
 from asr_windows import audio_window,central_segment
 from math_formulas import merge as merge_formulas
 from transcript_quality import annotate, assess
+from context_review import TOKENS, protected
 
 ROOT = Path(__file__).resolve().parent
 MODELS = ROOT.parent.parent / 'work' / 'models'
@@ -111,6 +112,38 @@ def merge_highlights(parts):
     return sorted(result, key=lambda item: item['start'])
 
 
+UNSET_DEADLINE = re.compile(
+    r'\b(?:срок|дат[ау])\s+(?:(?:ещ[её]|пока)\s+)*(?:'
+    r'не\s+(?:утвержд[её]н\w*|определ[её]н\w*|извест\w*|назнач\w*)|'
+    r'(?:уточним|сообщу|назову)\s+(?:позже|потом))\b')
+TENTATIVE_DEADLINE_PREFIX = re.compile(
+    r'\b(?:не|возможно|вероятно|ориентировочно)[,\s]+(?:(?:к|до|в|на)\s+)?$')
+TENTATIVE_DEADLINE = re.compile(r'\b(?:возможно|вероятно|ориентировочно)\b|^не\s+(?:к|до|в|на)\b')
+
+
+def grounded_deadline(value, quote):
+    if not isinstance(value, str) or not value.strip() or UNSET_DEADLINE.search(quote):
+        return None
+    phrase = normalized(value)
+    if TENTATIVE_DEADLINE.search(phrase):
+        return None
+    pattern = r'(?<!\w)' + re.escape(phrase) + r'(?!\w)'
+    for match in re.finditer(pattern, quote):
+        if not TENTATIVE_DEADLINE_PREFIX.search(quote[:match.start()]):
+            return value.strip()
+    return None
+
+
+def uncertain_quote_rows(anchor, texts):
+    return (row for row in texts.values() if row.get('needs_review')
+            and row['start'] < anchor['end'] and row['end'] > anchor['start'])
+
+
+def critical_claim(text):
+    return any(protected(word) and word.casefold() not in {'да', 'так', 'итак', 'вот', 'ну'}
+               for word in TOKENS.findall(text))
+
+
 def validate_part(part, segments):
     """Reject names, assignments and highlights without transcript evidence."""
     texts = {s['id']: s for s in segments}
@@ -148,17 +181,19 @@ def validate_part(part, segments):
                 item = dict(quote=item, segment_id=segment['id']) if segment else {}
             if not isinstance(item, dict): continue
             anchor = summary_anchor(item, texts)
-            if anchor and len(anchor['quote']) <= 1500 and anchor['quote'] not in result['summary']:
-                result['summary'].append(anchor['quote'])
-                result['summary_evidence'].append(anchor)
+            if not anchor or len(anchor['quote']) > 1500 or anchor['quote'] in result['summary']:
+                continue
+            if any(critical_claim(row['text']) for row in uncertain_quote_rows(anchor, texts)):
+                continue
+            result['summary'].append(anchor['quote'])
+            result['summary_evidence'].append(anchor)
     for item in part.get('homework', []) if isinstance(part.get('homework'), list) else []:
         if not isinstance(item, dict):
             continue
         anchor = summary_anchor(item, texts)
         if not anchor or len(anchor['quote']) > 1500:
             continue
-        if any(row.get('needs_review') for row in texts.values() if
-               row['start'] < anchor['end'] and row['end'] > anchor['start']):
+        if any(uncertain_quote_rows(anchor, texts)):
             continue
         quote = normalized(anchor['quote'])
         if not re.search(r'домаш|на дом\b|(?:на|к) следующ|после (?:пары|занятия|урока)', quote):
@@ -167,10 +202,8 @@ def validate_part(part, segments):
             continue
         if re.search(r'\?|например|допустим|в качестве примера|не (?:нужно|надо|будет|реш|дел|сда)|задани[ея] нет', quote):
             continue
-        deadline = item.get('deadline')
-        if not isinstance(deadline, str) or not normalized(deadline) or normalized(deadline) not in quote:
-            deadline = None
-        result['homework'].append(dict(anchor, task=anchor['quote'], deadline=deadline))
+        result['homework'].append(dict(anchor, task=anchor['quote'],
+                                       deadline=grounded_deadline(item.get('deadline'), quote)))
     for item in part.get('highlights', []) if isinstance(part.get('highlights'), list) else []:
         if not isinstance(item, dict) or not isinstance(item.get('point'), str) or not item['point'].strip():
             continue
