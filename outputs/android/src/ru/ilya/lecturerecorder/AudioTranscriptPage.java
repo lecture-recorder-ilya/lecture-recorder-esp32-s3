@@ -214,7 +214,7 @@ final class AudioTranscriptPage extends LinearLayout {
                 activity.startService(PhoneAnalysisService.cancel(activity));
             }
             else if (selected != null && Store.audio(activity, selected).isFile()) {
-                PhoneAnalysisService.request(activity, selected, Store.recordingTitle(selected), true);
+                PhoneAnalysisService.request(activity, selected, Store.recordingTitle(activity, selected), true);
             }
         });
         host.addView(transcribe, layout);
@@ -293,14 +293,14 @@ final class AudioTranscriptPage extends LinearLayout {
         for (File file : Store.audioFiles(activity)) {
             long seconds = Math.max(0, file.length() - 44) / (PcmWave.SAMPLE_RATE * 2);
             String name = file.getName();
-            options.put(name, new ChoiceDropdown.Option(name, Store.recordingTitle(name),
+            options.put(name, new ChoiceDropdown.Option(name, Store.recordingTitle(activity, name),
                     LectureReaderActivity.clock(seconds)));
         }
         for (boolean local : new boolean[]{true, false}) {
             for (File file : LectureNotes.files(activity, local)) {
                 String name = file.getName().substring(0, file.getName().length() - 5);
                 if (LectureNotes.valid(name)) {
-                    options.putIfAbsent(name, new ChoiceDropdown.Option(name, Store.recordingTitle(name), "Только текст"));
+                    options.putIfAbsent(name, new ChoiceDropdown.Option(name, Store.recordingTitle(activity, name), "Только текст"));
                 }
             }
         }
@@ -319,7 +319,7 @@ final class AudioTranscriptPage extends LinearLayout {
         transcript.replace(new ArrayList<>());
         position = initialPosition;
         duration = 0;
-        recordingDropdown.setSelected(new ChoiceDropdown.Option(name, Store.recordingTitle(name), ""));
+        recordingDropdown.setSelected(new ChoiceDropdown.Option(name, Store.recordingTitle(activity, name), ""));
         waveform.setEnvelope(null);
         boolean hasAudio = Store.audio(activity, name).isFile();
         transcriptPanel.setVisibility(View.VISIBLE);
@@ -353,7 +353,7 @@ final class AudioTranscriptPage extends LinearLayout {
         refreshTranscriptState();
         if (autoTranscribe && transcript.isEmpty() && android.os.Process.is64Bit()
                 && !PhoneAnalysisService.busy() && PhoneModels.ready(activity)) {
-            PhoneAnalysisService.request(activity, name, Store.recordingTitle(name));
+            PhoneAnalysisService.request(activity, name, Store.recordingTitle(activity, name));
         }
         updatePosition();
     }
@@ -696,10 +696,12 @@ final class AudioTranscriptPage extends LinearLayout {
             TranscriptEdits.Line line = getItem(index);
             boolean timed = Double.isFinite(line.start);
             row.time.setVisibility(timed ? View.VISIBLE : View.GONE);
+            row.review.setVisibility(line.needsReview ? View.VISIBLE : View.GONE);
+            row.time.setTextColor(line.needsReview ? StudioStyle.WARNING : ACCENT);
             if (timed) {
                 String time = LectureReaderActivity.clock(line.start);
                 row.time.setText(time);
-                row.time.setContentDescription("Слушать с " + time);
+                row.time.setContentDescription((line.needsReview ? "Сомнительная фраза. " : "") + "Слушать с " + time);
                 row.time.setOnClickListener(view -> seek((int) (Math.max(0, line.start) * 1000), true));
             }
             SpannableStringBuilder display = new SpannableStringBuilder();
@@ -732,6 +734,7 @@ final class AudioTranscriptPage extends LinearLayout {
     private final class TranscriptRow extends LinearLayout {
         final Button time = button("", () -> {});
         final TextView words = text("", 16, TEXT);
+        final TextView review = text("Проверить", 10, StudioStyle.WARNING);
 
         TranscriptRow() {
             super(activity);
@@ -746,9 +749,14 @@ final class AudioTranscriptPage extends LinearLayout {
             time.setPadding(dp(6), 0, dp(6), 0);
             time.setMinWidth(dp(54));
             time.setMinimumWidth(dp(54));
-            LinearLayout.LayoutParams badge = new LinearLayout.LayoutParams(-2, dp(48));
+            LinearLayout badges = column();
+            badges.addView(time, new LinearLayout.LayoutParams(-1, dp(48)));
+            review.setGravity(Gravity.CENTER);
+            review.setPadding(0, dp(3), 0, 0);
+            badges.addView(review, new LinearLayout.LayoutParams(-1, -2));
+            LinearLayout.LayoutParams badge = new LinearLayout.LayoutParams(dp(68), -2);
             badge.rightMargin = dp(8);
-            addView(time, badge);
+            addView(badges, badge);
             words.setLineSpacing(dp(3), 1);
             words.setMovementMethod(LinkMovementMethod.getInstance());
             words.setHighlightColor(0x55c5b5ff);

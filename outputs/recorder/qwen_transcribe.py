@@ -1,6 +1,6 @@
 import argparse,json,os,wave
 from transcript_cache import identity,prepare,checkpoint
-from asr_windows import audio_window
+from asr_windows import audio_window,boundary_at_pause
 from asr_segments import phrase_rows
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent
@@ -31,16 +31,18 @@ def run(audio_path,result_path,progress_path):
     save(progress_path,dict(status='processing',stage='transcribing',percent=5+round(55*offset/max(1,total)),message=f'GigaAM: распознаю {offset//rate//60} из {int(duration)//60+1} мин'))
     read_start,read_end=audio_window(offset,step,total,rate)
     audio.setpos(read_start);samples=np.frombuffer(audio.readframes(read_end-read_start),dtype='<i2').astype(np.float32)/32768
+    emit_start=boundary_at_pause(samples,offset-read_start,rate)/rate
+    emit_end=boundary_at_pause(samples,min(total,offset+step)-read_start,rate)/rate
     core=strict_speech_ranges(samples)
     ranges=speech_ranges(samples) if core else []
     if ranges:
      first,last=ranges[0][0],ranges[-1][1]
      context=context_for_recording(audio_path.name,offset/rate)
      terms=(context['prompt'] or '').split(', ') if context['prompt'] else []
-     text=clean_asr_text(decoder.transcribe(samples,terms,speech=core,emit_start=(offset-read_start)/rate,emit_end=(min(total,offset+step)-read_start)/rate))
+     text=clean_asr_text(decoder.transcribe(samples,terms,speech=core,emit_start=emit_start,emit_end=emit_end))
      segments.extend(phrase_rows(text,decoder.last,read_start/rate,
-                                 max(offset/rate,read_start/rate+first),
-                                 min(duration,(offset+step)/rate,read_start/rate+last),len(segments)))
+                                 read_start/rate+max(emit_start,first),
+                                 min(duration,read_start/rate+min(emit_end,last)),len(segments)))
     save(cache,checkpoint(expected,segments,duration,min(offset+step,total)))
     budget.checkpoint(force=True)
   save(cache,checkpoint(expected,segments,duration,total,complete=True))

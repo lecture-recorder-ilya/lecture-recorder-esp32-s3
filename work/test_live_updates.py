@@ -16,6 +16,10 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'outputs/recorder'
 sys.path.insert(0, str(SOURCE))
+import lesson_schedule as real_schedule
+import recording_selection
+import study_store
+
 submitted = []
 ai = types.ModuleType('ai_service')
 ai.auto = True
@@ -27,6 +31,7 @@ schedule = types.ModuleType('lesson_schedule')
 schedule.current = lambda: {}
 schedule.metadata = lambda name: None
 schedule.organize = lambda name: None
+schedule.assign_recording = real_schedule.assign_recording
 sys.modules.update(ai_service=ai, lesson_schedule=schedule)
 spec = importlib.util.spec_from_file_location('isolated_recorder', SOURCE / 'recorder.py')
 recording = importlib.util.module_from_spec(spec)
@@ -86,6 +91,8 @@ with tempfile.TemporaryDirectory() as folder:
     directory.mkdir(parents=True)
     recording.FILES = directory / 'recordings'
     recording.FILES.mkdir()
+    recording_selection.FILES = recording.FILES
+    study_store.ROOT = directory
     for source in SOURCE.glob('*.py'):
         shutil.copy(source, directory)
     shutil.copy(SOURCE/'schedule.example.json',directory)
@@ -108,6 +115,8 @@ with tempfile.TemporaryDirectory() as folder:
         return process
     try:
         process = launch()
+        assert get(app_url, '/mirea-profile')['configured'] is False
+        assert request(app_url, '/mirea-profile', b'{"skip":true}', app_url)[0] == 200
         assert request(app_url, '/start', b'{"transport":"wifi"}', app_url)[0] == 200
         initial = wait_for(lambda: (s if (s := get(app_url, '/status'))['samples'] > 0 else None))
         audio = recording.FILES / initial['file']
@@ -143,7 +152,22 @@ with tempfile.TemporaryDirectory() as folder:
         current = get(app_url, '/status')
         assert current['recording'] and current['file'] == initial['file']
         assert request(app_url, '/stop', b'{}')[0] == 200
-        assert not get(app_url, '/status')['recording']
+        stopped = get(app_url, '/status')
+        assert not stopped['recording'] and stopped['pending_lessons'] == [initial['file']]
+        assert initial['file'] not in stopped['files'] and not submitted
+        assert get(app_url, '/mirea-profile')['configured'] is True
+        assert request(app_url, '/analyze', json.dumps({'file': initial['file']}).encode())[0] == 409
+        selection = get(app_url, '/recording-selection?file=' + initial['file'])
+        assert selection['file'] == initial['file'] and selection['seconds'] > 0
+        assert selection['suggested'] is None
+        generation = get(app_url, '/app-info')['generation']
+        assert request(app_url, '/reload-app', b'', app_url)[0] == 200
+        wait_for(lambda: get(app_url, '/app-info')['generation'] != generation)
+        assert get(app_url, '/status')['pending_lessons'] == [initial['file']]
+        decision = json.dumps({'file': initial['file'], 'action': 'save', 'lesson': {'subject': 'Алгебра'}}).encode()
+        assert request(app_url, '/recording-selection', decision)[0] == 200
+        ready = get(app_url, '/status')
+        assert not ready['pending_lessons'] and ready['lessons'][initial['file']]['subject'] == 'Алгебра'
         with wave.open(str(audio)) as wav:
             assert wav.getparams()[:3] == (1, 2, 16000)
             assert wav.getnframes() == recording.state['samples']
@@ -152,9 +176,17 @@ with tempfile.TemporaryDirectory() as folder:
             assert pcm == (321).to_bytes(2, 'little', signed=True) * wav.getnframes()
         assert submitted == [initial['file']], submitted
         assert request(app_url, '/recordings/' + initial['file'])[1] == audio.read_bytes()
-        print('PASS: two code/interface reloads and application server termination/restart preserve one recording')
-        print('PASS: Stop finalizes valid mono 16-bit 16000 Hz WAV; all samples preserved; auto transcription submitted once')
-        print('PASS: audio download, settings proxy, active-file guard, duplicate Start and Origin/input validation')
+        assert request(app_url, '/start', b'{"transport":"wifi"}', app_url)[0] == 200
+        discard = wait_for(lambda: (s['file'] if (s := get(app_url, '/status'))['samples'] > 0 else None))
+        assert request(app_url, '/stop', b'{}')[0] == 200
+        assert get(app_url, '/status')['pending_lessons'] == [discard]
+        decision = json.dumps({'file': discard, 'action': 'discard'}).encode()
+        assert request(app_url, '/recording-selection', decision)[0] == 200
+        assert not (recording.FILES / discard).exists()
+        assert not get(app_url, '/status')['pending_lessons'] and submitted == [initial['file']]
+        print('PASS: two interface reloads and app server restart preserve one recording')
+        print('PASS: Stop finalizes WAV, keeps pending choice after reload, and queues transcription once after confirmation')
+        print('PASS: discard removes unfinished recording, startup profile skip persists, and audio download works')
     finally:
         recording.stop_recording.set()
         if recording.worker:

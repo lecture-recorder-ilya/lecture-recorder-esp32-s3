@@ -73,7 +73,7 @@ final class PhoneLectureAnalysis {
 
     static JSONArray transcribeVosk(Context context, PhoneAnalysisService.Job job, String name, File speech)
             throws Exception {
-        JSONArray segments = new JSONArray();
+        PhonePhrases phrases = new PhonePhrases();
         try (RandomAccessFile input = Store.openAudio(context, name);
              Model model = new Model(speech.getPath());
              Recognizer recognizer = new Recognizer(model, PcmWave.SAMPLE_RATE)) {
@@ -86,7 +86,7 @@ final class PhoneLectureAnalysis {
                 job.check();
                 int size = (int) Math.min(remaining, buffer.length);
                 input.readFully(buffer, 0, size);
-                if (recognizer.acceptWaveForm(buffer, size)) append(segments, new JSONObject(recognizer.getResult()).optJSONArray("result"));
+                if (recognizer.acceptWaveForm(buffer, size)) phrases.accept(new JSONObject(recognizer.getResult()).optJSONArray("result"));
                 remaining -= size;
                 int percent = (int) (100 * (total - remaining) / total);
                 if (percent != progress) {
@@ -94,37 +94,9 @@ final class PhoneLectureAnalysis {
                     job.update("Распознаю речь · " + percent + "%");
                 }
             }
-            append(segments, new JSONObject(recognizer.getFinalResult()).optJSONArray("result"));
+            phrases.accept(new JSONObject(recognizer.getFinalResult()).optJSONArray("result"));
         }
-        return segments;
-    }
-
-    static void append(JSONArray segments, JSONArray words) throws Exception {
-        if (words == null) return;
-        for (int first = 0; first < words.length(); ) {
-            JSONObject start = words.getJSONObject(first);
-            StringBuilder phrase = new StringBuilder();
-            double end = start.getDouble("end");
-            double confidence = 0;
-            boolean uncertain = false;
-            int next = first;
-            for (; next < words.length() && next - first < 22; next++) {
-                JSONObject word = words.getJSONObject(next);
-                if (next > first && word.getDouble("start") - end >= 0.30) break;
-                if (next > first) phrase.append(' ');
-                phrase.append(word.getString("word"));
-                end = word.getDouble("end");
-                double score = word.optDouble("conf", 1);
-                confidence += score;
-                uncertain |= score < 0.55;
-            }
-            if (phrase.length() != 0) {
-                segments.put(new JSONObject()
-                        .put("start", start.getDouble("start")).put("end", end).put("text", phrase.toString())
-                        .put("needs_review", uncertain || confidence / (next - first) < 0.78));
-            }
-            first = next;
-        }
+        return phrases.finish();
     }
 
     private static void summarize(Context context, PhoneAnalysisService.Job job, File model, JSONObject report)

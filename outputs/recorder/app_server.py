@@ -16,6 +16,9 @@ from urllib.parse import urlsplit, parse_qs, unquote
 import update_manager
 update_manager.recover()
 import study_store
+import mirea_schedule
+import lesson_schedule
+import recording_selection
 from learning_moments import moments_for_report, safe_image_query
 from speech_context import context_for_recording
 import illustrations
@@ -181,6 +184,10 @@ class Handler(BaseHTTPRequestHandler):
         route = urlsplit(self.path)
         query = parse_qs(route.query)
         try:
+            if route.path in ('/mirea-profile', '/recording-selection', '/calendar'):
+                port = self.server.server_port
+                if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
+                    return self.reply({'error':'Запрос отклонён'},403)
             if route.path == '/audio_enhance_ui.js':
                 return self.reply((ROOT / 'audio_enhance_ui.js').read_bytes(), mime='text/javascript; charset=utf-8')
             if route.path == '/audio-enhancement' or route.path.startswith('/enhanced-audio/'):
@@ -243,8 +250,24 @@ class Handler(BaseHTTPRequestHandler):
                     from teacher_remarks import remarks
                     report['teacher_remarks']=remarks(report.get('segments',[]),report['speaker_roles'],report.get('teacher_remarks',[]))
                     return self.reply(report)
+            if route.path == '/mirea-profile':
+                return self.reply(mirea_schedule.profile())
             if route.path == '/calendar':
-                return self.reply(json.loads((ROOT/('schedule.json' if (ROOT/'schedule.json').exists() else 'schedule.example.json')).read_text()))
+                return self.reply(mirea_schedule.load_calendar(lesson_schedule.DATA))
+            if route.path == '/recording-selection':
+                name = query.get('file', [''])[0]
+                with urlopen(self.server.service_url+'/status',timeout=4) as response:
+                    status = json.load(response)
+                if name not in status.get('pending_lessons', []):
+                    raise ValueError('Эта запись уже обработана или недоступна.')
+                audio = recording_selection.recording(name)
+                moment = lesson_schedule.recording_time(name)
+                seconds = (audio.stat().st_size - 44) / 32000
+                calendar = mirea_schedule.load_calendar(lesson_schedule.DATA)
+                entries = [entry for entry in calendar['entries'] if entry['date'] == moment.date().isoformat()]
+                return self.reply({'file':name,'date':moment.date().isoformat(),'start':moment.strftime('%H:%M'),
+                                   'seconds':seconds,'choices':entries,'suggested':mirea_schedule.suggest(entries,moment,seconds),
+                                   'note':calendar.get('error','')})
             if route.path == '/study_ui.js':
                 return self.reply((ROOT/'study_ui.js').read_bytes(),mime='text/javascript; charset=utf-8')
             if route.path == '/board_ui.js':
@@ -366,6 +389,12 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply({'error':'Служба записи временно недоступна'},503)
         try:
             value = json.loads(body) if body else {}
+            if self.path == '/mirea-profile':
+                if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
+                    return self.reply({'error':'Запрос отклонён'},403)
+                return self.reply(mirea_schedule.set_profile(value))
+            if self.path == '/start':
+                return self.proxy(json.dumps(dict(value,choose_lesson=True)).encode())
             if self.path.startswith('/update-auth/'):
                 if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
                     return self.reply({'error': 'Запрос отклонён'}, 403)
@@ -487,7 +516,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/check-updates':
             update_manager.CHECK.set()
             return self.reply({'ok': True})
-        if self.path in ('/start', '/stop', '/pair', '/check-wifi', '/setup-hotspot', '/ai-settings', '/analyze'):
+        if self.path in ('/stop', '/pair', '/check-wifi', '/setup-hotspot', '/ai-settings', '/analyze', '/recording-selection'):
             return self.proxy(body)
         self.reply({'error': 'Не найдено'}, 404)
 

@@ -41,6 +41,8 @@ public class MainActivity extends Activity {
  private boolean lastRecording;
  private boolean microphonePermissionDenied;
  private Button recordAction;
+ private RecordingLessonFlow lessonFlow;
+ private TextView mireaProfileStatus;
  private LinearLayout recordCard;
  private boolean recordingActionShown;
  private ChoiceDropdown transport;
@@ -129,8 +131,9 @@ public class MainActivity extends Activity {
   pageShown=true;
  }
  @Override public void onCreate(Bundle saved){
-  super.onCreate(saved);if(saved!=null){pendingPhoto=saved.getString("pending_photo");selectedPage=saved.getInt("page",0);if(selectedPage==3)selectedPage=AUDIO_PAGE;deviceExpanded=saved.getBoolean("device_expanded");deviceCharge=saved.getInt("device_charge",-1);}try{CaptureService.provision(this);}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
+  super.onCreate(saved);if(saved!=null){pendingPhoto=saved.getString("pending_photo");selectedPage=saved.getInt("page",0);if(selectedPage==3)selectedPage=AUDIO_PAGE;deviceExpanded=saved.getBoolean("device_expanded");deviceCharge=saved.getInt("device_charge",-1);}try{CaptureService.provision(this);if(!CaptureService.recording)Store.recover(this);}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
   getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(bg);getWindow().getDecorView().setSystemUiVisibility(0);
+  lessonFlow=new RecordingLessonFlow(this);
   LinearLayout root=column();root.setBackgroundColor(bg);setContentView(root);
   root.setOnApplyWindowInsetsListener((view,insets)->{view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});root.requestApplyInsets();
   FrameLayout host=new FrameLayout(this);root.addView(host,new LinearLayout.LayoutParams(-1,0,1));
@@ -185,6 +188,11 @@ public class MainActivity extends Activity {
   addConnectionPanel(microphone);
   if(saved!=null)deviceModel.setYaw(saved.getFloat("device_rotation",-.30f));
   LinearLayout settingsPage=page(host,SETTINGS_PAGE,"Настройки");
+  LinearLayout profile=card(settingsPage);
+  profile.addView(heading("Учёба в МИРЭА",18));
+  mireaProfileStatus=note(lessonFlow.profileLabel());
+  profile.addView(mireaProfileStatus);
+  profile.addView(button("Группа и курс",()->{if(!CaptureService.recording)lessonFlow.profile(true);}));
   LinearLayout mac=card(settingsPage);
   mac.addView(heading("Телефон и Mac",18));
   macStatus=note("");
@@ -618,7 +626,7 @@ public class MainActivity extends Activity {
   firmwareButton.setEnabled(!active&&firmwareQuery==null);
   if(active!=recordingActionShown){
    recordingActionShown=active;
-   recordAction.setText(active?"Завершить и сохранить":"Начать запись");
+   recordAction.setText(active?"Завершить запись":"Начать запись");
    recordAction.setBackground(StudioStyle.control(this,active?StudioStyle.RECORDING:accent,14));
    recordCard.setBackground(StudioStyle.recorderCard(this,active));
    if(selectedPage==0)StudioStyle.changeAction(recordAction);
@@ -627,6 +635,8 @@ public class MainActivity extends Activity {
   transport.setEnabled(!active);
   meter.setRecording(active&&selectedPage==0);
   if(selectedPage==SETTINGS_PAGE)refreshSyncSettings(active);
+  mireaProfileStatus.setText(lessonFlow.profileLabel());
+  lessonFlow.refresh(active);
   timer.postDelayed(()->refresh(),1000);
  }
  private void refreshSyncSettings(boolean recording){
@@ -648,7 +658,7 @@ public class MainActivity extends Activity {
   installUpdate.setEnabled(!recording);
  }
  @Override protected void onStart(){super.onStart();CaptureService.screenStarted();}
- @Override public void onResume(){super.onResume();resumed=true;audioPage.setActive(selectedPage==AUDIO_PAGE);timer.removeCallbacksAndMessages(null);CaptureService.resumeSync(this);refresh();}
+ @Override public void onResume(){super.onResume();resumed=true;lessonFlow.onResume();audioPage.setActive(selectedPage==AUDIO_PAGE);timer.removeCallbacksAndMessages(null);CaptureService.resumeSync(this);refresh();}
  @Override public void onPause(){resumed=false;stopPresenceCheck();transport.close();audioPage.setActive(false);timer.removeCallbacksAndMessages(null);super.onPause();}
  @Override protected void onStop(){CaptureService.screenStopped();super.onStop();}
  private boolean handleBack(){
@@ -661,6 +671,7 @@ public class MainActivity extends Activity {
  @Override public void onDestroy(){
   if(Build.VERSION.SDK_INT>=33&&systemBackCallback!=null)
    getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback((android.window.OnBackInvokedCallback)systemBackCallback);
+  lessonFlow.dispose();
   audioPage.dispose();
   if(deviceExpansion!=null)deviceExpansion.cancel();
   if(devicePairing!=null)devicePairing.close();

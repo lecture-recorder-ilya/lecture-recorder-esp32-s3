@@ -3,6 +3,50 @@ import re
 from asr_guard import join_words, lexical
 from speech_quality import clean_asr_text, usable
 
+SENTENCE_END = re.compile(r'[.!?…][»"\)\]]*$')
+CLAUSE_END = re.compile(r'[,;:—][»"\)\]]*$')
+BINDING_WORDS = frozenset(
+    'не ни в во на по к ко с со без для до от из у о об при про через и а но или либо'.split()
+)
+
+
+def _split_passage(words):
+    first = 0
+    while first < len(words):
+        limit = first + 1
+        while (limit < len(words) and limit - first < 20
+               and words[limit]['end'] - words[first]['start'] <= 7):
+            limit += 1
+        end = limit
+        if limit < len(words):
+            minimum = first + max(3, (limit - first) // 2)
+            candidates = []
+            for cut in range(minimum, limit + 1):
+                before, after = words[cut - 1], words[cut]
+                if lexical(before['text']) in BINDING_WORDS:
+                    continue
+                clause = bool(CLAUSE_END.search(before['text']))
+                if clause or after['start'] - before['end'] >= .35:
+                    candidates.append((clause, cut))
+            if candidates:
+                end = max(candidates)[1]
+            else:
+                while end > minimum and lexical(words[end - 1]['text']) in BINDING_WORDS:
+                    end -= 1
+        yield words[first:end]
+        first = end
+
+
+def _split_phrases(words):
+    first = 0
+    for index, word in enumerate(words):
+        sentence = SENTENCE_END.search(word['text']) and len(lexical(word['text'])) > 2
+        pause = index + 1 < len(words) and words[index + 1]['start'] - word['end'] >= .8
+        if sentence or pause:
+            yield from _split_passage(words[first:index + 1])
+            first = index + 1
+    yield from _split_passage(words[first:])
+
 
 def phrase_rows(text, recognition, offset, start, end, first_id=0):
     words = recognition.get('word_evidence') or []
@@ -16,20 +60,8 @@ def phrase_rows(text, recognition, offset, start, end, first_id=0):
                    timing='audio_excerpt', needs_review=bool(recognition.get('needs_review')),
                    recognition=dict(recognition, audio_offset=offset))
         return [row] if start < end and usable(row) else []
-    groups, current = [], []
-    for word in words:
-        if current and (word['start'] - current[-1]['end'] >= .8
-                        or word['end'] - current[0]['start'] > 7 or len(current) >= 20):
-            groups.append(current)
-            current = []
-        current.append(dict(word))
-        if re.search(r'[.!?…][»"\)\]]*$', word['text']) and len(lexical(word['text'])) > 2:
-            groups.append(current)
-            current = []
-    if current:
-        groups.append(current)
     rows = []
-    for group in groups:
+    for group in _split_phrases(words):
         left, right = max(start, offset+group[0]['start']), min(end, offset+max(w['end'] for w in group))
         if left >= right:
             continue

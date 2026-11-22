@@ -1,0 +1,39 @@
+.session-dialog {
+  box-sizing: border-box;
+  width: min(540px, calc(100% - 28px));
+  max-height: min(720px, calc(100% - 28px));
+  padding: 26px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: 0 24px 74px #000a;
+}
+.session-dialog[open] { animation: session-in .23s var(--motion-ease) both; }
+.session-dialog::backdrop { background: #070c13bb; animation: session-dim .20s ease-out both; }
+@keyframes session-in { from { opacity: 0; transform: translateY(10px) scale(.987); } to { opacity: 1; transform: none; } }
+@keyframes session-dim { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .session-dialog[open], .session-dialog::backdrop { animation: none; }
+}
+.session-dialog h2, .session-profile-card h2 { margin: 0 0 8px; letter-spacing: -.02em; }
+.session-dialog p { margin: 8px 0 14px; }
+.session-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(110px, .52fr); gap: 14px; }
+.session-fields label, #selection-manual-label { display: block; margin: 0; font-weight: 600; }
+.session-fields select { display: block; width: 100%; margin-top: 8px; min-height: 45px; }
+.session-actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.session-actions button { margin: 0; }
+.session-edit { justify-content: flex-start; }
+.session-error:empty { display: none; }
+.session-error { color: var(--recording); }
+#selection-choices { border: 0; padding: 0; min-width: 0; margin: 0 0 12px; max-height: 230px; overflow: auto; }
+.session-choice { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); padding: 9px 12px; margin: 0 0 5px; border-radius: 10px; cursor: pointer; }
+.session-choice:has(:checked) { background: var(--active); border-color: var(--accent-line); }
+.organized .session-choice input { width: auto; margin: 0; padding: 0; }
+.session-choice span { min-width: 0; }
+.session-choice small { display: block; margin-top: 3px; color: var(--muted); }
+.organized .session-text-danger, .organized .session-text-danger:hover:not(:disabled) { background: transparent; color: var(--recording); }
+.organized .session-danger, .organized .session-danger:hover:not(:disabled) { background: var(--recording); color: #381c17; }
+.organized .session-pending { margin: 0 0 10px; }
+.session-sr { clip-path: inset(50%); position: absolute; height: 1px; width: 1px; overflow: hidden; white-space: nowrap; }
+@media (max-width: 470px) { .session-dialog { padding: 19px; } }

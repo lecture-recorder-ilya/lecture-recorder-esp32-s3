@@ -18,6 +18,7 @@ import serial
 from serial.tools import list_ports
 import ai_service
 import lesson_schedule
+import recording_selection
 
 ROOT = Path(__file__).resolve().parent
 FILES = ROOT / 'recordings'
@@ -191,7 +192,7 @@ def open_recording_stream(transport):
     raise TimeoutError('ESP пока недоступна.')
 
 
-def capture(transport):
+def capture(transport, choose_lesson=False):
     global connection
     stream = None
     output = None
@@ -254,6 +255,8 @@ def capture(transport):
                         raise RuntimeError('Нет ответа от программы микрофона.')
                     if output is None:
                         filename = datetime.now(ZoneInfo('Europe/Moscow')).strftime('lecture-%Y-%m-%d-%H-%M-%S') + '-' + str(time.time_ns() % 1000000) + '.wav'
+                        if choose_lesson:
+                            recording_selection.begin(filename)
                         raw = (FILES / filename).open('w+b')
                         output = wave.open(raw, 'wb')
                         output.setnchannels(1)
@@ -312,16 +315,22 @@ def capture(transport):
             raw.flush()
             os.fsync(raw.fileno())
             raw.close()
+        if choose_lesson and filename and not count:
+            (FILES / filename).unlink(missing_ok=True)
+            recording_selection.finish(filename)
+            filename = ''
+            with lock:
+                state['file'] = ''
         with lock:
             state.update(recording=False, busy=False, reconnecting=False, level=0)
             completed = filename if filename and not state.get('error') else None
-        if filename:
+        if filename and not choose_lesson:
             try:
                 lesson_schedule.organize(filename)
             except OSError as exc:
                 with lock:
                     state['error'] = 'Запись сохранена, но папка занятия не создана: '+str(exc)
-        if completed and ai_service.auto:
+        if completed and not choose_lesson and ai_service.auto:
             try:
                 ai_service.submit(completed, wait_models=True)
             except Exception:
@@ -355,7 +364,10 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/status':
             with lock:
                 result = dict(state)
-            result['files'] = sorted([p.name for p in FILES.glob('*.wav')], reverse=True)
+            active_file = result['file'] if result['recording'] or result['busy'] else ''
+            result['pending_lessons'] = recording_selection.pending(active_file)
+            result['files'] = sorted((p.name for p in FILES.glob('*.wav')
+                                      if p.name == active_file or not recording_selection.awaiting(p.name)), reverse=True)
             result['wifi'] = {k: settings.get(k, '') for k in ('ssid', 'password', 'ip', 'mode')}
             result['usb_present'] = bool(usb_ports())
             result['ai'] = ai_service.status()
@@ -421,6 +433,8 @@ class Handler(BaseHTTPRequestHandler):
                 active = state['recording'] and state['file'] == body.get('file')
             if active:
                 return self.reply({'error':'Сначала останови эту запись.'}, 409)
+            if recording_selection.awaiting(body.get('file')):
+                return self.reply({'error':'Сначала выбери пару или сохрани запись вне расписания.'}, 409)
             try:
                 ai_service.submit(body.get('file'), wait_models=body.get('wait_models') is True)
                 return self.reply({'ok':True})
@@ -444,6 +458,33 @@ class Handler(BaseHTTPRequestHandler):
             finally:
                 with lock:
                     state['busy'] = False
+        if self.path == '/recording-selection':
+            name, action = body.get('file'), body.get('action')
+            if action not in ('save', 'discard'):
+                return self.reply({'error':'Выбери действие с записью.'}, 400)
+            with lock:
+                if state['file'] == name and (state['recording'] or state['busy']):
+                    return self.reply({'error':'Сначала заверши запись.'}, 409)
+                try:
+                    if action == 'discard':
+                        recording_selection.discard(name)
+                        if state['file'] == name:
+                            state.update(file='', samples=0, seconds=0, missing_seconds=0)
+                    else:
+                        recording_selection.recording(name)
+                        lesson_schedule.assign_recording(name,body.get('lesson'))
+                        recording_selection.finish(name)
+                except (ValueError, FileNotFoundError) as error:
+                    return self.reply({'error':str(error)}, 400)
+                except OSError:
+                    return self.reply({'error':'Не удалось сохранить выбор. Повтори попытку.'}, 503)
+            result = {'ok':True}
+            if action == 'save' and ai_service.auto:
+                try:
+                    ai_service.submit(name, wait_models=True)
+                except (ValueError, RuntimeError, OSError):
+                    result['warning'] = 'Запись сохранена. Запусти разбор из библиотеки.'
+            return self.reply(result)
         if self.path == '/start':
             with lock:
                 if state['recording'] or state['busy']:
@@ -451,7 +492,7 @@ class Handler(BaseHTTPRequestHandler):
                 stop_recording.clear()
                 state.update(busy=True, error='', seconds=0, samples=0, file='', reconnecting=False, missing_seconds=0)
             transport = body.get('transport', 'usb')
-            worker = threading.Thread(target=capture, args=(transport,), daemon=True)
+            worker = threading.Thread(target=capture, args=(transport, body.get("choose_lesson", False) is True), daemon=True)
             worker.start()
             return self.reply({'ok': True})
         if self.path == '/shutdown-for-update':

@@ -10,6 +10,7 @@ from speech_audio import normalize_audio
 from asr_terms import apply_terms
 from asr_segments import phrase_rows
 from asr_guard import speech_windows
+from asr_windows import boundary_at_pause
 from quality_asr import Decoder
 
 
@@ -30,6 +31,16 @@ class AudioTests(unittest.TestCase):
   windows=speech_windows([(9,10),(1,2)],12);self.assertEqual(len(windows),2);self.assertLess(windows[0][1],windows[1][0])
   windows=speech_windows([(0,70)],70,max_seconds=24);self.assertEqual(windows,[(0,24),(24,48),(48,70)])
   with self.assertRaises(ValueError):speech_windows([(0,1)],1,max_seconds=0)
+
+
+ def test_boundary_uses_shared_context_and_leaves_nominal_silence_alone(self):
+  samples=np.tile(np.array([.03,-.03],dtype=np.float32),40000)
+  samples[29000:37000]=0
+  cut=boundary_at_pause(samples,48000)
+  self.assertEqual(cut,32800)
+  self.assertEqual(boundary_at_pause(samples[16000:],32000)+16000,cut)
+  self.assertEqual(boundary_at_pause(samples,32800),32800)
+  self.assertEqual(boundary_at_pause(samples,0),0)
 
 class TermTests(unittest.TestCase):
  def setUp(self):
@@ -76,6 +87,15 @@ class PhraseTests(unittest.TestCase):
   words=[word('слово'+str(i),i*.4) for i in range(50)];text=' '.join(w['text'] for w in words)
   rows=phrase_rows(text,self.recognition(words),0,0,22)
   self.assertEqual(' '.join(row['text'] for row in rows),text);self.assertGreater(len(rows),1)
+
+ def test_duration_limit_prefers_clause_boundary_without_losing_words(self):
+  words=[word(value,i*.6) for i,value in enumerate(
+   'Если функция строго возрастает на отрезке, то её максимум находится на правом конце.'.split())]
+  text=' '.join(w['text'] for w in words)
+  rows=phrase_rows(text,self.recognition(words),0,0,15)
+  self.assertEqual(rows[0]['text'],'Если функция строго возрастает на отрезке,')
+  self.assertEqual(' '.join(row['text'] for row in rows),text)
+  self.assertTrue(all(row['end']-row['start']<=7 for row in rows))
 
 class DecoderTests(unittest.TestCase):
  def test_decode_skips_long_pauses_and_preserves_global_word_time(self):

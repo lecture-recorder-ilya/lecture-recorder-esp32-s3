@@ -1,7 +1,7 @@
 /* Date arithmetic is independent of the browser's local timezone. */
 function calendarShift(day, amount){const value=new Date(day+'T12:00:00Z');value.setUTCDate(value.getUTCDate()+amount);return value.toISOString().slice(0,10)}
 function calendarMonday(day){const value=new Date(day+'T12:00:00Z');return calendarShift(day,-((value.getUTCDay()+6)%7))}
-function calendarFolder(entry){return `${entry.date} ${entry.start.replace(':','-')} — ${entry.subject} — ${entry.type}`.replace(/[/\\\0]/g,'-')}
+function calendarFolder(entry){return entry.folder||`${entry.date} ${entry.start.replace(':','-')} — ${entry.subject} — ${entry.type}`.replace(/[/\\\0]/g,'-')}
 function calendarTopFiles(status){const covered=new Set();for(const name of status.files||[]){const meta=status.lessons?.[name];for(const source of meta?.source_records||[])covered.add(source)}return (status.files||[]).filter(name=>!covered.has(name))}
 function calendarFiles(status,entry,originals=false){const folder=calendarFolder(entry);return (originals?status.files||[]:calendarTopFiles(status)).filter(name=>status.lessons?.[name]?.folder===folder)}
 if(typeof module!=='undefined')module.exports={calendarShift,calendarMonday,calendarFolder,calendarFiles};
@@ -90,7 +90,23 @@ if(typeof document!=='undefined')(() => {
  window.revealCalendarFile=name=>{
   const meta=status?.lessons?.[name];if(!meta)return;day=meta.date;selected=meta.folder;const matching=(schedule?.entries||[]).some(e=>calendarFolder(e)===selected);if(!matching)selected='other';render();
  };
- fetch('/calendar').then(r=>{if(!r.ok)throw Error('Расписание недоступно');return r.json()}).then(value=>{schedule=value;status=studyStatus||status;chooseDay(today())}).catch(error=>{
-  calendar.textContent=error.message+' · ниже доступен обычный список записей.';empty.hidden=true;selectedInfo.hidden=true;
- });
+ let requestNumber=0;
+ window.refreshScheduleData=async()=>{
+  const request=++requestNumber;
+  try{
+   const response=await fetch('/calendar',{cache:'no-store'});
+   if(!response.ok)throw Error('Расписание недоступно');
+   const value=await response.json();
+   if(request!==requestNumber)return;
+   schedule=value;
+   status=studyStatus||status;
+   chooseDay(day||today());
+   hint.textContent=value.error||'Выбери пару — ниже появятся её темы и конспекты.';
+  }catch(error){
+   if(request!==requestNumber)return;
+   hint.textContent=error.message;
+   if(!schedule){schedule={entries:[],group:''};chooseDay(today());}
+  }
+ };
+ window.refreshScheduleData();
 })();

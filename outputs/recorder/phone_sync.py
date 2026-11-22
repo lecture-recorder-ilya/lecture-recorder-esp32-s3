@@ -118,7 +118,12 @@ def import_one(item,base,token,files=FILES,ledger_path=LEDGER):
   if gaps:atomic(target.with_suffix('.gaps.json'),gaps)
   atomic(target.with_suffix('.phone.json'),dict(source='android',sha256=sha,started_ms=item.get('started_ms'),error=item.get('error','')))
   import lesson_schedule
-  lesson_schedule.organize(name)
+  if item.get('lesson_decided') is True:
+   lesson = item.get('lesson')
+   if lesson is not None and not isinstance(lesson, dict):raise ValueError('Некорректные сведения о паре')
+   lesson_schedule.assign_recording(name, lesson)
+  else:
+   lesson_schedule.organize(name)
   if item.get('imported') is True:
    import study_store
    from datetime import datetime

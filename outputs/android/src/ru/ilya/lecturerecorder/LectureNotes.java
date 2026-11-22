@@ -17,8 +17,10 @@ final class LectureNotes {
  static JSONObject saveTranscript(Context c,String name,String title,JSONObject document,
                                   JSONArray segments,String recognizer)throws Exception{
   if(segments.length()==0)throw new IOException("В записи не удалось распознать русскую речь");
+  JSONObject lesson=Store.lesson(c,name);
+  String subject=lesson.optString("subject",title);
   if(document==null){
-   JSONObject report=new JSONObject().put("subject",title).put("topic",title);
+   JSONObject report=new JSONObject().put("subject",subject).put("topic",subject);
    document=new JSONObject().put("report",report);
   }
   JSONObject report=document.getJSONObject("report");
@@ -27,6 +29,7 @@ final class LectureNotes {
   String reviewPrefix="phone:"+name+":"+UUID.randomUUID()+":";
   for(int i=0;i<segments.length();i++)segments.getJSONObject(i).put("review_key",reviewPrefix+i);
   document.put("file",name);
+  if(lesson.length()>0)document.put("lesson",lesson);
   report.put("segments",segments).put("asr_engine",recognizer).put(SUMMARY_PENDING,true);
   saveLocal(c,document,true);
   return document;

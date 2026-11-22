@@ -14,7 +14,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.regex.Pattern;
 import java.util.Map;
 
 final class PhoneGigaAm {
@@ -23,6 +26,8 @@ final class PhoneGigaAm {
     private static final int EDGE = 2 * RATE;
     private static final int BLANK = 256;
     private static final double FRAME_SECONDS = 0.04;
+
+    private static final Pattern CRITICAL = Pattern.compile(".*[0-9+−=<>×÷/].*|не|ни|нет|без|нол.*|нул.*|один.*|одн.*|дв[аеу].*|три.*|тр[ёе]х.*|четыр.*|пят.*|шест.*|сем.*|вос[ье]м.*|девят.*|десят.*|сорок.*|сто|сот.*|тысяч.*|милли.*|минус|плюс|равно|меньше|больше");
 
     static JSONArray transcribe(Context context, PhoneAnalysisService.Job job, String name, File model)
             throws Exception {
@@ -35,7 +40,7 @@ final class PhoneGigaAm {
                                 RandomAccessFile input) throws Exception {
         long total = PcmWave.seekData(input) / 2;
         long data = input.getFilePointer();
-        JSONArray segments = new JSONArray();
+        PhonePhrases phrases = new PhonePhrases();
         String[] tokens = readTokens(context);
         OrtEnvironment environment = OrtEnvironment.getEnvironment();
         try (OrtSession.SessionOptions options = new OrtSession.SessionOptions()) {
@@ -45,7 +50,7 @@ final class PhoneGigaAm {
             try (OrtSession frontend = environment.createSession(readFrontend(context), options);
                  OrtSession acoustic = environment.createSession(model.getPath(), options)) {
                 int progress = -1;
-                for (long start = 0; start < total; start += CORE) {
+                for (long start = 0; start < total; ) {
                     job.check();
                     long end = Math.min(total, start + CORE);
                     int percent = (int) (100 * start / total);
@@ -54,21 +59,37 @@ final class PhoneGigaAm {
                         job.update("Распознаю речь · " + percent + "%");
                     }
                     long left = Math.max(0, start - EDGE);
-                    long right = Math.min(total, end + EDGE);
-                    int count = (int) (right - left);
-                    if (count < 400) continue;
-                    float[] wave = readWindow(input, data + left * 2, count);
-                    JSONArray words = recognize(environment, frontend, acoustic, wave, tokens,
-                            left / (double) RATE, start / (double) RATE, end / (double) RATE);
-                    PhoneLectureAnalysis.append(segments, words);
+                    long right = Math.min(total, end + EDGE + PhoneSpeechWindow.SEARCH);
+                    float[] raw = readWindow(input, data + left * 2, (int) (right - left));
+                    if (end + EDGE < total) {
+                        end = left + PhoneSpeechWindow.boundary(raw, (int) (end - left));
+                    }
+                    int length = (int) (Math.min(total, end + EDGE) - left);
+                    if (length >= 400 && !PhoneSpeechWindow.constant(raw)) {
+                        raw = Arrays.copyOf(raw, length);
+                        float level = PhoneSpeechWindow.level(raw);
+                        float[] wave = raw.clone();
+                        PhoneSpeechWindow.normalize(wave, level, 8);
+                        double first = start / (double) RATE, last = end / (double) RATE;
+                        double offset = left / (double) RATE;
+                        JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);
+                        if (level < .05f || weak(words)) {
+                            job.check();
+                            float[] clean = PhoneSpeechWindow.clean(raw);
+                            JSONArray alternate = recognize(environment, frontend, acoustic, clean, tokens, offset, first, last, true);
+                            reconcile(words, alternate);
+                        }
+                        phrases.accept(words);
+                    }
+                    start = end;
                 }
             }
         }
-        return segments;
+        return phrases.finish();
     }
 
     private static JSONArray recognize(OrtEnvironment environment, OrtSession frontend, OrtSession acoustic,
-                                       float[] wave, String[] tokens, double left, double start, double end)
+                                       float[] wave, String[] tokens, double left, double start, double end, boolean beam)
             throws Exception {
         Map<String, OnnxTensor> inputs = new HashMap<>();
         try (OnnxTensor samples = OnnxTensor.createTensor(environment, new float[][]{wave});
@@ -83,14 +104,16 @@ final class PhoneGigaAm {
                 int steps = (int) ((((long[]) frames.getValue())[0] + 3) / 4);
                 try (OrtSession.Result result = acoustic.run(inputs)) {
                     float[][] logits = ((float[][][]) result.get("log_probs").get().getValue())[0];
-                    return words(logits, steps, tokens, left, start, end, left + wave.length / (double) RATE);
+                    steps = Math.min(steps, logits.length);
+                    int[] alignment = beam ? PhoneCtc.alignment(logits, steps, BLANK) : null;
+                    return words(logits, steps, tokens, left, start, end, left + wave.length / (double) RATE, alignment);
                 }
             }
         }
     }
 
     private static JSONArray words(float[][] logits, int steps, String[] tokens, double left, double start, double end,
-                                   double audioEnd) throws Exception {
+                                   double audioEnd, int[] alignment) throws Exception {
         JSONArray result = new JSONArray();
         StringBuilder word = new StringBuilder();
         double wordStart = left;
@@ -100,9 +123,11 @@ final class PhoneGigaAm {
         int previous = BLANK;
         for (int frame = 0; frame < steps && frame < logits.length; frame++) {
             float[] scores = logits[frame];
-            int best = 0;
-            for (int i = 1; i < scores.length; i++) {
-                if (scores[i] > scores[best]) best = i;
+            int best = alignment == null ? 0 : alignment[frame];
+            if (alignment == null) {
+                for (int i = 1; i < scores.length; i++) {
+                    if (scores[i] > scores[best]) best = i;
+                }
             }
             boolean emit = best != previous && best != BLANK && best != 0;
             previous = best;
@@ -130,7 +155,7 @@ final class PhoneGigaAm {
                                    double confidence, int pieces, double start, double end) throws Exception {
         if (pieces == 0 || word.length() == 0) return;
         double midpoint = (wordStart + wordEnd) / 2;
-        if (midpoint >= start && midpoint < end) {
+        if (wordStart < wordEnd && midpoint >= start && midpoint < end) {
             result.put(new JSONObject().put("word", word.toString())
                     .put("start", wordStart).put("end", wordEnd)
                     .put("conf", confidence / pieces));
@@ -142,18 +167,54 @@ final class PhoneGigaAm {
         input.seek(offset);
         input.readFully(pcm);
         float[] wave = new float[count];
-        int[] magnitudes = new int[32769];
         for (int i = 0; i < count; i++) {
             int sample = (short) ((pcm[2 * i] & 0xff) | (pcm[2 * i + 1] << 8));
             wave[i] = sample / 32768f;
-            if (i % 4 == 0) magnitudes[Math.abs(sample)]++;
         }
-        int percentile = (int) Math.ceil(((count + 3) / 4) * 0.995);
-        int level = 0;
-        while (percentile > magnitudes[level]) percentile -= magnitudes[level++];
-        float gain = Math.min(8f, 0.39f / Math.max(level / 32768f, 0.007f));
-        for (int i = 0; i < count; i++) wave[i] = Math.max(-1f, Math.min(1f, wave[i] * gain));
         return wave;
+    }
+
+    private static boolean weak(JSONArray words) throws Exception {
+        for (int i = 0; i < words.length(); i++) {
+            if (words.getJSONObject(i).getDouble("conf") < .66) return true;
+        }
+        return false;
+    }
+
+    private static String lexical(JSONObject word) throws Exception {
+        return word.getString("word").toLowerCase(Locale.ROOT).replace('ё','е')
+                .replaceAll("^[«(]+|[.,;:!?…)»]+$", "");
+    }
+
+    private static boolean anchor(JSONArray base, int i, JSONArray other, int j) throws Exception {
+        if (i < 0 || i >= base.length() || j < 0 || j >= other.length()) return false;
+        JSONObject first = base.getJSONObject(i), second = other.getJSONObject(j);
+        return Math.abs(first.getDouble("start") - second.getDouble("start")) < .28
+                && !lexical(first).isEmpty() && lexical(first).equals(lexical(second));
+    }
+
+    static void reconcile(JSONArray base, JSONArray other) throws Exception {
+        int j = 0;
+        for (int i = 0; i < base.length() && j < other.length(); i++) {
+            JSONObject word = base.getJSONObject(i);
+            double time = word.getDouble("start");
+            while (j + 1 < other.length()
+                    && Math.abs(other.getJSONObject(j + 1).getDouble("start") - time)
+                    < Math.abs(other.getJSONObject(j).getDouble("start") - time)) j++;
+            JSONObject candidate = other.getJSONObject(j);
+            if (Math.abs(candidate.getDouble("start") - time) > .24) continue;
+            String original = lexical(word), proposed = lexical(candidate);
+            if (original.equals(proposed) || original.isEmpty() || proposed.isEmpty()) continue;
+            boolean anchored = anchor(base, i - 1, other, j - 1) || anchor(base, i + 1, other, j + 1);
+            if (!anchored) continue;
+            word.put("needs_review", true);
+            double firstScore = word.getDouble("conf"), secondScore = candidate.getDouble("conf");
+            if (firstScore < .72 && secondScore >= .80 && secondScore >= firstScore + .15
+                    && !CRITICAL.matcher(original).matches() && !CRITICAL.matcher(proposed).matches()) {
+                word.put("word", candidate.getString("word"));
+            }
+            j++;
+        }
     }
 
     private static byte[] readFrontend(Context context) throws Exception {

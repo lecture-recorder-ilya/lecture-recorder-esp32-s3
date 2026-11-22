@@ -22,7 +22,7 @@ class Tests(unittest.TestCase):
  def setUpClass(cls):cls.server=ThreadingHTTPServer(('127.0.0.1',0),H);threading.Thread(target=cls.server.serve_forever,daemon=True).start();cls.base='http://127.0.0.1:'+str(cls.server.server_port)
  @classmethod
  def tearDownClass(cls):cls.server.shutdown();cls.server.server_close()
- def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);self.files=self.root/'files';self.files.mkdir();self.ledger=self.root/'ledger.json';H.ack=0;H.data=PAYLOAD;H.fail=False;H.cutoff=None;H.ranges=[];self.item={'name':NAME,'bytes':len(PAYLOAD),'sha256':SHA}
+ def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);self.files=self.root/'recordings';self.files.mkdir();self.ledger=self.root/'ledger.json';H.ack=0;H.data=PAYLOAD;H.fail=False;H.cutoff=None;H.ranges=[];self.item={'name':NAME,'bytes':len(PAYLOAD),'sha256':SHA}
  def tearDown(self):self.tmp.cleanup()
  def run_import(self):
   with patch('phone_sync.queue_pending'),patch('lesson_schedule.organize'):
@@ -52,6 +52,21 @@ class Tests(unittest.TestCase):
   H.cutoff=None;self.run_import()
   self.assertEqual(H.ranges,[None,'bytes=10000-']);self.assertEqual(H.ack,1)
   self.assertEqual(phone_sync.digest(self.files/NAME),SHA)
+ def test_chosen_lesson_is_saved_before_phone_ack(self):
+  lesson={'date':'2026-10-12','start':'11:55','end':'13:25','subject':'Математический анализ','type':'ЛК','group':'ИКБО-01-26','room':'А-001','source':'mirea'}
+  self.item.update(lesson_decided=True,lesson=lesson)
+  with patch('study_store.ROOT',self.root):
+   self.run_import()
+   import study_store
+   saved=study_store.overrides()[NAME]
+  self.assertEqual(saved['subject'],lesson['subject'])
+  self.assertEqual(saved['start'],lesson['start'])
+  self.assertTrue((self.root/'lessons'/saved['folder']/NAME).is_file())
+  self.assertEqual(H.ack,1)
+ def test_invalid_lesson_keeps_phone_recording(self):
+  self.item.update(lesson_decided=True,lesson=['wrong type'])
+  with self.assertRaises(ValueError):self.run_import()
+  self.assertEqual(H.ack,0)
  def test_bad_name_never_ack(self):
   self.item['name']='../outside.wav'
   with self.assertRaises(ValueError):self.run_import()
