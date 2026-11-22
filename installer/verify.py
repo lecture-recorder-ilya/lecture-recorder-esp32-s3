@@ -29,7 +29,7 @@ elif mode == 'ai':
     assert not speech_profile(torch.zeros(16000).numpy()).strict
     for folder, name in [('gigaam', 'v3_e2e_ctc.int8.onnx'), ('gigaam-rnnt', 'v3_e2e_rnnt_encoder.onnx'),
                          ('gigaam-rnnt', 'v3_e2e_rnnt_decoder.onnx'), ('gigaam-rnnt', 'v3_e2e_rnnt_joint.onnx'),
-                         ('gigaam-beam', 'v3_ctc.onnx')]:
+                         ('gigaam-beam', 'v3_ctc.onnx'), ('gigaam-beam', 'v3_ctc.int8.onnx')]:
         options = onnxruntime.SessionOptions()
         options.intra_op_num_threads = 1
         session = onnxruntime.InferenceSession(str(models / folder / name), sess_options=options, providers=['CPUExecutionProvider'])

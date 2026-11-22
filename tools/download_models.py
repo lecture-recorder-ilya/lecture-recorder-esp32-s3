@@ -5,23 +5,23 @@ ROOT=Path(__file__).resolve().parent.parent
 os.environ.update(HF_HUB_DISABLE_TELEMETRY='1',HF_HUB_DISABLE_XET='1')
 from huggingface_hub import HfApi,snapshot_download,hf_hub_download
 models=ROOT/'work/models';models.mkdir(parents=True,exist_ok=True)
-repo='istupakov/gigaam-v3-onnx';revision='322c3b29492673eb7d0b434bfa9dfb8653e34d02'
-sets={'gigaam':['config.json','v3_e2e_ctc.int8.onnx','v3_e2e_ctc_vocab.txt'],
-      'gigaam-rnnt':['config.json','v3_e2e_rnnt_encoder.onnx','v3_e2e_rnnt_decoder.onnx','v3_e2e_rnnt_joint.onnx','v3_e2e_rnnt_vocab.txt'],
-      'gigaam-beam':['config.json','v3_ctc.onnx','v3_vocab.txt']}
-metadata={f.rfilename:f for f in HfApi().model_info(repo,revision=revision,files_metadata=True).siblings}
-for folder,names in sets.items():
- dest=models/folder;files=[]
- for name in names:
-  path=Path(hf_hub_download(repo,name,revision=revision,local_dir=dest))
-  digest=hashlib.sha256()
-  with path.open('rb') as f:
-   for block in iter(lambda:f.read(1024*1024),b''):digest.update(block)
-  sha=digest.hexdigest();remote=metadata[name]
-  if remote.size is not None and path.stat().st_size!=remote.size:raise ValueError('Неверный размер '+name)
-  if remote.lfs and remote.lfs.sha256!=sha:raise ValueError('Неверный SHA-256 '+name)
-  files.append({'name':name,'bytes':path.stat().st_size,'sha256':sha})
- (models/(folder+'-manifest.json')).write_text(json.dumps({'repo':repo,'revision':revision,'files':files},indent=2))
+specs=json.loads((ROOT/'installer/models.json').read_text())
+for spec in specs:
+ folder=spec['folder']
+ if folder not in ('gigaam','gigaam-rnnt','gigaam-beam'):continue
+ dest=models/folder
+ for file in spec['files']:
+  name=file['name']
+  path=Path(hf_hub_download(spec['repo'],name,revision=spec['revision'],local_dir=dest))
+  if path.stat().st_size!=file['bytes']:raise ValueError('Неверный размер '+name)
+  with path.open('rb') as source:
+   if hashlib.file_digest(source,'sha256').hexdigest()!=file['sha256']:raise ValueError('Неверный SHA-256 '+name)
+ temporary=models/(folder+'-manifest.'+str(os.getpid())+'.tmp')
+ try:
+  temporary.write_text(json.dumps(spec,indent=2))
+  temporary.replace(models/(folder+'-manifest.json'))
+ finally:
+  temporary.unlink(missing_ok=True)
  print(folder+' готов',flush=True)
 manifest={}
 for repo,folder in [('mlx-community/Qwen2.5-7B-Instruct-4bit','lecture'),('mlx-community/whisper-large-v3-turbo','whisper')]:

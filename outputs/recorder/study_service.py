@@ -21,7 +21,7 @@ from speech_context import context_for_recording
 from asr_policy import selected_model
 from preview_history import PreviewHistory
 from live_draft import LiveDraft
-from quality_asr import Decoder, ENGINE as QUALITY_ENGINE, ready as quality_ready
+from quality_asr import Decoder, ready as quality_ready
 from power_budget import Budget
 
 ROOT=store.ROOT
@@ -303,7 +303,7 @@ def monitor_quality(name,total,flush=False):
     offset=QUALITY_CURSOR['end'];end=min(max(0,total-(0 if flush else int(.45*16000))),offset+12*16000)
     if end <= offset or (not flush and end - offset < 12 * 16000):
         if flush:QUALITY_CURSOR['end']=max(offset,end)
-        return {'file':name,'segments':[],'seconds':QUALITY_CURSOR['end']/16000,'message':'Собираю целую фразу · текст появляется примерно раз в 12 секунд','model':QUALITY_ENGINE}
+        return {'file':name,'segments':[],'seconds':QUALITY_CURSOR['end']/16000,'message':'Собираю целую фразу · текст появляется примерно раз в 12 секунд','model':QUALITY_DECODER.engine}
     read_start=max(0,offset-int(.45*16000));read_end=min(total,end+int(.45*16000))
     pcm=read_pcm(store.audio(name),read_start,read_end)
     samples=np.frombuffer(pcm,dtype='<i2').astype(np.float32)/32768
@@ -311,7 +311,7 @@ def monitor_quality(name,total,flush=False):
     ranges=profile.padded or profile.quiet
     if not ranges:
         QUALITY_CURSOR['end']=end
-        return {'file':name,'segments':[],'message':'Фоновый звук · подтверждённой речи нет','seconds':end/16000,'speech_detected':False,'model':QUALITY_ENGINE}
+        return {'file':name,'segments':[],'message':'Фоновый звук · подтверждённой речи нет','seconds':end/16000,'speech_detected':False,'model':QUALITY_DECODER.engine}
     first=ranges[0][0];last=ranges[-1][1]
     context=context_for_recording(name,offset/16000)
     text=clean_asr_text(QUALITY_DECODER.transcribe(samples,(context['prompt'] or '').split(', ') if context['prompt'] else [],speech=profile,emit_start=(offset-read_start)/16000,emit_end=(end-read_start)/16000))
@@ -322,7 +322,7 @@ def monitor_quality(name,total,flush=False):
     message='Контроль ESP · GigaAM · черновой текст' if rows else 'Речь слышна, текст пока неразборчив'
     if not rows and profile.quiet:message='Фоновый звук · подтверждённой речи нет'
     return {'file':name,'segments':rows,'message':message,
-            'seconds':end/16000,'model':QUALITY_ENGINE,'subject':context['subject'],'context_seconds':12,'latency':round(time.monotonic()-started,3),'updated':time.time()}
+            'seconds':end/16000,'model':QUALITY_DECODER.engine,'subject':context['subject'],'context_seconds':12,'latency':round(time.monotonic()-started,3),'updated':time.time()}
 
 def monitor_chunk(name,total):
     if selected_model(store.read(PROJECT/'work/ai-settings.json').get('speech','auto'),quality_ready())=='qwen':return monitor_quality(name,total)

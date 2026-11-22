@@ -11,23 +11,36 @@ def save(path,data):
  temp.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')), encoding='utf-8')
  temp.replace(path)
 
+class CharacterWeightsChanged(Exception):
+ pass
+
+
 def run(audio_path,result_path,progress_path):
+ try:
+  _run(audio_path,result_path,progress_path,allow_fast_character=True)
+ except CharacterWeightsChanged:
+  _run(audio_path,result_path,progress_path,allow_fast_character=False)
+
+
+def _run(audio_path,result_path,progress_path,allow_fast_character):
  import numpy as np
  from speech_gate import speech_profile
  from speech_quality import usable,clean_asr_text
- from quality_asr import Decoder,ENGINE
+ from quality_asr import Decoder
  from power_budget import Budget
  from speech_context import context_for_recording
- budget=Budget();decoder=Decoder()
+ budget=Budget();decoder=Decoder(allow_fast_character=allow_fast_character)
+ done=dict(status='processing',stage='transcribed',percent=60,transcript_engine=decoder.engine,message='GigaAM: речь распознана, готовлю конспект')
  cache=result_path.with_suffix('.transcript.json')
  try:
   with wave.open(str(audio_path)) as audio:
    rate=audio.getframerate();total=audio.getnframes();duration=total/rate
    if rate!=16000 or audio.getsampwidth()!=2 or audio.getnchannels()!=1:raise ValueError('Ожидается PCM16 mono 16 кГц.')
    step=20*rate
-   expected=identity(audio_path,ENGINE)
+   expected=identity(audio_path,decoder.engine)
    old=prepare(cache,expected,total,step)
-   if old['complete']:return
+   if old['complete']:
+    save(progress_path,done);return
    segments=old['segments']
    for offset in range(old.get('completed_frames',0),total,step):
     save(progress_path,dict(status='processing',stage='transcribing',percent=5+round(55*offset/max(1,total)),message=f'GigaAM: распознаю {offset//rate//60} из {int(duration)//60+1} мин'))
@@ -42,6 +55,7 @@ def run(audio_path,result_path,progress_path):
      context=context_for_recording(audio_path.name,offset/rate)
      terms=(context['prompt'] or '').split(', ') if context['prompt'] else []
      text=clean_asr_text(decoder.transcribe(samples,terms,speech=profile,emit_start=emit_start,emit_end=emit_end))
+     if decoder.engine!=expected['engine']:raise CharacterWeightsChanged()
      segments.extend(phrase_rows(text,decoder.last,read_start/rate,
                                  read_start/rate+max(emit_start,first),
                                  min(duration,read_start/rate+min(emit_end,last)),len(segments)))
@@ -49,7 +63,7 @@ def run(audio_path,result_path,progress_path):
      save(cache,checkpoint(expected,segments,duration,offset+step))
      budget.checkpoint(force=True)
   save(cache,checkpoint(expected,segments,duration,total,complete=True))
-  save(progress_path,dict(status='processing',stage='transcribed',percent=60,message='GigaAM: речь распознана, готовлю конспект'))
+  save(progress_path,done)
  finally:decoder.close()
 
 if __name__=='__main__':

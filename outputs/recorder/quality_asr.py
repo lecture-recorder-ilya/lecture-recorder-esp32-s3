@@ -1,10 +1,18 @@
 """Local adaptive Russian ASR with voiced-word evidence; originals remain untouched."""
 import threading,math,re
 from pathlib import Path
+import character_weights
 ROOT=Path(__file__).resolve().parent;PROJECT=ROOT.parent.parent
 MODEL=PROJECT/'work/models/gigaam';RNNT=PROJECT/'work/models/gigaam-rnnt'
 CHAR=PROJECT/'work/models/gigaam-beam'
-ENGINE='GigaAM-v3-3pass-phrases-v14-quiet'
+BASE_ENGINE='GigaAM-v3-3pass-phrases-v14-quiet'
+
+
+def engine_for(fast_character):
+    return BASE_ENGINE + ('-char-int8' if fast_character else '')
+
+
+ENGINE=engine_for(character_weights.available(CHAR))
 
 def ready():
  return all(p.exists() for p in [MODEL/'v3_e2e_ctc.int8.onnx',MODEL/'v3_e2e_ctc_vocab.txt',PROJECT/'work/models/gigaam-manifest.json',RNNT/'v3_e2e_rnnt_encoder.onnx',RNNT/'v3_e2e_rnnt_decoder.onnx',RNNT/'v3_e2e_rnnt_joint.onnx',RNNT/'v3_e2e_rnnt_vocab.txt',PROJECT/'work/models/gigaam-rnnt-manifest.json',CHAR/'v3_ctc.onnx',CHAR/'v3_vocab.txt',PROJECT/'work/models/gigaam-beam-manifest.json'])
@@ -48,22 +56,31 @@ def contains_numeric_units(words):
 
 
 class Decoder:
- def __init__(self, threads=None):
+ def __init__(self, threads=None, *, allow_fast_character=True):
   from power_budget import decoder_threads
   self.threads = decoder_threads() if threads is None else threads
+  self.fast_character = allow_fast_character and character_weights.available(CHAR)
   self.models = {}
   self.lock = threading.Lock()
   self.last = {}
+ @property
+ def engine(self):
+  return engine_for(self.fast_character)
  def close(self):
   with self.lock:self.models.clear()
  def _load(self,kind):
+  if kind=='char_fast' and kind not in self.models:
+   if not self.fast_character or not character_weights.available(CHAR):
+    self.fast_character=False
+    kind='char'
   if kind not in self.models:
    import onnx_asr,onnxruntime as rt
    options=rt.SessionOptions();options.intra_op_num_threads=self.threads;options.inter_op_num_threads=1;options.execution_mode=rt.ExecutionMode.ORT_SEQUENTIAL
    options.add_session_config_entry('session.intra_op.allow_spinning','0');options.add_session_config_entry('session.inter_op.allow_spinning','0')
-   name='gigaam-v3-ctc' if kind=='char' else 'gigaam-v3-e2e-'+kind
-   path=CHAR if kind=='char' else RNNT if kind=='rnnt' else MODEL
-   self.models[kind]=onnx_asr.load_model(name,path=path,quantization='int8' if kind=='ctc' else None,sess_options=options,providers=['CPUExecutionProvider']).with_timestamps()
+   character=kind in ('char','char_fast')
+   name='gigaam-v3-ctc' if character else 'gigaam-v3-e2e-'+kind
+   path=CHAR if character else RNNT if kind=='rnnt' else MODEL
+   self.models[kind]=onnx_asr.load_model(name,path=path,quantization='int8' if kind in ('ctc','char_fast') else None,sess_options=options,providers=['CPUExecutionProvider']).with_timestamps()
   return self.models[kind]
  def _retry_original(self, samples, cleaned, speech, start, end):
   import numpy as np

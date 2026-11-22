@@ -145,10 +145,10 @@ def run_queue():
                 chosen=selected_model(speech,qwen_ready())
                 engine=WHISPER_ENGINE
                 if chosen=='qwen':
-                    from quality_asr import ENGINE
-                    engine=ENGINE
                     if not qwen_ready():raise RuntimeError('Модель русской речи ещё не готова.')
                     code=execute([str(ASR_PYTHON),str(ROOT/'qwen_transcribe.py'),str(file_path(name)),str(result),str(progress)])
+                    if code==0:
+                        engine=json.loads(progress.read_text())['transcript_engine']
                 if code==0 and not stopping:
                     code=execute([str(PYTHON),str(ROOT/'ai_worker.py'),str(file_path(name)),str(result),str(progress),'--transcript-engine',engine])
             data = json.loads(progress.read_text()) if progress.exists() else {}

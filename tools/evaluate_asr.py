@@ -205,6 +205,7 @@ def evaluate(manifest, source_root):
         phrase_rows = None
     cases = json.loads(manifest.read_text())
     decoder, results = Decoder(), []
+    engine = getattr(decoder, 'engine', ENGINE)
     try:
         for case in cases:
             path = manifest.parent/case['audio']
@@ -221,6 +222,8 @@ def evaluate(manifest, source_root):
                 left, right = max(0, offset-32000), min(len(audio), offset+352000)
                 text = clean_asr_text(decoder.transcribe(audio[left:right], case.get('terms', []),
                                       emit_start=(offset-left)/16000, emit_end=(min(len(audio), offset+320000)-left)/16000))
+                if getattr(decoder, 'engine', ENGINE) != engine:
+                    raise RuntimeError('Набор моделей изменился во время проверки. Повтори сравнение.')
                 if phrase_rows:
                     rows.extend(phrase_rows(text, decoder.last, left/16000, offset/16000,
                                             min(len(audio), offset+320000)/16000, len(rows)))
@@ -236,7 +239,7 @@ def evaluate(manifest, source_root):
             print(case['id'], result['word_errors'], '/', result['reference_words'], text, flush=True)
     finally:
         decoder.close()
-    return dict(engine=ENGINE, source='synthetic' if all(case.get('synthetic') is True for case in cases) else 'provided',
+    return dict(engine=engine, source='synthetic' if all(case.get('synthetic') is True for case in cases) else 'provided',
                 normalization='Нижний регистр, ё→е, без пунктуации; цифры и слова не приравниваются.',
                 **summarize_scores(results),
                 subsets=summarize_subsets(results), cases=results)

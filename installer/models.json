@@ -69,6 +69,11 @@
         "sha256": "1fb978d4f41e1334003fae9d29f2d9844d4132315a90553a4b986839051ba9d3"
       },
       {
+        "name": "v3_ctc.int8.onnx",
+        "bytes": 224721181,
+        "sha256": "ceb61454e2e1a2dec5872cbac1de0fe0a4271d1148f6b26b5bda53ff30a12acd"
+      },
+      {
         "name": "v3_vocab.txt",
         "bytes": 198,
         "sha256": "a9143c30844d3c0bee3e9e927e4084774eb1b9eeaafc473b2c4521e4911a7c07"
