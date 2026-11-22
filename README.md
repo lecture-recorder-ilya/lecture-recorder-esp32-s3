@@ -6,18 +6,18 @@
 
 Записи, расшифровки, формулы и конспекты — на твоём Mac.
 
-![Версия 0.5.7](https://img.shields.io/badge/версия-0.5.7-a8d7fa)
+![Версия 0.5.8](https://img.shields.io/badge/версия-0.5.8-a8d7fa)
 ![Apple Silicon](https://img.shields.io/badge/Mac-Apple_Silicon-242628)
 ![Android](https://img.shields.io/badge/телефон-Android-8bd5bd)
 ![Локальная обработка](https://img.shields.io/badge/обработка-локально-7b73ff)
 
-[**Скачать для Mac**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.7/lecture-recorder-0.5.7-arm64.dmg) · [**Скачать для Android**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.7/lecture-recorder.apk) · [Изменения 0.5.7](CHANGELOG.md)
+[**Скачать для Mac**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.8/lecture-recorder-0.5.8-arm64.dmg) · [**Скачать для Android**](https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.8/lecture-recorder.apk) · [Изменения 0.5.8](CHANGELOG.md)
 
 </div>
 
 Приложение загружает готовые аудиозаписи, записывает занятия с ESP32-S3, переносит аудио с Android, распознаёт русскую речь и собирает материалы занятия. Обработка выполняется на Apple Silicon, исходное аудио сохраняется рядом с текстом.
 
-**0.5.7 — ранняя версия продукта.** Android распознаёт речь и собирает конспект на устройстве. Mac очищает аудио и хранит общую библиотеку. Для установки и сопряжения ESP не нужна; запись с микрофона самого Mac пока в плане.
+**0.5.8 — ранняя версия продукта.** Android распознаёт речь и собирает конспект на устройстве. Mac очищает аудио и хранит общую библиотеку. Для установки и сопряжения ESP не нужна; запись с микрофона самого Mac пока в плане.
 
 ## Начать за три шага
 

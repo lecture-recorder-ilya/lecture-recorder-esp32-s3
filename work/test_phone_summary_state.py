@@ -176,6 +176,29 @@ public final class SummaryStateTest {
         PhoneSummaryEvidence.add("KEY: 7 — придуманный вывод\nTASK: 7", 0, 7, rows,
                 points, sources, tasks, new HashSet<>(), new HashSet<>());
         require(points.length() == 1 && tasks.length() == 1, "Reject free text and classwork");
+        String condition = "Если определитель равен нулю,";
+        String consequence = "то система не имеет единственного решения.";
+        JSONArray adjacent = new JSONArray()
+                .put(new JSONObject().put("text", condition).put("start", 7).put("end", 10))
+                .put(new JSONObject().put("text", consequence).put("start", 10.3).put("end", 13));
+        JSONArray valid = new JSONArray(), anchors = new JSONArray();
+        PhoneSummaryEvidence.add("KEY: 2", 0, 2, adjacent, valid, anchors,
+                new JSONArray(), new HashSet<>(), new HashSet<>());
+        require(valid.length() == 1 && (condition + " " + consequence).equals(valid.getString(0)),
+                "Evidence must retain the complete conditional statement");
+        require(anchors.getJSONObject(0).getInt("start") == 7 && anchors.getJSONObject(0).getInt("end") == 13,
+                "Evidence must play both adjacent phrases");
+        adjacent.getJSONObject(0).put("needs_review", true);
+        valid = new JSONArray();
+        PhoneSummaryEvidence.add("KEY: 2", 0, 2, adjacent, valid, new JSONArray(),
+                new JSONArray(), new HashSet<>(), new HashSet<>());
+        require(valid.length() == 0, "A missing or unclear condition cannot yield a confident conclusion");
+        adjacent.getJSONObject(0).put("needs_review", false);
+        adjacent.getJSONObject(1).put("start", 12);
+        valid = new JSONArray();
+        PhoneSummaryEvidence.add("KEY: 1,2", 0, 2, adjacent, valid, new JSONArray(),
+                new JSONArray(), new HashSet<>(), new HashSet<>());
+        require(valid.length() == 0, "Distant fragments must not be joined");
         System.out.println("PASS: verbatim quotes, timestamps, uncertainty and explicit homework");
     }
 

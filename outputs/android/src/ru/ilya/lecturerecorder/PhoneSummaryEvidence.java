@@ -19,6 +19,10 @@ final class PhoneSummaryEvidence {
     private static final Pattern EXCLUDED_TASK = Pattern.compile(
             "[?]|например|допустим|в качестве примера|если бы|не\\s+(?:нужно|надо|реш|дел|сда|готов|буд)|(?:задани[ея] нет|задани[ея] не будет)",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern CONDITION = Pattern.compile("^(?:если|когда|при условии,? что)\\s+.*[,;:]$",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern CONSEQUENCE = Pattern.compile("^то\\s+(?!(?:есть|же|самое|что)(?:\\s|$))",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
     static void add(String response, int first, int next, JSONArray segments, JSONArray summary,
                     JSONArray sources, JSONArray homework, Set<String> points, Set<String> tasks)
@@ -35,11 +39,12 @@ final class PhoneSummaryEvidence {
             }
         }
         for (int index : keys) {
-            JSONObject row = segments.getJSONObject(index);
-            String quote = row.getString("text");
-            if (row.optBoolean("needs_review") || quote.trim().length() < 16 || !points.add(quote)) continue;
+            JSONObject evidence = point(segments, index);
+            if (evidence == null) continue;
+            String quote = evidence.getString("quote");
+            if (quote.length() < 16 || !points.add(quote)) continue;
             summary.put(quote);
-            sources.put(anchor(row, index, quote));
+            sources.put(evidence);
         }
         for (int index : exercises) {
             JSONObject row = segments.getJSONObject(index);
@@ -49,6 +54,33 @@ final class PhoneSummaryEvidence {
                     || !tasks.add(quote)) continue;
             homework.put(anchor(row, index, quote).put("task", quote));
         }
+    }
+
+    private static JSONObject point(JSONArray segments, int index) throws JSONException {
+        JSONObject row = segments.getJSONObject(index);
+        if (row.optBoolean("needs_review")) return null;
+        String quote = row.getString("text").trim();
+        int previous = index - 1;
+        if (CONSEQUENCE.matcher(quote).find()) {
+            return previous >= 0 ? conditional(segments, previous, index) : null;
+        }
+        if (CONDITION.matcher(quote).matches()) {
+            return index + 1 < segments.length() ? conditional(segments, index, index + 1) : null;
+        }
+        return anchor(row, index, quote);
+    }
+
+    private static JSONObject conditional(JSONArray segments, int first, int next) throws JSONException {
+        JSONObject condition = segments.getJSONObject(first);
+        JSONObject result = segments.getJSONObject(next);
+        if (condition.optBoolean("needs_review") || result.optBoolean("needs_review")) return null;
+        String left = condition.getString("text").trim();
+        String right = result.getString("text").trim();
+        double gap = result.getDouble("start") - condition.getDouble("end");
+        if (!CONDITION.matcher(left).matches() || !CONSEQUENCE.matcher(right).find() || gap < -.25 || gap > 1.5) {
+            return null;
+        }
+        return anchor(condition, first, left + " " + right).put("end", result.getDouble("end"));
     }
 
     private static JSONObject anchor(JSONObject row, int index, String quote) throws JSONException {

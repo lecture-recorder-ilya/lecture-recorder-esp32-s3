@@ -34,6 +34,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -92,6 +93,9 @@ final class AudioTranscriptPage extends LinearLayout {
     private final LinearLayout transcriptPanel;
     private ProgressBar transcriptSpinner;
     private TranscriptAdapter transcript;
+    private CheckBox reviewFilter;
+    private List<TranscriptEdits.Line> transcriptRows = Collections.emptyList();
+    private List<TranscriptEdits.Line> reviewRows = Collections.emptyList();
     private Waveform waveform;
 
     AudioTranscriptPage(Activity activity, Bundle state, Runnable importAudio) {
@@ -167,7 +171,10 @@ final class AudioTranscriptPage extends LinearLayout {
 
         if (state != null) {
             String name = state.getString("recording");
-            if (LectureNotes.valid(name)) select(name, state.getInt("position"), false);
+            if (LectureNotes.valid(name)) {
+                select(name, state.getInt("position"), false);
+                if (!reviewRows.isEmpty()) reviewFilter.setChecked(state.getBoolean("reviewOnly"));
+            }
         }
     }
 
@@ -248,6 +255,14 @@ final class AudioTranscriptPage extends LinearLayout {
         }
         addTranscriptStatus(box);
 
+        reviewFilter = new CheckBox(activity);
+        reviewFilter.setTextColor(TEXT);
+        reviewFilter.setButtonTintList(ColorStateList.valueOf(ACCENT));
+        reviewFilter.setMinHeight(dp(48));
+        reviewFilter.setVisibility(View.GONE);
+        reviewFilter.setOnCheckedChangeListener((filter, checked) -> updateVisibleTranscript());
+        box.addView(reviewFilter, spaced(-1, -2, 4));
+
         ListView lines = new ListView(activity);
         transcript = new TranscriptAdapter(activity);
         lines.setAdapter(transcript);
@@ -316,7 +331,7 @@ final class AudioTranscriptPage extends LinearLayout {
         if (scan != null) scan.cancel(true);
         selected = name;
         noteRevision = null;
-        transcript.replace(new ArrayList<>());
+        setTranscriptRows(Collections.emptyList());
         position = initialPosition;
         duration = 0;
         recordingDropdown.setSelected(new ChoiceDropdown.Option(name, Store.recordingTitle(activity, name), ""));
@@ -351,7 +366,7 @@ final class AudioTranscriptPage extends LinearLayout {
             }
         });
         refreshTranscriptState();
-        if (autoTranscribe && transcript.isEmpty() && android.os.Process.is64Bit()
+        if (autoTranscribe && transcriptRows.isEmpty() && android.os.Process.is64Bit()
                 && !PhoneAnalysisService.busy() && PhoneModels.ready(activity)) {
             PhoneAnalysisService.request(activity, name, Store.recordingTitle(activity, name));
         }
@@ -463,7 +478,7 @@ final class AudioTranscriptPage extends LinearLayout {
             }
             List<TranscriptEdits.Line> rows = readSegments(local, true, corrections);
             if (rows.isEmpty()) rows = readSegments(mac, false, corrections);
-            transcript.replace(rows);
+            setTranscriptRows(rows);
             noteRevision = revision;
         }
 
@@ -476,7 +491,7 @@ final class AudioTranscriptPage extends LinearLayout {
         transcriptSpinner.setVisibility(loading ? View.VISIBLE : View.GONE);
         String message = PhoneAnalysisService.statusFor(selected);
         if (busy && !loading) message = "Обрабатывается другая запись";
-        else if (message.isEmpty() && transcript.isEmpty()) {
+        else if (message.isEmpty() && transcriptRows.isEmpty()) {
             if (!supported) message = "Расшифровка появится после обработки на Mac.";
             else message = "У этой записи пока нет расшифровки.";
         }
@@ -485,8 +500,24 @@ final class AudioTranscriptPage extends LinearLayout {
         transcribe.setVisibility(supported && (hasAudio || busy) ? View.VISIBLE : View.GONE);
         String label = busy ? "Отменить" : "Расшифровать";
         if (!TextUtils.equals(transcribe.getText(), label)) transcribe.setText(label);
-        String action = !busy && !transcript.isEmpty() ? "Расшифровать заново" : label;
+        String action = !busy && !transcriptRows.isEmpty() ? "Расшифровать заново" : label;
         if (!TextUtils.equals(transcribe.getContentDescription(), action)) transcribe.setContentDescription(action);
+    }
+
+    private void setTranscriptRows(List<TranscriptEdits.Line> rows) {
+        transcriptRows = rows;
+        reviewRows = new ArrayList<>();
+        for (TranscriptEdits.Line row : rows) {
+            if (row.needsReview) reviewRows.add(row);
+        }
+        reviewFilter.setVisibility(reviewRows.isEmpty() ? View.GONE : View.VISIBLE);
+        if (reviewRows.isEmpty()) reviewFilter.setChecked(false);
+        reviewFilter.setText("Сомнительные фразы (" + reviewRows.size() + ")");
+        updateVisibleTranscript();
+    }
+
+    private void updateVisibleTranscript() {
+        transcript.replace(reviewFilter.isChecked() ? reviewRows : transcriptRows);
     }
 
     private List<TranscriptEdits.Line> readSegments(File note, boolean local, JSONObject corrections) {
@@ -618,6 +649,7 @@ final class AudioTranscriptPage extends LinearLayout {
         Bundle state = new Bundle();
         state.putString("recording", selected);
         state.putInt("position", position);
+        state.putBoolean("reviewOnly", reviewFilter.isChecked());
         return state;
     }
 
