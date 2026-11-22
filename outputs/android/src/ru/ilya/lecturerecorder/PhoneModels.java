@@ -13,11 +13,16 @@ final class PhoneModels {
     private static final long GIGAAM_BYTES = 224893347L;
     private static final String PERSONAL = "gigaam-personal.int8.onnx";
     private static final String TEXT = "qwen3-0.6b-int4.litertlm";
+    private static final long TEXT_BYTES = 343490560L;
 
     static boolean ready(Context context) {
         File directory = directory(context);
         return (new File(directory, PERSONAL).isFile() || new File(directory, GIGAAM).length() == GIGAAM_BYTES)
-                && new File(directory, TEXT).length() == 343490560L;
+                && summaryReady(context);
+    }
+
+    static boolean summaryReady(Context context) {
+        return new File(directory(context), TEXT).length() == TEXT_BYTES;
     }
 
     static File acoustic(Context context, PhoneAnalysisService.Job job) throws Exception {
@@ -82,7 +87,7 @@ final class PhoneModels {
         return download(directory(context), TEXT,
                 "https://huggingface.co/litert-community/Qwen3-0.6B/resolve/"
                         + "2670e142a0d16a1b685be6604e5b4f2b31a826d7/Qwen3-0.6B_dynamic_wi4b32_afp32.litertlm",
-                343490560L, "bf1aba9ce8d963124407353c6aa4cbf72eba78db21ae133de983eac672ce83e0",
+                TEXT_BYTES, "bf1aba9ce8d963124407353c6aa4cbf72eba78db21ae133de983eac672ce83e0",
                 "Скачиваю модель конспекта", job);
     }
 

@@ -39,13 +39,22 @@ public final class PhoneAnalysisService extends Service {
     }
 
     static void request(Activity screen, String name, String title, boolean retranscribe) {
+        request(screen, name, title, retranscribe, false);
+    }
+
+    static void requestSummary(Activity screen, String name, String title) {
+        request(screen, name, title, false, true);
+    }
+
+    private static void request(Activity screen, String name, String title, boolean retranscribe, boolean summaryOnly) {
         if (busy() || !LectureNotes.valid(name)) return;
         Runnable start = () -> screen.startForegroundService(new Intent(screen, PhoneAnalysisService.class)
                 .setAction("analyze").putExtra("name", name).putExtra("title", title)
                 .putExtra("retranscribe", retranscribe));
-        if (PhoneModels.ready(screen)) start.run();
+        if (summaryOnly ? PhoneModels.summaryReady(screen) : PhoneModels.ready(screen)) start.run();
         else new AlertDialog.Builder(screen).setTitle("Модели для разбора")
-                .setMessage("Первый запуск скачает до 570 МБ. После этого разбор работает офлайн.")
+                .setMessage(summaryOnly ? "Для конспекта нужно скачать модель (около 344 МБ)."
+                        : "Первый запуск скачает до 570 МБ. После этого разбор работает офлайн.")
                 .setPositiveButton("Скачать и разобрать", (dialog, which) -> start.run())
                 .setNegativeButton("Отмена", null).show();
     }
@@ -98,7 +107,7 @@ public final class PhoneAnalysisService extends Service {
         wakeLock.acquire(2 * 60 * 60 * 1000L);
         try {
             PhoneLectureAnalysis.run(getApplicationContext(), job, name, title, retranscribe);
-            status = retranscribe ? "Расшифровка готова" : "Разбор готов";
+            status = retranscribe ? "Расшифровка и конспект готовы" : "Конспект готов";
         } catch (Exception | LinkageError error) {
             if (job.cancelled) {
                 status = "Разбор отменён";

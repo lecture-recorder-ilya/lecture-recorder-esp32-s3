@@ -9,30 +9,55 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 final class LectureNotes {
+ static final String SUMMARY_PENDING="local_summary_pending";
  static File root(Context c){File f=new File(c.getFilesDir(),"notes");f.mkdirs();return f;}
  static File file(Context c,String name,boolean local){return new File(local?localRoot(c):root(c),name+".json");}
  private static File localRoot(Context c){File f=new File(c.getFilesDir(),"phone-notes");f.mkdirs();return f;}
- static void saveLocal(Context c,JSONObject document)throws Exception{
+
+ static JSONObject saveTranscript(Context c,String name,String title,JSONObject document,
+                                  JSONArray segments,String recognizer)throws Exception{
+  if(segments.length()==0)throw new IOException("В записи не удалось распознать русскую речь");
+  if(document==null){
+   JSONObject report=new JSONObject().put("subject",title).put("topic",title);
+   document=new JSONObject().put("report",report);
+  }
+  JSONObject report=document.getJSONObject("report");
+  for(String field:new String[]{"summary","homework","overview","warnings","draft"})report.remove(field);
+  // Отметки проверки относятся к конкретной расшифровке.
+  String reviewPrefix="phone:"+name+":"+UUID.randomUUID()+":";
+  for(int i=0;i<segments.length();i++)segments.getJSONObject(i).put("review_key",reviewPrefix+i);
+  document.put("file",name);
+  report.put("segments",segments).put("asr_engine",recognizer).put(SUMMARY_PENDING,true);
+  saveLocal(c,document,true);
+  return document;
+ }
+
+ static void saveSummary(Context c,JSONObject document)throws Exception{
+  document.getJSONObject("report").remove(SUMMARY_PENDING);
   saveLocal(c,document,false);
  }
- static synchronized void saveLocal(Context c,JSONObject document,boolean archivePrevious)throws Exception{
+
+ private static synchronized void saveLocal(Context c,JSONObject document,boolean archivePrevious)throws Exception{
   String name=document.getString("file");
   if(!valid(name))throw new IOException("Некорректное имя записи");
   File target=file(c,name,true);
   if(archivePrevious&&target.isFile()){
    File history=new File(new File(c.getFilesDir(),"phone-note-history"),name);
    if(!history.isDirectory()&&!history.mkdirs())throw new IOException("Не удалось сохранить предыдущую расшифровку");
-   File archived=new File(history,UUID.randomUUID()+".json");
-   File part=new File(archived.getPath()+".tmp");
-   try{
-    try(FileInputStream input=new FileInputStream(target);FileOutputStream output=new FileOutputStream(part)){
-     byte[] buffer=new byte[65536];
-     for(int size;(size=input.read(buffer))!=-1;)output.write(buffer,0,size);
-     output.getFD().sync();
+   // При повторной попытке используем уже сохранённую копию.
+   File archived=new File(history,Store.hash(target)+".json");
+   if(!archived.isFile()){
+    File part=new File(archived.getPath()+".tmp");
+    try{
+     try(FileInputStream input=new FileInputStream(target);FileOutputStream output=new FileOutputStream(part)){
+      byte[] buffer=new byte[65536];
+      for(int size;(size=input.read(buffer))!=-1;)output.write(buffer,0,size);
+      output.getFD().sync();
+     }
+     Files.move(part.toPath(),archived.toPath(),StandardCopyOption.ATOMIC_MOVE);
+    }finally{
+     part.delete();
     }
-    Files.move(part.toPath(),archived.toPath(),StandardCopyOption.ATOMIC_MOVE);
-   }finally{
-    part.delete();
    }
   }
   Store.write(target,document);

@@ -42,8 +42,10 @@ public class LectureReaderActivity extends Activity {
     private LinearLayout body;
     private ScrollView scroll;
     private TextView status, elapsed;
+    private TextView pendingSummaryStatus;
     private SeekBar position;
     private Button toggle;
+    private Button finishSummary;
     private JSONObject document;
     private File note, edits;
     private String recording;
@@ -201,6 +203,8 @@ public class LectureReaderActivity extends Activity {
         int offset = Math.max(scroll.getScrollY(), contentScroll);
         contentScroll = 0;
         body.removeAllViews();
+        pendingSummaryStatus = null;
+        finishSummary = null;
         TextView heading = heading(report.optString("topic", LectureNotes.title(document)), 24);
         body.addView(heading, spaced(-1, -2, 4));
         if ("summary".equals(tab)) renderSummary(report);
@@ -209,13 +213,20 @@ public class LectureReaderActivity extends Activity {
     }
 
     private void renderSummary(JSONObject report) {
-        if (report.optBoolean("draft") || report.optBoolean("local_summary_pending")) {
-            body.addView(text("Конспект готовится", 16, MUTED), spaced(-1, -2, 12));
-            if (local && report.optBoolean("local_summary_pending") && android.os.Process.is64Bit()) {
-                body.addView(button("Завершить конспект", () ->
-                        PhoneAnalysisService.request(this, recording, LectureNotes.title(document))),
-                        spaced(-1, dp(48), 8));
+        if (local && report.optBoolean(LectureNotes.SUMMARY_PENDING)) {
+            pendingSummaryStatus = text("", 16, MUTED);
+            pendingSummaryStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+            body.addView(pendingSummaryStatus, spaced(-1, -2, 12));
+            if (android.os.Process.is64Bit()) {
+                finishSummary = button("Завершить конспект", () ->
+                        PhoneAnalysisService.requestSummary(this, recording, LectureNotes.title(document)));
+                body.addView(finishSummary, spaced(-1, dp(48), 8));
             }
+            updatePendingSummary();
+            return;
+        }
+        if (report.optBoolean("draft")) {
+            body.addView(text("Конспект готовится", 16, MUTED), spaced(-1, -2, 12));
             return;
         }
 
@@ -267,6 +278,14 @@ public class LectureReaderActivity extends Activity {
         } else {
             body.addView(text("Конспекта пока нет", 16, MUTED), spaced(-1, -2, 12));
         }
+    }
+
+    private void updatePendingSummary() {
+        if (pendingSummaryStatus == null) return;
+        String message = PhoneAnalysisService.busyFor(recording)
+                ? PhoneAnalysisService.statusFor(recording) : "Конспект не готов";
+        if (!message.contentEquals(pendingSummaryStatus.getText())) pendingSummaryStatus.setText(message);
+        if (finishSummary != null) finishSummary.setEnabled(!PhoneAnalysisService.busy());
     }
 
     private void shareSummary() {
@@ -391,6 +410,7 @@ public class LectureReaderActivity extends Activity {
                 stamp = revision;
                 render();
             }
+            updatePendingSummary();
             if (ready && player != null) {
                 position.setProgress(player.getCurrentPosition());
                 elapsed.setText(clock(player.getCurrentPosition() / 1000.0)

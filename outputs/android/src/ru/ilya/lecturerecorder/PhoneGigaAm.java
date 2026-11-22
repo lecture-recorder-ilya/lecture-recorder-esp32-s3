@@ -60,7 +60,7 @@ final class PhoneGigaAm {
                     float[] wave = readWindow(input, data + left * 2, count);
                     JSONArray words = recognize(environment, frontend, acoustic, wave, tokens,
                             left / (double) RATE, start / (double) RATE, end / (double) RATE);
-                    PhoneLectureAnalysis.append(segments, words, name);
+                    PhoneLectureAnalysis.append(segments, words);
                 }
             }
         }

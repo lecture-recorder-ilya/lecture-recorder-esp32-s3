@@ -68,24 +68,17 @@ final class PhoneLectureAnalysis {
                 segments = transcribeVosk(context, job, name, speech);
                 recognizer = "vosk-small-ru";
             }
-            if (segments.length() == 0) throw new IOException("В записи не удалось распознать русскую речь");
-            if (document == null) {
-                JSONObject report = new JSONObject().put("subject", title).put("topic", title)
-                        .put("local_summary_pending", true);
-                document = new JSONObject().put("file", name).put("report", report);
-            }
-            document.put("file", name).getJSONObject("report").put("segments", segments).put("asr_engine", recognizer);
             job.check();
-            LectureNotes.saveLocal(context, document, retranscribe);
+            document = LectureNotes.saveTranscript(context, name, title, document, segments, recognizer);
         }
 
         JSONObject report = document.getJSONObject("report");
-        if (!report.optBoolean("local_summary_pending")) return;
+        if (!report.optBoolean(LectureNotes.SUMMARY_PENDING)) return;
+        job.check();
         File text = PhoneModels.text(context, job);
         summarize(context, job, text, report);
-        report.remove("local_summary_pending");
         job.check();
-        LectureNotes.saveLocal(context, document);
+        LectureNotes.saveSummary(context, document);
     }
 
     static JSONArray transcribeVosk(Context context, PhoneAnalysisService.Job job, String name, File speech)
@@ -103,7 +96,7 @@ final class PhoneLectureAnalysis {
                 job.check();
                 int size = (int) Math.min(remaining, buffer.length);
                 input.readFully(buffer, 0, size);
-                if (recognizer.acceptWaveForm(buffer, size)) append(segments, new JSONObject(recognizer.getResult()).optJSONArray("result"), name);
+                if (recognizer.acceptWaveForm(buffer, size)) append(segments, new JSONObject(recognizer.getResult()).optJSONArray("result"));
                 remaining -= size;
                 int percent = (int) (100 * (total - remaining) / total);
                 if (percent != progress) {
@@ -111,12 +104,12 @@ final class PhoneLectureAnalysis {
                     job.update("Распознаю речь · " + percent + "%");
                 }
             }
-            append(segments, new JSONObject(recognizer.getFinalResult()).optJSONArray("result"), name);
+            append(segments, new JSONObject(recognizer.getFinalResult()).optJSONArray("result"));
         }
         return segments;
     }
 
-    static void append(JSONArray segments, JSONArray words, String name) throws Exception {
+    static void append(JSONArray segments, JSONArray words) throws Exception {
         if (words == null) return;
         for (int first = 0; first < words.length(); ) {
             JSONObject start = words.getJSONObject(first);
@@ -138,8 +131,7 @@ final class PhoneLectureAnalysis {
             if (phrase.length() != 0) {
                 segments.put(new JSONObject()
                         .put("start", start.getDouble("start")).put("end", end).put("text", phrase.toString())
-                        .put("needs_review", uncertain || confidence / (next - first) < 0.78)
-                        .put("review_key", "phone:" + name + ":" + segments.length()));
+                        .put("needs_review", uncertain || confidence / (next - first) < 0.78));
             }
             first = next;
         }

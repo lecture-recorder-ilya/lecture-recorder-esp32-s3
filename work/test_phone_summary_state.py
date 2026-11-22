@@ -1,0 +1,220 @@
+"""Run with a JDK on PATH (or JAVA_HOME) and the Android JSON implementation.
+
+Set ANDROID_JSON_JAR to com.vaadin.external.google:android-json:0.0.20131108.vaadin1
+or let the test fetch that small JAR from Maven Central.
+"""
+
+import hashlib
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+
+
+SOURCE = Path(__file__).resolve().parents[1] / "outputs/android/src/ru/ilya/lecturerecorder"
+PACKAGE = "ru.ilya.lecturerecorder"
+JSON_PATH = "com/vaadin/external/google/android-json/0.0.20131108.vaadin1/android-json-0.0.20131108.vaadin1.jar"
+JSON_SHA256 = "dfb7bae2f404cfe0b72b4d23944698cb716b7665171812a0a4d0f5926c0fac79"
+
+STUBS = {
+    "Context.java": """package android.content;
+import java.io.File;
+public final class Context {
+    private final File root;
+    public Context(File root) { this.root = root; }
+    public File getFilesDir() { return root; }
+    public SharedPreferences getSharedPreferences(String name, int mode) {
+        throw new UnsupportedOperationException();
+    }
+    public interface SharedPreferences { boolean getBoolean(String key, boolean fallback); }
+}
+""",
+    "BoardPhotos.java": f"""package {PACKAGE};
+import android.content.Context;
+import java.io.File;
+final class BoardPhotos {{
+    static File camera(Context context) {{ throw new UnsupportedOperationException(); }}
+    static void recover(Context context) {{ throw new UnsupportedOperationException(); }}
+}}
+""",
+    "LectureReaderActivity.java": f"""package {PACKAGE};
+final class LectureReaderActivity {{
+    static String clock(double seconds) {{ return Double.toString(seconds); }}
+}}
+""",
+}
+
+HARNESS = r"""package ru.ilya.lecturerecorder;
+
+import android.content.Context;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public final class SummaryStateTest {
+    private static final String NAME = "lecture-2026-11-22-12-34-56.wav";
+    private static final String NEW_TEXT = "Новая расшифровка лекции";
+    private static final String OLD_TEXT = "Прежняя расшифровка лекции";
+    private static final String OLD_KEY = "phone:" + NAME + ":0";
+
+    public static void main(String[] args) throws Exception {
+        File root = new File(args[0]);
+        Context context = new Context(root);
+        File target = LectureNotes.file(context, NAME, true);
+        File mac = LectureNotes.file(context, NAME, false);
+        File history = new File(new File(root, "phone-note-history"), NAME);
+        if (args[1].equals("replace")) {
+            JSONArray oldSegments = segments(OLD_TEXT);
+            oldSegments.getJSONObject(0).put("review_key", OLD_KEY);
+            JSONObject oldReport = new JSONObject()
+                    .put("subject", "Математика").put("topic", "Дифференциальные уравнения")
+                    .put("teacher", "Преподаватель").put("duration", 42)
+                    .put("overview", "Старое введение").put("warnings", new JSONArray().put("Старое предупреждение"))
+                    .put("summary", new JSONArray().put(OLD_TEXT)).put("homework", new JSONArray().put("Старое задание"))
+                    .put("draft", true).put("asr_engine", "vosk-small-ru")
+                    .put("segments", oldSegments);
+            JSONObject original = new JSONObject().put("file", NAME).put("report", oldReport)
+                    .put("lesson", new JSONObject().put("date", "2026-11-22")).put("extra", "metadata");
+            Store.write(target, original);
+            Store.write(mac, original);
+            String prior = Store.read(target);
+
+            try {
+                LectureNotes.saveTranscript(context, NAME, "Другой заголовок",
+                        read(target), new JSONArray(), "gigaam-v3");
+                throw new AssertionError("Empty recognition must fail");
+            } catch (IOException expected) {
+                require(prior.equals(Store.read(target)) && !history.exists(), "Original changed before ASR was ready");
+            }
+
+            require(history.getParentFile().mkdir(), "Set up archive failure");
+            require(history.createNewFile(), "Block archive directory");
+            replacementMustFail(context, target);
+            require(prior.equals(Store.read(target)), "Archive failure replaced the old document");
+            require(history.delete(), "Unblock archive directory");
+
+            File part = new File(target.getPath() + ".tmp");
+            require(part.mkdir(), "Block transcript write");
+            replacementMustFail(context, target);
+            require(prior.equals(Store.read(target)), "Write failure replaced the old document");
+            require(part.delete(), "Unblock transcript write");
+
+            LectureNotes.saveTranscript(context, NAME, "Другой заголовок", read(target), segments(NEW_TEXT), "gigaam-v3");
+            JSONObject pending = read(target);
+            JSONObject report = pending.getJSONObject("report");
+            require(report.optBoolean("local_summary_pending"), "New transcript must invalidate the summary");
+            for (String field : new String[]{"summary", "homework", "overview", "warnings", "draft"}) {
+                require(!report.has(field), "Stale field: " + field);
+            }
+            require("Математика".equals(report.getString("subject"))
+                    && "Дифференциальные уравнения".equals(report.getString("topic"))
+                    && "Преподаватель".equals(report.getString("teacher")) && report.getInt("duration") == 42
+                    && "2026-11-22".equals(pending.getJSONObject("lesson").getString("date"))
+                    && "metadata".equals(pending.getString("extra")), "Lesson metadata was lost");
+            JSONObject line = report.getJSONArray("segments").getJSONObject(0);
+            require(NEW_TEXT.equals(line.getString("text")) && line.getInt("start") == 5
+                    && "gigaam-v3".equals(report.getString("asr_engine")), "New transcript was not saved");
+            require(!OLD_KEY.equals(line.getString("review_key")), "Review mark leaked from the old transcript");
+            require(prior.equals(Store.read(mac)) && prior.equals(archive(history)), "Mac note or archive changed");
+
+            // Generating a summary changes the in-memory document. Ending the process here
+            // simulates interruption before the summary checkpoint.
+            report.put("summary", new JSONArray().put(NEW_TEXT)).put("homework", new JSONArray());
+            System.out.println("PASS: replacement guards, pending transcript, lesson metadata, archive and Mac copy");
+        } else {
+            JSONObject pending = read(target);
+            JSONObject report = pending.getJSONObject("report");
+            require(report.optBoolean("local_summary_pending") && !report.has("summary"), "Restart lost pending state");
+            JSONArray rows = report.getJSONArray("segments");
+            require(NEW_TEXT.equals(rows.getJSONObject(0).getString("text")), "Restart lost the new transcript");
+            report.put("summary", new JSONArray().put(rows.getJSONObject(0).getString("text")))
+                    .put("homework", new JSONArray());
+            File part = new File(target.getPath() + ".tmp");
+            require(part.mkdir(), "Block summary write");
+            try {
+                LectureNotes.saveSummary(context, pending);
+                throw new AssertionError("Summary write should have failed");
+            } catch (IOException expected) {
+                JSONObject onDisk = read(target).getJSONObject("report");
+                require(onDisk.optBoolean("local_summary_pending") && !onDisk.has("summary"),
+                        "Failed summary write changed the pending transcript");
+            }
+            require(part.delete(), "Unblock summary write");
+            LectureNotes.saveSummary(context, pending);
+            JSONObject completed = read(target);
+            require(!completed.getJSONObject("report").has("local_summary_pending"), "Summary stayed pending");
+            String shared = LectureNotes.summary(completed);
+            require(shared.contains(NEW_TEXT) && !shared.contains(OLD_TEXT), "Shared summary is stale");
+            require(archive(history).equals(Store.read(mac)), "Finishing re-archived or altered the previous result");
+            System.out.println("PASS: separate JVM resumed summary from disk and preserved the previous result");
+        }
+    }
+
+    private static JSONArray segments(String text) throws Exception {
+        return new JSONArray().put(new JSONObject().put("text", text).put("start", 5).put("end", 9)
+                .put("needs_review", true));
+    }
+
+    private static void replacementMustFail(Context context, File target) throws Exception {
+        try {
+            LectureNotes.saveTranscript(context, NAME, "Title", read(target), segments(NEW_TEXT), "gigaam-v3");
+            throw new AssertionError("Replacement should have failed");
+        } catch (IOException expected) {
+            // A blocked archive or write must leave the active note in place.
+        }
+    }
+
+    private static JSONObject read(File note) throws Exception {
+        return new JSONObject(Store.read(note));
+    }
+
+    private static String archive(File history) throws Exception {
+        File[] snapshots = history.listFiles();
+        require(snapshots != null && snapshots.length == 1, "Expected exactly one archived snapshot");
+        return Store.read(snapshots[0]);
+    }
+
+    private static void require(boolean ok, String message) {
+        if (!ok) throw new AssertionError(message);
+    }
+}
+"""
+
+
+def main():
+    java_bin = Path(os.environ["JAVA_HOME"]) / "bin" if "JAVA_HOME" in os.environ else Path()
+    with tempfile.TemporaryDirectory(prefix="phone-summary-") as temp:
+        root = Path(temp)
+        jar = root / "android-json.jar"
+        if "ANDROID_JSON_JAR" in os.environ:
+            jar = Path(os.environ["ANDROID_JSON_JAR"]).resolve()
+        else:
+            subprocess.run(
+                ["curl", "-fLsS", "--max-time", "30", f"https://repo.maven.apache.org/maven2/{JSON_PATH}",
+                 "-o", str(jar)],
+                check=True,
+            )
+        if hashlib.sha256(jar.read_bytes()).hexdigest() != JSON_SHA256:
+            raise ValueError("Unexpected Android JSON JAR checksum")
+        sources = {**STUBS, "SummaryStateTest.java": HARNESS}
+        for name, source in sources.items():
+            (root / name).write_text(source, encoding="utf-8")
+        subprocess.run(
+            [java_bin / "javac", "-encoding", "UTF-8", "-cp", jar, "-d", root,
+             SOURCE / "LectureNotes.java", SOURCE / "Store.java", *(root / name for name in sources)],
+            check=True,
+        )
+        data = root / "data"
+        data.mkdir()
+        for phase in ("replace", "resume"):
+            subprocess.run(
+                [java_bin / "java", "-cp", os.pathsep.join((str(root), str(jar))),
+                 f"{PACKAGE}.SummaryStateTest", data, phase],
+                check=True,
+            )
+
+
+if __name__ == "__main__":
+    main()
