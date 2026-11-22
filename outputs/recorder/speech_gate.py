@@ -17,6 +17,7 @@ class SpeechProfile(NamedTuple):
     padded: list
     anchored: list
     brief: tuple = ()
+    quiet: tuple = ()
 
 
 def _probabilities(samples):
@@ -63,7 +64,19 @@ def speech_profile(samples):
     brief = tuple((a, b) for a, b in _ranges(probabilities, length, _BRIEF)
                   if b - a <= .35 and not any(a <= d + .60 and b >= c - .60 for c, d in anchored))
     padded.extend((max(0, a - BRIEF_CONTEXT), min(length / 16000, b + BRIEF_CONTEXT)) for a, b in brief)
-    return SpeechProfile(core, _anchored(padded, []) if brief else padded, anchored, brief)
+    quiet = () if anchored or brief else _quiet_ranges(samples, probabilities)
+    return SpeechProfile(core, _anchored(padded, []) if brief else padded, anchored, brief, quiet)
+
+
+def _quiet_ranges(samples, probabilities):
+    if max(probabilities, default=0) < .5:
+        return ()
+    import numpy as np
+    values = np.asarray(samples, dtype=np.float32)
+    level = float(np.quantile(np.abs(values), .995))
+    if not .001 <= level <= .025:
+        return ()
+    return tuple(_ranges(_probabilities(values * 4), len(values), _STRICT))
 
 
 def speech_ranges(samples):

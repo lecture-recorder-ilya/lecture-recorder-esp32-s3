@@ -308,7 +308,7 @@ def monitor_quality(name,total,flush=False):
     pcm=read_pcm(store.audio(name),read_start,read_end)
     samples=np.frombuffer(pcm,dtype='<i2').astype(np.float32)/32768
     profile=speech_profile(samples)
-    ranges=profile.padded
+    ranges=profile.padded or profile.quiet
     if not ranges:
         QUALITY_CURSOR['end']=end
         return {'file':name,'segments':[],'message':'Фоновый звук · подтверждённой речи нет','seconds':end/16000,'speech_detected':False,'model':QUALITY_ENGINE}
@@ -319,7 +319,9 @@ def monitor_quality(name,total,flush=False):
     from asr_segments import phrase_rows
     rows=phrase_rows(text,QUALITY_DECODER.last,read_start/16000,
                      max(offset/16000,read_start/16000+first),min(end/16000,read_start/16000+last))
-    return {'file':name,'segments':rows,'message':'Контроль ESP · GigaAM · черновой текст' if rows else 'Речь слышна, текст пока неразборчив',
+    message='Контроль ESP · GigaAM · черновой текст' if rows else 'Речь слышна, текст пока неразборчив'
+    if not rows and profile.quiet:message='Фоновый звук · подтверждённой речи нет'
+    return {'file':name,'segments':rows,'message':message,
             'seconds':end/16000,'model':QUALITY_ENGINE,'subject':context['subject'],'context_seconds':12,'latency':round(time.monotonic()-started,3),'updated':time.time()}
 
 def monitor_chunk(name,total):

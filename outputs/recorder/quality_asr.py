@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent;PROJECT=ROOT.parent.parent
 MODEL=PROJECT/'work/models/gigaam';RNNT=PROJECT/'work/models/gigaam-rnnt'
 CHAR=PROJECT/'work/models/gigaam-beam'
-ENGINE='GigaAM-v3-3pass-phrases-v13-brief'
+ENGINE='GigaAM-v3-3pass-phrases-v14-quiet'
 
 def ready():
  return all(p.exists() for p in [MODEL/'v3_e2e_ctc.int8.onnx',MODEL/'v3_e2e_ctc_vocab.txt',PROJECT/'work/models/gigaam-manifest.json',RNNT/'v3_e2e_rnnt_encoder.onnx',RNNT/'v3_e2e_rnnt_decoder.onnx',RNNT/'v3_e2e_rnnt_joint.onnx',RNNT/'v3_e2e_rnnt_vocab.txt',PROJECT/'work/models/gigaam-rnnt-manifest.json',CHAR/'v3_ctc.onnx',CHAR/'v3_vocab.txt',PROJECT/'work/models/gigaam-beam-manifest.json'])
@@ -47,16 +47,21 @@ class Decoder:
   from asr_units import NUMBER, restore_spoken_units
   from brief_speech import confirmed_brief_words
   from context_review import acoustic_evidence
+  from quiet_speech import confirmed_quiet_words
   if speech is None:
    speech=speech_profile(samples)
-  brief = ()
+  brief = quiet = ()
   if isinstance(speech,SpeechProfile):
-   brief = speech.brief
+   brief,quiet = speech.brief,speech.quiet
    core,ranges=speech.strict,speech.anchored
   else:
    core=speech
    ranges=anchored_speech_ranges(samples,core) if core else []
   windows=speech_windows(ranges,len(samples)/16000,padding=.5,max_seconds=24)
+  if quiet and not windows and not brief:
+   with self.lock:
+    text,self.last=confirmed_quiet_words(samples,quiet,emit_start,emit_end,self._load)
+   return text
   if not windows and not brief:
    self.last={'selected':'silence','words':0,'word_evidence':[]};return ''
   from speech_audio import enhance_audio

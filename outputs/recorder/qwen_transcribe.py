@@ -36,7 +36,7 @@ def run(audio_path,result_path,progress_path):
     emit_start=boundary_at_pause(samples,offset-read_start,rate)/rate
     emit_end=boundary_at_pause(samples,min(total,offset+step)-read_start,rate)/rate
     profile=speech_profile(samples)
-    ranges=profile.padded
+    ranges=profile.padded or profile.quiet
     if ranges:
      first,last=ranges[0][0],ranges[-1][1]
      context=context_for_recording(audio_path.name,offset/rate)
