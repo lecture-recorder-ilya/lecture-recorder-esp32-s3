@@ -54,4 +54,12 @@ class QwenTests(unittest.TestCase):
    self.assertEqual(result['segments'][0]['text'],'Три.')
    self.assertEqual(study_service.monitor_quality('brief.wav',4000,flush=True)['segments'],[])
    decode.assert_called_once()
+ def test_stop_checks_last_frames_with_context_from_previous_block(self):
+  study_service.QUALITY_CURSOR.update(file='tail.wav',end=192000)
+  pcm=(np.ones(8000)*300).astype('<i2').tobytes()
+  with patch.object(study_service,'quality_ready',return_value=True),patch.object(study_service,'read_pcm',return_value=pcm) as read,patch.object(study_service.store,'audio',return_value=Path('tail.wav')),patch.object(study_service,'speech_profile',side_effect=voiced_profile),patch.object(study_service.QUALITY_DECODER,'transcribe',return_value='Конец.') as decode:
+   study_service.monitor_quality('tail.wav',192800,flush=True)
+   read.assert_called_once_with(Path('tail.wav'),184800,192800)
+   self.assertAlmostEqual(decode.call_args.kwargs['emit_start'],.45)
+   self.assertAlmostEqual(decode.call_args.kwargs['emit_end'],.50)
 unittest.main()
