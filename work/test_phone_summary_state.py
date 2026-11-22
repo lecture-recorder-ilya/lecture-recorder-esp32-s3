@@ -79,6 +79,7 @@ public final class SummaryStateTest {
                     .put("overview", "Старое введение").put("warnings", new JSONArray().put("Старое предупреждение"))
                     .put("summary", new JSONArray().put(OLD_TEXT)).put("homework", new JSONArray().put("Старое задание"))
                     .put("formulas", new JSONArray().put(new JSONObject().put("latex", "x=5").put("quote", OLD_TEXT)))
+                    .put("formula_review", new JSONArray().put(new JSONObject().put("candidate_latex", "x=50").put("quote", OLD_TEXT)))
                     .put("draft", true).put("asr_engine", "vosk-small-ru")
                     .put("segments", oldSegments);
             JSONObject original = new JSONObject().put("file", NAME).put("report", oldReport)
@@ -111,7 +112,7 @@ public final class SummaryStateTest {
             JSONObject pending = read(target);
             JSONObject report = pending.getJSONObject("report");
             require(report.optBoolean("local_summary_pending"), "New transcript must invalidate the summary");
-            for (String field : new String[]{"summary", "summary_evidence", "homework", "formulas", "overview", "warnings", "draft"}) {
+            for (String field : new String[]{"summary", "summary_evidence", "homework", "formulas", "formula_review", "overview", "warnings", "draft"}) {
                 require(!report.has(field), "Stale field: " + field);
             }
             require("Математика".equals(report.getString("subject"))

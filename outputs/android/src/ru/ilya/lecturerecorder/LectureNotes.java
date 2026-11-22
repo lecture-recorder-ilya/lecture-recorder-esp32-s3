@@ -24,7 +24,7 @@ final class LectureNotes {
    document=new JSONObject().put("report",report);
   }
   JSONObject report=document.getJSONObject("report");
-  for(String field:new String[]{"summary","summary_evidence","homework","formulas","overview","warnings","draft"})report.remove(field);
+  for(String field:new String[]{"summary","summary_evidence","homework","formulas","formula_review","overview","warnings","draft"})report.remove(field);
   // Отметки проверки относятся к конкретной расшифровке.
   String reviewPrefix="phone:"+name+":"+UUID.randomUUID()+":";
   for(int i=0;i<segments.length();i++)segments.getJSONObject(i).put("review_key",reviewPrefix+i);

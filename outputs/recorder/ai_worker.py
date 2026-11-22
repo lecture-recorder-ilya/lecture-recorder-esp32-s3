@@ -18,7 +18,8 @@ from power_budget import Budget, streamed_text
 from pathlib import Path
 from transcript_cache import WHISPER_ENGINE,identity,prepare,checkpoint as transcript_checkpoint
 from asr_windows import audio_window,central_segment
-from math_formulas import merge as merge_formulas, supported_latex, wanted as math_wanted, NUMBER_WORDS, FUNCTIONS, SAFE
+from math_formulas import merge as merge_formulas
+from formula_evidence import check as check_formula, REASONS as FORMULA_REASONS, finalize as finalize_formulas
 from transcript_quality import annotate, assess
 from summary_sources import reconcile as reconcile_sources
 
@@ -201,51 +202,7 @@ def grounded_deadline(value, quote):
 
 
 def grounded_formula(latex, quote):
-    """Проверка поддержки, а не доказательство математической эквивалентности."""
-    if not 1 <= len(latex) <= 1500:return False
-    text = normalized(quote)
-    negative = bool(re.search(r'\bне\s+рав(?:ен|на|но|ны)\b',text))
-    inequality = bool(re.search(r'\\(?:ne|neq)(?![A-Za-z])|!=|≠',latex))
-    if negative != inequality or re.search(r'\bили\b|неразбор|не расслыш',text):
-        return False
-    if not negative and re.search(r'\b(?:не|нельзя|без)\b',text):
-        return False
-    # Общие основы «пят...», «сем...» подходят и к 15/50, 17/70.
-    # Для конспекта малые числа подтверждаем полным словом, не префиксом.
-    words = dict(NUMBER_WORDS)
-    endings = r'(?:ый|ой|ая|ое|ые|ого|ому|ым|ую|ых|ыми|ом)'
-    for number,cardinal,ordinal in [(5,r'пять|пяти|пятью','пят'),(6,r'шесть|шести|шестью','шест'),
-                                    (7,r'семь|семи|семью','седьм'),(8,r'восемь|восьми|восемью','восьм'),
-                                    (9,r'девять|девяти|девятью','девят')]:
-        words[number] = cardinal+'|'+ordinal+endings
-    numbers = set(re.findall(r'\d+(?:[.,]\d+)?',text))
-    numbers.update(str(n) for n,p in words.items() if re.search(r'\b(?:'+p+r')\b',text))
-    if any(n.replace(',','.') not in {v.replace(',','.') for v in numbers}
-           for n in re.findall(r'\d+(?:[.,]\d+)?',latex)):
-        return False
-    checked = re.sub(r'\\ne(?![A-Za-z])',lambda _:r'\neq',latex)
-    # Словарь преобразователя ищет основу «равн»; «равен» — та же связка.
-    validation_quote = re.sub(r'\bравен\b','равно',quote,flags=re.I)
-    if math_wanted([dict(text=validation_quote)]):
-        return supported_latex(checked,validation_quote)
-    # Обычные физические обозначения, которых нет в словаре x/y/z.
-    depth=0
-    for character in latex:
-        depth += (character=='{')-(character=='}')
-        if depth<0:return False
-    if depth or re.search(r'[=+*/^_-]\s*$|\.\.\.|…|\?',latex):
-        return False
-    commands=re.findall(r'\\([A-Za-z]+)',checked)
-    if any(c not in FUNCTIONS and c not in SAFE for c in commands):return False
-    if any(c in FUNCTIONS and not re.search(FUNCTIONS[c],text.replace('ё','е')) for c in commands):return False
-    for symbol,cue in [('=',r'равн|получ|ответ'),('+',r'плюс|слож|сумм'),('-',r'минус|выч'),
-                       ('*',r'умнож|произвед'),('^',r'степен|квадрат|куб')]:
-        if symbol in latex and not re.search(cue,text):return False
-    quantities={'F':r'сил','m':r'масс','a':r'ускорен','R':r'сопротивлен','U':r'напряжен',
-                'I':r'ток','E':r'энерг','v':r'скорост','t':r'врем','s':r'пут|расстоян','p':r'давлен','V':r'объем'}
-    body=re.sub(r'\\[A-Za-z]+','',latex)
-    return all(letter in quantities and re.search(quantities[letter],text.replace('ё','е'))
-               for letter in re.findall(r'[A-Za-z]',body))
+    return check_formula(latex,quote)[0]
 
 
 def uncertain_quote_rows(anchor, texts):
@@ -272,7 +229,7 @@ def validate_part(part, segments):
     blocked={s['id'] for s in excluded};texts={k:v for k,v in texts.items() if k not in blocked}
     trusted_texts = {key: row for key, row in texts.items() if not row.get('needs_review')}
     combined = normalized(' '.join(s['text'] for s in trusted_texts.values()))
-    result = {'subject': None, 'teacher': None, 'summary': [], 'summary_evidence': [], 'homework': [], 'highlights': [], 'formulas': [], 'moments': [], 'evidence': {}, 'topic': part.get('topic','')[:120] if isinstance(part.get('topic'),str) else '', 'topics': [], 'excluded_asides': excluded}
+    result = {'subject': None, 'teacher': None, 'summary': [], 'summary_evidence': [], 'homework': [], 'highlights': [], 'formulas': [], 'formula_review': [], 'moments': [], 'evidence': {}, 'topic': part.get('topic','')[:120] if isinstance(part.get('topic'),str) else '', 'topics': [], 'excluded_asides': excluded}
     for topic in part.get('topics',[]) if isinstance(part.get('topics'),list) else []:
         if isinstance(topic,dict) and topic.get('segment_id') in texts and isinstance(topic.get('title'),str) and topic['title'].strip():
             result['topics'].append({'start':texts[topic['segment_id']]['start'],'title':topic['title'][:120]})
@@ -334,11 +291,18 @@ def validate_part(part, segments):
         latex = re.sub(r'\\\\(?=[A-Za-z])', lambda _: '\\', item['latex'])
         if any(ord(character) < 32 for character in latex):continue
         anchor = summary_anchor(item,texts)
-        mathematical = anchor and re.search(r'рав(?:ен|на|но|няется)|умнож|дел[её]н|формул|плюс|минус|квадрат|корень|синус|косинус|интеграл|производн|\b[xyzабв]\s*[=+*/-]',normalized(anchor['quote']))
-        if mathematical and latex.strip() and not any(uncertain_quote_rows(anchor,texts)) and grounded_formula(latex,anchor['quote']):
+        basis = anchor or highlight_anchor(item,texts)
+        if not basis:continue
+        valid,code=check_formula(latex,basis['quote'])
+        if not anchor:valid,code=False,'incomplete'
+        elif any(uncertain_quote_rows(anchor,texts)):valid,code=False,'source'
+        if valid:
             explanation = str(item.get('explanation',''))[:500]
             if normalized(explanation) not in normalized(anchor['quote']): explanation = ''
             result['formulas'].append(dict(anchor,latex=latex[:1500],explanation=explanation))
+        else:
+            result['formula_review'].append(dict(basis,candidate_latex=latex[:1500],verification_status='needs_review',
+                review_reason=code,review_note='Формулу нужно сверить: '+FORMULA_REASONS.get(code,FORMULA_REASONS['syntax'])+'.'))
     for item in part.get('moments',[]) if isinstance(part.get('moments'),list) else []:
         if not isinstance(item,dict) or item.get('kind') not in ('date','concept') or not isinstance(item.get('title'),str):continue
         anchor=highlight_anchor(item,texts)
@@ -570,6 +534,7 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
                   'topic':overview.get('topic')[:200] if isinstance(overview.get('topic'),str) else None,
                   'overview':' '.join(notes[:3])[:1500],
                   'formulas':merge_formulas(list({(v['segment_id'],normalized(v['quote'])):v for p in parts for v in p['formulas']}.values()),context_audit.get('formulas',[])),
+                  'formula_review':[v for p in parts for v in p['formula_review']],
                   'moments':merge_moments([v for p in parts for v in p['moments']]),
                   'sections':[t for p in parts for t in (p['topics'] or [{'start':p['start'],'end':p['end'],'title':p['topic'] or (p['summary'][0][:120] if p['summary'] else 'Фрагмент занятия')}])],
                   'transcript':'\n'.join(f"[{s['start']:.1f}] {s['text']}" for s in displayed_segments), 'duration':duration,
@@ -594,6 +559,7 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
     result['final_review'] = final_review
     transcript = result['transcript']
     result = annotate(result)
+    result = finalize_formulas(result)
     result = reconcile_sources(result,fresh=True)
     save_summary(result_path, result)
     markdown = ['# '+(result['subject'] or 'Предмет не определён'), '', 'Преподаватель: '+(result['teacher'] or 'не определён'), '', '## Конспект', '']

@@ -77,7 +77,7 @@ def reconcile(report,fresh=False):
         anchors.append(anchor)
     if 'summary' in result:result['summary_evidence']=anchors
     if overview_derived:result['overview']=' '.join(points[:3])[:1500]
-    for field in ('homework','formulas','highlights'):
+    for field in ('homework','formulas','formula_review','highlights'):
         for index,item in enumerate(result.get(field) or []):
             anchor=bind(item,rows,fresh)
             if anchor['source_status']=='needs_review':
