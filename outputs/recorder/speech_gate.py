@@ -8,16 +8,23 @@ _MODEL = None
 _STRICT = dict(threshold=.7, min_speech_duration_ms=350, min_silence_duration_ms=300, speech_pad_ms=0)
 _PADDED = dict(threshold=.45, min_speech_duration_ms=200, min_silence_duration_ms=700, speech_pad_ms=500)
 _WEAK = dict(threshold=.55, min_speech_duration_ms=250, min_silence_duration_ms=300, speech_pad_ms=0)
+_BRIEF = dict(threshold=.90, min_speech_duration_ms=96, min_silence_duration_ms=150, speech_pad_ms=0)
+BRIEF_CONTEXT = .30
 
 
 class SpeechProfile(NamedTuple):
     strict: list
     padded: list
     anchored: list
+    brief: tuple = ()
 
 
 def _probabilities(samples):
     global _MODEL
+    import numpy as np
+    values = np.asarray(samples)
+    if values.ndim == 1 and not np.any(values):
+        return []
     from silero_vad import load_silero_vad
     audio = normalize_audio(samples)
     with _LOCK:
@@ -27,6 +34,8 @@ def _probabilities(samples):
 
 
 def _ranges(probabilities, length, settings):
+    if not len(probabilities):
+        return []
     from silero_vad import get_speech_timestamps_from_probs
     rows = get_speech_timestamps_from_probs(probabilities, sampling_rate=16000,
                                             audio_length_samples=length, **settings)
@@ -49,11 +58,12 @@ def speech_profile(samples):
     probabilities = _probabilities(samples)
     length = len(samples)
     core = _ranges(probabilities, length, _STRICT)
-    if not core:
-        return SpeechProfile([], [], [])
-    padded = _ranges(probabilities, length, _PADDED)
-    weak = _ranges(probabilities, length, _WEAK)
-    return SpeechProfile(core, padded, _anchored(core, weak))
+    padded = _ranges(probabilities, length, _PADDED) if core else []
+    anchored = _anchored(core, _ranges(probabilities, length, _WEAK)) if core else []
+    brief = tuple((a, b) for a, b in _ranges(probabilities, length, _BRIEF)
+                  if b - a <= .35 and not any(a <= d + .60 and b >= c - .60 for c, d in anchored))
+    padded.extend((max(0, a - BRIEF_CONTEXT), min(length / 16000, b + BRIEF_CONTEXT)) for a, b in brief)
+    return SpeechProfile(core, _anchored(padded, []) if brief else padded, anchored, brief)
 
 
 def speech_ranges(samples):

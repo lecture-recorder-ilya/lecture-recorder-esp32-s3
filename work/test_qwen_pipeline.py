@@ -46,4 +46,12 @@ class QwenTests(unittest.TestCase):
   with patch.object(study_service,'quality_ready',return_value=True),patch.object(study_service,'read_pcm',return_value=pcm),patch.object(study_service.store,'audio',return_value=Path('fixture.wav')),patch.object(study_service,'speech_profile',side_effect=voiced_profile),patch.object(study_service.QUALITY_DECODER,'transcribe',return_value='Конец занятия.') as decode:
    a=study_service.monitor_quality('fixture.wav',64000,flush=True);b=study_service.monitor_quality('fixture.wav',64000,flush=True)
    self.assertEqual(decode.call_count,1);self.assertEqual(len(a['segments']),1);self.assertEqual(b['segments'],[]);self.assertEqual(study_service.QUALITY_CURSOR['end'],64000)
+ def test_stop_with_only_quarter_second_of_audio(self):
+  study_service.QUALITY_CURSOR.update(file='brief.wav',end=0)
+  pcm=(np.ones(4000)*300).astype('<i2').tobytes()
+  with patch.object(study_service,'quality_ready',return_value=True),patch.object(study_service,'read_pcm',return_value=pcm),patch.object(study_service.store,'audio',return_value=Path('brief.wav')),patch.object(study_service,'speech_profile',side_effect=voiced_profile),patch.object(study_service.QUALITY_DECODER,'transcribe',return_value='Три.') as decode:
+   result=study_service.monitor_quality('brief.wav',4000,flush=True)
+   self.assertEqual(result['segments'][0]['text'],'Три.')
+   self.assertEqual(study_service.monitor_quality('brief.wav',4000,flush=True)['segments'],[])
+   decode.assert_called_once()
 unittest.main()

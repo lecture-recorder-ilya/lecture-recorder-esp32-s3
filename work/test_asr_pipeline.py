@@ -74,6 +74,24 @@ class PipelineTests(unittest.TestCase):
   self.assertEqual([len(c.args[0]) for c in decode.call_args_list],[23*16000,3*16000])
   self.assertEqual([c.kwargs['emit_start'] for c in decode.call_args_list],[2,2])
   rows=json.loads(self.cache.read_text())['segments'];self.assertEqual([r['start'] for r in rows],[0,20,40])
+ def test_snapshot_finishes_once_and_can_finalize_legacy_partial(self):
+  expected=identity(self.audio,ENGINE)
+  writes=[]
+  save=qwen_transcribe.save
+  def record(path,data):
+   save(path,data)
+   if path==self.cache:
+    writes.append((data['completed_frames'],data['complete']))
+  def run():
+   qwen_transcribe.run(self.audio,self.root/'result.json',self.root/'progress.json')
+  with patch.object(qwen_transcribe,'save',side_effect=record),patch('speech_gate.speech_profile',return_value=SpeechProfile([],[],[])):
+   run()
+   self.assertEqual(writes,[(320000,False),(640000,False),(656000,True)])
+   self.cache.write_text(json.dumps(checkpoint(expected,[],41,656000),indent=2))
+   with patch.object(Decoder,'transcribe',side_effect=AssertionError('повторное распознавание')):
+    run()
+   self.assertTrue(json.loads(self.cache.read_text())['complete'])
+   self.assertEqual(writes[3:],[(656000,True)])
  def test_whisper_pipeline_uses_context_and_reuses_matching_cache(self):
   mx=types.ModuleType('mlx.core');mx.gpu='gpu';mx.synchronize=lambda *_:None
   mlx=types.ModuleType('mlx');mlx.core=mx;whisper=types.ModuleType('mlx_whisper')

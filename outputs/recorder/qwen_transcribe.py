@@ -7,7 +7,9 @@ ROOT=Path(__file__).resolve().parent
 PROJECT=ROOT.parent.parent
 
 def save(path,data):
- temp=path.with_suffix(path.suffix+'.tmp');temp.write_text(json.dumps(data,ensure_ascii=False,indent=2));temp.replace(path)
+ temp=path.with_suffix(path.suffix+'.tmp')
+ temp.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')), encoding='utf-8')
+ temp.replace(path)
 
 def run(audio_path,result_path,progress_path):
  import numpy as np
@@ -43,8 +45,9 @@ def run(audio_path,result_path,progress_path):
      segments.extend(phrase_rows(text,decoder.last,read_start/rate,
                                  read_start/rate+max(emit_start,first),
                                  min(duration,read_start/rate+min(emit_end,last)),len(segments)))
-    save(cache,checkpoint(expected,segments,duration,min(offset+step,total)))
-    budget.checkpoint(force=True)
+    if offset + step < total:
+     save(cache,checkpoint(expected,segments,duration,offset+step))
+     budget.checkpoint(force=True)
   save(cache,checkpoint(expected,segments,duration,total,complete=True))
   save(progress_path,dict(status='processing',stage='transcribed',percent=60,message='GigaAM: речь распознана, готовлю конспект'))
  finally:decoder.close()

@@ -301,7 +301,7 @@ def monitor_quality(name,total,flush=False):
     if QUALITY_CURSOR['file']!=name:
         QUALITY_CURSOR.update(file=name,end=max(0,total-int(12.45*16000)))
     offset=QUALITY_CURSOR['end'];end=min(max(0,total-(0 if flush else int(.45*16000))),offset+12*16000)
-    if end-offset<(int(.35*16000) if flush else 12*16000):
+    if end-offset<(int(.096*16000) if flush else 12*16000):
         if flush:QUALITY_CURSOR['end']=max(offset,end)
         return {'file':name,'segments':[],'seconds':QUALITY_CURSOR['end']/16000,'message':'Собираю целую фразу · текст появляется примерно раз в 12 секунд','model':QUALITY_ENGINE}
     read_start=max(0,offset-int(.45*16000));read_end=min(total,end+int(.45*16000))

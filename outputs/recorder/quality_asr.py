@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent;PROJECT=ROOT.parent.parent
 MODEL=PROJECT/'work/models/gigaam';RNNT=PROJECT/'work/models/gigaam-rnnt'
 CHAR=PROJECT/'work/models/gigaam-beam'
-ENGINE='GigaAM-v3-3pass-phrases-v12-units'
+ENGINE='GigaAM-v3-3pass-phrases-v13-brief'
 
 def ready():
  return all(p.exists() for p in [MODEL/'v3_e2e_ctc.int8.onnx',MODEL/'v3_e2e_ctc_vocab.txt',PROJECT/'work/models/gigaam-manifest.json',RNNT/'v3_e2e_rnnt_encoder.onnx',RNNT/'v3_e2e_rnnt_decoder.onnx',RNNT/'v3_e2e_rnnt_joint.onnx',RNNT/'v3_e2e_rnnt_vocab.txt',PROJECT/'work/models/gigaam-rnnt-manifest.json',CHAR/'v3_ctc.onnx',CHAR/'v3_vocab.txt',PROJECT/'work/models/gigaam-beam-manifest.json'])
@@ -44,20 +44,23 @@ class Decoder:
   from speech_gate import SpeechProfile, anchored_speech_ranges, speech_profile
   from asr_guard import prepare,supported_words,join_words,choose_candidate,refine_words,speech_windows,lexical,unrecognized_voice
   from asr_terms import apply_terms
-  from asr_units import restore_spoken_units
+  from asr_units import NUMBER, restore_spoken_units
+  from brief_speech import confirmed_brief_words
   from context_review import acoustic_evidence
   if speech is None:
    speech=speech_profile(samples)
+  brief = ()
   if isinstance(speech,SpeechProfile):
+   brief = speech.brief
    core,ranges=speech.strict,speech.anchored
   else:
    core=speech
    ranges=anchored_speech_ranges(samples,core) if core else []
   windows=speech_windows(ranges,len(samples)/16000,padding=.5,max_seconds=24)
-  if not windows:
+  if not windows and not brief:
    self.last={'selected':'silence','words':0,'word_evidence':[]};return ''
   from speech_audio import enhance_audio
-  working=enhance_audio(samples,ranges,level=False)
+  working=enhance_audio(samples,ranges,level=False) if windows else None
   selected_all=[];raw_all=[];alternatives={'ctc':[],'rnnt':[],'character':[]};changes=[];uncertain=[];scores_all=[];kinds=[];decoded_seconds=0
   retried_original=False
   with self.lock:
@@ -79,7 +82,10 @@ class Decoder:
      selected=self._retry_original(samples[begin:finish],audio,local,emit_start-left,emit_end-left)
      if selected:kind='original'
     character=[]
-    if selected and kind!='original' and confidence>=.85:
+    single = len(windows) == 1 and len(selected) == 1 and not brief
+    check_characters = (terms or any(w['confidence'] < (.8 if single else .9) or NUMBER.fullmatch(w['text'])
+                                     for w in selected))
+    if selected and kind!='original' and confidence>=.85 and check_characters:
      result=self._load('char').recognize(audio,sample_rate=16000)
      character=supported_words(result,local,emit_start-left,emit_end-left)
     raw=[dict(word) for word in selected]
@@ -101,11 +107,23 @@ class Decoder:
     for source,words in [('ctc',ctc),('rnnt',rnnt),('character',character)]:alternatives[source].extend(words)
     changes.extend(dict(change,start=change['start']+left) for change in refinements+term_changes+unit_changes)
     uncertain.extend(weak);scores_all.extend(scores);kinds.append(kind);decoded_seconds+=len(audio)/16000
+   brief_words, brief_windows, brief_seconds = confirmed_brief_words(samples, brief, emit_start, emit_end, self._load)
+  if not kinds and not brief_words:
+   self.last={'selected':'silence','words':0,'word_evidence':[]};return ''
+  window_count = len(kinds) + brief_windows
+  decoded_seconds += brief_seconds
+  if brief_words:
+   selected_all = sorted(selected_all + brief_words, key=lambda word: word['start'])
+   raw_all = sorted(raw_all + brief_words, key=lambda word: word['start'])
+   kinds.append('brief_consensus')
   text=join_words(selected_all)
   confidence=math.exp(sum(scores_all)/len(scores_all)) if scores_all else 0
   self.last={'selected':kinds[0] if len(set(kinds))==1 else 'mixed','words':len(selected_all),
              'ctc_confidence':round(confidence,3),'needs_review':bool(uncertain) or confidence<.85 or any(w['needs_review'] for w in selected_all),
-             'uncertain_words':uncertain,'refinements':changes,'decoded_seconds':round(decoded_seconds,3),'speech_windows':len(kinds)}
+             'uncertain_words':uncertain,'refinements':changes,'decoded_seconds':round(decoded_seconds,3),'speech_windows':window_count}
+  if brief_words:
+   self.last['brief_words']=len(brief_words)
+   if not scores_all:self.last.pop('ctc_confidence')
   if retried_original:self.last['original_retry']=True
   self.last['word_evidence']=acoustic_evidence(selected_all,list(alternatives.items()))
   gaps=unrecognized_voice(core,selected_all,max(0,emit_start),min(len(samples)/16000,emit_end))

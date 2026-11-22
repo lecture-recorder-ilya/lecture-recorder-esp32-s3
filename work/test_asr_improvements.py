@@ -148,7 +148,7 @@ class DecoderTests(unittest.TestCase):
   with patch('speech_gate.anchored_speech_ranges',side_effect=lambda _,core:core),patch.object(decoder,'_load',return_value=Model()):
    result=decoder.transcribe(np.ones(12*16000,dtype=np.float32)*.01,speech=[(1,3),(8,10)])
   self.assertEqual(result,'Первая фраза. Первая фраза.')
-  self.assertEqual(len(calls),6);self.assertLess(max(calls),4*16000)
+  self.assertEqual(len(calls),4);self.assertLess(max(calls),4*16000)
   self.assertEqual(decoder.last['speech_windows'],2)
   self.assertLessEqual(decoder.last['decoded_seconds'],6)
   starts=[w['start'] for w in decoder.last['word_evidence']];self.assertEqual(starts,sorted(starts));self.assertGreater(starts[2],7)
