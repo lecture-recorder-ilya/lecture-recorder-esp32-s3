@@ -36,12 +36,30 @@ def decode(audio, scratch, target):
         dest.writeframes(frames)
 
 
-def prepare(parquet, output):
+def clip_selection(path):
+    data = json.loads(path.read_text())
+    if data['parquet_sha256'] != PARQUET_SHA256:
+        raise ValueError('Выборка относится к другой версии корпуса')
+    selected = {}
+    for row in data['clips']:
+        ident, digest = row['id'], row['audio_sha256']
+        if not re.fullmatch(r'[a-zA-Z0-9_-]{11}_\d{4}', ident) or not re.fullmatch('[a-f0-9]{64}', digest):
+            raise ValueError('Некорректный идентификатор или SHA-256 фрагмента')
+        if ident in selected:
+            raise ValueError(f'Фрагмент повторяется: {ident}')
+        selected[ident] = digest
+    if not selected:
+        raise ValueError('Пустая выборка')
+    return selected
+
+
+def prepare(parquet, output, selection=None):
     import pyarrow.parquet as pq
 
     if audio_sha256(parquet) != PARQUET_SHA256:
         raise ValueError('Unexpected mTEDx test Parquet checksum')
-    selected = {f'{talk}_{index:04}' for talk, indexes in CLIPS.items() for index in indexes}
+    selected = (clip_selection(selection) if selection else
+                {f'{talk}_{index:04}': None for talk, indexes in sorted(CLIPS.items()) for index in indexes})
     output.mkdir(parents=True, exist_ok=True)
     cases = {}
     with tempfile.TemporaryDirectory() as temp:
@@ -54,6 +72,9 @@ def prepare(parquet, output):
                     raise ValueError(f'Duplicate mTEDx segment {ident}')
                 path = output / f'{ident}.wav'
                 decode(row['audio']['bytes'], Path(temp), path)
+                digest = audio_sha256(path)
+                if selected[ident] is not None and digest != selected[ident]:
+                    raise ValueError(f'Звук изменился: {ident}')
                 text = row['transcript']
                 cases[ident] = {
                     'id': ident, 'audio': path.name,
@@ -67,21 +88,39 @@ def prepare(parquet, output):
                     'license': 'CC-BY-NC-ND-4.0',
                     'subset': 'recorded-public-talk',
                     'synthetic_background': False, 'microphone_distance': 'unknown',
-                    'audio_sha256': audio_sha256(path),
+                    'audio_sha256': digest,
                 }
-    if cases.keys() != selected:
-        raise ValueError(f'Missing mTEDx segments: {sorted(selected - cases.keys())}')
+    if cases.keys() != selected.keys():
+        raise ValueError(f'Missing mTEDx segments: {sorted(selected.keys() - cases.keys())}')
     manifest = output / 'manifest.json'
-    manifest.write_text(json.dumps([cases[key] for key in sorted(cases)], ensure_ascii=False, indent=2) + '\n')
+    manifest.write_text(json.dumps([cases[key] for key in selected], ensure_ascii=False, indent=2) + '\n')
     return manifest
+
+
+def join_for_timing(manifest):
+    clips = json.loads(manifest.read_text())
+    target = manifest.parent / 'continuous.wav'
+    with wave.open(str(target), 'wb') as joined:
+        joined.setparams((1, 2, 16000, 0, 'NONE', 'not compressed'))
+        for index, clip in enumerate(clips):
+            if index:
+                joined.writeframesraw(bytes(4000 * 2))
+            with wave.open(str(manifest.parent / clip['audio'])) as audio:
+                joined.writeframesraw(audio.readframes(audio.getnframes()))
+    return target
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('parquet', type=Path, help='Pinned deepdml/mtedx Russian test Parquet')
     parser.add_argument('output', type=Path)
+    parser.add_argument('--selection', type=Path, help='Фиксированный список фрагментов с SHA-256')
+    parser.add_argument('--join', action='store_true', help='Собрать один WAV для замера скорости с паузами 0,25 с')
     args = parser.parse_args()
-    print(prepare(args.parquet, args.output))
+    manifest = prepare(args.parquet, args.output, args.selection)
+    print(manifest)
+    if args.join:
+        print(join_for_timing(manifest))
 
 
 if __name__ == '__main__':

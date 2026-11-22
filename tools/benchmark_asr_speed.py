@@ -28,16 +28,26 @@ def measure(source, audio, folder):
 
     qwen_transcribe.save = timed_save
     started = time.perf_counter()
+    cpu_started = time.process_time()
     qwen_transcribe.run(audio, folder/'result.json', folder/'progress.json')
     elapsed = time.perf_counter() - started
+    cpu = time.process_time() - cpu_started
     transcript = json.loads(cache.read_text())
     if not transcript['complete']:
         raise RuntimeError('Расшифровка не завершена.')
     rows = transcript['segments']
     evidence = json.dumps(rows, ensure_ascii=False, sort_keys=True).encode()
-    return dict(seconds=round(elapsed, 3), first_phrase_seconds=round(first, 3) if first is not None else None,
-                engine=transcript['engine'], wav_sha256=transcript['identity']['audio_sha256'],
-                segments=len(rows), segments_sha256=hashlib.sha256(evidence).hexdigest())
+    measurement = dict(
+        seconds=round(elapsed, 3), cpu_seconds=round(cpu, 3),
+        first_phrase_seconds=round(first, 3) if first is not None else None,
+        engine=transcript['engine'], wav_sha256=transcript['identity']['audio_sha256'],
+        segments=len(rows), segments_sha256=hashlib.sha256(evidence).hexdigest(),
+    )
+    if sys.platform in ('darwin', 'linux'):
+        import resource
+        peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        measurement['peak_rss_mib'] = round(peak / (1024**2 if sys.platform == 'darwin' else 1024), 1)
+    return measurement
 
 
 def main():

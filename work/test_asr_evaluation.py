@@ -8,6 +8,18 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 from evaluate_asr import audio_sha256, compare_transcripts, score
 
 class EvaluationTests(unittest.TestCase):
+ def test_fixed_talk_selection_requires_identifiers_and_checksums(self):
+  from prepare_mtedx_asr import PARQUET_SHA256, clip_selection
+  row = {'id': 'abcdef01234_0001', 'audio_sha256': 'a' * 64}
+  with tempfile.TemporaryDirectory() as temp:
+   path = Path(temp) / 'selection.json'
+   for clips in ([], [row, row], [dict(row, id='../test')], [dict(row, audio_sha256='bad')]):
+    path.write_text(json.dumps({'parquet_sha256': PARQUET_SHA256, 'clips': clips}))
+    with self.assertRaises(ValueError):
+     clip_selection(path)
+   path.write_text(json.dumps({'parquet_sha256': PARQUET_SHA256, 'clips': [row]}))
+   self.assertEqual(clip_selection(path), {row['id']: row['audio_sha256']})
+
  def test_case_punctuation_and_yo_are_equivalent(self):
   self.assertEqual(score('Ещё одна фраза.','ЕЩЕ одна, фраза!')['wer'],0)
  def test_alignment_retains_operation_and_reference_position(self):
