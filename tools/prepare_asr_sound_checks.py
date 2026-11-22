@@ -1,12 +1,13 @@
 import argparse
 import hashlib
 from functools import lru_cache
+from io import BytesIO
 import json
 from pathlib import Path
 import subprocess
 import tempfile
 from urllib.parse import urlencode
-
+import wave
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,34 +39,75 @@ def source(case, revisions):
     return download(url), row['transcription']
 
 
+def prepare_quiet_holdout(cases, lock):
+    revisions = {'Golos': lock['source_revision']}
+    manifest = []
+    for case in lock['cases']:
+        identifier = case['id']
+        raw, reference = source(dict(case, corpus='Golos'), revisions)
+        digest = hashlib.sha256(raw).hexdigest()
+        if (digest != case['source_audio_sha256'] or digest != case['audio_sha256'] or
+                hashlib.sha256(reference.encode()).hexdigest() != case['reference_sha256']):
+            raise ValueError(f"Изменилось аудио или эталон {identifier}.")
+        try:
+            with wave.open(BytesIO(raw)) as stream:
+                if (stream.getnchannels(), stream.getsampwidth(), stream.getframerate()) != (1, 2, 16000):
+                    raise ValueError
+                frames = stream.getnframes()
+                if not frames or len(stream.readframes(frames)) != frames * 2:
+                    raise ValueError
+        except (wave.Error, EOFError, ValueError) as error:
+            raise ValueError(f"Некорректный WAV PCM16 mono 16 кГц для {identifier}.") from error
+        audio = cases/(identifier+'.wav')
+        audio.write_bytes(raw)
+        manifest.append(dict(id=identifier, audio=audio.name, audio_sha256=digest,
+                             reference=reference, subset=case['subset']))
+    return manifest
+
+
+def prepare_sound_checks(cases, work, lock):
+    manifest = []
+    for case in lock['public_cases']:
+        raw, reference = source(case, lock['revisions'])
+        if (hashlib.sha256(raw).hexdigest() != case['source_sha256'] or
+                hashlib.sha256(reference.encode()).hexdigest() != case['reference_sha256']):
+            raise ValueError(f"Изменилось аудио или эталон {case['id']}.")
+        original = work/'input.wav'
+        original.write_bytes(raw)
+        audio = cases/(case['id']+'.wav')
+        subprocess.run(['/usr/bin/afconvert', str(original), str(audio), '-f', 'WAVE',
+                        '-d', 'LEI16@16000', '-c', '1'], check=True)
+        digest = hashlib.sha256(audio.read_bytes()).hexdigest()
+        if digest != case['wav_sha256']:
+            raise ValueError(f"Проверь версию конвертера для {case['id']}.")
+        manifest.append(dict(id=case['id'], audio=audio.name, audio_sha256=digest,
+                             reference=reference, subset=case['set']))
+    return manifest
+
+
 def main():
     parser = argparse.ArgumentParser(description='Скачать проверочные записи с единицами и бытовыми шумами для Mac.')
     parser.add_argument('output', type=Path)
+    parser.add_argument('--quiet-holdout', action='store_true', help='Скачать зафиксированную выборку тихих записей Golos.')
     args = parser.parse_args()
     if args.output.exists():
         parser.error('Выбери новую папку.')
-    lock = json.loads((ROOT/'docs/asr-speed-checks-2026-11-22.json').read_text())
+    if args.quiet_holdout:
+        report = json.loads((ROOT/'docs/asr-checks-2026-11-23.json').read_text())
+        lock = report.get('mac_final', {}).get('quiet_holdout')
+        if not lock:
+            parser.error('В отчёте пока нет зафиксированной выборки тихих записей Golos.')
+    else:
+        lock = json.loads((ROOT/'docs/asr-speed-checks-2026-11-22.json').read_text())
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=args.output.parent) as scratch:
         work = Path(scratch)
         cases = work/'cases'
         cases.mkdir()
-        manifest = []
-        for case in lock['public_cases']:
-            raw, reference = source(case, lock['revisions'])
-            if (hashlib.sha256(raw).hexdigest() != case['source_sha256'] or
-                    hashlib.sha256(reference.encode()).hexdigest() != case['reference_sha256']):
-                raise ValueError(f"Изменилось аудио или эталон {case['id']}.")
-            original = work/'input.wav'
-            original.write_bytes(raw)
-            audio = cases/(case['id']+'.wav')
-            subprocess.run(['/usr/bin/afconvert', str(original), str(audio), '-f', 'WAVE',
-                            '-d', 'LEI16@16000', '-c', '1'], check=True)
-            digest = hashlib.sha256(audio.read_bytes()).hexdigest()
-            if digest != case['wav_sha256']:
-                raise ValueError(f"Проверь версию конвертера для {case['id']}.")
-            manifest.append(dict(id=case['id'], audio=audio.name, audio_sha256=digest,
-                                 reference=reference, subset=case['set']))
+        if args.quiet_holdout:
+            manifest = prepare_quiet_holdout(cases, lock)
+        else:
+            manifest = prepare_sound_checks(cases, work, lock)
         (cases/'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n')
         cases.rename(args.output)
 
