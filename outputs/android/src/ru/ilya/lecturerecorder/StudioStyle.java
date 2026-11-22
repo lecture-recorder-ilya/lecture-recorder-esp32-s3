@@ -16,19 +16,21 @@ import android.view.animation.PathInterpolator;
 import android.widget.TextView;
 
 final class StudioStyle {
-    static final int BACKGROUND = 0xff10131c;
-    static final int PANEL = 0xff191e2b;
-    static final int CONTROL = 0xff222939;
-    static final int LINE = 0xff343d52;
-    static final int TEXT = 0xfff4f6fc;
-    static final int MUTED = 0xffa9b3c9;
-    static final int ACCENT = 0xffc4c6ff;
-    static final int ACTIVE = 0xff303653;
-    static final int RECORDING = 0xffffb2a5;
+    static final int BACKGROUND = 0xff0e1217;
+    static final int PANEL = 0xff171e27;
+    static final int CONTROL = 0xff202a35;
+    static final int LINE = 0xff334252;
+    static final int TEXT = 0xffeef3f8;
+    static final int MUTED = 0xffa5b4c3;
+    static final int ACCENT = 0xffa8d7fa;
+    static final int ACTIVE = 0xff263c50;
+    static final int RECORDING = 0xffffc0b1;
+    private static final int RECORDING_LINE = 0xff915d58;
     static final int GOOD = 0xff9fdfc6;
     static final int WARNING = 0xfff3c287;
-    static final int INK = 0xff1d2040;
-    static final int[] SPECTRUM = {0xff747ed2, 0xffa9afff, 0xffc4c6ff, 0xffffb2a5, 0xfff3c287};
+    static final int INK = 0xff102135;
+    static final int[] SPECTRUM = {0xff6493ba, 0xff7fb3dc, ACCENT, RECORDING, WARNING};
+    private static final PathInterpolator MOTION = new PathInterpolator(.2f, .72f, .27f, 1f);
 
     private StudioStyle() {}
 
@@ -49,11 +51,11 @@ final class StudioStyle {
         return drawable;
     }
 
-    static GradientDrawable recorderCard(Context context) {
+    static GradientDrawable recorderCard(Context context, boolean recording) {
         GradientDrawable drawable = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                new int[] {0xff252c43, PANEL, PANEL});
-        drawable.setCornerRadius(dp(context, 22));
-        drawable.setStroke(dp(context, 1), LINE);
+                new int[] {0xff202e40, PANEL, PANEL});
+        drawable.setCornerRadius(dp(context, 20));
+        drawable.setStroke(dp(context, 1), recording ? RECORDING_LINE : LINE);
         return drawable;
     }
 
@@ -61,15 +63,27 @@ final class StudioStyle {
         view.animate().cancel();
         view.setAlpha(1f);
         view.setTranslationY(0);
+        view.setScaleX(1f);
+        view.setScaleY(1f);
     }
 
     static void enter(View view, boolean opening) {
         settle(view);
         if (!ValueAnimator.areAnimatorsEnabled()) return;
         view.setAlpha(.86f);
-        view.setTranslationY(dp(view.getContext(), opening ? 8 : 4));
-        view.animate().alpha(1f).translationY(0).setDuration(opening ? 210 : 155)
-                .setInterpolator(new PathInterpolator(.22f, .75f, .24f, 1f)).start();
+        view.setTranslationY(dp(view.getContext(), opening ? 6 : 4));
+        view.animate().alpha(1f).translationY(0).setDuration(opening ? 180 : 150)
+                .setInterpolator(MOTION).start();
+    }
+
+    static void changeAction(View view) {
+        settle(view);
+        if (!ValueAnimator.areAnimatorsEnabled()) return;
+        view.setAlpha(.76f);
+        view.setScaleX(.985f);
+        view.setScaleY(.985f);
+        view.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(140)
+                .setInterpolator(MOTION).start();
     }
 
     static Drawable control(Context context, int color, int radius) {

@@ -17,14 +17,14 @@ import UniformTypeIdentifiers
 }
 
 private enum Studio {
-    static let background = Color(red: 16 / 255, green: 19 / 255, blue: 28 / 255)
-    static let panel = Color(red: 25 / 255, green: 30 / 255, blue: 43 / 255)
-    static let hero = Color(red: 37 / 255, green: 44 / 255, blue: 67 / 255)
-    static let line = Color(red: 52 / 255, green: 61 / 255, blue: 82 / 255)
-    static let ink = Color(red: 29 / 255, green: 32 / 255, blue: 64 / 255)
-    static let muted = Color(red: 169 / 255, green: 179 / 255, blue: 201 / 255)
-    static let accent = Color(red: 196 / 255, green: 198 / 255, blue: 1)
-    static let recording = Color(red: 1, green: 178 / 255, blue: 165 / 255)
+    static let background = Color(red: 14 / 255, green: 18 / 255, blue: 23 / 255)
+    static let panel = Color(red: 23 / 255, green: 30 / 255, blue: 39 / 255)
+    static let hero = Color(red: 32 / 255, green: 46 / 255, blue: 64 / 255)
+    static let line = Color(red: 51 / 255, green: 66 / 255, blue: 82 / 255)
+    static let ink = Color(red: 16 / 255, green: 33 / 255, blue: 53 / 255)
+    static let muted = Color(red: 165 / 255, green: 180 / 255, blue: 195 / 255)
+    static let accent = Color(red: 168 / 255, green: 215 / 255, blue: 250 / 255)
+    static let recording = Color(red: 1, green: 192 / 255, blue: 177 / 255)
     static let warning = Color(red: 243 / 255, green: 194 / 255, blue: 135 / 255)
 }
 
@@ -35,10 +35,10 @@ private struct ScreenEntry: ViewModifier {
     func body(content: Content) -> some View {
         content
             .opacity(entered || reduceMotion ? 1 : 0.86)
-            .offset(y: entered || reduceMotion ? 0 : 7)
+            .offset(y: entered || reduceMotion ? 0 : 5)
             .onAppear {
                 guard !entered else { return }
-                withAnimation(reduceMotion ? nil : .timingCurve(0.22, 0.75, 0.24, 1, duration: 0.21)) {
+                withAnimation(reduceMotion ? nil : .timingCurve(0.2, 0.72, 0.27, 1, duration: 0.18)) {
                     entered = true
                 }
             }

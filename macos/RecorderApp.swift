@@ -35,7 +35,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         window = NSWindow(contentRect: NSRect(x:0, y:0, width:880, height:840), styleMask:[.titled,.closable,.miniaturizable,.resizable], backing:.buffered, defer:false)
         window.title = "Запись лекций"
         window.appearance = NSAppearance(named: .darkAqua)
-        let background = NSColor(srgbRed: 16 / 255, green: 19 / 255, blue: 28 / 255, alpha: 1)
+        let background = NSColor(srgbRed: 14 / 255, green: 18 / 255, blue: 23 / 255, alpha: 1)
         window.backgroundColor = background
         window.center(); window.delegate = self
         view = WKWebView(frame: window.contentView!.bounds)
@@ -47,7 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         view.loadHTMLString("""
             <!doctype html><html lang="ru"><meta charset="utf-8">
             <style>
-            html{color-scheme:dark;background:#10131c;color:#a9b3c9}
+            html{color-scheme:dark;background:#0e1217;color:#a5b4c3}
             body{margin:0;min-height:100vh;display:grid;place-items:center;font:15px system-ui}
             </style>
             <body><p role="status">Открываю приложение…</p></body></html>

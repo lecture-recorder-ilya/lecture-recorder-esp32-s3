@@ -41,6 +41,7 @@ public class MainActivity extends Activity {
  private boolean lastRecording;
  private boolean microphonePermissionDenied;
  private Button recordAction;
+ private LinearLayout recordCard;
  private boolean recordingActionShown;
  private ChoiceDropdown transport;
  private final Handler timer=new Handler();
@@ -135,7 +136,8 @@ public class MainActivity extends Activity {
   FrameLayout host=new FrameLayout(this);root.addView(host,new LinearLayout.LayoutParams(-1,0,1));
   LinearLayout record=page(host,0,"Новая запись");
   LinearLayout hero=card(record);
-  hero.setBackground(StudioStyle.recorderCard(this));
+  recordCard=hero;
+  hero.setBackground(StudioStyle.recorderCard(this,false));
 
   TextView timerLabel=note("Длительность");
   hero.addView(timerLabel);
@@ -618,7 +620,8 @@ public class MainActivity extends Activity {
    recordingActionShown=active;
    recordAction.setText(active?"Завершить и сохранить":"Начать запись");
    recordAction.setBackground(StudioStyle.control(this,active?StudioStyle.RECORDING:accent,14));
-   if(selectedPage==0)StudioStyle.enter(recordAction,false);
+   recordCard.setBackground(StudioStyle.recorderCard(this,active));
+   if(selectedPage==0)StudioStyle.changeAction(recordAction);
   }
   recordAction.setEnabled(active||firmwareQuery==null);
   transport.setEnabled(!active);

@@ -1,23 +1,25 @@
 :root {
   color-scheme: dark;
-  --bg: #10131c;
-  --nav: #151925;
-  --nav-glass: #151925f5;
-  --panel: #191e2b;
-  --control: #222939;
-  --line: #343d52;
-  --text: #f4f6fc;
-  --muted: #a9b3c9;
-  --accent: #c4c6ff;
-  --accent-hover: #dbdcff;
-  --active: #303653;
-  --accent-line: #a9afff80;
-  --accent-wash: #c4c6ff23;
-  --ink: #1d2040;
+  --bg: #0e1217;
+  --nav: #121820;
+  --nav-glass: #121820f5;
+  --panel: #171e27;
+  --control: #202a35;
+  --line: #334252;
+  --text: #eef3f8;
+  --muted: #a5b4c3;
+  --accent: #a8d7fa;
+  --accent-hover: #c5e4fc;
+  --active: #263c50;
+  --accent-line: #a8d7fa86;
+  --accent-wash: #a8d7fa22;
+  --ink: #102135;
   --mint: var(--accent);
-  --recording: #ffb2a5;
+  --recording: #ffc0b1;
+  --recording-line: #915d58;
   --good: #9fdfc6;
   --warning: #f3c287;
+  --motion-ease: cubic-bezier(.2,.72,.27,1);
   accent-color: var(--accent);
 }
 
@@ -119,16 +121,23 @@ body.organized{-webkit-font-smoothing:antialiased} .organized main{max-width:122
 @media(max-width:560px){.organized main{padding:22px 16px 36px}.app-nav{padding:9px 10px}.organized .nav-button{gap:6px;padding:9px 8px}.organized .nav-button span{font-size:12px}.nav-icon{width:16px;height:16px}.organized .card{border-radius:16px}}
 
 .organized .app-nav { border-color: var(--line); }
-.organized .nav-button[aria-current=page] { border-color: var(--accent-wash); }
+.organized .nav-button[aria-current=page] {
+  border-color: var(--accent-wash);
+  box-shadow: inset 3px 0 var(--accent);
+}
 .organized .nav-button[aria-current=page]:hover { border-color: var(--accent-line); }
 .view-intro { margin: 36px 0 22px; }
 .view-intro h2 { font-size: clamp(27px, 4vw, 36px); letter-spacing: -.035em; }
 .record-utilities { display: grid; gap: 12px; margin: 18px 0; }
 .organized .record-utilities .card { margin: 0; }
-.recorder-hero {
-  background: linear-gradient(135deg, #252c43, var(--panel) 58%) !important;
+.organized .recorder-hero {
+  background: linear-gradient(135deg, #202e40, var(--panel) 64%) !important;
+  border-radius: 16px;
+  transition: border-color 180ms var(--motion-ease);
 }
-.recorder-hero::before { width: 32px; left: 26px; }
+.organized .recorder-hero.is-recording { border-color: var(--recording-line) !important; }
+.recorder-hero::before { width: 28px; height: 2px; left: 26px; }
+.recorder-hero.is-recording::before { background: var(--recording); }
 .capture-core {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -149,13 +158,13 @@ body.organized{-webkit-font-smoothing:antialiased} .organized main{max-width:122
 .recorder-hero.is-recording #status { color: var(--recording); }
 .recorder-hero.is-recording #status::before {
   background: var(--recording);
-  box-shadow: 0 0 0 4px #ffb2a529;
+  box-shadow: 0 0 0 3px #ffc0b129;
 }
 .organized .recorder-hero #stop:not(:disabled) {
   background: var(--recording);
   color: var(--ink);
 }
-.organized .recorder-hero #stop:not(:disabled):hover { background: #ffc9bf; }
+.organized .recorder-hero #stop:not(:disabled):hover { background: #ffd5ca; }
 .organized .capture-actions button { margin: 0; min-width: 172px; min-height: 48px; }
 .capture-level {
   margin: 20px 0 18px;
@@ -206,31 +215,39 @@ body.organized{-webkit-font-smoothing:antialiased} .organized main{max-width:122
 }
 
 @media (max-width: 560px) {
+  .organized .nav-button[aria-current=page] { box-shadow: inset 0 -2px var(--accent); }
   .capture-core { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .organized .capture-actions button { min-width: 0; width: 100%; }
   .recorder-hero .capture-inputs #phone-sync-status { flex-basis: 100%; margin: 0; }
 }
 
 @keyframes view-entry {
-  from { opacity: .84; transform: translateY(7px); }
+  from { opacity: .86; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes capture-action-entry {
+  from { opacity: .76; transform: scale(.985); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 @keyframes record-on {
-  from { box-shadow: 0 0 0 0 #ffb2a55c; }
-  to { box-shadow: 0 0 0 7px #ffb2a500; }
+  from { box-shadow: 0 0 0 0 #ffc0b15c; }
+  to { box-shadow: 0 0 0 6px #ffc0b100; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .organized .brand, .app-view:not([hidden]) {
-    animation: view-entry 210ms cubic-bezier(.22, .75, .24, 1) both;
+  .app-view:not([hidden]) {
+    animation: view-entry 180ms var(--motion-ease) both;
   }
   .recorder-hero.is-recording #status::before {
-    animation: record-on 700ms ease-out 2;
+    animation: record-on 460ms var(--motion-ease);
   }
-  .capture-actions button:not([hidden]),
+  .capture-actions button:not([hidden]) {
+    animation: capture-action-entry 140ms var(--motion-ease);
+  }
   .record-utilities details[open] > :not(summary) {
-    animation: view-entry 150ms ease-out;
+    animation: view-entry 160ms var(--motion-ease);
   }
 }
 
