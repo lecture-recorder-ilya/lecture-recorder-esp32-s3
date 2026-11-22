@@ -37,6 +37,14 @@ final class BoardPhotos {{
     static void recover(Context context) {{ throw new UnsupportedOperationException(); }}
 }}
 """,
+    "PhoneAnalysisService.java": f"""package {PACKAGE};
+final class PhoneAnalysisService {{
+    static final class Job {{
+        void check() {{}}
+        void update(String message) {{}}
+    }}
+}}
+""",
     "LectureReaderActivity.java": f"""package {PACKAGE};
 final class LectureReaderActivity {{
     static String clock(double seconds) {{ return Double.toString(seconds); }}
@@ -69,6 +77,7 @@ public final class SummaryStateTest {
         if (args[1].equals("replace")) {
             checkEvidence();
             checkRecordingNames(context);
+            checkApprovedAcousticModel(context);
             checkPhrases();
             JSONArray oldSegments = segments(OLD_TEXT);
             oldSegments.getJSONObject(0).put("review_key", OLD_KEY);
@@ -155,6 +164,26 @@ public final class SummaryStateTest {
             require(archive(history).equals(Store.read(mac)), "Finishing re-archived or altered the previous result");
             System.out.println("PASS: separate JVM resumed summary from disk and preserved the previous result");
         }
+    }
+
+    private static void checkApprovedAcousticModel(Context context) throws Exception {
+        File models = new File(context.getFilesDir(), "phone-models");
+        require(models.mkdirs(), "Create model fixture directory");
+        File trial = new File(models, "gigaam-personal.int8.onnx");
+        File acoustic = new File(models, "gigaam-v3-e2e-ctc.int8.onnx");
+        File summary = new File(models, "qwen3-0.6b-int4.litertlm");
+        require(trial.createNewFile(), "Create experimental model marker");
+        try (java.io.RandomAccessFile file = new java.io.RandomAccessFile(summary, "rw")) {
+            file.setLength(343490560L);
+        }
+        require(!PhoneModels.ready(context), "An experimental model is not a verified cached model");
+        try (java.io.RandomAccessFile file = new java.io.RandomAccessFile(acoustic, "rw")) {
+            file.setLength(224893347L);
+        }
+        require(PhoneModels.ready(context), "The verified model is available");
+        require(acoustic.equals(PhoneModels.acoustic(context, new PhoneAnalysisService.Job())),
+                "The experimental file must not override the stock model");
+        require(trial.isFile(), "Model selection removed a user's file");
     }
 
     private static void checkRecordingNames(Context context) throws Exception {
@@ -358,7 +387,7 @@ def main():
         subprocess.run(
             [java_bin / "javac", "-encoding", "UTF-8", "-cp", jar, "-d", root,
              SOURCE / "LectureNotes.java", SOURCE / "Store.java", SOURCE / "PhoneSummaryEvidence.java",
-             SOURCE / "PhonePhrases.java", SOURCE / "TranscriptEdits.java",
+             SOURCE / "PhonePhrases.java", SOURCE / "TranscriptEdits.java", SOURCE / "PhoneModels.java",
              *(root / name for name in sources)],
             check=True,
         )
