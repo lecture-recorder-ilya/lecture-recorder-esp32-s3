@@ -53,13 +53,14 @@ final class PhoneGigaAm {
         } catch (OrtException error) {
             job.check();
             if (workers == 1) throw error;
+            job.preview.startSpeech();
             return transcribe(context, job, model, input, total, data, 1);
         }
     }
 
     static JSONArray transcribe(Context context, PhoneAnalysisService.Job job, File model,
                                 RandomAccessFile input, long total, long data, int workers) throws Exception {
-        PhonePhrases phrases = new PhonePhrases();
+        PhonePhrases phrases = new PhonePhrases(job.preview::addPhrase);
         String[] tokens = readTokens(context);
         OrtEnvironment environment = OrtEnvironment.getEnvironment();
         try (OrtSession.SessionOptions options = new OrtSession.SessionOptions()) {

@@ -2,7 +2,12 @@ package ru.ilya.lecturerecorder;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
 import android.os.Build;
@@ -28,6 +33,7 @@ final class ChoiceDropdown {
     private static final int MUTED = StudioStyle.MUTED;
     private static final int ACCENT = StudioStyle.ACCENT;
     private final Context context;
+    private final Chevron chevron = new Chevron();
     private final String label;
     private final String empty;
     private final Supplier<List<Option>> options;
@@ -58,6 +64,9 @@ final class ChoiceDropdown {
         button.setPadding(dp(12), 0, dp(12), 0);
         button.setMaxLines(2);
         button.setEllipsize(TextUtils.TruncateAt.END);
+        chevron.setBounds(0, 0, dp(18), dp(18));
+        button.setCompoundDrawablesRelative(null, null, chevron, null);
+        button.setCompoundDrawablePadding(dp(8));
         button.setBackground(new RippleDrawable(ColorStateList.valueOf(0x28ffffff), surface(StudioStyle.CONTROL), null));
         button.setOnClickListener(view -> { if (!close()) open(); });
 
@@ -161,8 +170,31 @@ final class ChoiceDropdown {
 
     private void updateButton() {
         boolean open = isOpen();
-        button.setText((selected == null ? label : selected.title) + (open ? "  ▴" : "  ▾"));
+        button.setText(selected == null ? label : selected.title);
+        chevron.open = open;
+        chevron.invalidateSelf();
         button.setContentDescription(open ? "Свернуть список" : selected == null ? label : label + ". " + selected.title);
+    }
+
+    private static final class Chevron extends Drawable {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private boolean open;
+
+        @Override public void draw(Canvas canvas) {
+            float width = getBounds().width();
+            float middle = getBounds().exactCenterY();
+            float x = getBounds().left;
+            float delta = width * (open ? -.16f : .16f);
+            paint.setStrokeWidth(width / 10);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            paint.setColor(MUTED);
+            canvas.drawLine(x + width * .25f, middle - delta, x + width * .5f, middle + delta, paint);
+            canvas.drawLine(x + width * .5f, middle + delta, x + width * .75f, middle - delta, paint);
+        }
+
+        @Override public void setAlpha(int alpha) { paint.setAlpha(alpha); }
+        @Override public void setColorFilter(ColorFilter filter) { paint.setColorFilter(filter); }
+        @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }
     }
 
     private GradientDrawable surface(int color) {

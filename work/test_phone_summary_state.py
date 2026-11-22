@@ -81,6 +81,7 @@ public final class SummaryStateTest {
         if (args[1].equals("replace")) {
             checkEvidence();
             checkLogicReview();
+            checkLivePreview();
             checkRecordingNames(context);
             checkApprovedAcousticModel(context);
             checkPhrases();
@@ -169,6 +170,34 @@ public final class SummaryStateTest {
             require(archive(history).equals(Store.read(mac)), "Finishing re-archived or altered the previous result");
             System.out.println("PASS: separate JVM resumed summary from disk and preserved the previous result");
         }
+    }
+
+    private static void checkLivePreview() throws Exception {
+        AnalysisPreview preview = new AnalysisPreview();
+        require(preview.transcript(null) == null, "A summary-only job has no speech stream");
+        preview.startSpeech();
+        AnalysisPreview.Transcript empty = preview.transcript(null);
+        PhonePhrases stream = new PhonePhrases(preview::addPhrase);
+        JSONArray words = new JSONArray().put(new JSONObject().put("word", "Первый.").put("start", 1).put("end", 2))
+                .put(new JSONObject().put("word", "Второй.").put("start", 3).put("end", 4));
+        stream.accept(words);
+        AnalysisPreview.Transcript first = preview.transcript(empty);
+        require(first.rows.size() == 1 && empty.rows.isEmpty()
+                && first.stream == empty.stream, "Sealed phrases must publish an immutable snapshot before completion");
+        require(preview.transcript(first) == first, "Unchanged previews should not produce another snapshot");
+        JSONArray finalRows = stream.finish();
+        require(preview.transcript(first).rows.size() == 2 && finalRows.length() == 2,
+                "Live publishing changed sentence boundaries");
+        finalRows.getJSONObject(0).put("review_key", "persisted-only");
+        require(!first.rows.get(0).contains("persisted-only"), "Saving a note must not mutate pending UI snapshots");
+        preview.startSpeech();
+        AnalysisPreview.Transcript retry = preview.transcript(first);
+        require(retry.stream != first.stream && retry.rows.isEmpty(), "A fallback must reset its speech stream");
+        preview.finishSpeech();
+        require(preview.transcript(retry) == null, "Completed speech should display the saved report");
+        preview.showSummary(new JSONArray().put("Проверенный вывод"), new JSONArray());
+        require(new JSONObject(preview.summary).getJSONArray("summary").length() == 1, "Summary preview missing");
+        System.out.println("PASS: live phrase publishing, fallback reset and summary preview");
     }
 
     private static void checkLogicReview() throws Exception {
@@ -458,7 +487,7 @@ def main():
             [java_bin / "javac", "-encoding", "UTF-8", "-cp", jar, "-d", root,
              SOURCE / "LectureNotes.java", SOURCE / "Store.java", SOURCE / "PhoneSummaryEvidence.java",
              SOURCE / "PhonePhrases.java", SOURCE / "TranscriptEdits.java", SOURCE / "PhoneModels.java",
-             SOURCE / "PhoneSummaryProgress.java", SOURCE / "PhoneLogicReview.java",
+             SOURCE / "PhoneSummaryProgress.java", SOURCE / "PhoneLogicReview.java", SOURCE / "AnalysisPreview.java",
              *(root / name for name in sources)],
             check=True,
         )

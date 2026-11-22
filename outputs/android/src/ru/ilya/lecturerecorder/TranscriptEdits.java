@@ -159,7 +159,7 @@ final class TranscriptEdits {
     static final class Line {
         final String key;
         final String original;
-        final double start;
+        final double start, end;
         final List<Word> words = new ArrayList<>();
         final boolean corrected;
         final boolean needsReview;
@@ -172,7 +172,7 @@ final class TranscriptEdits {
             JSONObject replacements = changes(corrections.optJSONObject(key), original);
             Matcher matcher = WORD.matcher(original);
             JSONArray timings = segment.optJSONArray("word_times");
-            double end = segment.optDouble("end");
+            end = segment.optDouble("end");
             int timeIndex = 0;
             boolean changed = false;
             while (matcher.find()) {

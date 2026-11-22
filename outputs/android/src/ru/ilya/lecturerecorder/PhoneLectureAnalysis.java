@@ -39,6 +39,7 @@ final class PhoneLectureAnalysis {
             }
         }
         if (document == null || retranscribe) {
+            job.preview.startSpeech();
             JSONArray segments;
             String recognizer;
             try {
@@ -49,6 +50,7 @@ final class PhoneLectureAnalysis {
             } catch (IOException | ai.onnxruntime.OrtException | LinkageError error) {
                 job.check();
                 Log.w("LectureAnalysis", "Using the fallback speech model", error);
+                job.preview.startSpeech();
                 File speech = PhoneModels.speech(context, job);
                 job.update("Распознаю речь · 0%");
                 segments = transcribeVosk(context, job, name, speech);
@@ -57,9 +59,11 @@ final class PhoneLectureAnalysis {
             job.check();
             if (LectureNotes.hasSameFinishedTranscript(document, segments, recognizer)) {
                 PhoneSummaryProgress.clear(context, name);
+                job.preview.finishSpeech();
                 return;
             }
             document = LectureNotes.saveTranscript(context, name, title, document, segments, recognizer);
+            job.preview.finishSpeech();
         }
 
         JSONObject report = document.getJSONObject("report");
@@ -67,6 +71,7 @@ final class PhoneLectureAnalysis {
             job.check();
             JSONArray segments = report.getJSONArray("segments");
             PhoneSummaryProgress progress = PhoneSummaryProgress.open(context, name, segments);
+            job.preview.showSummary(progress.summary, progress.homework);
             if (progress.next < segments.length()) {
                 File model = PhoneModels.text(context, job);
                 summarize(context, job, model, document, segments, progress);
@@ -82,7 +87,7 @@ final class PhoneLectureAnalysis {
 
     static JSONArray transcribeVosk(Context context, PhoneAnalysisService.Job job, String name, File speech)
             throws Exception {
-        PhonePhrases phrases = new PhonePhrases();
+        PhonePhrases phrases = new PhonePhrases(job.preview::addPhrase);
         try (RandomAccessFile input = Store.openAudio(context, name);
              Model model = new Model(speech.getPath());
              Recognizer recognizer = new Recognizer(model, PcmWave.SAMPLE_RATE)) {
@@ -161,6 +166,7 @@ final class PhoneLectureAnalysis {
                     }
                 }
                 progress.checkpoint(next);
+                job.preview.showSummary(progress.summary, progress.homework);
                 first = next;
             }
         }

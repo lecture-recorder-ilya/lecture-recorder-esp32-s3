@@ -30,6 +30,11 @@ public final class PhoneAnalysisService extends Service {
         return name.equals(recording) && busy();
     }
 
+    static AnalysisPreview previewFor(String name) {
+        Job job = active;
+        return job != null && name.equals(recording) ? job.preview : null;
+    }
+
     static String statusFor(String name) {
         return name.equals(recording) ? status : "";
     }
@@ -146,6 +151,7 @@ public final class PhoneAnalysisService extends Service {
 
     static final class Job {
         private final Consumer<String> report;
+        final AnalysisPreview preview = new AnalysisPreview();
         private volatile boolean cancelled;
         volatile Conversation conversation;
 
