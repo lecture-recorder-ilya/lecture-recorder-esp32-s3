@@ -2,7 +2,7 @@ import sys,unittest
 from pathlib import Path
 from types import SimpleNamespace
 sys.path.insert(0,str(Path('outputs/recorder').resolve()))
-from asr_guard import supported_text,speech_windows,prepare
+from asr_guard import supported_text,speech_windows,prepare,quiet_edges,recover_edge_words
 class GuardTests(unittest.TestCase):
  def result(self,tokens,times,lp=None):return SimpleNamespace(tokens=tokens,timestamps=times,logprobs=lp or [-.01]*len(tokens))
  def test_high_confidence_words_on_silence_rejected(self):
@@ -24,6 +24,19 @@ class GuardTests(unittest.TestCase):
   ctc=[{'text':'Речь','start':0,'confidence':.95},{'text':'Вопрос?','start':8,'confidence':.95}]
   rnnt=[{'text':'Речь','start':0,'confidence':.99},{'text':'ещё','start':1,'confidence':.99}]
   self.assertIs(choose_candidate(ctc,rnnt),ctc)
+ def test_quiet_edge_adds_only_aligned_words(self):
+  def word(text,start,confidence=.95):
+   return dict(text=text,start=start,end=start+.10,confidence=confidence)
+  primary=[word('Как',.9),word('ведёт',1.1),word('себя',1.4)]
+  prefix=[word('Он',.12,.77),word('сказал,',.3)]
+  edges=quiet_edges([(.88,2)],[(.1,.5),(.88,2)])
+  result=recover_edge_words(primary,prefix+primary,edges)
+  self.assertEqual([item['text'] for item in result],['Он','сказал,','Как','ведёт','себя'])
+  self.assertTrue(all(item['needs_review'] for item in result[:2]))
+  self.assertEqual(result[2:],primary)
+  self.assertEqual(recover_edge_words(primary,prefix+[word('Так',.9)]+primary[1:],edges),[])
+  self.assertEqual(recover_edge_words(primary,[word('Не',.12)]+primary,edges),[])
+  self.assertEqual(recover_edge_words(primary,[word('Ладно',.12,.60)]+primary,edges),[])
  def test_acoustic_refinement_flags_conflicting_numbers_and_negations(self):
   from asr_guard import refine_words
   for old,new in [('не','ни'),('пять','шесть'),('три','плюс'),('задачу','20')]:

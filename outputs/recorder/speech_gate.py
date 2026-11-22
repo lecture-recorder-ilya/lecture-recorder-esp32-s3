@@ -49,7 +49,7 @@ def strict_speech_ranges(samples):
  return [(row['start']/16000,row['end']/16000) for row in rows]
 
 
-def anchored_speech_ranges(samples,core):
+def anchored_speech_ranges(samples,core,*,recover_quiet=False):
  """Quiet continuation is admitted only near an already verified voiced phrase."""
  if not core:return []
  global _MODEL
@@ -60,7 +60,8 @@ def anchored_speech_ranges(samples,core):
   if _MODEL is None:_MODEL=load_silero_vad()
   audio=torch.as_tensor(normalize_audio(samples),dtype=torch.float32)
   with torch.inference_mode():
-   rows=get_speech_timestamps(audio,_MODEL,sampling_rate=16000,threshold=.55,min_speech_duration_ms=250,min_silence_duration_ms=300,speech_pad_ms=0)
+   threshold,minimum=(.50,160) if recover_quiet else (.55,250)
+   rows=get_speech_timestamps(audio,_MODEL,sampling_rate=16000,threshold=threshold,min_speech_duration_ms=minimum,min_silence_duration_ms=300,speech_pad_ms=0)
  weak=[(row['start']/16000,row['end']/16000) for row in rows]
  selected=list(core)
  for a,b in weak:

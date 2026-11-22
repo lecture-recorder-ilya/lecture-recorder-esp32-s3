@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent;PROJECT=ROOT.parent.parent
 MODEL=PROJECT/'work/models/gigaam';RNNT=PROJECT/'work/models/gigaam-rnnt'
 CHAR=PROJECT/'work/models/gigaam-beam'
-ENGINE='GigaAM-v3-3pass-phrases-v10-coverage'
+ENGINE='GigaAM-v3-3pass-phrases-v11-quiet-edges'
 
 def ready():
  return all(p.exists() for p in [MODEL/'v3_e2e_ctc.int8.onnx',MODEL/'v3_e2e_ctc_vocab.txt',PROJECT/'work/models/gigaam-manifest.json',RNNT/'v3_e2e_rnnt_encoder.onnx',RNNT/'v3_e2e_rnnt_decoder.onnx',RNNT/'v3_e2e_rnnt_joint.onnx',RNNT/'v3_e2e_rnnt_vocab.txt',PROJECT/'work/models/gigaam-rnnt-manifest.json',CHAR/'v3_ctc.onnx',CHAR/'v3_vocab.txt',PROJECT/'work/models/gigaam-beam-manifest.json'])
@@ -24,12 +24,29 @@ class Decoder:
   return self.models[kind]
  def transcribe(self,samples,terms=None,speech=None,emit_start=0,emit_end=float('inf')):
   from speech_gate import strict_speech_ranges,anchored_speech_ranges
+  from asr_guard import join_words,quiet_edges,recover_edge_words,unrecognized_voice
+  core=strict_speech_ranges(samples) if speech is None else speech
+  ranges=anchored_speech_ranges(samples,core) if core else []
+  text=self._decode(samples,terms,core,ranges,emit_start,emit_end)
+  if not text or not ranges:return text
+  evidence=self.last
+  recovery=anchored_speech_ranges(samples,core,recover_quiet=True)
+  edges=quiet_edges(ranges,recovery)
+  if not edges:return text
+  self._decode(samples,terms,core,recovery,emit_start,emit_end)
+  words=recover_edge_words(evidence['word_evidence'],self.last['word_evidence'],edges)
+  self.last=evidence
+  if not words:return text
+  self.last.update(word_evidence=words,words=len(words),needs_review=True)
+  gaps=unrecognized_voice(core,words,max(0,emit_start),min(len(samples)/16000,emit_end))
+  if gaps:self.last['unrecognized_voice']=gaps
+  else:self.last.pop('unrecognized_voice',None)
+  return join_words(words)
+ def _decode(self,samples,terms,core,ranges,emit_start,emit_end):
   from asr_guard import prepare,supported_words,join_words,choose_candidate,refine_words,speech_windows,lexical,unrecognized_voice
   from asr_terms import apply_terms
   from speech_quality import repetition
   from context_review import acoustic_evidence
-  core=strict_speech_ranges(samples) if speech is None else speech
-  ranges=anchored_speech_ranges(samples,core) if core else []
   windows=speech_windows(ranges,len(samples)/16000,padding=.5,max_seconds=24)
   if not windows:
    self.last={'selected':'silence','words':0,'word_evidence':[]};return ''

@@ -52,6 +52,45 @@ def join_words(words):
 def supported_text(result,core,emit_start=0,emit_end=float('inf')):
  return join_words(supported_words(result,core,emit_start,emit_end))
 
+def quiet_edges(ranges, recovery):
+    left, right = ranges[0][0], ranges[-1][1]
+    edges = []
+    for start, end in recovery:
+        if left - start >= .16:
+            edges.append((start, min(end, left)))
+        if end - right >= .16:
+            edges.append((max(start, right), end))
+    return edges
+
+
+def recover_edge_words(primary, secondary, ranges):
+    from context_review import protected
+    base = [lexical(word['text']) for word in primary]
+    found = [lexical(word['text']) for word in secondary]
+    if len(base) < 3 or not all(base) or len(found) <= len(base):
+        return []
+    matches = [i for i in range(len(found) - len(base) + 1) if found[i:i + len(base)] == base]
+    if len(matches) != 1:
+        return []
+    index = matches[0]
+
+    def confirmed(words):
+        if not 1 <= len(words) <= 3:
+            return []
+        for word in words:
+            if word['confidence'] < .72 or not lexical(word['text']) or protected(word['text']):
+                return []
+            if not any(start - .14 <= word['start'] <= end + .14 for start, end in ranges):
+                return []
+        if sum(word['confidence'] for word in words) / len(words) < .83:
+            return []
+        return [dict(word, needs_review=True, review_reason='quiet_edge_recovery') for word in words]
+
+    before, after = secondary[:index], secondary[index + len(base):]
+    prefix = confirmed(before) if before and before[-1]['end'] <= primary[0]['start'] + .02 else []
+    suffix = confirmed(after) if after and after[0]['start'] >= primary[-1]['end'] - .02 else []
+    return prefix + primary + suffix if prefix or suffix else []
+
 MIN_UNRECOGNIZED_VOICE=.9
 
 def unrecognized_voice(core,words,start,end):

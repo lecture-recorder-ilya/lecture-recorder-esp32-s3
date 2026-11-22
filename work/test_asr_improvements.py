@@ -138,7 +138,7 @@ class DecoderTests(unittest.TestCase):
   class Model:
    def recognize(self,audio,**kwargs):
     calls.append(len(audio));return SimpleNamespace(tokens=['Первая',' фраза.'],timestamps=[.4,.8],logprobs=[-.01,-.01])
-  with patch('speech_gate.anchored_speech_ranges',side_effect=lambda _,core:core),patch.object(decoder,'_load',return_value=Model()):
+  with patch('speech_gate.anchored_speech_ranges',side_effect=lambda _,core,**kwargs:core),patch.object(decoder,'_load',return_value=Model()):
    result=decoder.transcribe(np.ones(12*16000,dtype=np.float32)*.01,speech=[(1,3),(8,10)])
   self.assertEqual(result,'Первая фраза. Первая фраза.')
   self.assertEqual(len(calls),6);self.assertLess(max(calls),4*16000)
