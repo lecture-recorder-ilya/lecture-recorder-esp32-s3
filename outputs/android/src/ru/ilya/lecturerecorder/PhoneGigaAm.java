@@ -5,20 +5,30 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import ai.onnxruntime.OnnxTensor;
 import ai.onnxruntime.OrtEnvironment;
+import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 final class PhoneGigaAm {
     private static final int RATE = PcmWave.SAMPLE_RATE;
@@ -52,59 +62,149 @@ final class PhoneGigaAm {
             options.addConfigEntry("session.intra_op.allow_spinning", "0");
             try (OrtSession frontend = environment.createSession(readFrontend(context), options);
                  OrtSession acoustic = environment.createSession(model.getPath(), options)) {
-                int progress = -1;
-                for (long start = 0; start < total; ) {
-                    job.check();
-                    long end = Math.min(total, start + CORE);
-                    int percent = (int) (100 * start / total);
-                    if (progress != percent) {
-                        progress = percent;
-                        job.update("Распознаю речь · " + percent + "%");
-                    }
-                    long left = Math.max(0, start - EDGE);
-                    long right = Math.min(total, end + EDGE + PhoneSpeechWindow.SEARCH);
-                    float[] raw = readWindow(input, data + left * 2, (int) (right - left));
-                    if (end + EDGE < total) {
-                        end = left + PhoneSpeechWindow.boundary(raw, (int) (end - left));
-                    }
-                    int length = (int) (Math.min(total, end + EDGE) - left);
-                    if (length >= 400 && !PhoneSpeechWindow.constant(raw, length)) {
-                        raw = Arrays.copyOf(raw, length);
-                        float level = PhoneSpeechWindow.level(raw);
-                        float[] wave = raw.clone();
-                        PhoneSpeechWindow.normalize(wave, level, 8);
-                        double first = start / (double) RATE, last = end / (double) RATE;
-                        double offset = left / (double) RATE;
-                        JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);
-                        if (words.length() == 1 && words.getJSONObject(0).optBoolean("verify_onset")) {
-                            job.check();
-                            float[] shifted = new float[ONSET_PAD + wave.length];
-                            System.arraycopy(wave, 0, shifted, ONSET_PAD, wave.length);
-                            JSONArray check = recognize(environment, frontend, acoustic, shifted, tokens,
-                                    0, 0, shifted.length / (double) RATE, true);
-                            if (hasSpeechAfterPadding(check)) words.getJSONObject(0).put("needs_review", true);
-                            else words = new JSONArray();
-                        }
-                        if (shouldRefine(level, words)) {
-                            job.check();
-                            float[] clean = PhoneSpeechWindow.clean(raw);
-                            JSONArray alternate = recognize(environment, frontend, acoustic, clean, tokens, offset, first, last, true);
-                            reconcile(words, alternate);
-                        }
-                        for (int i = 0; i < words.length(); i++) {
-                            JSONObject word = words.getJSONObject(i);
-                            double startTime = word.getDouble("start");
-                            double trimmed = PhoneSpeechWindow.trimSilentStart(raw, offset, startTime, word.getDouble("end"));
-                            if (trimmed > startTime) word.put("start", trimmed);
-                        }
-                        timeline.accept(words, last);
-                    }
-                    start = end;
-                }
+                decodeWindows(job, input, data, total, environment, frontend, acoustic, tokens, timeline);
             }
         }
         timeline.finish();
         return phrases.finish();
+    }
+
+    private static final class Window extends FutureTask<JSONArray> {
+        final long end;
+
+        Window(long end, Callable<JSONArray> decode) {
+            super(decode);
+            this.end = end;
+        }
+
+        JSONArray words() throws Exception {
+            try {
+                return get();
+            } catch (ExecutionException error) {
+                Throwable cause = error.getCause();
+                if (cause instanceof Exception) throw (Exception) cause;
+                if (cause instanceof Error) throw (Error) cause;
+                throw error;
+            } catch (InterruptedException cancelled) {
+                Thread.currentThread().interrupt();
+                throw cancelled;
+            }
+        }
+    }
+
+    static boolean canOverlapWindows(long samples, int cpus, long maxHeap, long freeHeap) {
+        long mib = 1024L * 1024;
+        return samples >= 90L * RATE && cpus >= 6 && maxHeap >= 256 * mib && freeHeap >= 160 * mib;
+    }
+
+    private static void decodeWindows(PhoneAnalysisService.Job job, RandomAccessFile input, long data,
+                                      long total, OrtEnvironment env, OrtSession frontend, OrtSession acoustic,
+                                      String[] tokens, PhoneWordTimeline timeline) throws Exception {
+        Runtime runtime = Runtime.getRuntime();
+        long freeHeap = runtime.maxMemory() - runtime.totalMemory() + runtime.freeMemory();
+        boolean parallel = canOverlapWindows(total, runtime.availableProcessors(), runtime.maxMemory(), freeHeap);
+        ExecutorService pool = parallel ? Executors.newFixedThreadPool(2) : null;
+        ArrayDeque<Window> pending = new ArrayDeque<>(2);
+        long next = 0, completed = 0;
+        boolean hasText = false;
+        int progress = -1;
+        try {
+            while (completed < total) {
+                job.check();
+                int percent = (int) (100 * completed / total);
+                if (progress != percent) {
+                    progress = percent;
+                    job.update("Распознаю речь · " + percent + "%");
+                }
+                int depth = pool != null && completed > 0 ? 2 : 1;
+                while (pending.size() < depth && next < total) {
+                    job.check();
+                    Window window = readTask(job, input, data, total, next, env, frontend, acoustic, tokens);
+                    pending.addLast(window);
+                    if (depth == 1) window.run();
+                    else pool.execute(window);
+                    next = window.end;
+                }
+                Window window = pending.removeFirst();
+                JSONArray words = window.words();
+                job.check();
+                if (words != null) {
+                    timeline.accept(words, window.end / (double) RATE);
+                    hasText |= words.length() > 0;
+                }
+                completed = window.end;
+            }
+        } catch (InterruptedIOException cancelled) {
+            throw cancelled;
+        } catch (IOException | OrtException failure) {
+            if (parallel && hasText) throw new Exception("Не удалось обработать следующий фрагмент записи.", failure);
+            throw failure;
+        } finally {
+            if (pool != null) {
+                pool.shutdownNow();
+                boolean interrupted = false;
+                while (!pool.isTerminated()) {
+                    try {
+                        pool.awaitTermination(1, TimeUnit.SECONDS);
+                    } catch (InterruptedException cancelled) {
+                        interrupted = true;
+                    }
+                }
+                if (interrupted) Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    private static Window readTask(PhoneAnalysisService.Job job, RandomAccessFile input, long data, long total,
+                                   long start, OrtEnvironment env, OrtSession frontend, OrtSession acoustic,
+                                   String[] tokens) throws Exception {
+        long end = Math.min(total, start + CORE);
+        long left = Math.max(0, start - EDGE);
+        long right = Math.min(total, end + EDGE + PhoneSpeechWindow.SEARCH);
+        float[] raw = readWindow(input, data + left * 2, (int) (right - left));
+        if (end + EDGE < total) end = left + PhoneSpeechWindow.boundary(raw, (int) (end - left));
+        int length = (int) (Math.min(total, end + EDGE) - left);
+        if (length < 400 || PhoneSpeechWindow.constant(raw, length)) return new Window(end, () -> null);
+        float[] samples = Arrays.copyOf(raw, length);
+        double first = start / (double) RATE, last = end / (double) RATE, offset = left / (double) RATE;
+        return new Window(end, () -> decode(job, env, frontend, acoustic, tokens, samples, first, last, offset));
+    }
+
+    private static void check(PhoneAnalysisService.Job job) throws InterruptedIOException {
+        if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException();
+        job.check();
+    }
+
+    private static JSONArray decode(PhoneAnalysisService.Job job, OrtEnvironment environment, OrtSession frontend,
+                                    OrtSession acoustic, String[] tokens, float[] raw, double first, double last,
+                                    double offset) throws Exception {
+        check(job);
+        float level = PhoneSpeechWindow.level(raw);
+        float[] wave = raw.clone();
+        PhoneSpeechWindow.normalize(wave, level, 8);
+        JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);
+        if (words.length() == 1 && words.getJSONObject(0).optBoolean("verify_onset")) {
+            check(job);
+            float[] shifted = new float[ONSET_PAD + wave.length];
+            System.arraycopy(wave, 0, shifted, ONSET_PAD, wave.length);
+            JSONArray validation = recognize(environment, frontend, acoustic, shifted, tokens,
+                    0, 0, shifted.length / (double) RATE, true);
+            if (hasSpeechAfterPadding(validation)) words.getJSONObject(0).put("needs_review", true);
+            else words = new JSONArray();
+        }
+        if (shouldRefine(level, words)) {
+            check(job);
+            float[] clean = PhoneSpeechWindow.clean(raw);
+            JSONArray alternate = recognize(environment, frontend, acoustic, clean, tokens, offset, first, last, true);
+            reconcile(words, alternate);
+        }
+        for (int i = 0; i < words.length(); i++) {
+            JSONObject word = words.getJSONObject(i);
+            double startTime = word.getDouble("start");
+            double trimmed = PhoneSpeechWindow.trimSilentStart(raw, offset, startTime, word.getDouble("end"));
+            if (trimmed > startTime) word.put("start", trimmed);
+        }
+        return words;
     }
 
     private static JSONArray recognize(OrtEnvironment environment, OrtSession frontend, OrtSession acoustic,
