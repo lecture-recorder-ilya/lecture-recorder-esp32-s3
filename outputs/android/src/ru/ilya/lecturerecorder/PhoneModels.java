@@ -12,6 +12,7 @@ final class PhoneModels {
     private static final String SPEECH = "vosk-model-small-ru-0.22";
     private static final String GIGAAM = "gigaam-v3-e2e-ctc.int8.onnx";
     private static final long GIGAAM_BYTES = 224893347L;
+    private static final String GIGAAM_SHA = "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e";
     private static final String TEXT = "qwen3-0.6b-int4.litertlm";
     private static final long TEXT_BYTES = 343490560L;
 
@@ -26,11 +27,19 @@ final class PhoneModels {
     }
 
     static File acoustic(Context context, PhoneAnalysisService.Job job) throws Exception {
-        return obtain(context, GIGAAM,
+        return acoustic(context, job, false);
+    }
+
+    static File acoustic(Context context, PhoneAnalysisService.Job job, boolean localOnly) throws Exception {
+        return obtain(context, GIGAAM, localOnly ? null :
                 "https://huggingface.co/istupakov/gigaam-v3-onnx/resolve/"
                         + "322c3b29492673eb7d0b434bfa9dfb8653e34d02/v3_e2e_ctc.int8.onnx",
-                GIGAAM_BYTES, "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+                GIGAAM_BYTES, GIGAAM_SHA,
                 "Скачиваю модель речи", job);
+    }
+
+    static File offlineAcoustic(Context context, PhoneAnalysisService.Job job) throws Exception {
+        return obtain(context, GIGAAM, null, GIGAAM_BYTES, GIGAAM_SHA, "Подготавливаю модель речи", job);
     }
 
     static File speech(Context context, PhoneAnalysisService.Job job) throws Exception {
@@ -94,15 +103,19 @@ final class PhoneModels {
         }
     }
 
-    private static File obtain(Context context, String name, String url, long bytes, String sha,
+    private static synchronized File obtain(Context context, String name, String url, long bytes, String sha,
                                String status, PhoneAnalysisService.Job job) throws Exception {
         File directory = directory(context);
         File target = new File(directory, name);
         if (target.length() == bytes) return target;
+        boolean inApp = bundled(context, name, bytes);
+        if (!inApp && url == null) throw new IOException("Для повтора нужна модель речи на телефоне. Установи её через «Разобрать запись»");
+        boolean embedded = bundled(context, name, bytes);
+        if (!embedded && url == null) throw new IOException("На телефоне ещё нет локальной модели речи");
         if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("Папка моделей недоступна");
         if (directory.getUsableSpace() < bytes + 150000000L) throw new IOException("Освободи место для моделей");
         File part = new File(directory, name + ".part");
-        if (bundled(context, name, bytes)) {
+        if (inApp) {
             try (InputStream input = context.getAssets().open("models/" + name)) {
                 return install(input, part, target, bytes, sha, "Подготавливаю встроенную модель", job);
             } finally {

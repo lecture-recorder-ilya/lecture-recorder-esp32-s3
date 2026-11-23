@@ -28,10 +28,15 @@ public final class ModelSelectionHarness {
   File text=new File(directory,"qwen3-0.6b-int4.litertlm");
   try(RandomAccessFile out=new RandomAccessFile(text,"rw")) { out.setLength(343490560L); }
   System.out.println("personal_only_ready="+PhoneModels.ready(context));
+  try {
+   PhoneModels.offlineAcoustic(context,new PhoneAnalysisService.Job());
+   throw new AssertionError("Missing offline model was accepted");
+  } catch(IOException expected) { System.out.println("offline_missing="+expected.getMessage()); }
   File stock=new File(directory,"gigaam-v3-e2e-ctc.int8.onnx");
   try(RandomAccessFile out=new RandomAccessFile(stock,"rw")) { out.setLength(224893347L); }
   System.out.println("stock_and_text_ready="+PhoneModels.ready(context));
   System.out.println("selected="+PhoneModels.acoustic(context,new PhoneAnalysisService.Job()).getName());
+  System.out.println("offline_selected="+PhoneModels.offlineAcoustic(context,new PhoneAnalysisService.Job()).getName());
   System.out.println("personal_preserved="+(personal.isFile() && personal.length()==3));
   if(!text.delete())throw new IOException("Summary fixture deletion");
   System.out.println("without_text_ready="+PhoneModels.ready(context));
@@ -73,6 +78,10 @@ class PhoneModelSelectionTests(unittest.TestCase):
 
     def test_stock_is_selected_when_a_personal_file_also_exists(self):
         self.assertEqual(self.result['selected'],'gigaam-v3-e2e-ctc.int8.onnx')
+
+    def test_offline_retry_uses_only_local_weights(self):
+        self.assertEqual(self.result['offline_missing'], 'На телефоне ещё нет локальной модели речи')
+        self.assertEqual(self.result['offline_selected'], 'gigaam-v3-e2e-ctc.int8.onnx')
 
     def test_stock_and_summary_are_still_ready(self):
         self.assertEqual(self.result['stock_and_text_ready'],'true')
