@@ -79,7 +79,7 @@ final class PhoneLectureAnalysis {
             }
             job.check();
             if (progress.summary.length() == 0 && progress.homework.length() == 0)
-                throw new IOException("Не нашёл уверенных пунктов. Расшифровка сохранена");
+                throw new IOException("Не удалось составить конспект. Расшифровка сохранена");
             report.put("summary", progress.summary).put("summary_evidence", progress.sources).put("homework", progress.homework);
             LectureNotes.saveSummary(context, document);
         }

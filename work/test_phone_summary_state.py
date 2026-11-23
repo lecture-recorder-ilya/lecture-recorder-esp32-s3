@@ -86,7 +86,7 @@ public final class SummaryStateTest {
             checkApprovedAcousticModel(context);
             checkPhrases();
             JSONArray oldSegments = segments(OLD_TEXT);
-            oldSegments.getJSONObject(0).put("review_key", OLD_KEY);
+            oldSegments.getJSONObject(0).put("review_key", OLD_KEY).put("needs_review", true);
             JSONObject oldReport = new JSONObject()
                     .put("subject", "Математика").put("topic", "Дифференциальные уравнения")
                     .put("teacher", "Преподаватель").put("duration", 42)
@@ -96,6 +96,10 @@ public final class SummaryStateTest {
                     .put("segments", oldSegments);
             JSONObject original = new JSONObject().put("file", NAME).put("report", oldReport)
                     .put("lesson", new JSONObject().put("date", "2026-11-22")).put("extra", "metadata");
+            String exported = LectureNotes.text(original);
+            require(exported.contains("[" + LectureReaderActivity.clock(5) + "] " + OLD_TEXT)
+                    && !exported.contains("Проверь по аудио"),
+                    "Legacy flagged rows must export as ordinary timestamped text");
             Store.write(target, original);
             Store.write(mac, original);
             String prior = Store.read(target);
@@ -135,7 +139,7 @@ public final class SummaryStateTest {
             JSONObject line = report.getJSONArray("segments").getJSONObject(0);
             require(NEW_TEXT.equals(line.getString("text")) && line.getInt("start") == 5
                     && "gigaam-v3".equals(report.getString("asr_engine")), "New transcript was not saved");
-            require(!OLD_KEY.equals(line.getString("review_key")), "Review mark leaked from the old transcript");
+            require(!line.has("review_key"), "New transcripts must omit retired review keys");
             require(prior.equals(Store.read(mac)) && prior.equals(archive(history)), "Mac note or archive changed");
 
             // Generating a summary changes the in-memory document. Ending the process here

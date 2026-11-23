@@ -35,7 +35,7 @@ public class LectureReaderActivity extends Activity {
     private static final int ACCENT = StudioStyle.ACCENT;
     private static final int ACTIVE = StudioStyle.ACTIVE;
     private static final String[] TABS = {"summary", "text", "review"};
-    private static final String[] TAB_LABELS = {"Конспект", "Текст", "Проверить"};
+    private static final String[] TAB_LABELS = {"Конспект", "Текст", "Логика"};
 
     private final Handler timer = new Handler(Looper.getMainLooper());
     private final Button[] tabButtons = new Button[TABS.length];
@@ -210,11 +210,8 @@ public class LectureReaderActivity extends Activity {
         TextView heading = heading(report.optString("topic", LectureNotes.title(document)), 24);
         body.addView(heading, spaced(-1, -2, 4));
         if ("summary".equals(tab)) renderSummary(report);
-        else {
-            boolean checking = "review".equals(tab);
-            if (checking) renderLogicReview(report);
-            renderTranscript(report, checking);
-        }
+        else if ("review".equals(tab)) renderLogicReview(report);
+        else renderTranscript(report);
         scroll.post(() -> scroll.scrollTo(0, offset));
     }
 
@@ -226,8 +223,10 @@ public class LectureReaderActivity extends Activity {
             try { review = PhoneLogicReview.evaluate(segments); }
             catch (org.json.JSONException invalid) { return; }
         }
-        if (review.length() == 0) return;
-        body.addView(heading("Проверить по записи", 18), spaced(-1, -2, 10));
+        if (review.length() == 0) {
+            body.addView(text("Расхождений не найдено", 16, MUTED), spaced(-1, -2, 12));
+            return;
+        }
         for (int i = 0; i < review.length(); i++) {
             JSONObject finding = review.optJSONObject(i);
             if (finding == null) continue;
@@ -348,12 +347,12 @@ public class LectureReaderActivity extends Activity {
         }
     }
 
-    private void renderTranscript(JSONObject report, boolean reviewOnly) {
+    private void renderTranscript(JSONObject report) {
         JSONArray rows = report.optJSONArray("segments");
         int count = 0;
         if (rows != null) for (int index = 0; index < rows.length(); index++) {
             JSONObject row = rows.optJSONObject(index);
-            if (row == null || reviewOnly && (!row.optBoolean("needs_review") || reviewed(row))) continue;
+            if (row == null) continue;
             count++;
             LinearLayout block = card();
             boolean timed = row.has("start") && row.has("end");
@@ -372,18 +371,6 @@ public class LectureReaderActivity extends Activity {
             }
             block.addView(timestamp, new LinearLayout.LayoutParams(-2, -2));
             block.addView(phrase, spaced(-1, -2, 5));
-            if (row.optBoolean("needs_review")) {
-                boolean checked = reviewed(row);
-                block.addView(text(checked ? "Проверено по записи" : "Нужно проверить", 13, MUTED),
-                        spaced(-1, -2, 8));
-                String key = row.optString("review_key");
-                if (!key.isEmpty()) {
-                    block.addView(button(checked ? "Отменить проверку" : "Отметить проверенным", () -> {
-                        getSharedPreferences("transcript-review", 0).edit().putBoolean(key, !checked).apply();
-                        render();
-                    }), spaced(-2, dp(48), 6));
-                }
-            }
             String original = row.optString("original_text");
             if (!original.isEmpty() && !original.equals(row.optString("text"))) {
                 block.addView(text("Исходное распознавание: " + original, 13, MUTED), spaced(-1, -2, 8));
@@ -391,14 +378,9 @@ public class LectureReaderActivity extends Activity {
             body.addView(block, spaced(-1, -2, 8));
         }
         if (count == 0) {
-            body.addView(text(reviewOnly ? "Непроверенных отметок нет" : "Текст пока недоступен", 16, MUTED),
+            body.addView(text("Текст пока недоступен", 16, MUTED),
                     spaced(-1, -2, 12));
         }
-    }
-
-    private boolean reviewed(JSONObject row) {
-        String key = row.optString("review_key");
-        return getSharedPreferences("transcript-review", 0).getBoolean(key, row.optBoolean("reviewed"));
     }
 
     private void playAt(int millis) {

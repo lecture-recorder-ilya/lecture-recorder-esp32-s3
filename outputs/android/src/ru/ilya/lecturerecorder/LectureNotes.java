@@ -41,9 +41,6 @@ final class LectureNotes {
   }
   JSONObject report=document.getJSONObject("report");
   for(String field:new String[]{"summary","summary_evidence","homework","overview","warnings","draft"})report.remove(field);
-  // Отметки проверки относятся к конкретной расшифровке.
-  String reviewPrefix="phone:"+name+":"+UUID.randomUUID()+":";
-  for(int i=0;i<segments.length();i++)segments.getJSONObject(i).put("review_key",reviewPrefix+i);
   document.put("file",name);
   if(lesson.length()>0)document.put("lesson",lesson);
   report.put("segments",segments).put("logic_review",PhoneLogicReview.evaluate(segments))
@@ -117,7 +114,7 @@ final class LectureNotes {
   String teacher=r.optString("teacher",m==null?"":m.optString("teacher"));if(!teacher.isEmpty())s.append("Преподаватель: ").append(teacher).append("\n");
   if(!r.optString("overview").isEmpty())s.append("\n").append(r.optString("overview")).append("\n");
   JSONArray summary=r.optJSONArray("summary");if(summary!=null&&summary.length()>0){s.append("\nКонспект\n");for(int i=0;i<summary.length();i++)s.append("• ").append(summary.get(i)).append("\n");}
-  JSONArray rows=includeTranscript?r.optJSONArray("segments"):null;if(includeTranscript)s.append("\nПолный текст\n");if(rows!=null)for(int i=0;i<rows.length();i++){JSONObject row=rows.getJSONObject(i);s.append("[").append((row.has("start")?LectureReaderActivity.clock(row.optDouble("start")):"Без таймкода")).append("] ");if(row.optBoolean("needs_review"))s.append("Проверь по аудио · ");s.append(row.optString("text")).append("\n\n");}
+  JSONArray rows=includeTranscript?r.optJSONArray("segments"):null;if(includeTranscript)s.append("\nПолный текст\n");if(rows!=null)for(int i=0;i<rows.length();i++){JSONObject row=rows.getJSONObject(i);s.append("[").append((row.has("start")?LectureReaderActivity.clock(row.optDouble("start")):"Без таймкода")).append("] ").append(row.optString("text")).append("\n\n");}
   JSONArray tasks=r.optJSONArray("homework");if(tasks!=null&&tasks.length()>0){s.append("\nЗадания из записи\n");for(int i=0;i<tasks.length();i++){JSONObject task=tasks.optJSONObject(i);if(task==null)continue;s.append("• ").append(task.optString("task"));String deadline=task.optString("deadline");if(!deadline.isEmpty())s.append(" · ").append(deadline);s.append("\n");String quote=task.optString("quote");if(!quote.isEmpty())s.append("Основание: «").append(quote).append("»\n");}}
   JSONArray warnings=r.optJSONArray("warnings");if(warnings!=null&&warnings.length()>0){s.append("\nПримечания\n");for(int i=0;i<warnings.length();i++)s.append("• ").append(warnings.optString(i)).append("\n");}
   return s.toString();

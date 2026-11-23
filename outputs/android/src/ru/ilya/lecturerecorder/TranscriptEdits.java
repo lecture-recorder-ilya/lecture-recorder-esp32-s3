@@ -162,12 +162,10 @@ final class TranscriptEdits {
         final double start, end;
         final List<Word> words = new ArrayList<>();
         final boolean corrected;
-        final boolean needsReview;
 
         Line(JSONObject segment, int index, boolean local, JSONObject corrections) {
             original = segment.optString("text");
             start = segment.optDouble("start");
-            needsReview = segment.optBoolean("needs_review");
             key = (local ? "phone:" : "mac:") + index + ":" + segment.optString("start") + ":" + segment.optString("end");
             JSONObject replacements = changes(corrections.optJSONObject(key), original);
             Matcher matcher = WORD.matcher(original);
