@@ -29,9 +29,11 @@ public class MainActivity extends Activity {
  private EspPairing devicePairing;
  private boolean deviceExpanded;
  private int deviceCharge=-1;
- private final List<ChoiceDropdown.Option> sources=Arrays.asList(
-  new ChoiceDropdown.Option("phone","Микрофон телефона",""),
-  new ChoiceDropdown.Option("ble","ESP · Bluetooth",""));
+ private static final String SOURCE_MODE="capture_source";
+ private final List<ChoiceDropdown.Option> sources=new ArrayList<>(Arrays.asList(
+  new ChoiceDropdown.Option("auto","Автоматически","ClipMic рядом, гарнитура или телефон"),
+  new ChoiceDropdown.Option("phone","Телефон или гарнитура","Системный аудиовход"),
+  new ChoiceDropdown.Option("ble","Только ClipMic","Bluetooth")));
  private GradientDrawable linkDot;
  private CaptureService.Link displayedLink;
  private CaptureService.Link idleLink=CaptureService.Link.OFF;
@@ -233,17 +235,20 @@ public class MainActivity extends Activity {
   LinearLayout microphone=card(record);
   microphone.addView(heading("Источник звука",16));
   SharedPreferences sourceSettings=getSharedPreferences("settings",0);
-  String source=sourceSettings.getString("transport","phone");
-  ChoiceDropdown.Option selectedSource=sources.get(source.equals("ble")||source.equals("wifi")?1:0);
-  if(!source.equals(selectedSource.value))sourceSettings.edit().putString("transport",selectedSource.value).apply();
+  if("wifi".equals(sourceSettings.getString("transport",""))||"wifi".equals(sourceSettings.getString(SOURCE_MODE,""))
+     ||(!sourceSettings.getString("ip","").isEmpty()&&!sourceSettings.getString("token","").isEmpty())){
+   sources.add(new ChoiceDropdown.Option("wifi","ClipMic по Wi-Fi","Сохранённое подключение"));
+  }
   transport=new ChoiceDropdown(this,"Источник звука","Нет доступных источников",()->sources,
    option->{
-    sourceSettings.edit().putString("transport",option.value).apply();
+    SharedPreferences.Editor editor=sourceSettings.edit().putString(SOURCE_MODE,option.value);
+    if("ble".equals(option.value)||"wifi".equals(option.value))editor.putString("transport",option.value);
+    editor.apply();
     stopPresenceCheck();
     presenceSource="";
     refreshConnection();
    });
-  transport.setSelected(selectedSource);
+  transport.setSelected(selectedSource());
   microphone.addView(transport.button,new LinearLayout.LayoutParams(-1,-2));
   LinearLayout.LayoutParams sourceList=new LinearLayout.LayoutParams(-1,-2);
   sourceList.topMargin=dp(6);
@@ -282,7 +287,7 @@ public class MainActivity extends Activity {
   githubDisconnect=button("Отключить GitHub на телефоне",()->GitHubUpdates.disconnect(this));
   updates.addView(githubDisconnect);
   LinearLayout connection=card(settingsPage);
-  connection.addView(heading("Микрофон ESP",18));
+  connection.addView(heading("Диктофон ClipMic",18));
   firmwareButton=button("Проверить версию прошивки",this::checkFirmware);
   connection.addView(firmwareButton);
   firmwareStatus=note("");
@@ -389,7 +394,8 @@ public class MainActivity extends Activity {
  private void begin(){
   if(firmwareQuery!=null)return;
   stopPresenceCheck();
-  if(usingPhoneMicrophone()){
+  String source=selectedSource().value;
+  if("auto".equals(source)||"phone".equals(source)){
    if(checkSelfPermission(MICROPHONE_PERMISSION)!=0){
     if(microphoneNeedsSettings()){
      Intent settings=new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -398,7 +404,7 @@ public class MainActivity extends Activity {
     }else requestPermissions(new String[]{MICROPHONE_PERMISSION},8);
     return;
    }
-   startCapture("START_PHONE");
+   startCapture("auto".equals(source)?"START_AUTO":"START_PHONE");
    return;
   }
   android.content.SharedPreferences settings=getSharedPreferences("settings",0);
@@ -406,7 +412,7 @@ public class MainActivity extends Activity {
   if(!bonded&&settings.getString("token","").isEmpty()){
    setDeviceExpanded(true);openDevicePairing();return;
   }
-  if(settings.getString("transport","ble").equals("ble")){
+  if("ble".equals(source)){
    String[] permissions=Build.VERSION.SDK_INT>=31?new String[]{"android.permission.BLUETOOTH_SCAN","android.permission.BLUETOOTH_CONNECT"}:new String[]{"android.permission.ACCESS_FINE_LOCATION"};
    for(String p:permissions)if(checkSelfPermission(p)!=0){requestPermissions(permissions,3);return;}
    BluetoothAdapter a=getSystemService(BluetoothManager.class).getAdapter();if(a==null){Toast.makeText(this,"На телефоне нет Bluetooth",1).show();return;}if(!a.isEnabled()){startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE),4);return;}
@@ -542,7 +548,7 @@ public class MainActivity extends Activity {
   row.setBackground(new android.graphics.drawable.RippleDrawable(
    android.content.res.ColorStateList.valueOf(0x22ffffff),null,surface(Color.WHITE,12)));
   row.setOnClickListener(view->toggleDevicePanel());
-  row.addView(heading("Устройство ESP",14),new LinearLayout.LayoutParams(0,-2,1));
+  row.addView(heading("Диктофон ClipMic",14),new LinearLayout.LayoutParams(0,-2,1));
   deviceChevron=note("⌄");
   deviceChevron.setGravity(Gravity.CENTER);
   deviceChevron.setRotation(deviceExpanded?180f:0f);
@@ -626,7 +632,7 @@ public class MainActivity extends Activity {
   deviceBattery.setText(deviceCharge<0?"Заряд недоступен":"Заряд · "+deviceCharge+"%");
  }
  private String panelAction(){
-  return (deviceExpanded?"Свернуть":"Раскрыть")+" настройки устройства ESP";
+  return (deviceExpanded?"Свернуть":"Раскрыть")+" настройки диктофона ClipMic";
  }
  private void toggleDevicePanel(){
   setDeviceExpanded(!deviceExpanded);
@@ -692,8 +698,10 @@ public class MainActivity extends Activity {
   stopPresenceCheck();
   devicePairing=new EspPairing(this,charge->{
    deviceCharge=charge;
-   transport.setSelected(sources.get(1));
-   presenceSource="ble";
+   SharedPreferences settings=getSharedPreferences("settings",0);
+   if(!"ble".equals(selectedSource().value))settings.edit().putString(SOURCE_MODE,"auto").apply();
+   transport.setSelected(selectedSource());
+   presenceSource=selectedSource().value;
    presenceError="";
    idleLink=CaptureService.Link.CONNECTED;
    nextPresenceCheck=SystemClock.elapsedRealtime()+8000;
@@ -722,15 +730,20 @@ public class MainActivity extends Activity {
   }
  }
  private void refreshConnection(){
-  String source=getSharedPreferences("settings",0).getString("transport","phone");
-  boolean phone=source.equals("phone");
+  String source=selectedSource().value;
+  boolean local=source.equals("phone")||source.equals("auto");
   if(CaptureService.recording){
    lastRecording=true;
    stopPresenceCheck();
    CaptureService.Link link=CaptureService.link;
    AudioManager audio=getSystemService(AudioManager.class);
-   if(phone&&audio!=null&&audio.isMicrophoneMute())link=CaptureService.Link.OFF;
-   paintConnection(link,phone,"");
+   if("phone".equals(CaptureService.linkSource)&&audio!=null&&audio.isMicrophoneMute()){
+    showConnection(CaptureService.Link.ERROR,"Микрофон выключен в Android");
+   }else if(link==CaptureService.Link.CONNECTED&&!CaptureService.inputLabel.isEmpty()){
+    showConnection(link,CaptureService.inputLabel);
+   }else{
+    showConnection(link,CaptureService.status);
+   }
    return;
   }
   if(lastRecording||!source.equals(presenceSource)){
@@ -740,14 +753,19 @@ public class MainActivity extends Activity {
    idleLink=CaptureService.Link.OFF;
    presenceError="";
   }
-  if(phone){
+  if(local){
    if(microphonePermissionDenied()){
     paintConnection(CaptureService.Link.ERROR,true,"Нет доступа к микрофону");
-   }else if(CaptureService.link==CaptureService.Link.ERROR&&"phone".equals(CaptureService.linkSource)){
+   }else if(CaptureService.link==CaptureService.Link.ERROR&&("phone".equals(CaptureService.linkSource)||"auto".equals(CaptureService.linkSource))){
     paintConnection(CaptureService.Link.ERROR,true,CaptureService.status);
    }else{
-    showConnection(CaptureService.Link.OFF,"Микрофон телефона доступен без сети");
+    boolean clipMic="auto".equals(source)&&!getSharedPreferences("settings",0).getString("ble_address","").isEmpty();
+    showConnection(CaptureService.Link.OFF,clipMic?"Сначала ClipMic рядом, затем гарнитура или телефон":"Гарнитура с микрофоном или сам телефон");
    }
+   return;
+  }
+  if("wifi".equals(source)){
+   showConnection(CaptureService.Link.OFF,"Сохранённое подключение по Wi-Fi");
    return;
   }
   if(resumed&&firmwareQuery==null&&devicePairing==null&&presenceCheck==null&&SystemClock.elapsedRealtime()>=nextPresenceCheck){
@@ -802,8 +820,10 @@ public class MainActivity extends Activity {
   if(presenceCheck!=null){presenceCheck.interrupt();presenceCheck=null;}
   nextPresenceCheck=0;
  }
- private boolean usingPhoneMicrophone(){
-  return "phone".equals(getSharedPreferences("settings",0).getString("transport","phone"));
+ private ChoiceDropdown.Option selectedSource(){
+  String saved=getSharedPreferences("settings",0).getString(SOURCE_MODE,"auto");
+  for(ChoiceDropdown.Option source:sources)if(source.value.equals(saved))return source;
+  return sources.get(0);
  }
  private boolean microphonePermissionDenied(){
   return checkSelfPermission(MICROPHONE_PERMISSION)!=android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -813,7 +833,8 @@ public class MainActivity extends Activity {
   return microphonePermissionDenied()&&!shouldShowRequestPermissionRationale(MICROPHONE_PERMISSION);
  }
  private void refreshMicrophoneAction(){
-  boolean needsPermission=usingPhoneMicrophone()&&microphonePermissionDenied();
+  String source=selectedSource().value;
+  boolean needsPermission=("auto".equals(source)||"phone".equals(source))&&microphonePermissionDenied();
   if(needsPermission){
    String action=microphoneNeedsSettings()?"Открыть настройки":"Разрешить микрофон";
    if(!action.contentEquals(recordAction.getText()))recordAction.setText(action);
@@ -874,7 +895,8 @@ public class MainActivity extends Activity {
   }
   if(active&&!stoppingRecording){
    if(CaptureService.link==CaptureService.Link.ERROR)setRecordState("Связь прервалась · переподключаюсь",StudioStyle.WARNING);
-   else setRecordState("Идёт запись",StudioStyle.RECORDING);
+   else if(CaptureService.link==CaptureService.Link.CONNECTING)setRecordState(CaptureService.status,muted);
+   else setRecordState(CaptureService.inputLabel.isEmpty()?"Идёт запись":"Идёт запись · "+CaptureService.inputLabel,StudioStyle.RECORDING);
   }
   if(!active&&startPendingUntil==0)refreshMicrophoneAction();
   refreshSavedRecording(active);

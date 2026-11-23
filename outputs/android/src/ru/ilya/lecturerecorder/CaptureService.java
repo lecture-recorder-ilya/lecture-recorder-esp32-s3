@@ -7,11 +7,12 @@ import android.net.wifi.WifiManager;
 import android.os.*;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder;
+import android.media.AudioRouting;
+import android.media.AudioTimestamp;
 import org.json.*;
 import java.io.*;
 import java.net.*;
-import java.text.SimpleDateFormat;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -19,12 +20,17 @@ public class CaptureService extends Service {
  enum Link { OFF, CONNECTING, CONNECTED, ERROR }
  static volatile Link link=Link.OFF;
  static volatile String linkSource="";
+ static volatile String inputLabel="";
  static volatile boolean recording=false;static volatile String status="Готово к записи",current="";static volatile long samples=0;
  static volatile int peak=0;
  private static final long SYNC_IDLE_NANOS=TimeUnit.SECONDS.toNanos(60);
  private static int visibleScreens;
  private static long lastScreenStopped=System.nanoTime();
- private boolean phoneMicrophone;
+ private volatile boolean phoneMicrophone;
+ private boolean autoWithClipMic;
+ private long lastStatusSecond;
+ private String lastStatusInput;
+ private volatile AudioRecord currentMicrophone;
  private boolean destroyed;
  private int foregroundType=-1;
  private volatile boolean stop=false;private volatile Socket socket;private SyncServer server;private BleSync bleSync;private PowerManager.WakeLock syncWake;private WifiManager.WifiLock wifi;private WifiManager.MulticastLock multicast;private NsdManager nsd;private NsdManager.DiscoveryListener discovery;private volatile String discovered="";private Handler timer=new Handler(Looper.getMainLooper());
@@ -45,6 +51,7 @@ public class CaptureService extends Service {
   if(recording)n.addAction(new Notification.Action.Builder(null,"Завершить запись",PendingIntent.getService(this,1,command(this,"STOP"),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT)).build());
   int type=Build.VERSION.SDK_INT>=30&&recording&&phoneMicrophone
    ?ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE:ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
+  if(Build.VERSION.SDK_INT>=30&&recording&&autoWithClipMic)type|=ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
   Notification notification=n.build();
   if(foregroundType!=type){
    if(Build.VERSION.SDK_INT>=29)startForeground(1,notification,type);else startForeground(1,notification);
@@ -54,21 +61,27 @@ public class CaptureService extends Service {
  @Override public int onStartCommand(Intent intent,int flags,int id){String secret=getSharedPreferences("settings",0).getString("service_key","");if(intent==null||secret.isEmpty()||!secret.equals(intent.getStringExtra("auth"))){if(!recording)stopSelf();return START_NOT_STICKY;}
   try{if(paired(this)&&server==null)server=new SyncServer(this);}catch(Exception e){status="Перенос: "+e.getMessage();}
   String action=intent.getAction();
-  if(("START".equals(action)||"START_PHONE".equals(action))&&!recording){
-   phoneMicrophone="START_PHONE".equals(action);
-   linkSource=phoneMicrophone?"phone":getSharedPreferences("settings",0).getString("transport","wifi");
-   if(phoneMicrophone&&checkSelfPermission("android.permission.RECORD_AUDIO")!=0){
-    link=Link.ERROR;status="Разреши доступ к микрофону в настройках телефона";stopSelf();return START_NOT_STICKY;
+  if (("START".equals(action) || "START_PHONE".equals(action) || "START_AUTO".equals(action)) && !recording) {
+   boolean automatic = "START_AUTO".equals(action);
+   phoneMicrophone = automatic || "START_PHONE".equals(action);
+   autoWithClipMic = automatic && BleStream.hasTrustedDevice(this);
+   boolean manualWifi = "wifi".equals(getSharedPreferences("settings", 0).getString("transport", "ble"));
+   String source = automatic ? "auto" : phoneMicrophone ? "phone" : manualWifi ? "wifi" : "ble";
+   if (phoneMicrophone && checkSelfPermission("android.permission.RECORD_AUDIO") != 0) {
+    link = Link.ERROR; status = "Разреши доступ к микрофону в настройках телефона"; stopSelf(); return START_NOT_STICKY;
    }
-   link=Link.CONNECTING;recording=true;stop=false;current="";samples=0;peak=0;
-   status=phoneMicrophone?"Включаю микрофон телефона…":"Подключаюсь к ESP…";
-   try{notifyState();}catch(RuntimeException error){
-    link=Link.ERROR;recording=false;status="Открой экран записи и попробуй ещё раз";stopSelf();return START_NOT_STICKY;
+   linkSource = source; inputLabel = ""; link = Link.CONNECTING;
+   recording = true; stop = false; current = ""; samples = 0; peak = 0;
+   lastStatusSecond = -1; lastStatusInput = "";
+   status = phoneMicrophone ? "Включаю микрофон…" : "Подключаюсь к ClipMic…";
+   try { notifyState(); } catch (RuntimeException error) {
+    link = Link.ERROR; recording = false; status = "Открой экран записи и попробуй ещё раз"; stopSelf(); return START_NOT_STICKY;
    }
-   boolean phone=phoneMicrophone;
-   new Thread(()->runCapture(phone),"Lecture capture").start();
+   new Thread(() -> runCapture(source), "Lecture capture").start();
+  } else if ("STOP".equals(action)) {
+   status = "Сохраняю запись…";
+   stopCapture();
   }
-  else if("STOP".equals(action)){stop=true;status="Сохраняю запись…";try{if(socket!=null){socket.getOutputStream().write('x');socket.close();}}catch(Exception ignored){}}
   try{if(server!=null&&bleSync==null&&(Build.VERSION.SDK_INT<31||(checkSelfPermission("android.permission.BLUETOOTH_ADVERTISE")==0&&checkSelfPermission("android.permission.BLUETOOTH_CONNECT")==0)))bleSync=new BleSync(this,server);}catch(Exception ignored){}
   notifyState();
   timer.removeCallbacksAndMessages(null);
@@ -92,13 +105,13 @@ public class CaptureService extends Service {
   notifyState();
   timer.postDelayed(this::maintainSync,5000);
  }
- private void runCapture(boolean phone){
+ private void runCapture(String source){
   PowerManager.WakeLock awake=getSystemService(PowerManager.class).newWakeLock(
    PowerManager.PARTIAL_WAKE_LOCK,"lectures:capture");
   String failure;
   try{
    awake.acquire();
-   failure=phone?capturePhone():capture();
+   failure=captureRecording(source);
   }catch(RuntimeException error){
    failure="Не удалось продолжить запись";
   }finally{
@@ -114,69 +127,287 @@ public class CaptureService extends Service {
   });
  }
  private boolean pending(){File[] files=Store.root(this).listFiles(f->Store.transferable(f.getName()));return files!=null&&files.length>0;}
- private String capturePhone(){File part=null;AudioRecord microphone=null;String error="";long started=System.currentTimeMillis();
-  try{
-   if(Store.root(this).getUsableSpace()<100*1024*1024)throw new IOException("На телефоне мало свободного места");
-   int rate=0,buffer=0;
-   for(int candidate:new int[]{16000,48000,44100}){int size=AudioRecord.getMinBufferSize(candidate,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT);if(size<=0)continue;AudioRecord trial=new AudioRecord(MediaRecorder.AudioSource.MIC,candidate,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,Math.max(size*2,candidate/2));if(trial.getState()==AudioRecord.STATE_INITIALIZED){microphone=trial;rate=candidate;buffer=Math.max(size,2048);break;}trial.release();}
-   if(microphone==null)throw new IOException("Микрофон телефона недоступен");
-   SimpleDateFormat fmt=new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss",Locale.US);fmt.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));current="lecture-"+fmt.format(new Date(started))+"-"+String.format(Locale.US,"%06d",started%1000*1000)+".wav";part=new File(Store.root(this),current.replace(".wav",".part"));
-   if(part.exists()||new File(Store.root(this),current).exists())throw new IOException("Запись с этим временем уже существует");
-   Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android_microphone").put("started_ms",started).put("awaiting_lesson",true).put("gaps",new JSONArray()));
-   try(RandomAccessFile out=new RandomAccessFile(part,"rw")){Store.header(out,0);out.seek(44);try(BufferedOutputStream output=new BufferedOutputStream(new OutputStream(){public void write(int b)throws IOException{out.write(b);}public void write(byte[] b,int offset,int length)throws IOException{out.write(b,offset,length);}},65536)){PcmResampler resampler=new PcmResampler(output,rate);short[] block=new short[buffer/2];microphone.startRecording();if(microphone.getRecordingState()!=AudioRecord.RECORDSTATE_RECORDING)throw new IOException("Не удалось запустить микрофон");link=Link.CONNECTED;long checkpoint=SystemClock.elapsedRealtime();
-    while(!stop){int count=microphone.read(block,0,block.length,AudioRecord.READ_BLOCKING);if(count<0)throw new IOException("Микрофон прервал запись. Сохранён доступный звук");if(count==0)continue;int blockPeak=0;
-     for(int i=0;i<count;i++){
-      short sample=block[i];
-      resampler.sample(sample);
-      blockPeak=Math.max(blockPeak,Math.abs((int)sample));
+ private String captureRecording(String source) {
+  boolean local = "phone".equals(source) || "auto".equals(source);
+  try (CaptureTake take = new CaptureTake(this, local ? "android_microphone" : "android");
+       ClipMicProbe probe = autoWithClipMic ? new ClipMicProbe(this, () -> stop) : null) {
+   current = take.name;
+   try {
+    if (local) {
+     BleStream clipMic;
+     try {
+      clipMic = captureLocal(take, probe);
+     } catch (IOException unavailable) {
+      if (probe == null || stop || samples > 0) throw unavailable;
+      clipMic = probe.await(() -> stop);
+      if (clipMic == null && !stop) throw unavailable;
      }
-     peak=blockPeak;samples=resampler.frames();status=String.format(Locale.US,"Записываю · %d:%02d",samples/16000/60,samples/16000%60);if(SystemClock.elapsedRealtime()-checkpoint>2000){output.flush();out.getFD().sync();checkpoint=SystemClock.elapsedRealtime();if(out.length()>4_200_000_000L||Store.root(this).getUsableSpace()<30*1024*1024)throw new IOException("Память заканчивается — запись сохранена");}}
-    resampler.finish();output.flush();out.getFD().sync();samples=resampler.frames();}
+     if (clipMic != null) {
+      try (Socket prepared = clipMic.socket()) {
+       if (!stop) {
+        phoneMicrophone = false;
+        timer.post(() -> { if (recording && !destroyed) notifyState(); });
+        captureExternal(take, "ble", prepared, true);
+       }
+      }
+     }
+    } else {
+     captureExternal(take, source, null, false);
+    }
+   } catch (Exception failure) {
+    String message = failure.getMessage() == null ? "Не удалось продолжить запись" : failure.getMessage();
+    take.setError(message);
+    return message;
    }
-  }catch(Exception e){error=e.getMessage()==null?"Не удалось записать звук":e.getMessage();}finally{
-   if(microphone!=null){try{microphone.stop();}catch(Exception ignored){}microphone.release();}
-   try{if(part!=null&&part.exists()&&part.length()<=44){part.delete();new File(part.getPath()+".json").delete();}if(part!=null&&part.exists()){Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android_microphone").put("started_ms",started).put("awaiting_lesson",true).put("gaps",new JSONArray()).put("error",error));Store.seal(part);}}catch(Exception e){error="Сохранение: "+e.getMessage();}
+   return "";
+  } catch (Exception failure) {
+   return failure.getMessage() == null ? "Не удалось сохранить запись" : failure.getMessage();
   }
-  return error;
+ }
+
+ private BleStream captureLocal(CaptureTake take, ClipMicProbe probe) throws Exception {
+  long lastInput = 0;
+  for (int attempt = 0; !stop; attempt++) {
+   BleStream prepared = probe == null ? null : probe.take();
+   if (prepared != null) return prepared;
+   try {
+    return readMicrophone(take, probe, lastInput);
+   } catch (DeadMicrophone disconnected) {
+    if (attempt >= 1) throw new IOException("Микрофон отключён. Сохранён доступный звук");
+    lastInput = disconnected.lastInput;
+    status = "Переключаю микрофон…";
+   }
+  }
+  return null;
+ }
+
+ private BleStream readMicrophone(CaptureTake take, ClipMicProbe probe, long gapStart) throws Exception {
+  AudioRecord microphone = null;
+  try (RecordingInput route = new RecordingInput(this)) {
+   int rate = 0, buffer = 0;
+   for (int candidate : new int[]{16000, 48000, 44100, 8000}) {
+    int size = AudioRecord.getMinBufferSize(candidate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+    if (size <= 0) continue;
+    AudioRecord trial;
+    try {
+     trial = new AudioRecord(route.audioSource(), candidate, AudioFormat.CHANNEL_IN_MONO,
+             AudioFormat.ENCODING_PCM_16BIT, Math.max(size * 2, candidate / 2));
+    } catch (IllegalArgumentException unsupported) { continue; }
+    if (trial.getState() == AudioRecord.STATE_INITIALIZED) {
+     microphone = trial; rate = candidate; buffer = Math.max(size, 2048); break;
+    }
+    trial.release();
+   }
+   if (microphone == null) throw new IOException("Микрофон телефона недоступен");
+   route.prefer(microphone);
+   AtomicBoolean routeChanged = new AtomicBoolean(true);
+   AudioRouting.OnRoutingChangedListener listener = ignored -> routeChanged.set(true);
+   microphone.addOnRoutingChangedListener(listener, timer);
+   try (BufferedOutputStream pcm = new BufferedOutputStream(new OutputStream() {
+    public void write(int value) throws IOException { take.audio.write(value); }
+    public void write(byte[] data, int offset, int length) throws IOException { take.audio.write(data, offset, length); }
+   }, 65536)) {
+    PcmResampler resampler = new PcmResampler(pcm, rate);
+    short[] block = new short[buffer / 2];
+    currentMicrophone = microphone;
+    if (stop) return null;
+    microphone.startRecording();
+    if (microphone.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) throw new IOException("Не удалось запустить микрофон");
+    long base = samples, clockOrigin = 0, lastInput = SystemClock.elapsedRealtime(), lastRouteCheck = 0;
+    BleStream prepared = null;
+    while (!stop) {
+     int count = microphone.read(block, 0, block.length, AudioRecord.READ_BLOCKING);
+     if (stop && count <= 0) break;
+     if (count == AudioRecord.ERROR_DEAD_OBJECT) throw new DeadMicrophone(lastInput);
+     if (count < 0) throw new IOException("Микрофон прервал запись. Сохранён доступный звук");
+     if (count == 0) continue;
+     lastInput = SystemClock.elapsedRealtime();
+     if (clockOrigin == 0) {
+      clockOrigin = System.nanoTime() - count * 1_000_000_000L / rate;
+      if (gapStart > 0) {
+       appendGap(take, Math.max(0, (lastInput - gapStart) * 16 - count * 16000L / rate));
+       base = samples;
+      }
+     }
+     if (routeChanged.getAndSet(false) || lastInput - lastRouteCheck >= 1000) {
+      markInput(take, "phone", RecordingInput.actualLabel(microphone));
+      lastRouteCheck = lastInput;
+     }
+     int blockPeak = 0;
+     for (int index = 0; index < count; index++) {
+      resampler.sample(block[index]);
+      blockPeak = Math.max(blockPeak, Math.abs((int)block[index]));
+     }
+     peak = blockPeak; samples = base + resampler.frames();
+     updateRecordingStatus();
+     if (take.shouldCheckpoint()) { pcm.flush(); take.checkpoint(); }
+     if (!stop && probe != null && (prepared = probe.take()) != null) break;
+    }
+    resampler.finish(); pcm.flush(); samples = base + resampler.frames();
+    if (prepared != null) {
+     try {
+      AudioTimestamp stamp = new AudioTimestamp();
+      if (microphone.getTimestamp(stamp, AudioTimestamp.TIMEBASE_MONOTONIC) == AudioRecord.SUCCESS
+              && stamp.nanoTime > 0 && stamp.framePosition >= 0) {
+       long origin = stamp.nanoTime - stamp.framePosition * 1_000_000_000L / rate;
+       if (Math.abs(origin - clockOrigin) < 2_000_000_000L) clockOrigin = origin;
+      }
+     } catch (RuntimeException unsupported) {}
+     long localFrames = Math.max(0, (prepared.firstAudioNanos() - clockOrigin) * 16000 / 1_000_000_000L);
+     take.localPrefixFrames = Math.min(samples, base + localFrames);
+    }
+    return prepared;
+   } finally {
+    microphone.removeOnRoutingChangedListener(listener);
+   }
+  } finally {
+   currentMicrophone = null;
+   if (microphone != null) {
+    try { microphone.stop(); } catch (RuntimeException ignored) {}
+    microphone.release();
+   }
+  }
+ }
+
+ private void markInput(CaptureTake take, String source, String label) throws Exception {
+  take.route(source, label, samples);
+  linkSource = source;
+  inputLabel = label;
+  link = Link.CONNECTED;
+ }
+
+ private void updateRecordingStatus() {
+  long seconds = samples / 16000;
+  if (stop || (seconds == lastStatusSecond && inputLabel.equals(lastStatusInput))) return;
+  lastStatusSecond = seconds;
+  lastStatusInput = inputLabel;
+  status = String.format(Locale.US, "%s · %d:%02d", inputLabel, seconds / 60, seconds % 60);
+ }
+
+ private static final class DeadMicrophone extends IOException {
+  final long lastInput;
+  DeadMicrophone(long lastInput) { this.lastInput = lastInput; }
+ }
+
+ private void appendGap(CaptureTake take, long missing) throws Exception {
+  if (missing == 0) return;
+  long from = samples;
+  byte[] silence = new byte[32000];
+  while (missing > 0) {
+   take.checkCapacity();
+   int frames = (int)Math.min(missing, 16000);
+   take.audio.write(silence, 0, frames * 2);
+   samples += frames;
+   missing -= frames;
+  }
+  take.gaps.put(new JSONObject().put("start", from / 16000.0).put("end", samples / 16000.0)
+          .put("seconds", (samples - from) / 16000.0));
+  take.saveMetadata();
  }
  private void discover(){try{WifiManager w=(WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);multicast=w.createMulticastLock("ESP discovery");multicast.acquire();nsd=getSystemService(NsdManager.class);discovery=new NsdManager.DiscoveryListener(){public void onDiscoveryStarted(String t){}public void onDiscoveryStopped(String t){}public void onStartDiscoveryFailed(String t,int e){}public void onStopDiscoveryFailed(String t,int e){}public void onServiceLost(NsdServiceInfo i){}public void onServiceFound(NsdServiceInfo i){nsd.resolveService(i,new NsdManager.ResolveListener(){public void onResolveFailed(NsdServiceInfo v,int e){}public void onServiceResolved(NsdServiceInfo v){if(v.getHost()!=null&&v.getPort()==8766)discovered=v.getHost().getHostAddress();}});}};nsd.discoverServices("_esp-recorder._tcp.",NsdManager.PROTOCOL_DNS_SD,discovery);}catch(Exception ignored){}}
- private Socket connect()throws Exception{
-  if(getSharedPreferences("settings",0).getString("transport","ble").equals("ble")){BleStream stream=new BleStream(this,()->stop);socket=stream.socket();return socket;}
+ private Socket connect(String transport, boolean trustedOnly) throws Exception {
+  if ("ble".equals(transport)) {
+   BleStream stream = new BleStream(this, () -> stop, SystemClock.elapsedRealtime() + 20000, trustedOnly);
+   return stream.socket();
+  }
   String host=getSharedPreferences("settings",0).getString("ip","");String hostname=getSharedPreferences("settings",0).getString("hostname","");Exception error=new IOException("Не указан адрес ESP");LinkedHashSet<String> choices=new LinkedHashSet<>(Arrays.asList(discovered,host,hostname));
-  for(String h:choices)if(!h.isEmpty()){Socket s=new Socket();try{s.connect(new InetSocketAddress(h,8766),3000);s.setSoTimeout(4000);s.setTcpNoDelay(true);socket=s;s.getOutputStream().write(("START "+getSharedPreferences("settings",0).getString("token","")+"\n").getBytes("UTF-8"));ByteArrayOutputStream line=new ByteArrayOutputStream();int b;while((b=s.getInputStream().read())!=-1&&b!=10&&line.size()<128)line.write(b);if(!line.toString("UTF-8").trim().equals("STREAM 16000"))throw new IOException("ESP не разрешила запись");return s;}catch(Exception e){error=e;s.close();}}
+  for(String h:choices)if(!h.isEmpty()){Socket s=new Socket();try{s.connect(new InetSocketAddress(h,8766),3000);s.setSoTimeout(4000);s.setTcpNoDelay(true);s.getOutputStream().write(("START "+getSharedPreferences("settings",0).getString("token","")+"\n").getBytes("UTF-8"));ByteArrayOutputStream line=new ByteArrayOutputStream();int b;while((b=s.getInputStream().read())!=-1&&b!=10&&line.size()<128)line.write(b);if(!line.toString("UTF-8").trim().equals("STREAM 16000"))throw new IOException("ESP не разрешила запись");return s;}catch(Exception e){error=e;s.close();}}
   throw error;
  }
- private String capture(){File part=null;JSONArray gaps=new JSONArray();long started=System.currentTimeMillis(),gapAt=-1;String error="";long lastSync=0,lastAudio=0;
-  try{
-   if(Store.root(this).getUsableSpace()<100*1024*1024)throw new IOException("На телефоне мало свободного места");
-   if(getSharedPreferences("settings",0).getString("transport","ble").equals("wifi")){
-    WifiManager manager=(WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
-    wifi=manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,"lectures:wifi");
-    wifi.acquire();
-    discover();
-   }
-   SimpleDateFormat fmt=new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss",Locale.US);fmt.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));current="lecture-"+fmt.format(new Date(started))+"-"+(started%1000*1000)+".wav";part=new File(Store.root(this),current.replace(".wav",".part"));if(part.exists()||new File(Store.root(this),current).exists())throw new IOException("Запись с этим временем уже существует");
-   Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android").put("started_ms",started).put("awaiting_lesson",true).put("gaps",gaps));
-   try(RandomAccessFile out=new RandomAccessFile(part,"rw")){Store.header(out,0);out.seek(44);byte[] zeros=new byte[32000];
-    while(!stop){link=Link.CONNECTING;try(Socket s=connect()){
-     if(stop)break;
-     if(gapAt>=0){long missing=(SystemClock.elapsedRealtime()-gapAt)*16;long from=samples;while(missing>0){if(Store.root(this).getUsableSpace()<30*1024*1024)throw new StorageException("Память заканчивается — запись сохранена");int frames=(int)Math.min(missing,16000);out.write(zeros,0,frames*2);samples+=frames;missing-=frames;}gaps.put(new JSONObject().put("start",from/16000.0).put("end",samples/16000.0).put("seconds",(samples-from)/16000.0));Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android").put("started_ms",started).put("awaiting_lesson",true).put("gaps",gaps));gapAt=-1;}
-     InputStream input=s.getInputStream();long connectionBase=samples;DataInputStream in=new DataInputStream(input);while(!stop){byte[] h=new byte[6];in.readFully(h);if(h[0]!='P'||h[1]!='C'||h[2]!='M'||h[3]!='1')throw new IOException("Некорректный поток ESP");int count=(h[4]&255)|((h[5]&255)<<8);if(count==0)throw new EOFException("ESP завершила поток");if(count>4096||count%2!=0)throw new IOException("Некорректный размер блока");byte[] b=new byte[count];in.readFully(b);if(stop)break;link=Link.CONNECTED;out.write(b);
-      int blockPeak=0;
-      for(int i=0;i<count;i+=2){
-       int sample=(short)((b[i]&255)|(b[i+1]<<8));
+ private void captureExternal(CaptureTake take, String transport, Socket prepared, boolean trustedOnly) throws Exception {
+  boolean wirelessLan = "wifi".equals(transport);
+  if (wirelessLan) {
+   WifiManager manager = (WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
+   wifi = manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "lectures:wifi");
+   wifi.acquire();
+   discover();
+  }
+  String label = wirelessLan ? "ClipMic · Wi-Fi" : "ClipMic · Bluetooth";
+  long gapAt = -1, lastAudio = 0;
+  try {
+   while (!stop) {
+    link = Link.CONNECTING;
+    Socket available = prepared;
+    prepared = null;
+    if (available == null) {
+     try { available = connect(transport, trustedOnly); }
+     catch (Exception disconnected) { if (stop) break; }
+    }
+    if (available != null) try (Socket stream = available) {
+     socket = stream;
+     if (stop) break;
+     InputStream input = stream.getInputStream();
+     DataInputStream data = new DataInputStream(input);
+     long connectionBase = -1;
+     while (!stop) {
+      byte[] pcm;
+      try { pcm = readPcm(data); }
+      catch (IOException lost) { break; }
+      if (stop) break;
+      long now = SystemClock.elapsedRealtime();
+      if (take.localPrefixFrames >= 0) {
+       take.trim(take.localPrefixFrames);
+       samples = take.localPrefixFrames;
+       take.localPrefixFrames = -1;
+      }
+      if (gapAt >= 0) { appendGap(take, Math.max(0, (now-gapAt)*16 - pcm.length/2)); gapAt = -1; }
+      if (connectionBase < 0) connectionBase = samples;
+      markInput(take, transport, label);
+      take.audio.write(pcm);
+      int blockPeak = 0;
+      for (int i=0; i<pcm.length; i+=2) {
+       int sample=(short)((pcm[i]&255)|(pcm[i+1]<<8));
        blockPeak=Math.max(blockPeak,Math.abs(sample));
       }
-      peak=blockPeak;samples+=count/2;lastAudio=SystemClock.elapsedRealtime();if(input instanceof BleStream){JSONArray lost=((BleStream)input).takeGaps();for(int i=0;i<lost.length();i++){JSONObject gap=lost.getJSONObject(i);gap.put("start",connectionBase/16000.0+gap.getDouble("start"));gaps.put(gap);}}status=String.format(Locale.US,"Записываю · %d:%02d",samples/16000/60,samples/16000%60);if(SystemClock.elapsedRealtime()-lastSync>2000){out.getFD().sync();Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android").put("started_ms",started).put("awaiting_lesson",true).put("gaps",gaps));lastSync=SystemClock.elapsedRealtime();}if(out.length()>4_200_000_000L||Store.root(this).getUsableSpace()<30*1024*1024)throw new StorageException("Память заканчивается — запись сохранена");}
-    }catch(StorageException e){throw e;}catch(Exception e){if(stop)break;link=Link.ERROR;if(samples>0&&gapAt<0)gapAt=lastAudio>0?lastAudio:SystemClock.elapsedRealtime();status="Связь потеряна — переподключаюсь…";for(int i=0;i<20&&!stop;i++)Thread.sleep(100);}}
-    if(gapAt>=0)gaps.put(new JSONObject().put("start",samples/16000.0).put("seconds",(SystemClock.elapsedRealtime()-gapAt)/1000.0).put("unrecorded_tail",true));out.getFD().sync();
+      peak = blockPeak; samples += pcm.length / 2; lastAudio = now;
+      if (input instanceof BleStream) {
+       JSONArray lost = ((BleStream)input).takeGaps();
+       for (int index=0; index<lost.length(); index++) {
+        JSONObject gap = lost.getJSONObject(index);
+        gap.put("start", connectionBase / 16000.0 + gap.getDouble("start"));
+        take.gaps.put(gap);
+       }
+      }
+      updateRecordingStatus();
+      if (take.shouldCheckpoint()) take.checkpoint();
+     }
+    } finally { socket = null; }
+    if (stop) break;
+    if (gapAt < 0 && lastAudio > 0) gapAt = lastAudio;
+    link = Link.ERROR; status = "Связь с ClipMic потеряна · переподключаюсь…";
+    for (int i=0; i<20 && !stop; i++) Thread.sleep(100);
    }
-  }catch(Exception e){error=e.getMessage()==null?"Не удалось записать звук ESP":e.getMessage();}finally{try{if(part!=null&&part.exists()&&part.length()<=44){part.delete();new File(part.getPath()+".json").delete();}if(part!=null&&part.exists()){Store.write(new File(part.getPath()+".json"),new JSONObject().put("source","android").put("started_ms",started).put("awaiting_lesson",true).put("gaps",gaps).put("error",error));Store.seal(part);}}catch(Exception e){error="Сохранение: "+e.getMessage();}
-   try{if(discovery!=null)nsd.stopServiceDiscovery(discovery);}catch(Exception ignored){}if(multicast!=null&&multicast.isHeld())multicast.release();if(wifi!=null&&wifi.isHeld())wifi.release();socket=null;
+  } finally {
+   if (gapAt >= 0) take.gaps.put(new JSONObject().put("start", samples / 16000.0)
+           .put("seconds", (SystemClock.elapsedRealtime() - gapAt) / 1000.0).put("unrecorded_tail", true));
+   if (discovery != null) { try { nsd.stopServiceDiscovery(discovery); } catch (RuntimeException ignored) {} discovery = null; }
+   if (multicast != null && multicast.isHeld()) multicast.release();
+   if (wifi != null && wifi.isHeld()) wifi.release();
+   socket = null;
   }
-  return error;
  }
- private static class StorageException extends IOException{StorageException(String s){super(s);}}
+
+ private static byte[] readPcm(DataInputStream input) throws IOException {
+  byte[] header = new byte[6];
+  input.readFully(header);
+  if (header[0]!='P' || header[1]!='C' || header[2]!='M' || header[3]!='1') throw new IOException("Некорректный поток ClipMic");
+  int count = (header[4]&255) | ((header[5]&255)<<8);
+  if (count == 0 || count > 4096 || count % 2 != 0) throw new IOException("Некорректный размер блока");
+  byte[] pcm = new byte[count];
+  input.readFully(pcm);
+  return pcm;
+ }
+
+ private void stopCapture() {
+  stop = true;
+  AudioRecord mic = currentMicrophone;
+  if (mic != null) { try { mic.stop(); } catch (RuntimeException ignored) {} }
+  Socket active = socket;
+  if (active != null) new Thread(() -> {
+   try { active.getOutputStream().write('x'); } catch (Exception ignored) {}
+   try { active.close(); } catch (IOException ignored) {}
+  }, "Stop capture").start();
+ }
  @Override public android.os.IBinder onBind(Intent i){return null;}
- @Override public void onDestroy(){destroyed=true;stop=true;try{if(socket!=null)socket.close();}catch(Exception ignored){}if(server!=null)server.close();if(bleSync!=null)bleSync.close();if(syncWake!=null&&syncWake.isHeld())syncWake.release();timer.removeCallbacksAndMessages(null);super.onDestroy();}
+ @Override public void onDestroy(){destroyed=true;stopCapture();if(server!=null)server.close();if(bleSync!=null)bleSync.close();if(syncWake!=null&&syncWake.isHeld())syncWake.release();timer.removeCallbacksAndMessages(null);super.onDestroy();}
 }
