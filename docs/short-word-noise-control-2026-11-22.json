@@ -1,0 +1,5372 @@
+{
+  "archive": {
+    "date": "2026-11-22",
+    "report_commit": "c1b8533cc7acfe0514f135d5851f66710ac606ff",
+    "scope": "Архив эксперимента. Ревизии и сценарии указаны в отчёте."
+  },
+  "audit": {
+    "baseline": {
+      "summary": {
+        "clips": 60,
+        "reference_words": 123,
+        "word_errors": 47,
+        "wer": 0.3821138211382114,
+        "hallucinated_words": 3,
+        "noise_cases": 8,
+        "failed_noise_cases": 3,
+        "word_error_breakdown": {
+          "substitutions": 27,
+          "deletions": 7,
+          "insertions": 13
+        },
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 1
+        },
+        "negations": {
+          "missed": 11,
+          "extra": 0
+        }
+      },
+      "targets": {
+        "не": {
+          "cases": 19,
+          "expected": 19,
+          "retained": 8,
+          "baseline_retained": 8,
+          "added_losses": 0
+        },
+        "три": {
+          "cases": 19,
+          "expected": 19,
+          "retained": 16,
+          "baseline_retained": 16,
+          "added_losses": 0
+        },
+        "да": {
+          "cases": 14,
+          "expected": 14,
+          "retained": 8,
+          "baseline_retained": 8,
+          "added_losses": 0
+        }
+      },
+      "subsets": {
+        "center-5s": {
+          "cases": 8,
+          "expected": 8,
+          "retained": 4,
+          "baseline_retained": 4,
+          "added_losses": 0
+        },
+        "end-5s": {
+          "cases": 8,
+          "expected": 8,
+          "retained": 5,
+          "baseline_retained": 5,
+          "added_losses": 0
+        },
+        "isolated": {
+          "cases": 8,
+          "expected": 8,
+          "retained": 4,
+          "baseline_retained": 4,
+          "added_losses": 0
+        },
+        "quiet-center-5s": {
+          "cases": 8,
+          "expected": 8,
+          "retained": 6,
+          "baseline_retained": 6,
+          "added_losses": 0
+        },
+        "recorded-context": {
+          "cases": 12,
+          "expected": 12,
+          "retained": 9,
+          "baseline_retained": 9,
+          "added_losses": 0
+        },
+        "start-5s": {
+          "cases": 8,
+          "expected": 8,
+          "retained": 4,
+          "baseline_retained": 4,
+          "added_losses": 0
+        }
+      },
+      "rows": [
+        {
+          "id": "6hoeGxsHS6c_0023",
+          "subset": "recorded-context",
+          "target": "не",
+          "reference": "Не знаю, 100?",
+          "baseline": "Не знаю сто.",
+          "after": "Не знаю сто.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "CPci7a8l-oU_0101",
+          "subset": "recorded-context",
+          "target": "не",
+          "reference": "И не болейте.",
+          "baseline": "И-и не болейте.",
+          "after": "И-и не болейте.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "a1F_YF36bII_0032",
+          "subset": "recorded-context",
+          "target": "не",
+          "reference": "Забить никто не мог.",
+          "baseline": "Журналист Александр",
+          "after": "Журналист Александр",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0126",
+          "subset": "recorded-context",
+          "target": "не",
+          "reference": "Иди!» Ничто не мешает.",
+          "baseline": "Иди. Ничто не мешает.",
+          "after": "Иди. Ничто не мешает.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0078",
+          "subset": "recorded-context",
+          "target": "три",
+          "reference": "Ну, почти три — и бросил.",
+          "baseline": "Ну, почти три. и бросил.",
+          "after": "Ну, почти три. и бросил.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "7hkxVyhoMoQ_0065",
+          "subset": "recorded-context",
+          "target": "три",
+          "reference": "В следующие три месяца произошло очень много.",
+          "baseline": "Произошло очень много. Государство ставило",
+          "after": "Произошло очень много. Государство ставило",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0141",
+          "subset": "recorded-context",
+          "target": "три",
+          "reference": "И по уровню сложности их разделили тоже на три категории.",
+          "baseline": "И по уровню сложности их разделили тоже на три категории.",
+          "after": "И по уровню сложности их разделили тоже на три категории.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "dll-jtmrD70_0111",
+          "subset": "recorded-context",
+          "target": "три",
+          "reference": "Мы тренировались на себе, проверяли, собирали три поколения, проверяли: может ли следующее поколение быть два раза умнее нас?",
+          "baseline": "Мы тренировали на себе, проверяли, собирали три поколения, проверяли, может ли следующее поколение быть в два раза умнее нас.",
+          "after": "Мы тренировали на себе, проверяли, собирали три поколения, проверяли, может ли следующее поколение быть в два раза умнее нас.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0000",
+          "subset": "recorded-context",
+          "target": "да",
+          "reference": "Да, привет!",
+          "baseline": "Да, привет.",
+          "after": "Да, привет.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "CPci7a8l-oU_0092",
+          "subset": "recorded-context",
+          "target": "да",
+          "reference": "Да, мы пытались найти таких.",
+          "baseline": "Дгда, мы пытались найти таких.",
+          "after": "Дгда, мы пытались найти таких.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "7hkxVyhoMoQ_0040",
+          "subset": "recorded-context",
+          "target": "да",
+          "reference": "Я сказала: \"Ну да, я не могу больше, я не хочу.",
+          "baseline": "С: да, я-я не могу больше, я не хочу.",
+          "after": "С: да, я-я не могу больше, я не хочу.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "B0f6kt4rnpM_0036",
+          "subset": "recorded-context",
+          "target": "да",
+          "reference": "Голова болит, гулять хочется, Ой ли ой люли, да не можется.",
+          "baseline": "Голова болит, Гулять хочется. Ой-ли-воой-люли, Да не может.",
+          "after": "Голова болит, Гулять хочется. Ой-ли-воой-люли, Да не может.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0023-не-isolated",
+          "subset": "isolated",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Незнаю",
+          "after": "Незнаю",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0023-не-center-5s",
+          "subset": "center-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Нез.",
+          "after": "Нез.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0023-не-quiet-center-5s",
+          "subset": "quiet-center-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Не знаю.",
+          "after": "Не знаю.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0023-не-start-5s",
+          "subset": "start-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Не знаю.",
+          "after": "Не знаю.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0023-не-end-5s",
+          "subset": "end-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Не знаю.",
+          "after": "Не знаю.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "CPci7a8l-oU_0101-не-isolated",
+          "subset": "isolated",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Не",
+          "after": "Не",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "CPci7a8l-oU_0101-не-center-5s",
+          "subset": "center-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Небо.",
+          "after": "Небо.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "CPci7a8l-oU_0101-не-quiet-center-5s",
+          "subset": "quiet-center-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Не.",
+          "after": "Не.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "CPci7a8l-oU_0101-не-start-5s",
+          "subset": "start-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Нниб.",
+          "after": "Нниб.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "CPci7a8l-oU_0101-не-end-5s",
+          "subset": "end-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Н.",
+          "after": "Н.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0126-не-isolated",
+          "subset": "isolated",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Кто",
+          "after": "Кто",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0126-не-center-5s",
+          "subset": "center-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Чтонибь?",
+          "after": "Чтонибь?",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0126-не-quiet-center-5s",
+          "subset": "quiet-center-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Что-нибь?",
+          "after": "Что-нибь?",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0126-не-start-5s",
+          "subset": "start-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Что-нибь?",
+          "after": "Что-нибь?",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0126-не-end-5s",
+          "subset": "end-5s",
+          "target": "не",
+          "reference": "не",
+          "baseline": "Кто?",
+          "after": "Кто?",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0078-три-isolated",
+          "subset": "isolated",
+          "target": "три",
+          "reference": "три",
+          "baseline": "Три.",
+          "after": "Три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0078-три-center-5s",
+          "subset": "center-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "Три.",
+          "after": "Три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0078-три-quiet-center-5s",
+          "subset": "quiet-center-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "Три.",
+          "after": "Три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0078-три-start-5s",
+          "subset": "start-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "Три.",
+          "after": "Три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "cPhc8OVB2Rk_0078-три-end-5s",
+          "subset": "end-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "Три.",
+          "after": "Три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0141-три-isolated",
+          "subset": "isolated",
+          "target": "три",
+          "reference": "три",
+          "baseline": "А ри.",
+          "after": "А ри.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0141-три-center-5s",
+          "subset": "center-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "А три.",
+          "after": "А три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0141-три-quiet-center-5s",
+          "subset": "quiet-center-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "А три.",
+          "after": "А три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0141-три-start-5s",
+          "subset": "start-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "Натри.",
+          "after": "Натри.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0141-три-end-5s",
+          "subset": "end-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "А три.",
+          "after": "А три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "dll-jtmrD70_0111-три-isolated",
+          "subset": "isolated",
+          "target": "три",
+          "reference": "три",
+          "baseline": "Три.",
+          "after": "Три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "dll-jtmrD70_0111-три-center-5s",
+          "subset": "center-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "Три.",
+          "after": "Три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "dll-jtmrD70_0111-три-quiet-center-5s",
+          "subset": "quiet-center-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "Три.",
+          "after": "Три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "dll-jtmrD70_0111-три-start-5s",
+          "subset": "start-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "Три.",
+          "after": "Три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "dll-jtmrD70_0111-три-end-5s",
+          "subset": "end-5s",
+          "target": "три",
+          "reference": "три",
+          "baseline": "Три.",
+          "after": "Три.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0000-да-isolated",
+          "subset": "isolated",
+          "target": "да",
+          "reference": "да",
+          "baseline": "Да.",
+          "after": "Да.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0000-да-center-5s",
+          "subset": "center-5s",
+          "target": "да",
+          "reference": "да",
+          "baseline": "Да.",
+          "after": "Да.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0000-да-quiet-center-5s",
+          "subset": "quiet-center-5s",
+          "target": "да",
+          "reference": "да",
+          "baseline": "Да.",
+          "after": "Да.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0000-да-start-5s",
+          "subset": "start-5s",
+          "target": "да",
+          "reference": "да",
+          "baseline": "Да.",
+          "after": "Да.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "6hoeGxsHS6c_0000-да-end-5s",
+          "subset": "end-5s",
+          "target": "да",
+          "reference": "да",
+          "baseline": "Да.",
+          "after": "Да.",
+          "expected": 1,
+          "before": 1,
+          "retained": 1,
+          "added_losses": 0
+        },
+        {
+          "id": "7hkxVyhoMoQ_0040-да-isolated",
+          "subset": "isolated",
+          "target": "да",
+          "reference": "да",
+          "baseline": "А.",
+          "after": "А.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "7hkxVyhoMoQ_0040-да-center-5s",
+          "subset": "center-5s",
+          "target": "да",
+          "reference": "да",
+          "baseline": "Ай.",
+          "after": "Ай.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "7hkxVyhoMoQ_0040-да-quiet-center-5s",
+          "subset": "quiet-center-5s",
+          "target": "да",
+          "reference": "да",
+          "baseline": "Ай.",
+          "after": "Ай.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "7hkxVyhoMoQ_0040-да-start-5s",
+          "subset": "start-5s",
+          "target": "да",
+          "reference": "да",
+          "baseline": "Ай.",
+          "after": "Ай.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        },
+        {
+          "id": "7hkxVyhoMoQ_0040-да-end-5s",
+          "subset": "end-5s",
+          "target": "да",
+          "reference": "да",
+          "baseline": "А.",
+          "after": "А.",
+          "expected": 1,
+          "before": 0,
+          "retained": 0,
+          "added_losses": 0
+        }
+      ]
+    },
+    "baseline_sha256": "7b12e42b5c537da0117cbd06c131fd3c9ad99a98b56bdfe639146ac8a15542f9",
+    "manifest_sha256": "ae01a7a86443aab098794000e3eaf1123b665010adcf25b44e04e8b6a6f48311",
+    "script_sha256": "94d17b09e72672d0bf57d0a12dc37f6350bb596073cbce9cdc1229f9cc87cbce",
+    "diagnostic_plan_sha256": "1190e422408b5de364674d3c286604a923ac0b9216868d9f1cc05279bfc6e7f9",
+    "sources_sha256": {
+      "PhoneGigaAm": "09425d39e026797b0870675fefb96633a4da0101e177e040eb09befc9c7fcdee",
+      "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+      "PhoneSpeechWindow": "da065eea7fb1cf02e0cccc75436e53820e6b6804cd020d30c78a7946de31d184",
+      "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+      "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+    },
+    "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+    "diagnostic_only": true,
+    "diagnostics": {
+      "single_word": {
+        "summary": {
+          "clips": 60,
+          "reference_words": 123,
+          "word_errors": 62,
+          "wer": 0.5040650406504065,
+          "hallucinated_words": 0,
+          "noise_cases": 8,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 40,
+            "insertions": 11
+          },
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 14,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 13,
+            "extra": 0
+          }
+        },
+        "targets": {
+          "не": {
+            "cases": 19,
+            "expected": 19,
+            "retained": 6,
+            "baseline_retained": 8,
+            "added_losses": 2
+          },
+          "три": {
+            "cases": 19,
+            "expected": 19,
+            "retained": 6,
+            "baseline_retained": 16,
+            "added_losses": 10
+          },
+          "да": {
+            "cases": 14,
+            "expected": 14,
+            "retained": 3,
+            "baseline_retained": 8,
+            "added_losses": 5
+          }
+        },
+        "subsets": {
+          "center-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 1,
+            "baseline_retained": 4,
+            "added_losses": 3
+          },
+          "end-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 2,
+            "baseline_retained": 5,
+            "added_losses": 3
+          },
+          "isolated": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 0,
+            "baseline_retained": 4,
+            "added_losses": 4
+          },
+          "quiet-center-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 2,
+            "baseline_retained": 6,
+            "added_losses": 4
+          },
+          "recorded-context": {
+            "cases": 12,
+            "expected": 12,
+            "retained": 9,
+            "baseline_retained": 9,
+            "added_losses": 0
+          },
+          "start-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 1,
+            "baseline_retained": 4,
+            "added_losses": 3
+          }
+        },
+        "rows": [
+          {
+            "id": "6hoeGxsHS6c_0023",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "Не знаю, 100?",
+            "baseline": "Не знаю сто.",
+            "after": "Не знаю сто.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "И не болейте.",
+            "baseline": "И-и не болейте.",
+            "after": "И-и не болейте.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "a1F_YF36bII_0032",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "Забить никто не мог.",
+            "baseline": "Журналист Александр",
+            "after": "Журналист Александр",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "Иди!» Ничто не мешает.",
+            "baseline": "Иди. Ничто не мешает.",
+            "after": "Иди. Ничто не мешает.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "Ну, почти три — и бросил.",
+            "baseline": "Ну, почти три. и бросил.",
+            "after": "Ну, почти три. и бросил.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0065",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "В следующие три месяца произошло очень много.",
+            "baseline": "Произошло очень много. Государство ставило",
+            "after": "Произошло очень много. Государство ставило",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "И по уровню сложности их разделили тоже на три категории.",
+            "baseline": "И по уровню сложности их разделили тоже на три категории.",
+            "after": "И по уровню сложности их разделили тоже на три категории.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "dll-jtmrD70_0111",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "Мы тренировались на себе, проверяли, собирали три поколения, проверяли: может ли следующее поколение быть два раза умнее нас?",
+            "baseline": "Мы тренировали на себе, проверяли, собирали три поколения, проверяли, может ли следующее поколение быть в два раза умнее нас.",
+            "after": "Мы тренировали на себе, проверяли, собирали три поколения, проверяли, может ли следующее поколение быть в два раза умнее нас.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0000",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Да, привет!",
+            "baseline": "Да, привет.",
+            "after": "Да, привет.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0092",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Да, мы пытались найти таких.",
+            "baseline": "Дгда, мы пытались найти таких.",
+            "after": "Дгда, мы пытались найти таких.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Я сказала: \"Ну да, я не могу больше, я не хочу.",
+            "baseline": "С: да, я-я не могу больше, я не хочу.",
+            "after": "С: да, я-я не могу больше, я не хочу.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "B0f6kt4rnpM_0036",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Голова болит, гулять хочется, Ой ли ой люли, да не можется.",
+            "baseline": "Голова болит, Гулять хочется. Ой-ли-воой-люли, Да не может.",
+            "after": "Голова болит, Гулять хочется. Ой-ли-воой-люли, Да не может.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-isolated",
+            "subset": "isolated",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Незнаю",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-center-5s",
+            "subset": "center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Нез.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не знаю.",
+            "after": "Не знаю.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-start-5s",
+            "subset": "start-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не знаю.",
+            "after": "Не знаю.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-end-5s",
+            "subset": "end-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не знаю.",
+            "after": "Не знаю.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-isolated",
+            "subset": "isolated",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-center-5s",
+            "subset": "center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Небо.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-start-5s",
+            "subset": "start-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Нниб.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-end-5s",
+            "subset": "end-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Н.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-isolated",
+            "subset": "isolated",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Кто",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-center-5s",
+            "subset": "center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Чтонибь?",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Что-нибь?",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-start-5s",
+            "subset": "start-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Что-нибь?",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-end-5s",
+            "subset": "end-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Кто?",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-isolated",
+            "subset": "isolated",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-center-5s",
+            "subset": "center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-start-5s",
+            "subset": "start-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-end-5s",
+            "subset": "end-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-isolated",
+            "subset": "isolated",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А ри.",
+            "after": "А ри.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-center-5s",
+            "subset": "center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А три.",
+            "after": "А три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А три.",
+            "after": "А три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-start-5s",
+            "subset": "start-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Натри.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-end-5s",
+            "subset": "end-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А три.",
+            "after": "А три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-isolated",
+            "subset": "isolated",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-center-5s",
+            "subset": "center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-start-5s",
+            "subset": "start-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-end-5s",
+            "subset": "end-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-isolated",
+            "subset": "isolated",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-center-5s",
+            "subset": "center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-start-5s",
+            "subset": "start-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-end-5s",
+            "subset": "end-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-isolated",
+            "subset": "isolated",
+            "target": "да",
+            "reference": "да",
+            "baseline": "А.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-center-5s",
+            "subset": "center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Ай.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Ай.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-start-5s",
+            "subset": "start-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Ай.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-end-5s",
+            "subset": "end-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "А.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          }
+        ]
+      },
+      "single_conf_below_070": {
+        "summary": {
+          "clips": 60,
+          "reference_words": 123,
+          "word_errors": 49,
+          "wer": 0.3983739837398374,
+          "hallucinated_words": 0,
+          "noise_cases": 8,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 19,
+            "deletions": 17,
+            "insertions": 13
+          },
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 4,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 13,
+            "extra": 0
+          }
+        },
+        "targets": {
+          "не": {
+            "cases": 19,
+            "expected": 19,
+            "retained": 6,
+            "baseline_retained": 8,
+            "added_losses": 2
+          },
+          "три": {
+            "cases": 19,
+            "expected": 19,
+            "retained": 16,
+            "baseline_retained": 16,
+            "added_losses": 0
+          },
+          "да": {
+            "cases": 14,
+            "expected": 14,
+            "retained": 8,
+            "baseline_retained": 8,
+            "added_losses": 0
+          }
+        },
+        "subsets": {
+          "center-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 4,
+            "baseline_retained": 4,
+            "added_losses": 0
+          },
+          "end-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 5,
+            "baseline_retained": 5,
+            "added_losses": 0
+          },
+          "isolated": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 3,
+            "baseline_retained": 4,
+            "added_losses": 1
+          },
+          "quiet-center-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 5,
+            "baseline_retained": 6,
+            "added_losses": 1
+          },
+          "recorded-context": {
+            "cases": 12,
+            "expected": 12,
+            "retained": 9,
+            "baseline_retained": 9,
+            "added_losses": 0
+          },
+          "start-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 4,
+            "baseline_retained": 4,
+            "added_losses": 0
+          }
+        },
+        "rows": [
+          {
+            "id": "6hoeGxsHS6c_0023",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "Не знаю, 100?",
+            "baseline": "Не знаю сто.",
+            "after": "Не знаю сто.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "И не болейте.",
+            "baseline": "И-и не болейте.",
+            "after": "И-и не болейте.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "a1F_YF36bII_0032",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "Забить никто не мог.",
+            "baseline": "Журналист Александр",
+            "after": "Журналист Александр",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "Иди!» Ничто не мешает.",
+            "baseline": "Иди. Ничто не мешает.",
+            "after": "Иди. Ничто не мешает.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "Ну, почти три — и бросил.",
+            "baseline": "Ну, почти три. и бросил.",
+            "after": "Ну, почти три. и бросил.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0065",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "В следующие три месяца произошло очень много.",
+            "baseline": "Произошло очень много. Государство ставило",
+            "after": "Произошло очень много. Государство ставило",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "И по уровню сложности их разделили тоже на три категории.",
+            "baseline": "И по уровню сложности их разделили тоже на три категории.",
+            "after": "И по уровню сложности их разделили тоже на три категории.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "dll-jtmrD70_0111",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "Мы тренировались на себе, проверяли, собирали три поколения, проверяли: может ли следующее поколение быть два раза умнее нас?",
+            "baseline": "Мы тренировали на себе, проверяли, собирали три поколения, проверяли, может ли следующее поколение быть в два раза умнее нас.",
+            "after": "Мы тренировали на себе, проверяли, собирали три поколения, проверяли, может ли следующее поколение быть в два раза умнее нас.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0000",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Да, привет!",
+            "baseline": "Да, привет.",
+            "after": "Да, привет.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0092",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Да, мы пытались найти таких.",
+            "baseline": "Дгда, мы пытались найти таких.",
+            "after": "Дгда, мы пытались найти таких.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Я сказала: \"Ну да, я не могу больше, я не хочу.",
+            "baseline": "С: да, я-я не могу больше, я не хочу.",
+            "after": "С: да, я-я не могу больше, я не хочу.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "B0f6kt4rnpM_0036",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Голова болит, гулять хочется, Ой ли ой люли, да не можется.",
+            "baseline": "Голова болит, Гулять хочется. Ой-ли-воой-люли, Да не может.",
+            "after": "Голова болит, Гулять хочется. Ой-ли-воой-люли, Да не может.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-isolated",
+            "subset": "isolated",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Незнаю",
+            "after": "Незнаю",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-center-5s",
+            "subset": "center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Нез.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не знаю.",
+            "after": "Не знаю.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-start-5s",
+            "subset": "start-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не знаю.",
+            "after": "Не знаю.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-end-5s",
+            "subset": "end-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не знаю.",
+            "after": "Не знаю.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-isolated",
+            "subset": "isolated",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-center-5s",
+            "subset": "center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Небо.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-start-5s",
+            "subset": "start-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Нниб.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-end-5s",
+            "subset": "end-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Н.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-isolated",
+            "subset": "isolated",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Кто",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-center-5s",
+            "subset": "center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Чтонибь?",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Что-нибь?",
+            "after": "Что-нибь?",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-start-5s",
+            "subset": "start-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Что-нибь?",
+            "after": "Что-нибь?",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-end-5s",
+            "subset": "end-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Кто?",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-isolated",
+            "subset": "isolated",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-center-5s",
+            "subset": "center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-start-5s",
+            "subset": "start-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-end-5s",
+            "subset": "end-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-isolated",
+            "subset": "isolated",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А ри.",
+            "after": "А ри.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-center-5s",
+            "subset": "center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А три.",
+            "after": "А три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А три.",
+            "after": "А три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-start-5s",
+            "subset": "start-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Натри.",
+            "after": "Натри.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-end-5s",
+            "subset": "end-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А три.",
+            "after": "А три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-isolated",
+            "subset": "isolated",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-center-5s",
+            "subset": "center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-start-5s",
+            "subset": "start-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-end-5s",
+            "subset": "end-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-isolated",
+            "subset": "isolated",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "Да.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-center-5s",
+            "subset": "center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "Да.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "Да.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-start-5s",
+            "subset": "start-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "Да.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-end-5s",
+            "subset": "end-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "Да.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-isolated",
+            "subset": "isolated",
+            "target": "да",
+            "reference": "да",
+            "baseline": "А.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-center-5s",
+            "subset": "center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Ай.",
+            "after": "Ай.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Ай.",
+            "after": "Ай.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-start-5s",
+            "subset": "start-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Ай.",
+            "after": "Ай.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-end-5s",
+            "subset": "end-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "А.",
+            "after": "А.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          }
+        ]
+      },
+      "single_span_over_1s": {
+        "summary": {
+          "clips": 60,
+          "reference_words": 123,
+          "word_errors": 58,
+          "wer": 0.4715447154471545,
+          "hallucinated_words": 0,
+          "noise_cases": 8,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 14,
+            "deletions": 33,
+            "insertions": 11
+          },
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 12,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 12,
+            "extra": 0
+          }
+        },
+        "targets": {
+          "не": {
+            "cases": 19,
+            "expected": 19,
+            "retained": 7,
+            "baseline_retained": 8,
+            "added_losses": 1
+          },
+          "три": {
+            "cases": 19,
+            "expected": 19,
+            "retained": 8,
+            "baseline_retained": 16,
+            "added_losses": 8
+          },
+          "да": {
+            "cases": 14,
+            "expected": 14,
+            "retained": 4,
+            "baseline_retained": 8,
+            "added_losses": 4
+          }
+        },
+        "subsets": {
+          "center-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 1,
+            "baseline_retained": 4,
+            "added_losses": 3
+          },
+          "end-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 2,
+            "baseline_retained": 5,
+            "added_losses": 3
+          },
+          "isolated": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 4,
+            "baseline_retained": 4,
+            "added_losses": 0
+          },
+          "quiet-center-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 2,
+            "baseline_retained": 6,
+            "added_losses": 4
+          },
+          "recorded-context": {
+            "cases": 12,
+            "expected": 12,
+            "retained": 9,
+            "baseline_retained": 9,
+            "added_losses": 0
+          },
+          "start-5s": {
+            "cases": 8,
+            "expected": 8,
+            "retained": 1,
+            "baseline_retained": 4,
+            "added_losses": 3
+          }
+        },
+        "rows": [
+          {
+            "id": "6hoeGxsHS6c_0023",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "Не знаю, 100?",
+            "baseline": "Не знаю сто.",
+            "after": "Не знаю сто.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "И не болейте.",
+            "baseline": "И-и не болейте.",
+            "after": "И-и не болейте.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "a1F_YF36bII_0032",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "Забить никто не мог.",
+            "baseline": "Журналист Александр",
+            "after": "Журналист Александр",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126",
+            "subset": "recorded-context",
+            "target": "не",
+            "reference": "Иди!» Ничто не мешает.",
+            "baseline": "Иди. Ничто не мешает.",
+            "after": "Иди. Ничто не мешает.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "Ну, почти три — и бросил.",
+            "baseline": "Ну, почти три. и бросил.",
+            "after": "Ну, почти три. и бросил.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0065",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "В следующие три месяца произошло очень много.",
+            "baseline": "Произошло очень много. Государство ставило",
+            "after": "Произошло очень много. Государство ставило",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "И по уровню сложности их разделили тоже на три категории.",
+            "baseline": "И по уровню сложности их разделили тоже на три категории.",
+            "after": "И по уровню сложности их разделили тоже на три категории.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "dll-jtmrD70_0111",
+            "subset": "recorded-context",
+            "target": "три",
+            "reference": "Мы тренировались на себе, проверяли, собирали три поколения, проверяли: может ли следующее поколение быть два раза умнее нас?",
+            "baseline": "Мы тренировали на себе, проверяли, собирали три поколения, проверяли, может ли следующее поколение быть в два раза умнее нас.",
+            "after": "Мы тренировали на себе, проверяли, собирали три поколения, проверяли, может ли следующее поколение быть в два раза умнее нас.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0000",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Да, привет!",
+            "baseline": "Да, привет.",
+            "after": "Да, привет.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0092",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Да, мы пытались найти таких.",
+            "baseline": "Дгда, мы пытались найти таких.",
+            "after": "Дгда, мы пытались найти таких.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Я сказала: \"Ну да, я не могу больше, я не хочу.",
+            "baseline": "С: да, я-я не могу больше, я не хочу.",
+            "after": "С: да, я-я не могу больше, я не хочу.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "B0f6kt4rnpM_0036",
+            "subset": "recorded-context",
+            "target": "да",
+            "reference": "Голова болит, гулять хочется, Ой ли ой люли, да не можется.",
+            "baseline": "Голова болит, Гулять хочется. Ой-ли-воой-люли, Да не может.",
+            "after": "Голова болит, Гулять хочется. Ой-ли-воой-люли, Да не может.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-isolated",
+            "subset": "isolated",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Незнаю",
+            "after": "Незнаю",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-center-5s",
+            "subset": "center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Нез.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не знаю.",
+            "after": "Не знаю.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-start-5s",
+            "subset": "start-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не знаю.",
+            "after": "Не знаю.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0023-не-end-5s",
+            "subset": "end-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не знаю.",
+            "after": "Не знаю.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-isolated",
+            "subset": "isolated",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не",
+            "after": "Не",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-center-5s",
+            "subset": "center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Небо.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Не.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-start-5s",
+            "subset": "start-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Нниб.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "CPci7a8l-oU_0101-не-end-5s",
+            "subset": "end-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Н.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-isolated",
+            "subset": "isolated",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Кто",
+            "after": "Кто",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-center-5s",
+            "subset": "center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Чтонибь?",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Что-нибь?",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-start-5s",
+            "subset": "start-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Что-нибь?",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0126-не-end-5s",
+            "subset": "end-5s",
+            "target": "не",
+            "reference": "не",
+            "baseline": "Кто?",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-isolated",
+            "subset": "isolated",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-center-5s",
+            "subset": "center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-start-5s",
+            "subset": "start-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "cPhc8OVB2Rk_0078-три-end-5s",
+            "subset": "end-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-isolated",
+            "subset": "isolated",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А ри.",
+            "after": "А ри.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-center-5s",
+            "subset": "center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А три.",
+            "after": "А три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А три.",
+            "after": "А три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-start-5s",
+            "subset": "start-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Натри.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0141-три-end-5s",
+            "subset": "end-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "А три.",
+            "after": "А три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-isolated",
+            "subset": "isolated",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "Три.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-center-5s",
+            "subset": "center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-start-5s",
+            "subset": "start-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "dll-jtmrD70_0111-три-end-5s",
+            "subset": "end-5s",
+            "target": "три",
+            "reference": "три",
+            "baseline": "Три.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-isolated",
+            "subset": "isolated",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "Да.",
+            "expected": 1,
+            "before": 1,
+            "retained": 1,
+            "added_losses": 0
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-center-5s",
+            "subset": "center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-start-5s",
+            "subset": "start-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "6hoeGxsHS6c_0000-да-end-5s",
+            "subset": "end-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Да.",
+            "after": "",
+            "expected": 1,
+            "before": 1,
+            "retained": 0,
+            "added_losses": 1
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-isolated",
+            "subset": "isolated",
+            "target": "да",
+            "reference": "да",
+            "baseline": "А.",
+            "after": "А.",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-center-5s",
+            "subset": "center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Ай.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-quiet-center-5s",
+            "subset": "quiet-center-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Ай.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-start-5s",
+            "subset": "start-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "Ай.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          },
+          {
+            "id": "7hkxVyhoMoQ_0040-да-end-5s",
+            "subset": "end-5s",
+            "target": "да",
+            "reference": "да",
+            "baseline": "А.",
+            "after": "",
+            "expected": 1,
+            "before": 0,
+            "retained": 0,
+            "added_losses": 0
+          }
+        ]
+      }
+    },
+    "baseline_repeats_exact": true
+  },
+  "source_plan": {
+    "rule": "Четыре кратчайших эталона на слово, по одному на выступление; сортировка число слов, ID. Выбор до ASR.",
+    "targets": [
+      "не",
+      "три",
+      "да"
+    ],
+    "count": 4,
+    "sources": [
+      {
+        "id": "6hoeGxsHS6c_0023",
+        "transcript": "Не знаю, 100?",
+        "duration": 0.800000011920929,
+        "talk_id": "6hoeGxsHS6c",
+        "segment_id": 23,
+        "start": 147.0,
+        "end": 147.8000030517578,
+        "target": "не"
+      },
+      {
+        "id": "CPci7a8l-oU_0101",
+        "transcript": "И не болейте.",
+        "duration": 0.6700000166893005,
+        "talk_id": "CPci7a8l-oU",
+        "segment_id": 101,
+        "start": 729.0599975585938,
+        "end": 729.72998046875,
+        "target": "не"
+      },
+      {
+        "id": "a1F_YF36bII_0032",
+        "transcript": "Забить никто не мог.",
+        "duration": 1.190000057220459,
+        "talk_id": "a1F_YF36bII",
+        "segment_id": 32,
+        "start": 232.0399932861328,
+        "end": 233.22999572753906,
+        "target": "не"
+      },
+      {
+        "id": "cPhc8OVB2Rk_0126",
+        "transcript": "Иди!» Ничто не мешает.",
+        "duration": 1.440000057220459,
+        "talk_id": "cPhc8OVB2Rk",
+        "segment_id": 126,
+        "start": 386.4700012207031,
+        "end": 387.9100036621094,
+        "target": "не"
+      },
+      {
+        "id": "cPhc8OVB2Rk_0078",
+        "transcript": "Ну, почти три — и бросил.",
+        "duration": 2.2200000286102295,
+        "talk_id": "cPhc8OVB2Rk",
+        "segment_id": 78,
+        "start": 220.0800018310547,
+        "end": 222.3000030517578,
+        "target": "три"
+      },
+      {
+        "id": "7hkxVyhoMoQ_0065",
+        "transcript": "В следующие три месяца произошло очень много.",
+        "duration": 3.440000057220459,
+        "talk_id": "7hkxVyhoMoQ",
+        "segment_id": 65,
+        "start": 352.9800109863281,
+        "end": 356.4200134277344,
+        "target": "три"
+      },
+      {
+        "id": "6hoeGxsHS6c_0141",
+        "transcript": "И по уровню сложности их разделили тоже на три категории.",
+        "duration": 4.460000038146973,
+        "talk_id": "6hoeGxsHS6c",
+        "segment_id": 141,
+        "start": 761.9199829101562,
+        "end": 766.3800048828125,
+        "target": "три"
+      },
+      {
+        "id": "dll-jtmrD70_0111",
+        "transcript": "Мы тренировались на себе, проверяли, собирали три поколения, проверяли: может ли следующее поколение быть два раза умнее нас?",
+        "duration": 7.880000114440918,
+        "talk_id": "dll-jtmrD70",
+        "segment_id": 111,
+        "start": 686.9400024414062,
+        "end": 694.8200073242188,
+        "target": "три"
+      },
+      {
+        "id": "6hoeGxsHS6c_0000",
+        "transcript": "Да, привет!",
+        "duration": 0.6899999976158142,
+        "talk_id": "6hoeGxsHS6c",
+        "segment_id": 0,
+        "start": 11.039999961853027,
+        "end": 11.729999542236328,
+        "target": "да"
+      },
+      {
+        "id": "CPci7a8l-oU_0092",
+        "transcript": "Да, мы пытались найти таких.",
+        "duration": 1.2200000286102295,
+        "talk_id": "CPci7a8l-oU",
+        "segment_id": 92,
+        "start": 638.97998046875,
+        "end": 640.2000122070312,
+        "target": "да"
+      },
+      {
+        "id": "7hkxVyhoMoQ_0040",
+        "transcript": "Я сказала: \"Ну да, я не могу больше, я не хочу.",
+        "duration": 2.2300000190734863,
+        "talk_id": "7hkxVyhoMoQ",
+        "segment_id": 40,
+        "start": 246.4199981689453,
+        "end": 248.64999389648438,
+        "target": "да"
+      },
+      {
+        "id": "B0f6kt4rnpM_0036",
+        "transcript": "Голова болит, гулять хочется, Ой ли ой люли, да не можется.",
+        "duration": 12.020000457763672,
+        "talk_id": "B0f6kt4rnpM",
+        "segment_id": 36,
+        "start": 460.1400146484375,
+        "end": 472.1600036621094,
+        "target": "да"
+      }
+    ],
+    "parquet_sha256": "636b6437749db49bfad10e628945fc284afee33c75f874f8a1462b4b8b7a6eb9",
+    "excludes": {
+      "work/android-latency/manifest.json": "978cc1e062b63fd35ceb4599f1ef59e77a288534521f292924fcedd15164072a",
+      "work/clipmic-asr-quality/results/mtedx/clips/manifest.json": "660d5f8e6963bcbc95c9f7c3b6d8adfa046a89e76aac1070f14238db0bab1124",
+      "work/asr-speed/round2/units/manifest.json": "eadc879983c2f994695e5e34446ad49e2f438af415fc79c2d79e2fc1c9837f13",
+      "work/asr-speed/round2/fresh-golos/manifest.json": "9441924f72cf3766edd57d2532ada2c2921913c46ae46c1b2803b5e59ad6c440"
+    },
+    "script_sha256": "a4277add95f869054eb4637e29f25f9ce2893f2bac5b19dbd37a41c8a1b63b7c"
+  },
+  "freeze": {
+    "context_manifest_sha256": "49658259746405193630e6a339e1b20f4463b0f51999d9638879d6e90b5ba772",
+    "alignment_sha256": "0c9281cc98d3a0d1e8fee93e99c38b0d118cbd1ba41efd211fb294a9e8037843",
+    "script_sha256": "a4277add95f869054eb4637e29f25f9ce2893f2bac5b19dbd37a41c8a1b63b7c",
+    "unavailable_cuts": [
+      {
+        "id": "a1F_YF36bII_0032",
+        "reason": "Нет времён целевого слова; полный контекст оставлен в контроле"
+      },
+      {
+        "id": "7hkxVyhoMoQ_0065",
+        "reason": "Нет времён целевого слова; полный контекст оставлен в контроле"
+      },
+      {
+        "id": "CPci7a8l-oU_0092",
+        "reason": "Нет времён целевого слова; полный контекст оставлен в контроле"
+      },
+      {
+        "id": "B0f6kt4rnpM_0036",
+        "reason": "Нет времён целевого слова; полный контекст оставлен в контроле"
+      }
+    ],
+    "rules": "Все вырезки сохраняются, независимо от последующего ответа Android; контексты не исключаются."
+  },
+  "acceptance": {
+    "manifest_sha256": "44001f99db189913e15cc8fc0c9a0008f3b16594bb5527e489272d953cea08a4",
+    "comparison_manifest_sha256": "ae01a7a86443aab098794000e3eaf1123b665010adcf25b44e04e8b6a6f48311",
+    "selection_plan_sha256": "4d71d10f8d76b8c9e6b0e82e940a6024a9dcbf0201366a5091c51eccadf4ad01",
+    "speech_cases": 52,
+    "noise_cases": 8,
+    "acceptance": "Не добавлять потерю целевого короткого слова среди случаев, где базовый Android его сохраняет; показать также все исходные ошибки.",
+    "limits": "Вырезки из живой связной речи с автоматической разметкой; не самостоятельные произнесённые ответы. Заморожено до просмотра Android-контроля и фильтра."
+  },
+  "manifest": [
+    {
+      "id": "6hoeGxsHS6c_0023",
+      "audio": "work/short-word-control/sources/6hoeGxsHS6c_0023.wav",
+      "reference": "Не знаю, 100?",
+      "subset": "recorded-context",
+      "target": "не",
+      "source_id": "6hoeGxsHS6c_0023",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 147.0,
+      "source_end": 147.8000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "6ec441cf25e2abeb433cfddf0fe79c3736bc6f90d4ec9fab16e555f24f8a7ea3",
+      "audio_sha256": "3d9562c07d30756cf9c3cf353d5790d2b0e51f007eed64bd9ca00425b1ef73e8"
+    },
+    {
+      "id": "CPci7a8l-oU_0101",
+      "audio": "work/short-word-control/sources/CPci7a8l-oU_0101.wav",
+      "reference": "И не болейте.",
+      "subset": "recorded-context",
+      "target": "не",
+      "source_id": "CPci7a8l-oU_0101",
+      "talk_id": "CPci7a8l-oU",
+      "source_start": 729.0599975585938,
+      "source_end": 729.72998046875,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "1206ee53f2fbd5fd2f7bf25428044bae0d0e8d50f86dc092542db69e5c28d626",
+      "audio_sha256": "e98b4be2b28e1dd883a2352bbf99f90020d27993295410be67bbb5896fb2d804"
+    },
+    {
+      "id": "a1F_YF36bII_0032",
+      "audio": "work/short-word-control/sources/a1F_YF36bII_0032.wav",
+      "reference": "Забить никто не мог.",
+      "subset": "recorded-context",
+      "target": "не",
+      "source_id": "a1F_YF36bII_0032",
+      "talk_id": "a1F_YF36bII",
+      "source_start": 232.0399932861328,
+      "source_end": 233.22999572753906,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "0f8bb7815835401f95a0a2906aea6732337bccf5aa68d10aa6a83e8c15858a96",
+      "audio_sha256": "108e7157b22078cf0c9bd658c88a1690a607d56f536c4c73f27dbff75360f034"
+    },
+    {
+      "id": "cPhc8OVB2Rk_0126",
+      "audio": "work/short-word-control/sources/cPhc8OVB2Rk_0126.wav",
+      "reference": "Иди!» Ничто не мешает.",
+      "subset": "recorded-context",
+      "target": "не",
+      "source_id": "cPhc8OVB2Rk_0126",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 386.4700012207031,
+      "source_end": 387.9100036621094,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "e4608cbe2e56c306d7abaa8076598803278b8a0e9947f4cea5ab3c8c2a986216",
+      "audio_sha256": "94ddafb28903a732d78df5f4b36d03fc41b30e095b1f5c26656aeff92208dc43"
+    },
+    {
+      "id": "cPhc8OVB2Rk_0078",
+      "audio": "work/short-word-control/sources/cPhc8OVB2Rk_0078.wav",
+      "reference": "Ну, почти три — и бросил.",
+      "subset": "recorded-context",
+      "target": "три",
+      "source_id": "cPhc8OVB2Rk_0078",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 220.0800018310547,
+      "source_end": 222.3000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "4f507ad1c68c28b47e3425dfa2d0fef3607dd34ecf0b39af62c2b73a4b6a3229",
+      "audio_sha256": "30c0ca84bb4c49bd41c406eda5074ac6aecb017c34882aa5dcd86cac490ef9c1"
+    },
+    {
+      "id": "7hkxVyhoMoQ_0065",
+      "audio": "work/short-word-control/sources/7hkxVyhoMoQ_0065.wav",
+      "reference": "В следующие три месяца произошло очень много.",
+      "subset": "recorded-context",
+      "target": "три",
+      "source_id": "7hkxVyhoMoQ_0065",
+      "talk_id": "7hkxVyhoMoQ",
+      "source_start": 352.9800109863281,
+      "source_end": 356.4200134277344,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "45eb63d498576ebcbc7673f55f1cafabed121534904717447b4819ef8c9148d8",
+      "audio_sha256": "042126d1da5a8ffb6fcbce43937993e5c9fa189221a7a27d89ea854adf30213d"
+    },
+    {
+      "id": "6hoeGxsHS6c_0141",
+      "audio": "work/short-word-control/sources/6hoeGxsHS6c_0141.wav",
+      "reference": "И по уровню сложности их разделили тоже на три категории.",
+      "subset": "recorded-context",
+      "target": "три",
+      "source_id": "6hoeGxsHS6c_0141",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 761.9199829101562,
+      "source_end": 766.3800048828125,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "88ee960cf042f2973cdbe231767668f54870cce3302186cdbd1dab30ebd617fe",
+      "audio_sha256": "da9af833f9652e005dd4042c9c9df701bc76dc073c0eacb214d972bdf6c27dff"
+    },
+    {
+      "id": "dll-jtmrD70_0111",
+      "audio": "work/short-word-control/sources/dll-jtmrD70_0111.wav",
+      "reference": "Мы тренировались на себе, проверяли, собирали три поколения, проверяли: может ли следующее поколение быть два раза умнее нас?",
+      "subset": "recorded-context",
+      "target": "три",
+      "source_id": "dll-jtmrD70_0111",
+      "talk_id": "dll-jtmrD70",
+      "source_start": 686.9400024414062,
+      "source_end": 694.8200073242188,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "c8eff1997955020b48cf2253fe4adccaa6b8870f4376e38ae787c0c8dfb2daf6",
+      "audio_sha256": "77ecb58966662e548c389cf1ed7a3a9139355668a3e9ea369954a2345df746ee"
+    },
+    {
+      "id": "6hoeGxsHS6c_0000",
+      "audio": "work/short-word-control/sources/6hoeGxsHS6c_0000.wav",
+      "reference": "Да, привет!",
+      "subset": "recorded-context",
+      "target": "да",
+      "source_id": "6hoeGxsHS6c_0000",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 11.039999961853027,
+      "source_end": 11.729999542236328,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "2f3ea6ea544669a6fc91af8e4b00abc46f56f40b717fdf9d5c7309873f23c9df",
+      "audio_sha256": "d1351218d1c4b7a0fefbee082b2fd2d22aa57e2681735162e4aca581066d344a"
+    },
+    {
+      "id": "CPci7a8l-oU_0092",
+      "audio": "work/short-word-control/sources/CPci7a8l-oU_0092.wav",
+      "reference": "Да, мы пытались найти таких.",
+      "subset": "recorded-context",
+      "target": "да",
+      "source_id": "CPci7a8l-oU_0092",
+      "talk_id": "CPci7a8l-oU",
+      "source_start": 638.97998046875,
+      "source_end": 640.2000122070312,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "d2feaae67c3cb338c982e2fdb0450dd453d3486bc8c46c516d84a73a364061af",
+      "audio_sha256": "dc31a460583ec286a1d7e004748fca1c8a492a83ec9358f675074834687a3804"
+    },
+    {
+      "id": "7hkxVyhoMoQ_0040",
+      "audio": "work/short-word-control/sources/7hkxVyhoMoQ_0040.wav",
+      "reference": "Я сказала: \"Ну да, я не могу больше, я не хочу.",
+      "subset": "recorded-context",
+      "target": "да",
+      "source_id": "7hkxVyhoMoQ_0040",
+      "talk_id": "7hkxVyhoMoQ",
+      "source_start": 246.4199981689453,
+      "source_end": 248.64999389648438,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "ba92c50f9b8c72e899a08bd0e3888d445a6665e58aac1ca66272f421dc468754",
+      "audio_sha256": "a23337e027c22a0ec5792c9d16073421dad3282c4e713461afa499f63f7b0c4c"
+    },
+    {
+      "id": "B0f6kt4rnpM_0036",
+      "audio": "work/short-word-control/sources/B0f6kt4rnpM_0036.wav",
+      "reference": "Голова болит, гулять хочется, Ой ли ой люли, да не можется.",
+      "subset": "recorded-context",
+      "target": "да",
+      "source_id": "B0f6kt4rnpM_0036",
+      "talk_id": "B0f6kt4rnpM",
+      "source_start": 460.1400146484375,
+      "source_end": 472.1600036621094,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "e712382afb1b2fdbd58ae674137bdda956e5b80f3694a5b9485689488b4ad8eb",
+      "audio_sha256": "8d6f03c4a9d3602250327fd56d2137a10b795d542f4710926abf00f68f312054"
+    },
+    {
+      "id": "6hoeGxsHS6c_0023-не-isolated",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0023-не-isolated.wav",
+      "reference": "не",
+      "subset": "isolated",
+      "target": "не",
+      "source_id": "6hoeGxsHS6c_0023",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 147.0,
+      "source_end": 147.8000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "6ec441cf25e2abeb433cfddf0fe79c3736bc6f90d4ec9fab16e555f24f8a7ea3",
+      "audio_sha256": "c84b4e01eb58aeaf153259af063a899d0f4e54e5ff949566eb8a11eff080d4f5",
+      "parent_audio_sha256": "3d9562c07d30756cf9c3cf353d5790d2b0e51f007eed64bd9ca00425b1ef73e8",
+      "cut": {
+        "start_frame": 0,
+        "end_frame": 3520,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.04,
+            "end": 0.16
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.04,
+            "end": 0.08
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": false
+    },
+    {
+      "id": "6hoeGxsHS6c_0023-не-center-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0023-не-center-5s.wav",
+      "reference": "не",
+      "subset": "center-5s",
+      "target": "не",
+      "source_id": "6hoeGxsHS6c_0023",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 147.0,
+      "source_end": 147.8000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "6ec441cf25e2abeb433cfddf0fe79c3736bc6f90d4ec9fab16e555f24f8a7ea3",
+      "audio_sha256": "9ebe71b162e762d3e1766aacc6c96976a0548fda153cc78a07ee0bce70f84e8d",
+      "parent_audio_sha256": "3d9562c07d30756cf9c3cf353d5790d2b0e51f007eed64bd9ca00425b1ef73e8",
+      "cut": {
+        "start_frame": 0,
+        "end_frame": 3520,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.04,
+            "end": 0.16
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.04,
+            "end": 0.08
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "6hoeGxsHS6c_0023-не-quiet-center-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0023-не-quiet-center-5s.wav",
+      "reference": "не",
+      "subset": "quiet-center-5s",
+      "target": "не",
+      "source_id": "6hoeGxsHS6c_0023",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 147.0,
+      "source_end": 147.8000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "6ec441cf25e2abeb433cfddf0fe79c3736bc6f90d4ec9fab16e555f24f8a7ea3",
+      "audio_sha256": "627c55257acd17ae5912bc84509bb7278f21244e2c90e68830931a5758c69f81",
+      "parent_audio_sha256": "3d9562c07d30756cf9c3cf353d5790d2b0e51f007eed64bd9ca00425b1ef73e8",
+      "cut": {
+        "start_frame": 0,
+        "end_frame": 3520,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.04,
+            "end": 0.16
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.04,
+            "end": 0.08
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 0.0625,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "6hoeGxsHS6c_0023-не-start-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0023-не-start-5s.wav",
+      "reference": "не",
+      "subset": "start-5s",
+      "target": "не",
+      "source_id": "6hoeGxsHS6c_0023",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 147.0,
+      "source_end": 147.8000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "6ec441cf25e2abeb433cfddf0fe79c3736bc6f90d4ec9fab16e555f24f8a7ea3",
+      "audio_sha256": "8dbfb5d469561b1e2bb98233f7131ecb841ef2da4a2387e45c61a108253e976b",
+      "parent_audio_sha256": "3d9562c07d30756cf9c3cf353d5790d2b0e51f007eed64bd9ca00425b1ef73e8",
+      "cut": {
+        "start_frame": 0,
+        "end_frame": 3520,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.04,
+            "end": 0.16
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.04,
+            "end": 0.08
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "6hoeGxsHS6c_0023-не-end-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0023-не-end-5s.wav",
+      "reference": "не",
+      "subset": "end-5s",
+      "target": "не",
+      "source_id": "6hoeGxsHS6c_0023",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 147.0,
+      "source_end": 147.8000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "6ec441cf25e2abeb433cfddf0fe79c3736bc6f90d4ec9fab16e555f24f8a7ea3",
+      "audio_sha256": "a12e79aec8cdbe5bd50361d7368a0015240cfa3c95d1f7db501280d2d184e15e",
+      "parent_audio_sha256": "3d9562c07d30756cf9c3cf353d5790d2b0e51f007eed64bd9ca00425b1ef73e8",
+      "cut": {
+        "start_frame": 0,
+        "end_frame": 3520,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.04,
+            "end": 0.16
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.04,
+            "end": 0.08
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "CPci7a8l-oU_0101-не-isolated",
+      "audio": "work/short-word-control/frozen/CPci7a8l-oU_0101-не-isolated.wav",
+      "reference": "не",
+      "subset": "isolated",
+      "target": "не",
+      "source_id": "CPci7a8l-oU_0101",
+      "talk_id": "CPci7a8l-oU",
+      "source_start": 729.0599975585938,
+      "source_end": 729.72998046875,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "1206ee53f2fbd5fd2f7bf25428044bae0d0e8d50f86dc092542db69e5c28d626",
+      "audio_sha256": "dc1890b973bbee83e34ebc18422ac4c3979e6dac3fa4613010f8e45bb1a6a3f1",
+      "parent_audio_sha256": "e98b4be2b28e1dd883a2352bbf99f90020d27993295410be67bbb5896fb2d804",
+      "cut": {
+        "start_frame": 2880,
+        "end_frame": 6080,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.28,
+            "end": 0.32
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.24,
+            "end": 0.27999999999999997
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": false
+    },
+    {
+      "id": "CPci7a8l-oU_0101-не-center-5s",
+      "audio": "work/short-word-control/frozen/CPci7a8l-oU_0101-не-center-5s.wav",
+      "reference": "не",
+      "subset": "center-5s",
+      "target": "не",
+      "source_id": "CPci7a8l-oU_0101",
+      "talk_id": "CPci7a8l-oU",
+      "source_start": 729.0599975585938,
+      "source_end": 729.72998046875,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "1206ee53f2fbd5fd2f7bf25428044bae0d0e8d50f86dc092542db69e5c28d626",
+      "audio_sha256": "e109921020008a11f7172750d0eb38d299fb11f64afc783c9cde49faf6c5571b",
+      "parent_audio_sha256": "e98b4be2b28e1dd883a2352bbf99f90020d27993295410be67bbb5896fb2d804",
+      "cut": {
+        "start_frame": 2880,
+        "end_frame": 6080,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.28,
+            "end": 0.32
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.24,
+            "end": 0.27999999999999997
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "CPci7a8l-oU_0101-не-quiet-center-5s",
+      "audio": "work/short-word-control/frozen/CPci7a8l-oU_0101-не-quiet-center-5s.wav",
+      "reference": "не",
+      "subset": "quiet-center-5s",
+      "target": "не",
+      "source_id": "CPci7a8l-oU_0101",
+      "talk_id": "CPci7a8l-oU",
+      "source_start": 729.0599975585938,
+      "source_end": 729.72998046875,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "1206ee53f2fbd5fd2f7bf25428044bae0d0e8d50f86dc092542db69e5c28d626",
+      "audio_sha256": "2949391dec9211ff6ba85bc20767771b639af6e055421db7e6a3895510035047",
+      "parent_audio_sha256": "e98b4be2b28e1dd883a2352bbf99f90020d27993295410be67bbb5896fb2d804",
+      "cut": {
+        "start_frame": 2880,
+        "end_frame": 6080,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.28,
+            "end": 0.32
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.24,
+            "end": 0.27999999999999997
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 0.0625,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "CPci7a8l-oU_0101-не-start-5s",
+      "audio": "work/short-word-control/frozen/CPci7a8l-oU_0101-не-start-5s.wav",
+      "reference": "не",
+      "subset": "start-5s",
+      "target": "не",
+      "source_id": "CPci7a8l-oU_0101",
+      "talk_id": "CPci7a8l-oU",
+      "source_start": 729.0599975585938,
+      "source_end": 729.72998046875,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "1206ee53f2fbd5fd2f7bf25428044bae0d0e8d50f86dc092542db69e5c28d626",
+      "audio_sha256": "1b35d7a1425d9a7860e8c182ed9a39e046995c559d81ac3a245e29918775767c",
+      "parent_audio_sha256": "e98b4be2b28e1dd883a2352bbf99f90020d27993295410be67bbb5896fb2d804",
+      "cut": {
+        "start_frame": 2880,
+        "end_frame": 6080,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.28,
+            "end": 0.32
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.24,
+            "end": 0.27999999999999997
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "CPci7a8l-oU_0101-не-end-5s",
+      "audio": "work/short-word-control/frozen/CPci7a8l-oU_0101-не-end-5s.wav",
+      "reference": "не",
+      "subset": "end-5s",
+      "target": "не",
+      "source_id": "CPci7a8l-oU_0101",
+      "talk_id": "CPci7a8l-oU",
+      "source_start": 729.0599975585938,
+      "source_end": 729.72998046875,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "1206ee53f2fbd5fd2f7bf25428044bae0d0e8d50f86dc092542db69e5c28d626",
+      "audio_sha256": "fb64ccacf6f221e1f01e82bfb78707265e821d76cbcb6ac2105be121eb804c0a",
+      "parent_audio_sha256": "e98b4be2b28e1dd883a2352bbf99f90020d27993295410be67bbb5896fb2d804",
+      "cut": {
+        "start_frame": 2880,
+        "end_frame": 6080,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.28,
+            "end": 0.32
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.24,
+            "end": 0.27999999999999997
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "cPhc8OVB2Rk_0126-не-isolated",
+      "audio": "work/short-word-control/frozen/cPhc8OVB2Rk_0126-не-isolated.wav",
+      "reference": "не",
+      "subset": "isolated",
+      "target": "не",
+      "source_id": "cPhc8OVB2Rk_0126",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 386.4700012207031,
+      "source_end": 387.9100036621094,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "e4608cbe2e56c306d7abaa8076598803278b8a0e9947f4cea5ab3c8c2a986216",
+      "audio_sha256": "21b4ac087b2cfee58609c6c7643ce8a7ff50a0b77e3559ccfafe6b30f09d45d3",
+      "parent_audio_sha256": "94ddafb28903a732d78df5f4b36d03fc41b30e095b1f5c26656aeff92208dc43",
+      "cut": {
+        "start_frame": 13760,
+        "end_frame": 16960,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.92,
+            "end": 0.9600000000000001
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.96,
+            "end": 1.0
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": false
+    },
+    {
+      "id": "cPhc8OVB2Rk_0126-не-center-5s",
+      "audio": "work/short-word-control/frozen/cPhc8OVB2Rk_0126-не-center-5s.wav",
+      "reference": "не",
+      "subset": "center-5s",
+      "target": "не",
+      "source_id": "cPhc8OVB2Rk_0126",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 386.4700012207031,
+      "source_end": 387.9100036621094,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "e4608cbe2e56c306d7abaa8076598803278b8a0e9947f4cea5ab3c8c2a986216",
+      "audio_sha256": "1c18e13d7bfa7ab85a0cd33482326e99a6dec41427ad503dfb9c7345b18d7584",
+      "parent_audio_sha256": "94ddafb28903a732d78df5f4b36d03fc41b30e095b1f5c26656aeff92208dc43",
+      "cut": {
+        "start_frame": 13760,
+        "end_frame": 16960,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.92,
+            "end": 0.9600000000000001
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.96,
+            "end": 1.0
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "cPhc8OVB2Rk_0126-не-quiet-center-5s",
+      "audio": "work/short-word-control/frozen/cPhc8OVB2Rk_0126-не-quiet-center-5s.wav",
+      "reference": "не",
+      "subset": "quiet-center-5s",
+      "target": "не",
+      "source_id": "cPhc8OVB2Rk_0126",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 386.4700012207031,
+      "source_end": 387.9100036621094,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "e4608cbe2e56c306d7abaa8076598803278b8a0e9947f4cea5ab3c8c2a986216",
+      "audio_sha256": "363a474dc15daba5977177f9ae9e4ede86b968c02ad15342d6b93475f49cf0d2",
+      "parent_audio_sha256": "94ddafb28903a732d78df5f4b36d03fc41b30e095b1f5c26656aeff92208dc43",
+      "cut": {
+        "start_frame": 13760,
+        "end_frame": 16960,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.92,
+            "end": 0.9600000000000001
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.96,
+            "end": 1.0
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 0.0625,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "cPhc8OVB2Rk_0126-не-start-5s",
+      "audio": "work/short-word-control/frozen/cPhc8OVB2Rk_0126-не-start-5s.wav",
+      "reference": "не",
+      "subset": "start-5s",
+      "target": "не",
+      "source_id": "cPhc8OVB2Rk_0126",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 386.4700012207031,
+      "source_end": 387.9100036621094,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "e4608cbe2e56c306d7abaa8076598803278b8a0e9947f4cea5ab3c8c2a986216",
+      "audio_sha256": "e4d128496b8c306a784db7e28cdb3650203c94b4f86c58d850f4b45de68db489",
+      "parent_audio_sha256": "94ddafb28903a732d78df5f4b36d03fc41b30e095b1f5c26656aeff92208dc43",
+      "cut": {
+        "start_frame": 13760,
+        "end_frame": 16960,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.92,
+            "end": 0.9600000000000001
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.96,
+            "end": 1.0
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "cPhc8OVB2Rk_0126-не-end-5s",
+      "audio": "work/short-word-control/frozen/cPhc8OVB2Rk_0126-не-end-5s.wav",
+      "reference": "не",
+      "subset": "end-5s",
+      "target": "не",
+      "source_id": "cPhc8OVB2Rk_0126",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 386.4700012207031,
+      "source_end": 387.9100036621094,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "e4608cbe2e56c306d7abaa8076598803278b8a0e9947f4cea5ab3c8c2a986216",
+      "audio_sha256": "d595dce1d92bde535e0dbae53adc4dcac4a1a515ec95bbb120810f18a413040f",
+      "parent_audio_sha256": "94ddafb28903a732d78df5f4b36d03fc41b30e095b1f5c26656aeff92208dc43",
+      "cut": {
+        "start_frame": 13760,
+        "end_frame": 16960,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.92,
+            "end": 0.9600000000000001
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.96,
+            "end": 1.0
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "cPhc8OVB2Rk_0078-три-isolated",
+      "audio": "work/short-word-control/frozen/cPhc8OVB2Rk_0078-три-isolated.wav",
+      "reference": "три",
+      "subset": "isolated",
+      "target": "три",
+      "source_id": "cPhc8OVB2Rk_0078",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 220.0800018310547,
+      "source_end": 222.3000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "4f507ad1c68c28b47e3425dfa2d0fef3607dd34ecf0b39af62c2b73a4b6a3229",
+      "audio_sha256": "b1bbdd93c9b2f4492f816c763e139c0f2c8be4ccf8d1e6ca463e994fb7c097b0",
+      "parent_audio_sha256": "30c0ca84bb4c49bd41c406eda5074ac6aecb017c34882aa5dcd86cac490ef9c1",
+      "cut": {
+        "start_frame": 8640,
+        "end_frame": 13120,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.64,
+            "end": 0.76
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.6,
+            "end": 0.64
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": false
+    },
+    {
+      "id": "cPhc8OVB2Rk_0078-три-center-5s",
+      "audio": "work/short-word-control/frozen/cPhc8OVB2Rk_0078-три-center-5s.wav",
+      "reference": "три",
+      "subset": "center-5s",
+      "target": "три",
+      "source_id": "cPhc8OVB2Rk_0078",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 220.0800018310547,
+      "source_end": 222.3000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "4f507ad1c68c28b47e3425dfa2d0fef3607dd34ecf0b39af62c2b73a4b6a3229",
+      "audio_sha256": "aeca19b50daa13787a9341539db501b9cce861fca690207c3f969b93c01d2238",
+      "parent_audio_sha256": "30c0ca84bb4c49bd41c406eda5074ac6aecb017c34882aa5dcd86cac490ef9c1",
+      "cut": {
+        "start_frame": 8640,
+        "end_frame": 13120,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.64,
+            "end": 0.76
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.6,
+            "end": 0.64
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "cPhc8OVB2Rk_0078-три-quiet-center-5s",
+      "audio": "work/short-word-control/frozen/cPhc8OVB2Rk_0078-три-quiet-center-5s.wav",
+      "reference": "три",
+      "subset": "quiet-center-5s",
+      "target": "три",
+      "source_id": "cPhc8OVB2Rk_0078",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 220.0800018310547,
+      "source_end": 222.3000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "4f507ad1c68c28b47e3425dfa2d0fef3607dd34ecf0b39af62c2b73a4b6a3229",
+      "audio_sha256": "b92b21a9f02775c0b2fc8901353d4d0961c8d8402492bcd1725d4ca82a337656",
+      "parent_audio_sha256": "30c0ca84bb4c49bd41c406eda5074ac6aecb017c34882aa5dcd86cac490ef9c1",
+      "cut": {
+        "start_frame": 8640,
+        "end_frame": 13120,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.64,
+            "end": 0.76
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.6,
+            "end": 0.64
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 0.0625,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "cPhc8OVB2Rk_0078-три-start-5s",
+      "audio": "work/short-word-control/frozen/cPhc8OVB2Rk_0078-три-start-5s.wav",
+      "reference": "три",
+      "subset": "start-5s",
+      "target": "три",
+      "source_id": "cPhc8OVB2Rk_0078",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 220.0800018310547,
+      "source_end": 222.3000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "4f507ad1c68c28b47e3425dfa2d0fef3607dd34ecf0b39af62c2b73a4b6a3229",
+      "audio_sha256": "c556366c359d036166223e1adc160576230877da8cf7c502c3f1cfe319fde182",
+      "parent_audio_sha256": "30c0ca84bb4c49bd41c406eda5074ac6aecb017c34882aa5dcd86cac490ef9c1",
+      "cut": {
+        "start_frame": 8640,
+        "end_frame": 13120,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.64,
+            "end": 0.76
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.6,
+            "end": 0.64
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "cPhc8OVB2Rk_0078-три-end-5s",
+      "audio": "work/short-word-control/frozen/cPhc8OVB2Rk_0078-три-end-5s.wav",
+      "reference": "три",
+      "subset": "end-5s",
+      "target": "три",
+      "source_id": "cPhc8OVB2Rk_0078",
+      "talk_id": "cPhc8OVB2Rk",
+      "source_start": 220.0800018310547,
+      "source_end": 222.3000030517578,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "4f507ad1c68c28b47e3425dfa2d0fef3607dd34ecf0b39af62c2b73a4b6a3229",
+      "audio_sha256": "fc178cf6848caeac7b7841936d831021e9bf2eaa493d9db5af726023e585640e",
+      "parent_audio_sha256": "30c0ca84bb4c49bd41c406eda5074ac6aecb017c34882aa5dcd86cac490ef9c1",
+      "cut": {
+        "start_frame": 8640,
+        "end_frame": 13120,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.64,
+            "end": 0.76
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.6,
+            "end": 0.64
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "6hoeGxsHS6c_0141-три-isolated",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0141-три-isolated.wav",
+      "reference": "три",
+      "subset": "isolated",
+      "target": "три",
+      "source_id": "6hoeGxsHS6c_0141",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 761.9199829101562,
+      "source_end": 766.3800048828125,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "88ee960cf042f2973cdbe231767668f54870cce3302186cdbd1dab30ebd617fe",
+      "audio_sha256": "45df4ed4d982d75f906e6ddeeaeec27da58b19b0e2db4ba75c6ac048f3b7d365",
+      "parent_audio_sha256": "da9af833f9652e005dd4042c9c9df701bc76dc073c0eacb214d972bdf6c27dff",
+      "cut": {
+        "start_frame": 56640,
+        "end_frame": 60480,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 3.64,
+            "end": 3.72
+          },
+          {
+            "kind": "rnnt",
+            "start": 3.6,
+            "end": 3.64
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": false
+    },
+    {
+      "id": "6hoeGxsHS6c_0141-три-center-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0141-три-center-5s.wav",
+      "reference": "три",
+      "subset": "center-5s",
+      "target": "три",
+      "source_id": "6hoeGxsHS6c_0141",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 761.9199829101562,
+      "source_end": 766.3800048828125,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "88ee960cf042f2973cdbe231767668f54870cce3302186cdbd1dab30ebd617fe",
+      "audio_sha256": "8136bd85bd81d38e23ef9797c22e97e80303b34f259109022ae57acf50c617b8",
+      "parent_audio_sha256": "da9af833f9652e005dd4042c9c9df701bc76dc073c0eacb214d972bdf6c27dff",
+      "cut": {
+        "start_frame": 56640,
+        "end_frame": 60480,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 3.64,
+            "end": 3.72
+          },
+          {
+            "kind": "rnnt",
+            "start": 3.6,
+            "end": 3.64
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "6hoeGxsHS6c_0141-три-quiet-center-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0141-три-quiet-center-5s.wav",
+      "reference": "три",
+      "subset": "quiet-center-5s",
+      "target": "три",
+      "source_id": "6hoeGxsHS6c_0141",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 761.9199829101562,
+      "source_end": 766.3800048828125,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "88ee960cf042f2973cdbe231767668f54870cce3302186cdbd1dab30ebd617fe",
+      "audio_sha256": "0689832cca7982a42e2ad00693196831b33607ba01fdb04d718bebe1e0694ea9",
+      "parent_audio_sha256": "da9af833f9652e005dd4042c9c9df701bc76dc073c0eacb214d972bdf6c27dff",
+      "cut": {
+        "start_frame": 56640,
+        "end_frame": 60480,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 3.64,
+            "end": 3.72
+          },
+          {
+            "kind": "rnnt",
+            "start": 3.6,
+            "end": 3.64
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 0.0625,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "6hoeGxsHS6c_0141-три-start-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0141-три-start-5s.wav",
+      "reference": "три",
+      "subset": "start-5s",
+      "target": "три",
+      "source_id": "6hoeGxsHS6c_0141",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 761.9199829101562,
+      "source_end": 766.3800048828125,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "88ee960cf042f2973cdbe231767668f54870cce3302186cdbd1dab30ebd617fe",
+      "audio_sha256": "17ea4a5d075d6c76630ffedd89026ed59e8cc74373c14e56e91c403c7c555767",
+      "parent_audio_sha256": "da9af833f9652e005dd4042c9c9df701bc76dc073c0eacb214d972bdf6c27dff",
+      "cut": {
+        "start_frame": 56640,
+        "end_frame": 60480,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 3.64,
+            "end": 3.72
+          },
+          {
+            "kind": "rnnt",
+            "start": 3.6,
+            "end": 3.64
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "6hoeGxsHS6c_0141-три-end-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0141-три-end-5s.wav",
+      "reference": "три",
+      "subset": "end-5s",
+      "target": "три",
+      "source_id": "6hoeGxsHS6c_0141",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 761.9199829101562,
+      "source_end": 766.3800048828125,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "88ee960cf042f2973cdbe231767668f54870cce3302186cdbd1dab30ebd617fe",
+      "audio_sha256": "cd356efc5796fa61f8ad1b7f89c4318ea6ca0b7832b0a9added4f77765d6fd48",
+      "parent_audio_sha256": "da9af833f9652e005dd4042c9c9df701bc76dc073c0eacb214d972bdf6c27dff",
+      "cut": {
+        "start_frame": 56640,
+        "end_frame": 60480,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 3.64,
+            "end": 3.72
+          },
+          {
+            "kind": "rnnt",
+            "start": 3.6,
+            "end": 3.64
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "dll-jtmrD70_0111-три-isolated",
+      "audio": "work/short-word-control/frozen/dll-jtmrD70_0111-три-isolated.wav",
+      "reference": "три",
+      "subset": "isolated",
+      "target": "три",
+      "source_id": "dll-jtmrD70_0111",
+      "talk_id": "dll-jtmrD70",
+      "source_start": 686.9400024414062,
+      "source_end": 694.8200073242188,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "c8eff1997955020b48cf2253fe4adccaa6b8870f4376e38ae787c0c8dfb2daf6",
+      "audio_sha256": "8a802b655e29903c831977c6dcb2106c57e8e1c073d9afff5ebc7793b0bbce0c",
+      "parent_audio_sha256": "77ecb58966662e548c389cf1ed7a3a9139355668a3e9ea369954a2345df746ee",
+      "cut": {
+        "start_frame": 38720,
+        "end_frame": 42560,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 2.48,
+            "end": 2.6
+          },
+          {
+            "kind": "rnnt",
+            "start": 2.48,
+            "end": 2.52
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": false
+    },
+    {
+      "id": "dll-jtmrD70_0111-три-center-5s",
+      "audio": "work/short-word-control/frozen/dll-jtmrD70_0111-три-center-5s.wav",
+      "reference": "три",
+      "subset": "center-5s",
+      "target": "три",
+      "source_id": "dll-jtmrD70_0111",
+      "talk_id": "dll-jtmrD70",
+      "source_start": 686.9400024414062,
+      "source_end": 694.8200073242188,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "c8eff1997955020b48cf2253fe4adccaa6b8870f4376e38ae787c0c8dfb2daf6",
+      "audio_sha256": "13c775f4d071a17ad08b553c69b1d5126febaad2253196e309da4dc8087eacf5",
+      "parent_audio_sha256": "77ecb58966662e548c389cf1ed7a3a9139355668a3e9ea369954a2345df746ee",
+      "cut": {
+        "start_frame": 38720,
+        "end_frame": 42560,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 2.48,
+            "end": 2.6
+          },
+          {
+            "kind": "rnnt",
+            "start": 2.48,
+            "end": 2.52
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "dll-jtmrD70_0111-три-quiet-center-5s",
+      "audio": "work/short-word-control/frozen/dll-jtmrD70_0111-три-quiet-center-5s.wav",
+      "reference": "три",
+      "subset": "quiet-center-5s",
+      "target": "три",
+      "source_id": "dll-jtmrD70_0111",
+      "talk_id": "dll-jtmrD70",
+      "source_start": 686.9400024414062,
+      "source_end": 694.8200073242188,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "c8eff1997955020b48cf2253fe4adccaa6b8870f4376e38ae787c0c8dfb2daf6",
+      "audio_sha256": "89d5e035e7a83c79f0f84c10cca6e7b48b681fe1c0ee6fd60e7334af98aa6dcf",
+      "parent_audio_sha256": "77ecb58966662e548c389cf1ed7a3a9139355668a3e9ea369954a2345df746ee",
+      "cut": {
+        "start_frame": 38720,
+        "end_frame": 42560,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 2.48,
+            "end": 2.6
+          },
+          {
+            "kind": "rnnt",
+            "start": 2.48,
+            "end": 2.52
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 0.0625,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "dll-jtmrD70_0111-три-start-5s",
+      "audio": "work/short-word-control/frozen/dll-jtmrD70_0111-три-start-5s.wav",
+      "reference": "три",
+      "subset": "start-5s",
+      "target": "три",
+      "source_id": "dll-jtmrD70_0111",
+      "talk_id": "dll-jtmrD70",
+      "source_start": 686.9400024414062,
+      "source_end": 694.8200073242188,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "c8eff1997955020b48cf2253fe4adccaa6b8870f4376e38ae787c0c8dfb2daf6",
+      "audio_sha256": "15731fc4f503d5e4bc936bceb359097df9d7052689b4cb344b2ba9334e28ab28",
+      "parent_audio_sha256": "77ecb58966662e548c389cf1ed7a3a9139355668a3e9ea369954a2345df746ee",
+      "cut": {
+        "start_frame": 38720,
+        "end_frame": 42560,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 2.48,
+            "end": 2.6
+          },
+          {
+            "kind": "rnnt",
+            "start": 2.48,
+            "end": 2.52
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "dll-jtmrD70_0111-три-end-5s",
+      "audio": "work/short-word-control/frozen/dll-jtmrD70_0111-три-end-5s.wav",
+      "reference": "три",
+      "subset": "end-5s",
+      "target": "три",
+      "source_id": "dll-jtmrD70_0111",
+      "talk_id": "dll-jtmrD70",
+      "source_start": 686.9400024414062,
+      "source_end": 694.8200073242188,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "c8eff1997955020b48cf2253fe4adccaa6b8870f4376e38ae787c0c8dfb2daf6",
+      "audio_sha256": "69146c0cb81ee9cd9b08954a9291e4414024bba0022c440774d69b030887ff8c",
+      "parent_audio_sha256": "77ecb58966662e548c389cf1ed7a3a9139355668a3e9ea369954a2345df746ee",
+      "cut": {
+        "start_frame": 38720,
+        "end_frame": 42560,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 2.48,
+            "end": 2.6
+          },
+          {
+            "kind": "rnnt",
+            "start": 2.48,
+            "end": 2.52
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "6hoeGxsHS6c_0000-да-isolated",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0000-да-isolated.wav",
+      "reference": "да",
+      "subset": "isolated",
+      "target": "да",
+      "source_id": "6hoeGxsHS6c_0000",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 11.039999961853027,
+      "source_end": 11.729999542236328,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "2f3ea6ea544669a6fc91af8e4b00abc46f56f40b717fdf9d5c7309873f23c9df",
+      "audio_sha256": "b071502dd03f6315041b6c96b8941e4c1b54e1a2c4994f6fbffe581a03ea9d0a",
+      "parent_audio_sha256": "d1351218d1c4b7a0fefbee082b2fd2d22aa57e2681735162e4aca581066d344a",
+      "cut": {
+        "start_frame": 0,
+        "end_frame": 2880,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.0,
+            "end": 0.12
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.08,
+            "end": 0.12
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": false
+    },
+    {
+      "id": "6hoeGxsHS6c_0000-да-center-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0000-да-center-5s.wav",
+      "reference": "да",
+      "subset": "center-5s",
+      "target": "да",
+      "source_id": "6hoeGxsHS6c_0000",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 11.039999961853027,
+      "source_end": 11.729999542236328,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "2f3ea6ea544669a6fc91af8e4b00abc46f56f40b717fdf9d5c7309873f23c9df",
+      "audio_sha256": "ac451f6106d671dc22dc5bd6747fe3880bb980b03af36cf3e1f998cf6acc91de",
+      "parent_audio_sha256": "d1351218d1c4b7a0fefbee082b2fd2d22aa57e2681735162e4aca581066d344a",
+      "cut": {
+        "start_frame": 0,
+        "end_frame": 2880,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.0,
+            "end": 0.12
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.08,
+            "end": 0.12
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "6hoeGxsHS6c_0000-да-quiet-center-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0000-да-quiet-center-5s.wav",
+      "reference": "да",
+      "subset": "quiet-center-5s",
+      "target": "да",
+      "source_id": "6hoeGxsHS6c_0000",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 11.039999961853027,
+      "source_end": 11.729999542236328,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "2f3ea6ea544669a6fc91af8e4b00abc46f56f40b717fdf9d5c7309873f23c9df",
+      "audio_sha256": "a2e32d3875dabcd8f347dc9df2f589f92219cc7eed6e7d31d65d1d7ccf0d31cf",
+      "parent_audio_sha256": "d1351218d1c4b7a0fefbee082b2fd2d22aa57e2681735162e4aca581066d344a",
+      "cut": {
+        "start_frame": 0,
+        "end_frame": 2880,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.0,
+            "end": 0.12
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.08,
+            "end": 0.12
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 0.0625,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "6hoeGxsHS6c_0000-да-start-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0000-да-start-5s.wav",
+      "reference": "да",
+      "subset": "start-5s",
+      "target": "да",
+      "source_id": "6hoeGxsHS6c_0000",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 11.039999961853027,
+      "source_end": 11.729999542236328,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "2f3ea6ea544669a6fc91af8e4b00abc46f56f40b717fdf9d5c7309873f23c9df",
+      "audio_sha256": "aaf47b67d25a355d1044adf3860e9978223758b2dca489da8f0164bbc01b81b9",
+      "parent_audio_sha256": "d1351218d1c4b7a0fefbee082b2fd2d22aa57e2681735162e4aca581066d344a",
+      "cut": {
+        "start_frame": 0,
+        "end_frame": 2880,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.0,
+            "end": 0.12
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.08,
+            "end": 0.12
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "6hoeGxsHS6c_0000-да-end-5s",
+      "audio": "work/short-word-control/frozen/6hoeGxsHS6c_0000-да-end-5s.wav",
+      "reference": "да",
+      "subset": "end-5s",
+      "target": "да",
+      "source_id": "6hoeGxsHS6c_0000",
+      "talk_id": "6hoeGxsHS6c",
+      "source_start": 11.039999961853027,
+      "source_end": 11.729999542236328,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "2f3ea6ea544669a6fc91af8e4b00abc46f56f40b717fdf9d5c7309873f23c9df",
+      "audio_sha256": "c955f4e24c34a118cf4155494122e9f8980675ed3086a8cfc75f414fd4e1cfe0",
+      "parent_audio_sha256": "d1351218d1c4b7a0fefbee082b2fd2d22aa57e2681735162e4aca581066d344a",
+      "cut": {
+        "start_frame": 0,
+        "end_frame": 2880,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.0,
+            "end": 0.12
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.08,
+            "end": 0.12
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "7hkxVyhoMoQ_0040-да-isolated",
+      "audio": "work/short-word-control/frozen/7hkxVyhoMoQ_0040-да-isolated.wav",
+      "reference": "да",
+      "subset": "isolated",
+      "target": "да",
+      "source_id": "7hkxVyhoMoQ_0040",
+      "talk_id": "7hkxVyhoMoQ",
+      "source_start": 246.4199981689453,
+      "source_end": 248.64999389648438,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "ba92c50f9b8c72e899a08bd0e3888d445a6665e58aac1ca66272f421dc468754",
+      "audio_sha256": "75be4d252900806b039b3246e94121004bf730da906b2bb83eedf1891014077b",
+      "parent_audio_sha256": "a23337e027c22a0ec5792c9d16073421dad3282c4e713461afa499f63f7b0c4c",
+      "cut": {
+        "start_frame": 6080,
+        "end_frame": 9920,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.52,
+            "end": 0.56
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.44,
+            "end": 0.48
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": false
+    },
+    {
+      "id": "7hkxVyhoMoQ_0040-да-center-5s",
+      "audio": "work/short-word-control/frozen/7hkxVyhoMoQ_0040-да-center-5s.wav",
+      "reference": "да",
+      "subset": "center-5s",
+      "target": "да",
+      "source_id": "7hkxVyhoMoQ_0040",
+      "talk_id": "7hkxVyhoMoQ",
+      "source_start": 246.4199981689453,
+      "source_end": 248.64999389648438,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "ba92c50f9b8c72e899a08bd0e3888d445a6665e58aac1ca66272f421dc468754",
+      "audio_sha256": "11cb7478dc1b997240996353ab9aa1cb3bdec064f5cb2b0afde0cb5d273c161f",
+      "parent_audio_sha256": "a23337e027c22a0ec5792c9d16073421dad3282c4e713461afa499f63f7b0c4c",
+      "cut": {
+        "start_frame": 6080,
+        "end_frame": 9920,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.52,
+            "end": 0.56
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.44,
+            "end": 0.48
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "7hkxVyhoMoQ_0040-да-quiet-center-5s",
+      "audio": "work/short-word-control/frozen/7hkxVyhoMoQ_0040-да-quiet-center-5s.wav",
+      "reference": "да",
+      "subset": "quiet-center-5s",
+      "target": "да",
+      "source_id": "7hkxVyhoMoQ_0040",
+      "talk_id": "7hkxVyhoMoQ",
+      "source_start": 246.4199981689453,
+      "source_end": 248.64999389648438,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "ba92c50f9b8c72e899a08bd0e3888d445a6665e58aac1ca66272f421dc468754",
+      "audio_sha256": "3a001b0dc052728075f1ad384e3a9d9b3b691a380ce4c1455b0707da9473f00c",
+      "parent_audio_sha256": "a23337e027c22a0ec5792c9d16073421dad3282c4e713461afa499f63f7b0c4c",
+      "cut": {
+        "start_frame": 6080,
+        "end_frame": 9920,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.52,
+            "end": 0.56
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.44,
+            "end": 0.48
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 0.0625,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "7hkxVyhoMoQ_0040-да-start-5s",
+      "audio": "work/short-word-control/frozen/7hkxVyhoMoQ_0040-да-start-5s.wav",
+      "reference": "да",
+      "subset": "start-5s",
+      "target": "да",
+      "source_id": "7hkxVyhoMoQ_0040",
+      "talk_id": "7hkxVyhoMoQ",
+      "source_start": 246.4199981689453,
+      "source_end": 248.64999389648438,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "ba92c50f9b8c72e899a08bd0e3888d445a6665e58aac1ca66272f421dc468754",
+      "audio_sha256": "41d002b959a1cbdb72fddb18bb000971d082e34df765587972fda66b5cf89536",
+      "parent_audio_sha256": "a23337e027c22a0ec5792c9d16073421dad3282c4e713461afa499f63f7b0c4c",
+      "cut": {
+        "start_frame": 6080,
+        "end_frame": 9920,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.52,
+            "end": 0.56
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.44,
+            "end": 0.48
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "7hkxVyhoMoQ_0040-да-end-5s",
+      "audio": "work/short-word-control/frozen/7hkxVyhoMoQ_0040-да-end-5s.wav",
+      "reference": "да",
+      "subset": "end-5s",
+      "target": "да",
+      "source_id": "7hkxVyhoMoQ_0040",
+      "talk_id": "7hkxVyhoMoQ",
+      "source_start": 246.4199981689453,
+      "source_end": 248.64999389648438,
+      "source": "Multilingual TEDx / ru/test",
+      "source_revision": "89e77b30f14b8c580b19dc51087f675ff90cda07",
+      "source_audio_sha256": "ba92c50f9b8c72e899a08bd0e3888d445a6665e58aac1ca66272f421dc468754",
+      "audio_sha256": "82c5d41be4cef02280acd74bec38ec97ebcdc810c2367459e6ea8e04e4ee977e",
+      "parent_audio_sha256": "a23337e027c22a0ec5792c9d16073421dad3282c4e713461afa499f63f7b0c4c",
+      "cut": {
+        "start_frame": 6080,
+        "end_frame": 9920,
+        "passes": [
+          {
+            "kind": "ctc",
+            "start": 0.52,
+            "end": 0.56
+          },
+          {
+            "kind": "rnnt",
+            "start": 0.44,
+            "end": 0.48
+          }
+        ],
+        "note": "Автоматическая акустическая разметка, не ручная фонемная; срез из связной живой речи"
+      },
+      "gain": 1,
+      "synthetic_speech": false,
+      "synthetic_silence": true
+    },
+    {
+      "id": "esc50-keyboard_typing",
+      "audio": "work/asr-speed/round2/esc/5-205090-A-32.wav",
+      "reference": "",
+      "subset": "environmental_sound",
+      "source_id": "5-205090-A-32.wav",
+      "source_revision": "33c8ce9eb2cf0b1c2f8bcf322eb349b6be34dbb6",
+      "category": "keyboard_typing",
+      "audio_sha256": "f72dc926f75b55a39b87ef2987f88613981c253bde641f3165dc8932f4840b72",
+      "source_sha256": "5a8f193f14fa649248b1d645ce6dae97f5c105015b3351ffaf86406e998c36d3"
+    },
+    {
+      "id": "esc50-mouse_click",
+      "audio": "work/asr-speed/round2/esc/5-219318-A-31.wav",
+      "reference": "",
+      "subset": "environmental_sound",
+      "source_id": "5-219318-A-31.wav",
+      "source_revision": "33c8ce9eb2cf0b1c2f8bcf322eb349b6be34dbb6",
+      "category": "mouse_click",
+      "audio_sha256": "a93b65c87a90f59c78eba10b0d1b9da4d293089d126f8967ba021c3971280865",
+      "source_sha256": "b98ad73cbc140b63e7b6bb37aab8974e2f60a357c07038ffdbacef1048fab8e6"
+    },
+    {
+      "id": "esc50-rain",
+      "audio": "work/asr-speed/round2/esc/5-181766-A-10.wav",
+      "reference": "",
+      "subset": "environmental_sound",
+      "source_id": "5-181766-A-10.wav",
+      "source_revision": "33c8ce9eb2cf0b1c2f8bcf322eb349b6be34dbb6",
+      "category": "rain",
+      "audio_sha256": "1e6956ae83df3901fd603010cb5a0bbe8a788765875eb879522a999c680dac8f",
+      "source_sha256": "608fcc0bef32512e2a984c7d3d2cac8ea161f6337ec0056850a6d34f07f8db35"
+    },
+    {
+      "id": "esc50-clock_tick",
+      "audio": "work/asr-speed/round2/esc/5-201194-A-38.wav",
+      "reference": "",
+      "subset": "environmental_sound",
+      "source_id": "5-201194-A-38.wav",
+      "source_revision": "33c8ce9eb2cf0b1c2f8bcf322eb349b6be34dbb6",
+      "category": "clock_tick",
+      "audio_sha256": "963a23279417fd9ed59961950223a7d34e1a1958f82205a58899fc263ba5c956",
+      "source_sha256": "61599b9d388e887b0318d4b008ca3f545b28f327ba3ecb12afdff7a128162c28"
+    },
+    {
+      "id": "esc50-footsteps",
+      "audio": "work/asr-speed/round2/esc/5-234263-A-25.wav",
+      "reference": "",
+      "subset": "environmental_sound",
+      "source_id": "5-234263-A-25.wav",
+      "source_revision": "33c8ce9eb2cf0b1c2f8bcf322eb349b6be34dbb6",
+      "category": "footsteps",
+      "audio_sha256": "ced5e1a2bfdf7b080131a34e92f7735b1975277fa850d78c7b8d5dd1d7629822",
+      "source_sha256": "b83813a8a07ac187c280204b4ac4a015c0cff5a84bf5a7b7e3aa03b6e726910d"
+    },
+    {
+      "id": "esc50-vacuum_cleaner",
+      "audio": "work/asr-speed/round2/esc/5-182007-A-36.wav",
+      "reference": "",
+      "subset": "environmental_sound",
+      "source_id": "5-182007-A-36.wav",
+      "source_revision": "33c8ce9eb2cf0b1c2f8bcf322eb349b6be34dbb6",
+      "category": "vacuum_cleaner",
+      "audio_sha256": "5f2bfe93c7f07ab757f9994a4681782ba0f54c452f29ca9647ebd5732bc30f23",
+      "source_sha256": "3da75e2e43452c3d1bc595b46a51e7a04bc6be977fc5b11e7adaa5e8e5877b0f"
+    },
+    {
+      "id": "esc50-door_wood_knock",
+      "audio": "work/asr-speed/round2/esc/5-218980-A-30.wav",
+      "reference": "",
+      "subset": "environmental_sound",
+      "source_id": "5-218980-A-30.wav",
+      "source_revision": "33c8ce9eb2cf0b1c2f8bcf322eb349b6be34dbb6",
+      "category": "door_wood_knock",
+      "audio_sha256": "e25fe41b63f847de0d73b6f2369909bc585203aecce149eaf3faf43666674a89",
+      "source_sha256": "c917686cc7048be91d4dec61539344094a01233e649989264187388c9e95f82f"
+    },
+    {
+      "id": "esc50-washing_machine",
+      "audio": "work/asr-speed/round2/esc/5-141683-A-35.wav",
+      "reference": "",
+      "subset": "environmental_sound",
+      "source_id": "5-141683-A-35.wav",
+      "source_revision": "33c8ce9eb2cf0b1c2f8bcf322eb349b6be34dbb6",
+      "category": "washing_machine",
+      "audio_sha256": "59d47d86905ab911fef384699a8b2b572b68d35d03eb3416b4c092a397301a1a",
+      "source_sha256": "c8ac3bafa369ff4bcfef515f00060c963f4c19d9275ada75edbc8cdb9c1ad591"
+    }
+  ],
+  "examples": [
+    {
+      "id": "CPci7a8l-oU_0101-не-isolated",
+      "subset": "isolated",
+      "reference": "не",
+      "text": "Не",
+      "audio_sha256": "dc1890b973bbee83e34ebc18422ac4c3979e6dac3fa4613010f8e45bb1a6a3f1",
+      "pcm_sha256": "e7889864d1e142598482e190a3e5bcb90b89144ad04c8d5673424597557d4f52",
+      "duration": 0.2,
+      "load_seconds": 0.626000333,
+      "elapsed_seconds": 0.650726208,
+      "primary_seconds": 0.01936525,
+      "clean_calls": 0,
+      "repeat": 0,
+      "available_at_return_seconds": 0.650726208,
+      "clean_seconds": 0,
+      "first_primary_seconds": 0.64547325,
+      "first_phrase_built_seconds": 0.650701958,
+      "primary_calls": 1,
+      "windows": [
+        {
+          "final": [
+            {
+              "start": 0.04,
+              "end": 0.12,
+              "conf": 0.4534768295456948,
+              "word": "Не"
+            }
+          ],
+          "primary": [
+            {
+              "start": 0.04,
+              "end": 0.12,
+              "conf": 0.4534768295456948,
+              "word": "Не"
+            }
+          ]
+        }
+      ],
+      "segments": [
+        {
+          "needs_review": true,
+          "word_times": [
+            [
+              0,
+              2,
+              40
+            ]
+          ],
+          "start": 0.04,
+          "end": 0.12,
+          "text": "Не"
+        }
+      ],
+      "reference_words": 1,
+      "word_errors": 0,
+      "word_error_breakdown": {
+        "substitutions": 0,
+        "deletions": 0,
+        "insertions": 0
+      },
+      "word_edits": [],
+      "wer": 0.0,
+      "cer": 0.0,
+      "hallucinated_words": 0,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "CPci7a8l-oU_0101-не-quiet-center-5s",
+      "subset": "quiet-center-5s",
+      "reference": "не",
+      "text": "Не.",
+      "audio_sha256": "2949391dec9211ff6ba85bc20767771b639af6e055421db7e6a3895510035047",
+      "pcm_sha256": "77a472d9fe383e5da4ab6ead28a03ab506c6385eda13262fe3fd0b4019061b4b",
+      "duration": 5.0,
+      "load_seconds": 0.469883583,
+      "elapsed_seconds": 0.666333583,
+      "primary_seconds": 0.18358525,
+      "clean_calls": 0,
+      "repeat": 0,
+      "available_at_return_seconds": 0.666333583,
+      "clean_seconds": 0,
+      "first_primary_seconds": 0.653830375,
+      "first_phrase_built_seconds": 0.666298,
+      "primary_calls": 1,
+      "windows": [
+        {
+          "final": [
+            {
+              "start": 0.04,
+              "end": 5,
+              "conf": 0.6389415304363618,
+              "word": "Не."
+            }
+          ],
+          "primary": [
+            {
+              "start": 0.04,
+              "end": 5,
+              "conf": 0.6389415304363618,
+              "word": "Не."
+            }
+          ]
+        }
+      ],
+      "segments": [
+        {
+          "needs_review": true,
+          "word_times": [
+            [
+              0,
+              3,
+              40
+            ]
+          ],
+          "start": 0.04,
+          "end": 5,
+          "text": "Не."
+        }
+      ],
+      "reference_words": 1,
+      "word_errors": 0,
+      "word_error_breakdown": {
+        "substitutions": 0,
+        "deletions": 0,
+        "insertions": 0
+      },
+      "word_edits": [],
+      "wer": 0.0,
+      "cer": 0.0,
+      "hallucinated_words": 0,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "cPhc8OVB2Rk_0078-три-center-5s",
+      "subset": "center-5s",
+      "reference": "три",
+      "text": "Три.",
+      "audio_sha256": "aeca19b50daa13787a9341539db501b9cce861fca690207c3f969b93c01d2238",
+      "pcm_sha256": "a17beb039d59d41ce7ec87228dd44af63afb9f92dfe1047a2fbcbd5243a4e7cb",
+      "duration": 5.0,
+      "load_seconds": 0.470772333,
+      "elapsed_seconds": 0.657722875,
+      "primary_seconds": 0.181561416,
+      "clean_calls": 0,
+      "repeat": 0,
+      "available_at_return_seconds": 0.657722875,
+      "clean_seconds": 0,
+      "first_primary_seconds": 0.652564417,
+      "first_phrase_built_seconds": 0.657692875,
+      "primary_calls": 1,
+      "windows": [
+        {
+          "final": [
+            {
+              "start": 0,
+              "end": 5,
+              "conf": 0.9995664030060625,
+              "word": "Три."
+            }
+          ],
+          "primary": [
+            {
+              "start": 0,
+              "end": 5,
+              "conf": 0.9995664030060625,
+              "word": "Три."
+            }
+          ]
+        }
+      ],
+      "segments": [
+        {
+          "needs_review": false,
+          "word_times": [
+            [
+              0,
+              4,
+              0
+            ]
+          ],
+          "start": 0,
+          "end": 5,
+          "text": "Три."
+        }
+      ],
+      "reference_words": 1,
+      "word_errors": 0,
+      "word_error_breakdown": {
+        "substitutions": 0,
+        "deletions": 0,
+        "insertions": 0
+      },
+      "word_edits": [],
+      "wer": 0.0,
+      "cer": 0.0,
+      "hallucinated_words": 0,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "6hoeGxsHS6c_0000-да-center-5s",
+      "subset": "center-5s",
+      "reference": "да",
+      "text": "Да.",
+      "audio_sha256": "ac451f6106d671dc22dc5bd6747fe3880bb980b03af36cf3e1f998cf6acc91de",
+      "pcm_sha256": "6182107d13f1d8f3f882e82e9dca8460b32bc9adfb3e61c9f37f4324caa5c623",
+      "duration": 5.0,
+      "load_seconds": 0.460827541,
+      "elapsed_seconds": 0.60184775,
+      "primary_seconds": 0.137410917,
+      "clean_calls": 0,
+      "repeat": 0,
+      "available_at_return_seconds": 0.60184775,
+      "clean_seconds": 0,
+      "first_primary_seconds": 0.598508375,
+      "first_phrase_built_seconds": 0.601833208,
+      "primary_calls": 1,
+      "windows": [
+        {
+          "final": [
+            {
+              "start": 0,
+              "end": 5,
+              "conf": 0.997571865899675,
+              "word": "Да."
+            }
+          ],
+          "primary": [
+            {
+              "start": 0,
+              "end": 5,
+              "conf": 0.997571865899675,
+              "word": "Да."
+            }
+          ]
+        }
+      ],
+      "segments": [
+        {
+          "needs_review": false,
+          "word_times": [
+            [
+              0,
+              3,
+              0
+            ]
+          ],
+          "start": 0,
+          "end": 5,
+          "text": "Да."
+        }
+      ],
+      "reference_words": 1,
+      "word_errors": 0,
+      "word_error_breakdown": {
+        "substitutions": 0,
+        "deletions": 0,
+        "insertions": 0
+      },
+      "word_edits": [],
+      "wer": 0.0,
+      "cer": 0.0,
+      "hallucinated_words": 0,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    }
+  ],
+  "baseline_summary": {
+    "clips": 60,
+    "reference_words": 123,
+    "word_errors": 47,
+    "wer": 0.3821138211382114,
+    "hallucinated_words": 3,
+    "noise_cases": 8,
+    "failed_noise_cases": 3,
+    "word_error_breakdown": {
+      "substitutions": 27,
+      "deletions": 7,
+      "insertions": 13
+    },
+    "duration_seconds": 240.06,
+    "elapsed_seconds": 39.821,
+    "real_time_factor": 0.16587797354411396,
+    "critical_phrases": {
+      "missed": 0,
+      "extra": 0
+    },
+    "numeric_tokens": {
+      "missed": 4,
+      "extra": 1
+    },
+    "negations": {
+      "missed": 11,
+      "extra": 0
+    }
+  },
+  "baseline_subsets": {
+    "recorded-context": {
+      "clips": 12,
+      "reference_words": 83,
+      "word_errors": 21,
+      "wer": 0.25301204819277107,
+      "hallucinated_words": 0,
+      "noise_cases": 0,
+      "failed_noise_cases": 0,
+      "word_error_breakdown": {
+        "substitutions": 10,
+        "deletions": 7,
+        "insertions": 4
+      },
+      "duration_seconds": 38.26,
+      "elapsed_seconds": 7.085,
+      "real_time_factor": 0.18518826343439623,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 2,
+        "extra": 1
+      },
+      "negations": {
+        "missed": 1,
+        "extra": 0
+      }
+    },
+    "isolated": {
+      "clips": 8,
+      "reference_words": 8,
+      "word_errors": 5,
+      "wer": 0.625,
+      "hallucinated_words": 0,
+      "noise_cases": 0,
+      "failed_noise_cases": 0,
+      "word_error_breakdown": {
+        "substitutions": 4,
+        "deletions": 0,
+        "insertions": 1
+      },
+      "duration_seconds": 1.8,
+      "elapsed_seconds": 4.12,
+      "real_time_factor": 2.288635069444444,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 1,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 2,
+        "extra": 0
+      }
+    },
+    "center-5s": {
+      "clips": 8,
+      "reference_words": 8,
+      "word_errors": 5,
+      "wer": 0.625,
+      "hallucinated_words": 0,
+      "noise_cases": 0,
+      "failed_noise_cases": 0,
+      "word_error_breakdown": {
+        "substitutions": 4,
+        "deletions": 0,
+        "insertions": 1
+      },
+      "duration_seconds": 40.0,
+      "elapsed_seconds": 5.317,
+      "real_time_factor": 0.13293166350000002,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 3,
+        "extra": 0
+      }
+    },
+    "quiet-center-5s": {
+      "clips": 8,
+      "reference_words": 8,
+      "word_errors": 5,
+      "wer": 0.625,
+      "hallucinated_words": 0,
+      "noise_cases": 0,
+      "failed_noise_cases": 0,
+      "word_error_breakdown": {
+        "substitutions": 2,
+        "deletions": 0,
+        "insertions": 3
+      },
+      "duration_seconds": 40.0,
+      "elapsed_seconds": 5.802,
+      "real_time_factor": 0.1450428458,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 1,
+        "extra": 0
+      }
+    },
+    "start-5s": {
+      "clips": 8,
+      "reference_words": 8,
+      "word_errors": 6,
+      "wer": 0.75,
+      "hallucinated_words": 0,
+      "noise_cases": 0,
+      "failed_noise_cases": 0,
+      "word_error_breakdown": {
+        "substitutions": 4,
+        "deletions": 0,
+        "insertions": 2
+      },
+      "duration_seconds": 40.0,
+      "elapsed_seconds": 6.512,
+      "real_time_factor": 0.16280083437499998,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 1,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 2,
+        "extra": 0
+      }
+    },
+    "end-5s": {
+      "clips": 8,
+      "reference_words": 8,
+      "word_errors": 5,
+      "wer": 0.625,
+      "hallucinated_words": 0,
+      "noise_cases": 0,
+      "failed_noise_cases": 0,
+      "word_error_breakdown": {
+        "substitutions": 3,
+        "deletions": 0,
+        "insertions": 2
+      },
+      "duration_seconds": 40.0,
+      "elapsed_seconds": 6.023,
+      "real_time_factor": 0.150571906225,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 2,
+        "extra": 0
+      }
+    },
+    "environmental_sound": {
+      "clips": 8,
+      "reference_words": 0,
+      "word_errors": 0,
+      "wer": null,
+      "hallucinated_words": 3,
+      "noise_cases": 8,
+      "failed_noise_cases": 3,
+      "word_error_breakdown": {
+        "substitutions": 0,
+        "deletions": 0,
+        "insertions": 0
+      },
+      "duration_seconds": 40.0,
+      "elapsed_seconds": 4.962,
+      "real_time_factor": 0.124048256225,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    }
+  },
+  "baseline_timing": [
+    {
+      "repeat": 0,
+      "elapsed_seconds": 39.820666329
+    },
+    {
+      "repeat": 1,
+      "elapsed_seconds": 39.767639417
+    }
+  ],
+  "same_8_noise_answers_as_supplied": true,
+  "provided_noise_report": {
+    "path": "work/asr-speed/round2/android-noise-after.json",
+    "sha256": "0e2c1e50700da09c916c2f970b89916bd09456399b3eaefbcb0db700858fee8a"
+  },
+  "artifacts_root": "work/short-word-control",
+  "artifacts_sha256": {
+    "sources/sources-plan.json": "4d71d10f8d76b8c9e6b0e82e940a6024a9dcbf0201366a5091c51eccadf4ad01",
+    "sources/manifest.json": "49658259746405193630e6a339e1b20f4463b0f51999d9638879d6e90b5ba772",
+    "alignment.json": "0c9281cc98d3a0d1e8fee93e99c38b0d118cbd1ba41efd211fb294a9e8037843",
+    "frozen/manifest.json": "44001f99db189913e15cc8fc0c9a0008f3b16594bb5527e489272d953cea08a4",
+    "frozen/frozen.json": "e7221e872566b2e150b56084c2e60408ae3cda3565980ae5646c80d1b6f86492",
+    "comparison-manifest.json": "ae01a7a86443aab098794000e3eaf1123b665010adcf25b44e04e8b6a6f48311",
+    "acceptance.json": "1950092f770a7054a8efb5ce3db4a25175fc83d32462ccf7cc54c4bc616ae2f4",
+    "diagnostic-plan.json": "1190e422408b5de364674d3c286604a923ac0b9216868d9f1cc05279bfc6e7f9",
+    "android-baseline.json": "7b12e42b5c537da0117cbd06c131fd3c9ad99a98b56bdfe639146ac8a15542f9",
+    "audit-final.json": "a19e1155090084c93b21a6d1fa2809ff8eb90899a259ad8b6a3e1ace38724e09",
+    "audit-v2.json": "0e09dae9ff81cea638ff3cc0ce11ceb97b2a838aa8162c721331e6474d9afc6d"
+  },
+  "candidate_checked": false,
+  "limitations": [
+    "Вырезки из связной живой речи, автоматические границы: возможны части соседних звуков. Не ручная фонемная разметка и не отдельно произнесённые слова.",
+    "52 речевых случая образованы из 12 записей, варианты одного источника зависимы.",
+    "Сегменты новые, часть выступлений уже использовалась ранее.",
+    "Диагностические правила не являются Android-фильтром владельца, которого в этой проверке ещё нет.",
+    "JVM на Mac M2, не телефон."
+  ]
+}

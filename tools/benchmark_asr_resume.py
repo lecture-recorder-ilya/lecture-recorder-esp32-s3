@@ -22,7 +22,7 @@ MINUTE_BYTES = 60 * RATE * 2
 SOURCE = Path(__file__).resolve().parents[1] / 'outputs/recorder'
 
 
-def build_wav(path, sources, minutes):
+def build_wav(path, sources, minutes, continuous=False, pause_seconds=.25):
     # Alternate supplied excerpts without changing the samples. Each minute
     # contains up to 30 seconds of source audio, then digital silence.
     blocks = []
@@ -33,7 +33,22 @@ def build_wav(path, sources, minutes):
             data = stream.readframes(30 * RATE)
         if not data:
             raise ValueError(f'{audio}: empty source')
-        blocks.append((len(data) // 2, data.ljust(MINUTE_BYTES, b'\0')))
+        blocks.append((len(data) // 2, data if continuous else data.ljust(MINUTE_BYTES, b'\0')))
+    if continuous:
+        total = minutes*60*RATE
+        written = speech = 0
+        pause = b'\0'*(round(pause_seconds*RATE)*2)
+        with wave.open(str(path), 'wb') as stream:
+            stream.setparams((1, 2, RATE, 0, 'NONE', 'not compressed'))
+            while written < total:
+                for count, data in blocks:
+                    wanted = min(total-written, count+len(pause)//2)
+                    stream.writeframesraw((data+pause)[:wanted*2])
+                    written += wanted
+                    speech += min(count, wanted)
+                    if written == total:
+                        break
+        return speech/RATE
     with wave.open(str(path), 'wb') as stream:
         stream.setparams((1, 2, RATE, 0, 'NONE', 'not compressed'))
         for minute in range(minutes):
@@ -87,10 +102,10 @@ def worker(folder, phase, interrupt_frame):
     log()
 
 
-def benchmark(folder, sources, minutes, interrupt_at):
+def benchmark(folder, sources, minutes, interrupt_at, continuous=False, pause_seconds=.25, verify_uninterrupted=False):
     folder.mkdir(parents=True)
     audio = folder / 'lecture-2026-01-01-00-00-00.wav'
-    source_seconds = build_wav(audio, sources, minutes)
+    source_seconds = build_wav(audio, sources, minutes, continuous, pause_seconds)
     sha = audio_sha256(audio)
     cache = folder / 'result.transcript.json'
     phases = {}
@@ -117,15 +132,43 @@ def benchmark(folder, sources, minutes, interrupt_at):
     warm = run_phase('complete_cache')
     if warm != after or phases['complete_cache']['windows']:
         raise RuntimeError('Opening a complete cache performed new decoding')
+    if audio_sha256(audio) != sha:
+        raise RuntimeError('WAV изменился во время распознавания')
+    word_count = 0
+    for segment in after['segments']:
+        if not 0 <= segment['start'] < segment['end'] <= minutes*60+.001:
+            raise RuntimeError('Таймкод фразы вне WAV')
+        for word in segment.get('words', []):
+            if not segment['start']-.001 <= word['start'] < word['end'] <= segment['end']+.001:
+                raise RuntimeError('Таймкод слова вне фразы')
+            word_count += 1
+    uninterrupted = None
+    if verify_uninterrupted:
+        comparison = folder/'uninterrupted'
+        comparison.mkdir()
+        (comparison/audio.name).symlink_to(audio)
+        command = [sys.executable, str(Path(__file__).resolve()), '--worker', str(comparison), 'full', '0']
+        subprocess.run(command, check=True)
+        complete = read_checkpoint(comparison/'result.transcript.json')
+        if complete['segments'] != after['segments'] or complete['identity']['audio_sha256'] != sha:
+            raise RuntimeError('Непрерванный прогон отличается от возобновлённого')
+        uninterrupted = dict(measurements=read_checkpoint(comparison/'full.json'),
+                             equal_segments=True, equal_word_timestamps=True,
+                             segments_sha256=snapshot(complete['segments']))
     seconds = minutes * 60
     wall = sum(phases[name]['wall_seconds'] for name in ('interrupted', 'resumed'))
     result = dict(
-        duration_seconds=seconds, source_audio_seconds=source_seconds, synth_layout='30s source + silence per minute',
+        duration_seconds=seconds, source_audio_seconds=source_seconds,
+        synth_layout=('Плотный повтор человеческих фрагментов с паузами' if continuous else '30s source + silence per minute'),
+        pause_seconds=pause_seconds if continuous else None,
         audio_sha256=sha, source_audio_sha256={str(item): audio_sha256(item) for item in sources},
         engine=after['engine'], economy_mode=False, phases=phases,
         real_time_factor=wall / seconds, peak_rss_mib=max(row['peak_rss_mib'] for row in phases.values()),
         checkpoint_seconds=before['completed_frames'] / RATE, checkpoint_segments=len(prefix),
         segments=len(after['segments']), preserved_prefix_sha256=snapshot(prefix),
+        restored_prefix_sha256=snapshot(after['segments'][:len(prefix)]),
+        verified_word_timestamps=word_count, audio_unchanged_after_run=True,
+        uninterrupted=uninterrupted, script_sha256=audio_sha256(Path(__file__)),
     )
     (folder / 'benchmark.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result, indent=2))
@@ -141,10 +184,16 @@ def main():
     parser.add_argument('inputs', nargs='+', type=Path, help='PCM mono 16 kHz source excerpts to cycle')
     parser.add_argument('--minutes', type=int, default=90)
     parser.add_argument('--interrupt-at', type=int, default=300, metavar='SECONDS')
+    parser.add_argument('--continuous', action='store_true', help='Плотно повторять клипы вместо минуты с длинной тишиной')
+    parser.add_argument('--pause', type=float, default=.25, help='Пауза между клипами в плотном режиме, секунд')
+    parser.add_argument('--verify-uninterrupted', action='store_true', help='Сравнить весь результат с отдельным непрерванным прогоном')
     args = parser.parse_args()
     if not 0 < args.interrupt_at < args.minutes * 60 or args.interrupt_at % 20:
         parser.error('--interrupt-at must be a positive multiple of 20 within the WAV')
-    benchmark(args.output.resolve(), [path.resolve() for path in args.inputs], args.minutes, args.interrupt_at)
+    if not 0 <= args.pause <= 1:
+        parser.error('Пауза должна быть от 0 до 1 секунды.')
+    benchmark(args.output.resolve(), [path.resolve() for path in args.inputs], args.minutes, args.interrupt_at,
+              args.continuous, args.pause, args.verify_uninterrupted)
 
 
 if __name__ == '__main__':

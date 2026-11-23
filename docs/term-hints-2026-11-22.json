@@ -1,0 +1,558 @@
+{
+  "archive": {
+    "date": "2026-11-22",
+    "report_commit": "69730d066757290054392465ba29700f8949de7c",
+    "scope": "Архив эксперимента. Ревизии и сценарии указаны в отчёте."
+  },
+  "manifest": [
+    {
+      "source_id": "public_lecture_1/7/92/eb496ac51c88.opus",
+      "reference": "с акцентом это очень есть хорошо но теперь давайте мне сюда вашу пробирку",
+      "reference_item": "public_lecture_1/7/92/eb496ac51c88.txt",
+      "selection": "общая речь",
+      "source_audio_sha256": "318886b955e546981de34bcb51eb4898f5125db81bb357f6b4125eea0412bc9b",
+      "seed": 258700556442760,
+      "parent_audio_sha256": "fa07e21cbd7fc2a562265e41c25b5169451f7e1f9d74f2629dda3b6cfed8faee",
+      "id": "openstt-eb496ac51c88-room-base",
+      "audio": "work/asr-qa/control/openstt-eb496ac51c88-room.wav",
+      "audio_sha256": "a7970fcae1e73e5d1efb6dd06d79623301a6ec4fa4690c17bfad0117965fabd4",
+      "subset": "base",
+      "terms": []
+    },
+    {
+      "source_id": "public_lecture_1/7/92/eb496ac51c88.opus",
+      "reference": "с акцентом это очень есть хорошо но теперь давайте мне сюда вашу пробирку",
+      "reference_item": "public_lecture_1/7/92/eb496ac51c88.txt",
+      "selection": "общая речь",
+      "source_audio_sha256": "318886b955e546981de34bcb51eb4898f5125db81bb357f6b4125eea0412bc9b",
+      "seed": 258700556442760,
+      "parent_audio_sha256": "fa07e21cbd7fc2a562265e41c25b5169451f7e1f9d74f2629dda3b6cfed8faee",
+      "id": "openstt-eb496ac51c88-room-correct",
+      "audio": "work/asr-qa/control/openstt-eb496ac51c88-room.wav",
+      "audio_sha256": "a7970fcae1e73e5d1efb6dd06d79623301a6ec4fa4690c17bfad0117965fabd4",
+      "subset": "correct",
+      "terms": [
+        "пробирка",
+        "образец",
+        "жидкость",
+        "клетка"
+      ]
+    },
+    {
+      "source_id": "public_lecture_1/7/92/eb496ac51c88.opus",
+      "reference": "с акцентом это очень есть хорошо но теперь давайте мне сюда вашу пробирку",
+      "reference_item": "public_lecture_1/7/92/eb496ac51c88.txt",
+      "selection": "общая речь",
+      "source_audio_sha256": "318886b955e546981de34bcb51eb4898f5125db81bb357f6b4125eea0412bc9b",
+      "seed": 258700556442760,
+      "parent_audio_sha256": "fa07e21cbd7fc2a562265e41c25b5169451f7e1f9d74f2629dda3b6cfed8faee",
+      "id": "openstt-eb496ac51c88-room-wrong",
+      "audio": "work/asr-qa/control/openstt-eb496ac51c88-room.wav",
+      "audio_sha256": "a7970fcae1e73e5d1efb6dd06d79623301a6ec4fa4690c17bfad0117965fabd4",
+      "subset": "wrong",
+      "terms": [
+        "транзистор",
+        "электрод",
+        "диффузия",
+        "кремний"
+      ]
+    },
+    {
+      "id": "lecture-54d7a2206802-room-base",
+      "audio": "work/rear-row/corpus/wav/lecture-54d7a2206802-room.wav",
+      "audio_sha256": "c456510ecfa1e66cdc9f3e6c53ff4811c15c08729a25e37a134858d83ee45025",
+      "reference": "и создают серьёзную конкуренцию опытным мэтрам вот такие молодые команды",
+      "subset": "base",
+      "synthetic": true,
+      "source": "OpenSTT public_lecture_1",
+      "source_item": "public_lecture_1/5/9e/54d7a2206802.opus",
+      "reference_source": "субтитры корпуса",
+      "microphone_distance": null,
+      "terms": []
+    },
+    {
+      "id": "lecture-54d7a2206802-room-correct",
+      "audio": "work/rear-row/corpus/wav/lecture-54d7a2206802-room.wav",
+      "audio_sha256": "c456510ecfa1e66cdc9f3e6c53ff4811c15c08729a25e37a134858d83ee45025",
+      "reference": "и создают серьёзную конкуренцию опытным мэтрам вот такие молодые команды",
+      "subset": "correct",
+      "synthetic": true,
+      "source": "OpenSTT public_lecture_1",
+      "source_item": "public_lecture_1/5/9e/54d7a2206802.opus",
+      "reference_source": "субтитры корпуса",
+      "microphone_distance": null,
+      "terms": [
+        "мэтр",
+        "творчество",
+        "мастерская"
+      ]
+    },
+    {
+      "id": "lecture-54d7a2206802-room-wrong",
+      "audio": "work/rear-row/corpus/wav/lecture-54d7a2206802-room.wav",
+      "audio_sha256": "c456510ecfa1e66cdc9f3e6c53ff4811c15c08729a25e37a134858d83ee45025",
+      "reference": "и создают серьёзную конкуренцию опытным мэтрам вот такие молодые команды",
+      "subset": "wrong",
+      "synthetic": true,
+      "source": "OpenSTT public_lecture_1",
+      "source_item": "public_lecture_1/5/9e/54d7a2206802.opus",
+      "reference_source": "субтитры корпуса",
+      "microphone_distance": null,
+      "terms": [
+        "транзистор",
+        "электрод",
+        "диффузия",
+        "кремний"
+      ]
+    },
+    {
+      "source_id": "public_lecture_1/b/97/cc06f7543107.opus",
+      "reference": "не питающую жизнь воду а участки твёрдой поверхности",
+      "reference_item": "public_lecture_1/b/97/cc06f7543107.txt",
+      "selection": "отрицания",
+      "source_audio_sha256": "339079a732ea00972ac161cfb1efcae52e365385a557280b2bdc48c6e4f383c1",
+      "seed": 224330291360007,
+      "parent_audio_sha256": "ba8442ce56e215cdee14549626e236fafb1c5258b14facbd4499b85afaccbd95",
+      "id": "openstt-cc06f7543107-room-base",
+      "audio": "work/asr-qa/control/openstt-cc06f7543107-room.wav",
+      "audio_sha256": "13b341595527b665c51c4327da4561cd56c2286abf9875096152ffd36bb4a752",
+      "subset": "base",
+      "terms": []
+    },
+    {
+      "source_id": "public_lecture_1/b/97/cc06f7543107.opus",
+      "reference": "не питающую жизнь воду а участки твёрдой поверхности",
+      "reference_item": "public_lecture_1/b/97/cc06f7543107.txt",
+      "selection": "отрицания",
+      "source_audio_sha256": "339079a732ea00972ac161cfb1efcae52e365385a557280b2bdc48c6e4f383c1",
+      "seed": 224330291360007,
+      "parent_audio_sha256": "ba8442ce56e215cdee14549626e236fafb1c5258b14facbd4499b85afaccbd95",
+      "id": "openstt-cc06f7543107-room-correct",
+      "audio": "work/asr-qa/control/openstt-cc06f7543107-room.wav",
+      "audio_sha256": "13b341595527b665c51c4327da4561cd56c2286abf9875096152ffd36bb4a752",
+      "subset": "correct",
+      "terms": [
+        "вода",
+        "поверхность",
+        "частица"
+      ]
+    },
+    {
+      "source_id": "public_lecture_1/b/97/cc06f7543107.opus",
+      "reference": "не питающую жизнь воду а участки твёрдой поверхности",
+      "reference_item": "public_lecture_1/b/97/cc06f7543107.txt",
+      "selection": "отрицания",
+      "source_audio_sha256": "339079a732ea00972ac161cfb1efcae52e365385a557280b2bdc48c6e4f383c1",
+      "seed": 224330291360007,
+      "parent_audio_sha256": "ba8442ce56e215cdee14549626e236fafb1c5258b14facbd4499b85afaccbd95",
+      "id": "openstt-cc06f7543107-room-wrong",
+      "audio": "work/asr-qa/control/openstt-cc06f7543107-room.wav",
+      "audio_sha256": "13b341595527b665c51c4327da4561cd56c2286abf9875096152ffd36bb4a752",
+      "subset": "wrong",
+      "terms": [
+        "транзистор",
+        "электрод",
+        "диффузия",
+        "кремний"
+      ]
+    },
+    {
+      "source_id": "public_lecture_1/1/37/0a7b5a064c66.opus",
+      "reference": "то есть мы заболеем с гораздо большей вероятностью через восемь лет чем сейчас",
+      "reference_item": "public_lecture_1/1/37/0a7b5a064c66.txt",
+      "selection": "числа",
+      "source_audio_sha256": "ebe0dc0348697d56dae520a0201bc240549fff39d1db5328893799346d9f7072",
+      "seed": 11524907617382,
+      "parent_audio_sha256": "2bc232fc4b5f637675f66acebd7160a442fd1d94d61412a042dfc207f50767d3",
+      "id": "openstt-0a7b5a064c66-room-base",
+      "audio": "work/asr-qa/control/openstt-0a7b5a064c66-room.wav",
+      "audio_sha256": "1a40ac9e12292f9119c4c28614235ce9a19256936268770584425e97a91df330",
+      "subset": "base",
+      "terms": []
+    },
+    {
+      "source_id": "public_lecture_1/1/37/0a7b5a064c66.opus",
+      "reference": "то есть мы заболеем с гораздо большей вероятностью через восемь лет чем сейчас",
+      "reference_item": "public_lecture_1/1/37/0a7b5a064c66.txt",
+      "selection": "числа",
+      "source_audio_sha256": "ebe0dc0348697d56dae520a0201bc240549fff39d1db5328893799346d9f7072",
+      "seed": 11524907617382,
+      "parent_audio_sha256": "2bc232fc4b5f637675f66acebd7160a442fd1d94d61412a042dfc207f50767d3",
+      "id": "openstt-0a7b5a064c66-room-correct",
+      "audio": "work/asr-qa/control/openstt-0a7b5a064c66-room.wav",
+      "audio_sha256": "1a40ac9e12292f9119c4c28614235ce9a19256936268770584425e97a91df330",
+      "subset": "correct",
+      "terms": [
+        "клетка",
+        "образец",
+        "лаборатория"
+      ]
+    },
+    {
+      "source_id": "public_lecture_1/1/37/0a7b5a064c66.opus",
+      "reference": "то есть мы заболеем с гораздо большей вероятностью через восемь лет чем сейчас",
+      "reference_item": "public_lecture_1/1/37/0a7b5a064c66.txt",
+      "selection": "числа",
+      "source_audio_sha256": "ebe0dc0348697d56dae520a0201bc240549fff39d1db5328893799346d9f7072",
+      "seed": 11524907617382,
+      "parent_audio_sha256": "2bc232fc4b5f637675f66acebd7160a442fd1d94d61412a042dfc207f50767d3",
+      "id": "openstt-0a7b5a064c66-room-wrong",
+      "audio": "work/asr-qa/control/openstt-0a7b5a064c66-room.wav",
+      "audio_sha256": "1a40ac9e12292f9119c4c28614235ce9a19256936268770584425e97a91df330",
+      "subset": "wrong",
+      "terms": [
+        "транзистор",
+        "электрод",
+        "диффузия",
+        "кремний"
+      ]
+    }
+  ],
+  "summary": {
+    "clips": 12,
+    "reference_words": 132,
+    "word_errors": 28,
+    "wer": 0.21212121212121213,
+    "hallucinated_words": 0,
+    "noise_cases": 0,
+    "failed_noise_cases": 0,
+    "word_error_breakdown": {
+      "substitutions": 13,
+      "deletions": 9,
+      "insertions": 6
+    },
+    "duration_seconds": 61.611,
+    "elapsed_seconds": 15.549,
+    "real_time_factor": 0.2523721007774189,
+    "critical_phrases": {
+      "missed": 0,
+      "extra": 0
+    },
+    "numeric_tokens": {
+      "missed": 0,
+      "extra": 0
+    },
+    "negations": {
+      "missed": 0,
+      "extra": 0
+    }
+  },
+  "subsets": {
+    "base": {
+      "clips": 4,
+      "reference_words": 44,
+      "word_errors": 10,
+      "wer": 0.22727272727272727,
+      "hallucinated_words": 0,
+      "noise_cases": 0,
+      "failed_noise_cases": 0,
+      "word_error_breakdown": {
+        "substitutions": 5,
+        "deletions": 3,
+        "insertions": 2
+      },
+      "duration_seconds": 20.537,
+      "elapsed_seconds": 8.383,
+      "real_time_factor": 0.40819302561220694,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    "correct": {
+      "clips": 4,
+      "reference_words": 44,
+      "word_errors": 8,
+      "wer": 0.18181818181818182,
+      "hallucinated_words": 0,
+      "noise_cases": 0,
+      "failed_noise_cases": 0,
+      "word_error_breakdown": {
+        "substitutions": 3,
+        "deletions": 3,
+        "insertions": 2
+      },
+      "duration_seconds": 20.537,
+      "elapsed_seconds": 3.676,
+      "real_time_factor": 0.1789989632859219,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    "wrong": {
+      "clips": 4,
+      "reference_words": 44,
+      "word_errors": 10,
+      "wer": 0.22727272727272727,
+      "hallucinated_words": 0,
+      "noise_cases": 0,
+      "failed_noise_cases": 0,
+      "word_error_breakdown": {
+        "substitutions": 5,
+        "deletions": 3,
+        "insertions": 2
+      },
+      "duration_seconds": 20.537,
+      "elapsed_seconds": 3.49,
+      "real_time_factor": 0.16992431343412784,
+      "critical_phrases": {
+        "missed": 0,
+        "extra": 0
+      },
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "openstt-eb496ac51c88-room-base",
+      "audio_sha256": "a7970fcae1e73e5d1efb6dd06d79623301a6ec4fa4690c17bfad0117965fabd4",
+      "reference": "с акцентом это очень есть хорошо но теперь давайте мне сюда вашу пробирку",
+      "text": "И это очень есть хорошо, но теперь давайте мне сюда вашу пробилку.",
+      "word_errors": 3,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "openstt-eb496ac51c88-room-correct",
+      "audio_sha256": "a7970fcae1e73e5d1efb6dd06d79623301a6ec4fa4690c17bfad0117965fabd4",
+      "reference": "с акцентом это очень есть хорошо но теперь давайте мне сюда вашу пробирку",
+      "text": "И это очень есть хорошо, но теперь давайте мне сюда вашу пробирку.",
+      "word_errors": 2,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "openstt-eb496ac51c88-room-wrong",
+      "audio_sha256": "a7970fcae1e73e5d1efb6dd06d79623301a6ec4fa4690c17bfad0117965fabd4",
+      "reference": "с акцентом это очень есть хорошо но теперь давайте мне сюда вашу пробирку",
+      "text": "И это очень есть хорошо, но теперь давайте мне сюда вашу пробилку.",
+      "word_errors": 3,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "lecture-54d7a2206802-room-base",
+      "audio_sha256": "c456510ecfa1e66cdc9f3e6c53ff4811c15c08729a25e37a134858d83ee45025",
+      "reference": "и создают серьёзную конкуренцию опытным мэтрам вот такие молодые команды",
+      "text": "...и создают серьёзную конкуренцию, скажем так, опытным этрам вот такие молодые команды...",
+      "word_errors": 3,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "lecture-54d7a2206802-room-correct",
+      "audio_sha256": "c456510ecfa1e66cdc9f3e6c53ff4811c15c08729a25e37a134858d83ee45025",
+      "reference": "и создают серьёзную конкуренцию опытным мэтрам вот такие молодые команды",
+      "text": "...и создают серьёзную конкуренцию, скажем так, опытным мэтрам вот такие молодые команды...",
+      "word_errors": 2,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "lecture-54d7a2206802-room-wrong",
+      "audio_sha256": "c456510ecfa1e66cdc9f3e6c53ff4811c15c08729a25e37a134858d83ee45025",
+      "reference": "и создают серьёзную конкуренцию опытным мэтрам вот такие молодые команды",
+      "text": "...и создают серьёзную конкуренцию, скажем так, опытным этрам вот такие молодые команды...",
+      "word_errors": 3,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "openstt-cc06f7543107-room-base",
+      "audio_sha256": "13b341595527b665c51c4327da4561cd56c2286abf9875096152ffd36bb4a752",
+      "reference": "не питающую жизнь воду а участки твёрдой поверхности",
+      "text": "Не питающую жизнь воду, а участки твёрдой поверхности.",
+      "word_errors": 0,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "openstt-cc06f7543107-room-correct",
+      "audio_sha256": "13b341595527b665c51c4327da4561cd56c2286abf9875096152ffd36bb4a752",
+      "reference": "не питающую жизнь воду а участки твёрдой поверхности",
+      "text": "Не питающую жизнь воду, а участки твёрдой поверхности.",
+      "word_errors": 0,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "openstt-cc06f7543107-room-wrong",
+      "audio_sha256": "13b341595527b665c51c4327da4561cd56c2286abf9875096152ffd36bb4a752",
+      "reference": "не питающую жизнь воду а участки твёрдой поверхности",
+      "text": "Не питающую жизнь воду, а участки твёрдой поверхности.",
+      "word_errors": 0,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "openstt-0a7b5a064c66-room-base",
+      "audio_sha256": "1a40ac9e12292f9119c4c28614235ce9a19256936268770584425e97a91df330",
+      "reference": "то есть мы заболеем с гораздо большей вероятностью через восемь лет чем сейчас",
+      "text": "Мы заболеем гораздо с большей вероятностью через восемь лет, чем сейчас.",
+      "word_errors": 4,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "openstt-0a7b5a064c66-room-correct",
+      "audio_sha256": "1a40ac9e12292f9119c4c28614235ce9a19256936268770584425e97a91df330",
+      "reference": "то есть мы заболеем с гораздо большей вероятностью через восемь лет чем сейчас",
+      "text": "Мы заболеем гораздо с большей вероятностью через восемь лет, чем сейчас.",
+      "word_errors": 4,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    },
+    {
+      "id": "openstt-0a7b5a064c66-room-wrong",
+      "audio_sha256": "1a40ac9e12292f9119c4c28614235ce9a19256936268770584425e97a91df330",
+      "reference": "то есть мы заболеем с гораздо большей вероятностью через восемь лет чем сейчас",
+      "text": "Мы заболеем гораздо с большей вероятностью через восемь лет, чем сейчас.",
+      "word_errors": 4,
+      "numeric_tokens": {
+        "missed": 0,
+        "extra": 0
+      },
+      "negations": {
+        "missed": 0,
+        "extra": 0
+      }
+    }
+  ],
+  "wrong_subject_replay": {
+    "files": {
+      "tune": {
+        "clips": 38,
+        "wrong_subject_changes": [],
+        "changed_critical_cases": []
+      },
+      "control": {
+        "clips": 92,
+        "wrong_subject_changes": [],
+        "changed_critical_cases": []
+      }
+    },
+    "wrong_terms": [
+      "транзистор",
+      "электрод",
+      "диффузия",
+      "кремний"
+    ]
+  },
+  "source_sha256": {
+    "quality_asr.py": "19ea9dcbc1ed257200d9b91be700efc905a9236e04644ee7b56f220d24392e48",
+    "asr_guard.py": "add15e8f787e267a314afe11bb9f4d36fad96407f29d4a5c968c8b8cadc47cd9",
+    "speech_gate.py": "f1d97e07bffd3bd176a54457977c53b73053c21b55eecae47df6a277e212d4e0",
+    "speech_audio.py": "fd622c592e2e5fe0e798033d5c7fe8eaac9df53ce2bcbe1683e37b4c64a3d04b",
+    "context_review.py": "b65c84dd83ffec54dfcc1e220dce8ce986cf4554a4a12ba7c99807741fd95ccf",
+    "asr_terms.py": "63717518098658f132b33ec1be3935c0aaa6a440ebb82f0c8a44ec33ad40d05a",
+    "asr_segments.py": "60271c71df06cb6e80962654d4e07f07ba7677fc10e8739ee8a9ae45102df543",
+    "speech_quality.py": "13e5ec16b14b646fba1d6fd94890d14520b0b21916505d21ae45ff1fe42810ea"
+  },
+  "models_sha256": {
+    "gigaam/v3_e2e_ctc_vocab.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd",
+    "gigaam/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+    "gigaam/v3_e2e_ctc.int8.onnx": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+    "gigaam-rnnt/v3_e2e_rnnt_vocab.txt": "39abae20e692998290c574e606f11a9edef2902a1995463fcff63d1490cf22b7",
+    "gigaam-rnnt/v3_e2e_rnnt_joint.onnx": "602ff7017a93311aad34df1437c8d7f49911353c13d6eae7a6ee7b041339465c",
+    "gigaam-rnnt/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+    "gigaam-rnnt/v3_e2e_rnnt_decoder.onnx": "7b0a16d67fd2cb37061decc93c69e364a9ab27afee3c57495d55b1c974cf7231",
+    "gigaam-rnnt/v3_e2e_rnnt_encoder.onnx": "cd60b3764a832e8560ae6d3ad0b10adc1a42ffae412b9476f25620aae4f4a508",
+    "gigaam-beam/v3_ctc.onnx": "1fb978d4f41e1334003fae9d29f2d9844d4132315a90553a4b986839051ba9d3",
+    "gigaam-beam/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+    "gigaam-beam/v3_vocab.txt": "a9143c30844d3c0bee3e9e927e4084774eb1b9eeaafc473b2c4521e4911a7c07"
+  },
+  "engine": "GigaAM-v3-3pass-phrases-v12-term-forms-guard",
+  "artifact_sha256": "c0dfeddd1a89d6869e00716caf20a3cde93bbffceb871eefd3e10be8d6a382f6",
+  "tests": 26,
+  "limitations": "Целевые известные фрагменты; это не слепая оценка всех предметов. Самостоятельная ошибка модели в исходной расшифровке возможна."
+}

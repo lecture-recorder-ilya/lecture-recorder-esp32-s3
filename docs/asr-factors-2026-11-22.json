@@ -1,0 +1,922 @@
+{
+  "archive": {
+    "date": "2026-11-22",
+    "report_commit": "cb2427136527a2efa7c6537ab562b0ab9c75b9fd",
+    "scope": "Архив эксперимента. Ревизии и сценарии указаны в отчёте."
+  },
+  "pairs": {
+    "pairs": [
+      {
+        "factor": "weak",
+        "original": "work/rear-row/corpus/wav/lecture-826e1189d0fb.wav",
+        "original_sha256": "a7b5cd7d3bd21c4eefd2c16d0297a77266f38534aac55b95d2a5644f583e7cce",
+        "modified": "work/asr-factors/source-0-weak.wav",
+        "modified_sha256": "1f2e3cf921eb5925c89df318164820589b82c36facd2c35c0ad7b5d45ed36d49",
+        "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+        "parameters": {
+          "attenuation_db": -36
+        },
+        "original_rms": 0.21267325052201858,
+        "modified_rms": 0.003370672002882607
+      },
+      {
+        "factor": "reflections",
+        "original": "work/rear-row/corpus/wav/lecture-826e1189d0fb.wav",
+        "original_sha256": "a7b5cd7d3bd21c4eefd2c16d0297a77266f38534aac55b95d2a5644f583e7cce",
+        "modified": "work/asr-factors/source-0-reflections.wav",
+        "modified_sha256": "0dde7c8dfea668f3c46b16c8154ae62c0a817a4510df9313da6360b8da617ca9",
+        "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+        "parameters": {
+          "impulse_taps_samples": [
+            0,
+            720,
+            1760,
+            2960,
+            4320,
+            6560
+          ],
+          "added_noise": false
+        },
+        "original_rms": 0.21267325052201858,
+        "modified_rms": 0.16991476550564033
+      },
+      {
+        "factor": "background",
+        "original": "work/rear-row/corpus/wav/lecture-826e1189d0fb.wav",
+        "original_sha256": "a7b5cd7d3bd21c4eefd2c16d0297a77266f38534aac55b95d2a5644f583e7cce",
+        "modified": "work/asr-factors/source-0-background.wav",
+        "modified_sha256": "d05e34253cb3259679f34eaffd30c547925c945715331d2b82776eab8da7d760",
+        "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+        "parameters": {
+          "snr_db_before_common_scaling": 0,
+          "seed": 90110
+        },
+        "original_rms": 0.21267325052201858,
+        "modified_rms": 0.18569455658153355
+      },
+      {
+        "factor": "clipping",
+        "original": "work/rear-row/corpus/wav/lecture-826e1189d0fb.wav",
+        "original_sha256": "a7b5cd7d3bd21c4eefd2c16d0297a77266f38534aac55b95d2a5644f583e7cce",
+        "modified": "work/asr-factors/source-0-clipping.wav",
+        "modified_sha256": "871e9ac2ac38bbdcd4a9eaf14f58c2171437d90000425b90b17287a65106a051",
+        "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+        "parameters": {
+          "gain": 4.768335273573923,
+          "clipped_fraction": 0.20001908073270014
+        },
+        "original_rms": 0.21267325052201858,
+        "modified_rms": 0.5577645879514416
+      },
+      {
+        "factor": "overlap",
+        "original": "work/rear-row/corpus/wav/lecture-826e1189d0fb.wav",
+        "original_sha256": "a7b5cd7d3bd21c4eefd2c16d0297a77266f38534aac55b95d2a5644f583e7cce",
+        "modified": "work/asr-factors/source-0-overlap.wav",
+        "modified_sha256": "4ced9e7ed7a98d9533603d57993cfef5240f7d1d1983a6fea4831b5770259b1e",
+        "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+        "parameters": {
+          "target_to_distractor_db": 0,
+          "distractor_sha256": "1a116267b6d272ca89abf93570f9f9d3700547bd68a78a61ee12a71c04c1effe"
+        },
+        "original_rms": 0.21267325052201858,
+        "modified_rms": 0.17368451570817584
+      },
+      {
+        "factor": "weak",
+        "original": "work/rear-row/corpus/wav/lecture-3d89c1cc021f.wav",
+        "original_sha256": "08def9646c2d105be85034680f82ffea1a0a24853be7de60ee0b40bfffcbc6ff",
+        "modified": "work/asr-factors/source-1-weak.wav",
+        "modified_sha256": "3ec13725e5626dbb81c91f2f9a5fb2e2d392ed066fc7afdd563415b15bdab6b8",
+        "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+        "parameters": {
+          "attenuation_db": -36
+        },
+        "original_rms": 0.059229812937309695,
+        "modified_rms": 0.0009387900403608044
+      },
+      {
+        "factor": "reflections",
+        "original": "work/rear-row/corpus/wav/lecture-3d89c1cc021f.wav",
+        "original_sha256": "08def9646c2d105be85034680f82ffea1a0a24853be7de60ee0b40bfffcbc6ff",
+        "modified": "work/asr-factors/source-1-reflections.wav",
+        "modified_sha256": "ef7858a041571389d8eb49ab77e247d5692cabd69bc913141548dbd709e536e7",
+        "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+        "parameters": {
+          "impulse_taps_samples": [
+            0,
+            720,
+            1760,
+            2960,
+            4320,
+            6560
+          ],
+          "added_noise": false
+        },
+        "original_rms": 0.059229812937309695,
+        "modified_rms": 0.05708859318706988
+      },
+      {
+        "factor": "background",
+        "original": "work/rear-row/corpus/wav/lecture-3d89c1cc021f.wav",
+        "original_sha256": "08def9646c2d105be85034680f82ffea1a0a24853be7de60ee0b40bfffcbc6ff",
+        "modified": "work/asr-factors/source-1-background.wav",
+        "modified_sha256": "7b5b2a1236cd4cbbafb5830afee6402402e0f5f410eb3fc85438c81aab8c51c4",
+        "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+        "parameters": {
+          "snr_db_before_common_scaling": 0,
+          "seed": 90111
+        },
+        "original_rms": 0.059229812937309695,
+        "modified_rms": 0.08368339951252185
+      },
+      {
+        "factor": "clipping",
+        "original": "work/rear-row/corpus/wav/lecture-3d89c1cc021f.wav",
+        "original_sha256": "08def9646c2d105be85034680f82ffea1a0a24853be7de60ee0b40bfffcbc6ff",
+        "modified": "work/asr-factors/source-1-clipping.wav",
+        "modified_sha256": "9d01d80dce531a1d03c139ce8ef3ea0304252f05e764043570887b0698d07325",
+        "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+        "parameters": {
+          "gain": 18.133923630326507,
+          "clipped_fraction": 0.1999515701468189
+        },
+        "original_rms": 0.059229812937309695,
+        "modified_rms": 0.5712434542574986
+      },
+      {
+        "factor": "overlap",
+        "original": "work/rear-row/corpus/wav/lecture-3d89c1cc021f.wav",
+        "original_sha256": "08def9646c2d105be85034680f82ffea1a0a24853be7de60ee0b40bfffcbc6ff",
+        "modified": "work/asr-factors/source-1-overlap.wav",
+        "modified_sha256": "bd4098332f8b208ee9689e0fe87e0dec3a3fbffb296e448d18bd93956a186dfa",
+        "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+        "parameters": {
+          "target_to_distractor_db": 0,
+          "distractor_sha256": "1a116267b6d272ca89abf93570f9f9d3700547bd68a78a61ee12a71c04c1effe"
+        },
+        "original_rms": 0.059229812937309695,
+        "modified_rms": 0.08390884166927703
+      }
+    ],
+    "script_sha256": "0ebd66fdade32631d5ae64144603610b951485156a74d81e942d5635034512f6",
+    "note": "Повреждения смоделированы отдельно. В наложении эталон относится к выбранному основному голосу; слова второго голоса считаются вставками."
+  },
+  "systems": {
+    "v059": {
+      "artifact_sha256": "d474f47c5f69fb2f5ea37af508a4f02333dd6dd2c9166a3b3e3d01ee94bd0389",
+      "summary": {
+        "clips": 12,
+        "reference_words": 156,
+        "word_errors": 30,
+        "wer": 0.19230769230769232,
+        "hallucinated_words": 0,
+        "noise_cases": 0,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 21,
+          "deletions": 8,
+          "insertions": 1
+        },
+        "duration_seconds": 65.62,
+        "elapsed_seconds": 30.535,
+        "real_time_factor": 0.465332504084011,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "original": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 0,
+          "wer": 0.0,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 10.8,
+          "elapsed_seconds": 11.712,
+          "real_time_factor": 1.0844305439813642,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "weak": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 0,
+          "wer": 0.0,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 10.8,
+          "elapsed_seconds": 3.971,
+          "real_time_factor": 0.3676620448149387,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "reflections": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 6,
+          "wer": 0.23076923076923078,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 6,
+            "insertions": 0
+          },
+          "duration_seconds": 11.62,
+          "elapsed_seconds": 3.514,
+          "real_time_factor": 0.30237849251266813,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "background": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 2,
+          "wer": 0.07692307692307693,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 1,
+            "deletions": 1,
+            "insertions": 0
+          },
+          "duration_seconds": 10.8,
+          "elapsed_seconds": 4.591,
+          "real_time_factor": 0.42511247685137343,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "clipping": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 0,
+          "wer": 0.0,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 10.8,
+          "elapsed_seconds": 4.599,
+          "real_time_factor": 0.4258358295367172,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "overlap": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 22,
+          "wer": 0.8461538461538461,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 20,
+            "deletions": 1,
+            "insertions": 1
+          },
+          "duration_seconds": 10.8,
+          "elapsed_seconds": 2.149,
+          "real_time_factor": 0.19894807101890263,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "sources_sha256": {
+        "quality_asr.py": "cdfb237c58547c28505e7af56102d62a31e127cba24376698e3f901dea9fcad5",
+        "asr_guard.py": "0c4420494943616a1e81e918032ea934352e837f506f8be476bbf179548da890",
+        "speech_gate.py": "55722d5f1be2a99f68257d3ffaccf8297fd394962399106350109600251ac838",
+        "speech_audio.py": "fd622c592e2e5fe0e798033d5c7fe8eaac9df53ce2bcbe1683e37b4c64a3d04b",
+        "context_review.py": "b65c84dd83ffec54dfcc1e220dce8ce986cf4554a4a12ba7c99807741fd95ccf",
+        "asr_terms.py": "5b0d9e03068586b8cfc2dc4c75330658365be28f8b6950efeb11006a5ef5e9cf",
+        "asr_segments.py": "60271c71df06cb6e80962654d4e07f07ba7677fc10e8739ee8a9ae45102df543",
+        "speech_quality.py": "13e5ec16b14b646fba1d6fd94890d14520b0b21916505d21ae45ff1fe42810ea"
+      },
+      "models_sha256": {
+        "gigaam/v3_e2e_ctc_vocab.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd",
+        "gigaam/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam/v3_e2e_ctc.int8.onnx": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+        "gigaam-rnnt/v3_e2e_rnnt_vocab.txt": "39abae20e692998290c574e606f11a9edef2902a1995463fcff63d1490cf22b7",
+        "gigaam-rnnt/v3_e2e_rnnt_joint.onnx": "602ff7017a93311aad34df1437c8d7f49911353c13d6eae7a6ee7b041339465c",
+        "gigaam-rnnt/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam-rnnt/v3_e2e_rnnt_decoder.onnx": "7b0a16d67fd2cb37061decc93c69e364a9ab27afee3c57495d55b1c974cf7231",
+        "gigaam-rnnt/v3_e2e_rnnt_encoder.onnx": "cd60b3764a832e8560ae6d3ad0b10adc1a42ffae412b9476f25620aae4f4a508",
+        "gigaam-beam/v3_ctc.onnx": "1fb978d4f41e1334003fae9d29f2d9844d4132315a90553a4b986839051ba9d3",
+        "gigaam-beam/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam-beam/v3_vocab.txt": "a9143c30844d3c0bee3e9e927e4084774eb1b9eeaafc473b2c4521e4911a7c07"
+      },
+      "cases": [
+        {
+          "id": "source-0",
+          "audio_sha256": "a7b5cd7d3bd21c4eefd2c16d0297a77266f38534aac55b95d2a5644f583e7cce",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Это дети, которые вдруг обнаружили, что, оказывается, есть в их жизни место.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-0-weak",
+          "audio_sha256": "1f2e3cf921eb5925c89df318164820589b82c36facd2c35c0ad7b5d45ed36d49",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Это дети, которые вдруг обнаружили, что, оказывается, есть в их жизни место.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-0-reflections",
+          "audio_sha256": "0dde7c8dfea668f3c46b16c8154ae62c0a817a4510df9313da6360b8da617ca9",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Что, оказывается, есть в жизни место!",
+          "word_errors": 6,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 6,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-0-background",
+          "audio_sha256": "d05e34253cb3259679f34eaffd30c547925c945715331d2b82776eab8da7d760",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Это дети, которые вдруг обнаружили, что, оказывается, есть в их жизни место.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-0-clipping",
+          "audio_sha256": "871e9ac2ac38bbdcd4a9eaf14f58c2171437d90000425b90b17287a65106a051",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Это дети, которые вдруг обнаружили, что, оказывается, есть в их жизни место.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-0-overlap",
+          "audio_sha256": "4ced9e7ed7a98d9533603d57993cfef5240f7d1d1983a6fea4831b5770259b1e",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Я начну дети, которые вдруг обнаруживат здороваюсь в первую очередь, тью вами, присутствующими.",
+          "word_errors": 10,
+          "word_error_breakdown": {
+            "substitutions": 9,
+            "deletions": 0,
+            "insertions": 1
+          }
+        },
+        {
+          "id": "source-1",
+          "audio_sha256": "08def9646c2d105be85034680f82ffea1a0a24853be7de60ee0b40bfffcbc6ff",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Он сказал, как бы лучше стал мир, если бы люди всегда помогали друг другу?",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-1-weak",
+          "audio_sha256": "3ec13725e5626dbb81c91f2f9a5fb2e2d392ed066fc7afdd563415b15bdab6b8",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Он сказал, как бы лучше стал мир, если бы люди всегда помогали друг другу.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-1-reflections",
+          "audio_sha256": "ef7858a041571389d8eb49ab77e247d5692cabd69bc913141548dbd709e536e7",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Он сказал, как бы лучше стал мир, если бы люди всегда помогали друг другу.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-1-background",
+          "audio_sha256": "7b5b2a1236cd4cbbafb5830afee6402402e0f5f410eb3fc85438c81aab8c51c4",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Рассказал, как бы лучше стал мир, если бы люди всегда помогали друг другу.",
+          "word_errors": 2,
+          "word_error_breakdown": {
+            "substitutions": 1,
+            "deletions": 1,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-1-clipping",
+          "audio_sha256": "9d01d80dce531a1d03c139ce8ef3ea0304252f05e764043570887b0698d07325",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Он сказал, как бы лучше стал мир, если бы люди всегда помогали друг другу?",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-1-overlap",
+          "audio_sha256": "bd4098332f8b208ee9689e0fe87e0dec3a3fbffb296e448d18bd93956a186dfa",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Начну с того, что поздороваюсь в первую очередь чтобы люди все помогали ги.",
+          "word_errors": 12,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 1,
+            "insertions": 0
+          }
+        }
+      ]
+    },
+    "current": {
+      "artifact_sha256": "ce9b6519a269ef0048e63c3c270a1e86a9912f6baf0d9cb6fc89922231bb8c76",
+      "summary": {
+        "clips": 12,
+        "reference_words": 156,
+        "word_errors": 30,
+        "wer": 0.19230769230769232,
+        "hallucinated_words": 0,
+        "noise_cases": 0,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 21,
+          "deletions": 8,
+          "insertions": 1
+        },
+        "duration_seconds": 65.62,
+        "elapsed_seconds": 25.655,
+        "real_time_factor": 0.39095998998779785,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "original": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 0,
+          "wer": 0.0,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 10.8,
+          "elapsed_seconds": 9.206,
+          "real_time_factor": 0.8524535416664649,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "weak": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 0,
+          "wer": 0.0,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 10.8,
+          "elapsed_seconds": 3.461,
+          "real_time_factor": 0.3204711420373011,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "reflections": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 6,
+          "wer": 0.23076923076923078,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 6,
+            "insertions": 0
+          },
+          "duration_seconds": 11.62,
+          "elapsed_seconds": 2.709,
+          "real_time_factor": 0.23313524449245543,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "background": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 2,
+          "wer": 0.07692307692307693,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 1,
+            "deletions": 1,
+            "insertions": 0
+          },
+          "duration_seconds": 10.8,
+          "elapsed_seconds": 3.724,
+          "real_time_factor": 0.34483803629612975,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "clipping": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 0,
+          "wer": 0.0,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 10.8,
+          "elapsed_seconds": 4.001,
+          "real_time_factor": 0.37050804018522115,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "overlap": {
+          "clips": 2,
+          "reference_words": 26,
+          "word_errors": 22,
+          "wer": 0.8461538461538461,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 20,
+            "deletions": 1,
+            "insertions": 1
+          },
+          "duration_seconds": 10.8,
+          "elapsed_seconds": 2.552,
+          "real_time_factor": 0.23633692518497235,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "sources_sha256": {
+        "quality_asr.py": "181584d5cd64a1f18ca5abd466823e372091391dfdbfb4906655f759023b28c9",
+        "asr_guard.py": "add15e8f787e267a314afe11bb9f4d36fad96407f29d4a5c968c8b8cadc47cd9",
+        "speech_gate.py": "f1d97e07bffd3bd176a54457977c53b73053c21b55eecae47df6a277e212d4e0",
+        "speech_audio.py": "fd622c592e2e5fe0e798033d5c7fe8eaac9df53ce2bcbe1683e37b4c64a3d04b",
+        "context_review.py": "b65c84dd83ffec54dfcc1e220dce8ce986cf4554a4a12ba7c99807741fd95ccf",
+        "asr_terms.py": "5b0d9e03068586b8cfc2dc4c75330658365be28f8b6950efeb11006a5ef5e9cf",
+        "asr_segments.py": "60271c71df06cb6e80962654d4e07f07ba7677fc10e8739ee8a9ae45102df543",
+        "speech_quality.py": "13e5ec16b14b646fba1d6fd94890d14520b0b21916505d21ae45ff1fe42810ea"
+      },
+      "models_sha256": {
+        "gigaam/v3_e2e_ctc_vocab.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd",
+        "gigaam/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam/v3_e2e_ctc.int8.onnx": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+        "gigaam-rnnt/v3_e2e_rnnt_vocab.txt": "39abae20e692998290c574e606f11a9edef2902a1995463fcff63d1490cf22b7",
+        "gigaam-rnnt/v3_e2e_rnnt_joint.onnx": "602ff7017a93311aad34df1437c8d7f49911353c13d6eae7a6ee7b041339465c",
+        "gigaam-rnnt/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam-rnnt/v3_e2e_rnnt_decoder.onnx": "7b0a16d67fd2cb37061decc93c69e364a9ab27afee3c57495d55b1c974cf7231",
+        "gigaam-rnnt/v3_e2e_rnnt_encoder.onnx": "cd60b3764a832e8560ae6d3ad0b10adc1a42ffae412b9476f25620aae4f4a508",
+        "gigaam-beam/v3_ctc.onnx": "1fb978d4f41e1334003fae9d29f2d9844d4132315a90553a4b986839051ba9d3",
+        "gigaam-beam/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam-beam/v3_vocab.txt": "a9143c30844d3c0bee3e9e927e4084774eb1b9eeaafc473b2c4521e4911a7c07"
+      },
+      "cases": [
+        {
+          "id": "source-0",
+          "audio_sha256": "a7b5cd7d3bd21c4eefd2c16d0297a77266f38534aac55b95d2a5644f583e7cce",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Это дети, которые вдруг обнаружили, что, оказывается, есть в их жизни место.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-0-weak",
+          "audio_sha256": "1f2e3cf921eb5925c89df318164820589b82c36facd2c35c0ad7b5d45ed36d49",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Это дети, которые вдруг обнаружили, что, оказывается, есть в их жизни место.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-0-reflections",
+          "audio_sha256": "0dde7c8dfea668f3c46b16c8154ae62c0a817a4510df9313da6360b8da617ca9",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Что, оказывается, есть в жизни место!",
+          "word_errors": 6,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 6,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-0-background",
+          "audio_sha256": "d05e34253cb3259679f34eaffd30c547925c945715331d2b82776eab8da7d760",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Это дети, которые вдруг обнаружили, что, оказывается, есть в их жизни место.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-0-clipping",
+          "audio_sha256": "871e9ac2ac38bbdcd4a9eaf14f58c2171437d90000425b90b17287a65106a051",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Это дети, которые вдруг обнаружили, что, оказывается, есть в их жизни место.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-0-overlap",
+          "audio_sha256": "4ced9e7ed7a98d9533603d57993cfef5240f7d1d1983a6fea4831b5770259b1e",
+          "reference": "это дети которые вдруг обнаружили что оказывается есть в их жизни место",
+          "text": "Я начну дети, которые вдруг обнаруживат здороваюсь в первую очередь, тью вами, присутствующими.",
+          "word_errors": 10,
+          "word_error_breakdown": {
+            "substitutions": 9,
+            "deletions": 0,
+            "insertions": 1
+          }
+        },
+        {
+          "id": "source-1",
+          "audio_sha256": "08def9646c2d105be85034680f82ffea1a0a24853be7de60ee0b40bfffcbc6ff",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Он сказал, как бы лучше стал мир, если бы люди всегда помогали друг другу?",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-1-weak",
+          "audio_sha256": "3ec13725e5626dbb81c91f2f9a5fb2e2d392ed066fc7afdd563415b15bdab6b8",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Он сказал, как бы лучше стал мир, если бы люди всегда помогали друг другу.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-1-reflections",
+          "audio_sha256": "ef7858a041571389d8eb49ab77e247d5692cabd69bc913141548dbd709e536e7",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Он сказал, как бы лучше стал мир, если бы люди всегда помогали друг другу.",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-1-background",
+          "audio_sha256": "7b5b2a1236cd4cbbafb5830afee6402402e0f5f410eb3fc85438c81aab8c51c4",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Рассказал, как бы лучше стал мир, если бы люди всегда помогали друг другу.",
+          "word_errors": 2,
+          "word_error_breakdown": {
+            "substitutions": 1,
+            "deletions": 1,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-1-clipping",
+          "audio_sha256": "9d01d80dce531a1d03c139ce8ef3ea0304252f05e764043570887b0698d07325",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Он сказал, как бы лучше стал мир, если бы люди всегда помогали друг другу?",
+          "word_errors": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          }
+        },
+        {
+          "id": "source-1-overlap",
+          "audio_sha256": "bd4098332f8b208ee9689e0fe87e0dec3a3fbffb296e448d18bd93956a186dfa",
+          "reference": "он сказал как бы лучше стал мир если бы люди всегда помогали друг другу",
+          "text": "Начну с того, что поздороваюсь в первую очередь чтобы люди все помогали ги.",
+          "word_errors": 12,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 1,
+            "insertions": 0
+          }
+        }
+      ]
+    }
+  },
+  "physical_check": "Не проводилась: повреждения синтетические, реальные расстояния/акустика аудитории не измерены."
+}

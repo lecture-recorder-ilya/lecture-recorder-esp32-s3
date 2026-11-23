@@ -1,0 +1,88 @@
+{
+  "archive": {
+    "date": "2026-11-22",
+    "report_commit": "ce692f737f290a0f813ba9df7bfc45e911573ba7",
+    "scope": "Архив эксперимента. Ревизии и сценарии указаны в отчёте."
+  },
+  "duration_seconds": 5400,
+  "source_audio_seconds": 5148.5,
+  "synth_layout": "Плотный повтор человеческих фрагментов с паузами",
+  "pause_seconds": 0.25,
+  "audio_sha256": "856a4615477b4ee9e4a3eb7af209fccaff8d953aa091513dd658fa478f42f256",
+  "source_audio_sha256": {
+    "work/rear-row/corpus/wav/lecture-826e1189d0fb.wav": "a7b5cd7d3bd21c4eefd2c16d0297a77266f38534aac55b95d2a5644f583e7cce",
+    "work/rear-row/corpus/wav/lecture-3d89c1cc021f-room.wav": "7104da9e86939a9a3a6daebf56e9e0b8586e8d017e1ca3440cd9e3d89f5f2484",
+    "work/rear-row/corpus/wav/lecture-31fc7e98a70d.wav": "802fae92e5481fd9017597b5c34a4611a60ed289343aa30538d93daf285db4b4",
+    "work/rear-row/corpus/wav/lecture-0f08ece1dc8b-room.wav": "5e9ac006198613524d6b170aa89e2935f2168cb36222bfdc2ade4d5ee0052a82",
+    "work/rear-row/corpus/wav/lecture-4abbe7ecae51.wav": "122dc79cc43b319dd6daab3edc173ca6eb6386163f0e2062a3f0401bccb51202",
+    "work/rear-row/corpus/wav/lecture-3eed7fd33f1e-room.wav": "e271e29057a1977b560922e9dc4f1850d7c2cae0b90755f20e25ed7ec6b42dbe"
+  },
+  "engine": "GigaAM-v3-3pass-phrases-v12-term-forms-guard",
+  "economy_mode": false,
+  "phases": {
+    "interrupted": {
+      "wall_seconds": 53.01600370799861,
+      "peak_rss_mib": 2501.1875,
+      "start_frame": 0,
+      "first_checkpoint_frame": 320000,
+      "windows": 15
+    },
+    "resumed": {
+      "wall_seconds": 920.1322789580008,
+      "peak_rss_mib": 2464.78125,
+      "start_frame": 4800000,
+      "first_checkpoint_frame": 5120000,
+      "windows": 255
+    },
+    "complete_cache": {
+      "wall_seconds": 0.1688296669999545,
+      "peak_rss_mib": 67.609375,
+      "start_frame": 86400000,
+      "first_checkpoint_frame": null,
+      "windows": 0
+    }
+  },
+  "real_time_factor": 0.18021264493814804,
+  "peak_rss_mib": 2501.1875,
+  "checkpoint_seconds": 300.0,
+  "checkpoint_segments": 62,
+  "segments": 1202,
+  "preserved_prefix_sha256": "c4959607ead2726e1b1d0139f394d113136e0e22262be2692167f13a4c00f386",
+  "restored_prefix_sha256": "c4959607ead2726e1b1d0139f394d113136e0e22262be2692167f13a4c00f386",
+  "verified_word_timestamps": 6096,
+  "audio_unchanged_after_run": true,
+  "uninterrupted": {
+    "measurements": {
+      "wall_seconds": 1006.183995833002,
+      "peak_rss_mib": 2569.0,
+      "start_frame": 0,
+      "first_checkpoint_frame": 320000,
+      "windows": 270
+    },
+    "equal_segments": true,
+    "equal_word_timestamps": true,
+    "segments_sha256": "83e3618b5cd085aba495cad57a3b042b92c3b7a6f5aa785da574930114b72464"
+  },
+  "script_sha256": "f6eefe5ef409dcc62304cfd948eab76551becbb8597445c50060b5d7a1091fb3",
+  "source_commit": "69730d0",
+  "host": {
+    "machine": "Apple M2",
+    "ram_gib": 16,
+    "logical_cpus": 8,
+    "os": "macOS-27.2.1-arm64-arm-64bit",
+    "python": "3.12.12"
+  },
+  "same_wav_after_both_runs": true,
+  "artifacts_root": "work/dense-90min",
+  "artifacts_sha256": {
+    "benchmark.json": "30ed4cf7cad3b0de07734db994d6921930693506bc8005d24a62915b7d717967",
+    "result.transcript.json": "4c58262246ce460884b16d8407b7cd39fdb0ef6737a53fe523babf3718a79f4a",
+    "uninterrupted/result.transcript.json": "4c58262246ce460884b16d8407b7cd39fdb0ef6737a53fe523babf3718a79f4a",
+    "uninterrupted/full.json": "3f2018e298e5e81c5b06ed917de74a43560b0da576e1c4dfe129e76bebdba477"
+  },
+  "limitations": [
+    "Составной WAV с повтором шести человеческих фрагментов; не настоящая непрерывная лекция",
+    "Общая рабочая сессия с параллельной нагрузкой, включая Android JNI; не изолированный замер",
+    "SIGKILL процесса; перезагрузка, отключение питания, Android и батарея не проверены"
+  ]
+}

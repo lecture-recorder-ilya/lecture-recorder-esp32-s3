@@ -1,0 +1,5060 @@
+{
+  "archive": {
+    "date": "2026-11-22",
+    "report_commit": "043dc97d0c7a33afcdbff113196b3b8917616c6c",
+    "scope": "Архив эксперимента. Ревизии и сценарии указаны в отчёте."
+  },
+  "baseline_commit": "6abca7c",
+  "environment": {
+    "system": "Darwin",
+    "release": "27.2.0",
+    "machine": "arm64"
+  },
+  "selection": {
+    "frozen_at": "2026-11-22T17:46:41.507307+00:00",
+    "candidate": "quiet-gain32",
+    "reason": "Among candidates without additional noise words, quiet-gain32 and quiet-gain128 tie: one fewer error on tune (72/577 vs 73/577), unchanged development (78/384). Choose the smaller gain; primary-clean variants hallucinate on at least one tuning background; retry variants do not improve WER. Separate 8-background amplitude sweep: 0 vs 0 words. All speech controls remain undecoded at freeze.",
+    "candidates": [
+      {
+        "variant": "base",
+        "errors": 151,
+        "hallucinated_words": 0,
+        "sources_sha256": {
+          "PhoneGigaAm": "a41a2ccae9d36ee38361806bfb7a4cb9471c2a449301cec1a6876e2b8a9fe12e",
+          "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+          "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+          "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+          "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+        }
+      },
+      {
+        "variant": "gain32",
+        "errors": 148,
+        "hallucinated_words": 1,
+        "sources_sha256": {
+          "PhoneGigaAm": "eaeefcc130e7e79b733e77a02942d757028e948f8802128625896cdf13b2fc1f",
+          "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+          "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+          "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+          "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+        }
+      },
+      {
+        "variant": "gain128",
+        "errors": 148,
+        "hallucinated_words": 1,
+        "sources_sha256": {
+          "PhoneGigaAm": "8e987d9668c9d71ec2ff7ee86182de64165030a8412b3fc58a876c1b43fa42ee",
+          "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+          "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+          "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+          "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+        }
+      },
+      {
+        "variant": "quiet-clean",
+        "errors": 147,
+        "hallucinated_words": 1,
+        "sources_sha256": {
+          "PhoneGigaAm": "05154838ccdc496a12f965286889edf217580c586c40a362dc4c485aa48248b4",
+          "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+          "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+          "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+          "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+        }
+      },
+      {
+        "variant": "quiet-gain32",
+        "errors": 150,
+        "hallucinated_words": 0,
+        "sources_sha256": {
+          "PhoneGigaAm": "02e16339b4ba34f2ca74c8fed9e953d87fc287bb706e7692859115bb8d03b752",
+          "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+          "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+          "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+          "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+        }
+      },
+      {
+        "variant": "quiet-gain128",
+        "errors": 150,
+        "hallucinated_words": 0,
+        "sources_sha256": {
+          "PhoneGigaAm": "8a205d3d76180d53db0494029c0858933c126d7cc43e3c90bac14895bfe36f74",
+          "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+          "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+          "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+          "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+        }
+      },
+      {
+        "variant": "raw-retry32",
+        "errors": 151,
+        "hallucinated_words": 0,
+        "sources_sha256": {
+          "PhoneGigaAm": "e9d8701251cca9f7ba2a67f4baf707e8e5d7d20307ad9200f65ec6c359fd4a2e",
+          "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+          "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+          "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+          "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+        }
+      },
+      {
+        "variant": "mixed-retry",
+        "errors": 151,
+        "hallucinated_words": 0,
+        "sources_sha256": {
+          "PhoneGigaAm": "2c75683a1aa8dcb5db6e94352b272e47647b72e6808912b0cb7e5fbe7b707571",
+          "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+          "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+          "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+          "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+        }
+      }
+    ],
+    "retention_rule": "Retain only if improvement repeats on independent control data, no extra speech errors on original OpenSTT/Golos, no new noise words, no worsened numeric/negation counts. No retuning after final controls."
+  },
+  "experiments": [
+    {
+      "name": "base-control",
+      "artifact_sha256": "0c42aaef9ae198258a2d0892b97186ff0a2cdb17e19ce29c7c283b6d95f8374c",
+      "manifest_sha256": "fe0bbd57603f4107dcc207d6ce2ffdacb198723b21040f0db4843085bbcbae1c",
+      "sources_sha256": {
+        "PhoneGigaAm": "a41a2ccae9d36ee38361806bfb7a4cb9471c2a449301cec1a6876e2b8a9fe12e",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 46,
+        "reference_words": 701,
+        "word_errors": 177,
+        "wer": 0.2524964336661912,
+        "hallucinated_words": 0,
+        "noise_cases": 4,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 89,
+          "deletions": 14,
+          "insertions": 74
+        },
+        "duration_seconds": 394.02,
+        "elapsed_seconds": 37.968,
+        "real_time_factor": 0.09636132460027409,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 18,
+          "extra": 4
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "mtedx-original": {
+          "clips": 12,
+          "reference_words": 235,
+          "word_errors": 69,
+          "wer": 0.2936170212765957,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 30,
+            "deletions": 3,
+            "insertions": 36
+          },
+          "duration_seconds": 107.66,
+          "elapsed_seconds": 8.835,
+          "real_time_factor": 0.08206245352963033,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 8,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "mtedx-quiet-minus30db": {
+          "clips": 12,
+          "reference_words": 235,
+          "word_errors": 69,
+          "wer": 0.2936170212765957,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 30,
+            "deletions": 3,
+            "insertions": 36
+          },
+          "duration_seconds": 107.66,
+          "elapsed_seconds": 10.742,
+          "real_time_factor": 0.09977615522942598,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 8,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-clean": {
+          "clips": 6,
+          "reference_words": 77,
+          "word_errors": 3,
+          "wer": 0.03896103896103896,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 2,
+            "deletions": 1,
+            "insertions": 0
+          },
+          "duration_seconds": 48.9,
+          "elapsed_seconds": 4.312,
+          "real_time_factor": 0.08818112472392639,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 77,
+          "word_errors": 3,
+          "wer": 0.03896103896103896,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 2,
+            "deletions": 1,
+            "insertions": 0
+          },
+          "duration_seconds": 48.9,
+          "elapsed_seconds": 5.558,
+          "real_time_factor": 0.11366159423312884,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-room-6db": {
+          "clips": 6,
+          "reference_words": 77,
+          "word_errors": 33,
+          "wer": 0.42857142857142855,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 25,
+            "deletions": 6,
+            "insertions": 2
+          },
+          "duration_seconds": 48.9,
+          "elapsed_seconds": 5.173,
+          "real_time_factor": 0.10577954584867076,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 3
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no-speech": {
+          "clips": 4,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 4,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 32.0,
+          "elapsed_seconds": 3.349,
+          "real_time_factor": 0.10465049221875,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 29,
+      "reference_negations": 10
+    },
+    {
+      "name": "base-development-repeat",
+      "artifact_sha256": "554206b6ed33d392b3bf93571e580ece3398f5bae8db26710ae3b98d2d8f5503",
+      "manifest_sha256": "4957a56ace35b5c066daee66928cb36f541d119acf968e4c76b7a568e01f8eac",
+      "sources_sha256": {
+        "PhoneGigaAm": "a41a2ccae9d36ee38361806bfb7a4cb9471c2a449301cec1a6876e2b8a9fe12e",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 78,
+        "wer": 0.203125,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 43,
+          "deletions": 15,
+          "insertions": 20
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 23.436,
+        "real_time_factor": 0.11804694705797908,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 6,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 10.842,
+          "real_time_factor": 0.11625269861710139,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 51,
+          "wer": 0.265625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 32,
+            "deletions": 9,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 11.409,
+          "real_time_factor": 0.12232964218336609,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 1,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.184,
+          "real_time_factor": 0.09870668758333334,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 2,
+      "reference_negations": 8,
+      "changed_cases": []
+    },
+    {
+      "name": "base-development",
+      "artifact_sha256": "dde0f8e0a60ae2cefd9959517c702cf039d332b6d98178676bea3cbb38d240b1",
+      "manifest_sha256": "4957a56ace35b5c066daee66928cb36f541d119acf968e4c76b7a568e01f8eac",
+      "sources_sha256": {
+        "PhoneGigaAm": "a41a2ccae9d36ee38361806bfb7a4cb9471c2a449301cec1a6876e2b8a9fe12e",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 78,
+        "wer": 0.203125,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 43,
+          "deletions": 15,
+          "insertions": 20
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 33.903,
+        "real_time_factor": 0.1707705115386456,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 6,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 14.605,
+          "real_time_factor": 0.15659745427642424,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 51,
+          "wer": 0.265625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 32,
+            "deletions": 9,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 16.749,
+          "real_time_factor": 0.1795831378797342,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 1,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 2.549,
+          "real_time_factor": 0.21243189233333334,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 2,
+      "reference_negations": 8
+    },
+    {
+      "name": "base-farfield",
+      "artifact_sha256": "98a6d238fa48ce48de0f4388c7d89fcae16d5a4334edb039cb1bc3289480a657",
+      "manifest_sha256": "9c4b23a66df1ead7213344b9b32b3f3c670e7ac686d6a684289495b066b7e929",
+      "sources_sha256": {
+        "PhoneGigaAm": "a41a2ccae9d36ee38361806bfb7a4cb9471c2a449301cec1a6876e2b8a9fe12e",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 26,
+        "reference_words": 150,
+        "word_errors": 11,
+        "wer": 0.07333333333333333,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 9,
+          "deletions": 2,
+          "insertions": 0
+        },
+        "duration_seconds": 91.791,
+        "elapsed_seconds": 17.012,
+        "real_time_factor": 0.18533675637825447,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 2,
+          "extra": 4
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "golos_farfield": {
+          "clips": 24,
+          "reference_words": 150,
+          "word_errors": 11,
+          "wer": 0.07333333333333333,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 9,
+            "deletions": 2,
+            "insertions": 0
+          },
+          "duration_seconds": 79.791,
+          "elapsed_seconds": 15.848,
+          "real_time_factor": 0.19861629099636396,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 4
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.164,
+          "real_time_factor": 0.09703739583333333,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 3,
+      "reference_negations": 2
+    },
+    {
+      "name": "base-holdout",
+      "artifact_sha256": "b1703a6429fb05049ee5258354af0bd6819bf3c4ce9a63e4d023abf3e311e85a",
+      "manifest_sha256": "74ff3fdae9be8584a4846f497f3ea8f3ec87c4285ee58b2fdee95f68876b117d",
+      "sources_sha256": {
+        "PhoneGigaAm": "a41a2ccae9d36ee38361806bfb7a4cb9471c2a449301cec1a6876e2b8a9fe12e",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 74,
+        "reference_words": 784,
+        "word_errors": 134,
+        "wer": 0.17091836734693877,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 67,
+          "deletions": 23,
+          "insertions": 44
+        },
+        "duration_seconds": 387.941,
+        "elapsed_seconds": 52.208,
+        "real_time_factor": 0.1345765430597327,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 2,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 1,
+          "extra": 1
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 36,
+          "reference_words": 392,
+          "word_errors": 51,
+          "wer": 0.13010204081632654,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 20,
+            "deletions": 7,
+            "insertions": 24
+          },
+          "duration_seconds": 187.97,
+          "elapsed_seconds": 24.181,
+          "real_time_factor": 0.12864228140737602,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 36,
+          "reference_words": 392,
+          "word_errors": 83,
+          "wer": 0.21173469387755103,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 47,
+            "deletions": 16,
+            "insertions": 20
+          },
+          "duration_seconds": 187.97,
+          "elapsed_seconds": 26.626,
+          "real_time_factor": 0.14165052074296283,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 1,
+            "extra": 1
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.401,
+          "real_time_factor": 0.11672380558333334,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 8,
+      "reference_negations": 16
+    },
+    {
+      "name": "base-probes",
+      "artifact_sha256": "80fc8cdaac36587ebaf049bede32248e9aabf8f0b7284d3d3310ed2199e5b536",
+      "manifest_sha256": "67eefe14f9ec29334b15adee3d9d44006257042ada9784a87170c4a7622f4723",
+      "sources_sha256": {
+        "PhoneGigaAm": "a41a2ccae9d36ee38361806bfb7a4cb9471c2a449301cec1a6876e2b8a9fe12e",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 8,
+        "reference_words": 0,
+        "word_errors": 0,
+        "wer": null,
+        "hallucinated_words": 0,
+        "noise_cases": 8,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0
+        },
+        "duration_seconds": 64.0,
+        "elapsed_seconds": 7.328,
+        "real_time_factor": 0.11450423764062499,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "noise-probes": {
+          "clips": 8,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 8,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 64.0,
+          "elapsed_seconds": 7.328,
+          "real_time_factor": 0.11450423764062499,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 0,
+      "reference_negations": 0
+    },
+    {
+      "name": "base-tune",
+      "artifact_sha256": "7770baeb8cfeacefde887b2ad87d2f8867c278c13fded09e0b74c5301a51813c",
+      "manifest_sha256": "35b0ab8fbfd798edc0ae2f25a6dc92a937d495da23e143d0f67a1fd2f71b0a66",
+      "sources_sha256": {
+        "PhoneGigaAm": "a41a2ccae9d36ee38361806bfb7a4cb9471c2a449301cec1a6876e2b8a9fe12e",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 34,
+        "reference_words": 577,
+        "word_errors": 73,
+        "wer": 0.1265164644714038,
+        "hallucinated_words": 0,
+        "noise_cases": 4,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 37,
+          "deletions": 8,
+          "insertions": 28
+        },
+        "duration_seconds": 326.44,
+        "elapsed_seconds": 29.43,
+        "real_time_factor": 0.09015556865886534,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 2
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "mtedx-original": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 5.399,
+          "real_time_factor": 0.09465558890252454,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "mtedx-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 5.526,
+          "real_time_factor": 0.09688248160939693,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-clean": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 4.722,
+          "real_time_factor": 0.07854827707917499,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 5,
+          "wer": 0.047619047619047616,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 5,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.635,
+          "real_time_factor": 0.09373380876580173,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-room-6db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 24,
+          "wer": 0.22857142857142856,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 22,
+            "deletions": 2,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.198,
+          "real_time_factor": 0.08645574196606787,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no-speech": {
+          "clips": 4,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 4,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 32.0,
+          "elapsed_seconds": 2.95,
+          "real_time_factor": 0.09217919009375,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 19,
+      "reference_negations": 6
+    },
+    {
+      "name": "gain128-development",
+      "artifact_sha256": "9acedc8c7fc82194d7b78a49835670cff04110f57d6942f28474704947c9484c",
+      "manifest_sha256": "4957a56ace35b5c066daee66928cb36f541d119acf968e4c76b7a568e01f8eac",
+      "sources_sha256": {
+        "PhoneGigaAm": "8e987d9668c9d71ec2ff7ee86182de64165030a8412b3fc58a876c1b43fa42ee",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 76,
+        "wer": 0.19791666666666666,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 42,
+          "deletions": 14,
+          "insertions": 20
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 26.29,
+        "real_time_factor": 0.1324245226151409,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 6,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 12.601,
+          "real_time_factor": 0.13511588134789052,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 49,
+          "wer": 0.2552083333333333,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 31,
+            "deletions": 8,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 12.495,
+          "real_time_factor": 0.13396989603197368,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 1,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.194,
+          "real_time_factor": 0.09949655208333334,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 2,
+      "reference_negations": 8,
+      "changed_cases": [
+        {
+          "id": "lecture-e2436e1bef04-room",
+          "subset": "openstt_simulated_room",
+          "audio_sha256": "ecaeb798ccc8ffd93b587f81730d0925706bf82bde0f1d47c1be7725fa1c3a79",
+          "word_errors": 4,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Когда ты стоёшь перед церковью Санта-Мария Новелла вохренции?",
+          "baseline_word_errors": 4
+        },
+        {
+          "id": "lecture-6340dd656f74-room",
+          "subset": "openstt_simulated_room",
+          "audio_sha256": "754e4cc6e5c10db1e2611b6533ef2304d31474c9c6299554da3fa08bb54b3b77",
+          "word_errors": 4,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "..толь разные результаты деятельности тилки китов являются на самом делее...",
+          "baseline_word_errors": 6
+        }
+      ]
+    },
+    {
+      "name": "gain128-tune",
+      "artifact_sha256": "e30b01d21495ecc53756199f5fb143b895cc36502e74a810699524d910f81d62",
+      "manifest_sha256": "35b0ab8fbfd798edc0ae2f25a6dc92a937d495da23e143d0f67a1fd2f71b0a66",
+      "sources_sha256": {
+        "PhoneGigaAm": "8e987d9668c9d71ec2ff7ee86182de64165030a8412b3fc58a876c1b43fa42ee",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 34,
+        "reference_words": 577,
+        "word_errors": 72,
+        "wer": 0.12478336221837089,
+        "hallucinated_words": 1,
+        "noise_cases": 4,
+        "failed_noise_cases": 1,
+        "word_error_breakdown": {
+          "substitutions": 35,
+          "deletions": 9,
+          "insertions": 28
+        },
+        "duration_seconds": 326.44,
+        "elapsed_seconds": 33.453,
+        "real_time_factor": 0.10247846694338929,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 2
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "mtedx-original": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 5.637,
+          "real_time_factor": 0.0988333143232819,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "mtedx-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 6.461,
+          "real_time_factor": 0.11326396683029454,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-clean": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.43,
+          "real_time_factor": 0.09031124416167664,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 6.631,
+          "real_time_factor": 0.11029043162009314,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-room-6db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 24,
+          "wer": 0.22857142857142856,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 21,
+            "deletions": 3,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.94,
+          "real_time_factor": 0.09879439870259482,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no-speech": {
+          "clips": 4,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 1,
+          "noise_cases": 4,
+          "failed_noise_cases": 1,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 32.0,
+          "elapsed_seconds": 3.355,
+          "real_time_factor": 0.1048546823125,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 19,
+      "reference_negations": 6,
+      "changed_cases": [
+        {
+          "id": "mtedx-6hoeGxsHS6c_0082-quiet",
+          "subset": "mtedx-quiet-minus30db",
+          "audio_sha256": "2339eaddd76de32ceefbce316b7b72391e6d81175f516967d342e9a86dad17ad",
+          "word_errors": 6,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Я был очень удивлён. У меня приятель, мясной технолог. Я удивлён был, что на одном из последних заводов, которые запускал, делают сырокопчёную колбасу, там 15 сотрудников. Из которых половина — это охранники.",
+          "baseline_word_errors": 6
+        },
+        {
+          "id": "fleurs-fleurs-38-clean-quiet",
+          "subset": "fleurs-quiet-minus30db",
+          "audio_sha256": "849f52651660287f82706ebeb3e399f65d99a38168096dc9ebe320f9915c3269",
+          "word_errors": 0,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Сегрегация и рекомбинация с каждым поколением тасуют вариации между двумя поулами.",
+          "baseline_word_errors": 1
+        },
+        {
+          "id": "fleurs-fleurs-38-room-6db",
+          "subset": "fleurs-room-6db",
+          "audio_sha256": "4ac5fe35a14eda499109344d1dc095deb7fb234b0ff84d1277e9d766164c61a2",
+          "word_errors": 5,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Дфигация и рекомбинация с каждым поколением проиходят вариации ж вариацию Луны.",
+          "baseline_word_errors": 5
+        },
+        {
+          "id": "fleurs-fleurs-40-room-6db",
+          "subset": "fleurs-room-6db",
+          "audio_sha256": "9dd13574afb095fd5315cbfacfb5e3f5f2f37dc5d0e23a42c1a4579acd198bb1",
+          "word_errors": 10,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "т самы живописны ам т картину остров и находится на побережье полуострова уру.Что находится напротив?",
+          "baseline_word_errors": 10
+        },
+        {
+          "id": "fleurs-fleurs-42-clean-quiet",
+          "subset": "fleurs-quiet-minus30db",
+          "audio_sha256": "d29c2bd14d750683a9b942513c3aae082031ff84e318377a740d29fe705ac0d6",
+          "word_errors": 1,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "В репортажах по телевидеонию сообщается о белом дыме, идущем от завода.",
+          "baseline_word_errors": 1
+        },
+        {
+          "id": "tune-noise",
+          "subset": "no-speech",
+          "audio_sha256": "02089c3cc27f1962f4d68fac4203da1a6aa43fec54269afddde90ff95f61a95c",
+          "word_errors": 1,
+          "hallucinated_words": 1,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "",
+          "baseline_word_errors": 0
+        }
+      ]
+    },
+    {
+      "name": "gain32-development",
+      "artifact_sha256": "0030edd1ae3ee58429c9edd50515d8312e10c61ef15de4f1f26acfdbb5458a5c",
+      "manifest_sha256": "4957a56ace35b5c066daee66928cb36f541d119acf968e4c76b7a568e01f8eac",
+      "sources_sha256": {
+        "PhoneGigaAm": "eaeefcc130e7e79b733e77a02942d757028e948f8802128625896cdf13b2fc1f",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 76,
+        "wer": 0.19791666666666666,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 42,
+          "deletions": 14,
+          "insertions": 20
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 28.319,
+        "real_time_factor": 0.1426457045260504,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 6,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 13.132,
+          "real_time_factor": 0.14080770097867082,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 49,
+          "wer": 0.2552083333333333,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 31,
+            "deletions": 8,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 13.894,
+          "real_time_factor": 0.14897204181666607,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 1,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.293,
+          "real_time_factor": 0.10776228116666665,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 2,
+      "reference_negations": 8,
+      "changed_cases": [
+        {
+          "id": "lecture-e2436e1bef04-room",
+          "subset": "openstt_simulated_room",
+          "audio_sha256": "ecaeb798ccc8ffd93b587f81730d0925706bf82bde0f1d47c1be7725fa1c3a79",
+          "word_errors": 4,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Когда ты стоёшь перед церковью Санта-Мария Новелла вохренции?",
+          "baseline_word_errors": 4
+        },
+        {
+          "id": "lecture-6340dd656f74-room",
+          "subset": "openstt_simulated_room",
+          "audio_sha256": "754e4cc6e5c10db1e2611b6533ef2304d31474c9c6299554da3fa08bb54b3b77",
+          "word_errors": 4,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "..толь разные результаты деятельности тилки китов являются на самом делее...",
+          "baseline_word_errors": 6
+        }
+      ]
+    },
+    {
+      "name": "gain32-tune",
+      "artifact_sha256": "fbc61428cc816e4f3f093ecb99c79376a82f4f2d244ca3eda3e2422cdd554599",
+      "manifest_sha256": "35b0ab8fbfd798edc0ae2f25a6dc92a937d495da23e143d0f67a1fd2f71b0a66",
+      "sources_sha256": {
+        "PhoneGigaAm": "eaeefcc130e7e79b733e77a02942d757028e948f8802128625896cdf13b2fc1f",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 34,
+        "reference_words": 577,
+        "word_errors": 72,
+        "wer": 0.12478336221837089,
+        "hallucinated_words": 1,
+        "noise_cases": 4,
+        "failed_noise_cases": 1,
+        "word_error_breakdown": {
+          "substitutions": 35,
+          "deletions": 9,
+          "insertions": 28
+        },
+        "duration_seconds": 326.44,
+        "elapsed_seconds": 33.705,
+        "real_time_factor": 0.10325150702426172,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 2
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "mtedx-original": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 5.594,
+          "real_time_factor": 0.09806441167601684,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "mtedx-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 6.662,
+          "real_time_factor": 0.11680117019635343,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-clean": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.504,
+          "real_time_factor": 0.09155111791417167,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 6.63,
+          "real_time_factor": 0.11028128669328012,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-room-6db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 24,
+          "wer": 0.22857142857142856,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 21,
+            "deletions": 3,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.99,
+          "real_time_factor": 0.09963598426480373,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no-speech": {
+          "clips": 4,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 1,
+          "noise_cases": 4,
+          "failed_noise_cases": 1,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 32.0,
+          "elapsed_seconds": 3.325,
+          "real_time_factor": 0.10391280075,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 19,
+      "reference_negations": 6,
+      "changed_cases": [
+        {
+          "id": "mtedx-6hoeGxsHS6c_0082-quiet",
+          "subset": "mtedx-quiet-minus30db",
+          "audio_sha256": "2339eaddd76de32ceefbce316b7b72391e6d81175f516967d342e9a86dad17ad",
+          "word_errors": 6,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Я был очень удивлён. У меня приятель, мясной технолог. Я удивлён был, что на одном из последних заводов, которые запускал, делают сырокопчёную колбасу, там 15 сотрудников. Из которых половина — это охранники.",
+          "baseline_word_errors": 6
+        },
+        {
+          "id": "fleurs-fleurs-38-clean-quiet",
+          "subset": "fleurs-quiet-minus30db",
+          "audio_sha256": "849f52651660287f82706ebeb3e399f65d99a38168096dc9ebe320f9915c3269",
+          "word_errors": 0,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Сегрегация и рекомбинация с каждым поколением тасуют вариации между двумя поулами.",
+          "baseline_word_errors": 1
+        },
+        {
+          "id": "fleurs-fleurs-38-room-6db",
+          "subset": "fleurs-room-6db",
+          "audio_sha256": "4ac5fe35a14eda499109344d1dc095deb7fb234b0ff84d1277e9d766164c61a2",
+          "word_errors": 5,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Дфигация и рекомбинация с каждым поколением проиходят вариации ж вариацию Луны.",
+          "baseline_word_errors": 5
+        },
+        {
+          "id": "fleurs-fleurs-40-room-6db",
+          "subset": "fleurs-room-6db",
+          "audio_sha256": "9dd13574afb095fd5315cbfacfb5e3f5f2f37dc5d0e23a42c1a4579acd198bb1",
+          "word_errors": 10,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "т самы живописны ам т картину остров и находится на побережье полуострова уру.Что находится напротив?",
+          "baseline_word_errors": 10
+        },
+        {
+          "id": "fleurs-fleurs-42-clean-quiet",
+          "subset": "fleurs-quiet-minus30db",
+          "audio_sha256": "d29c2bd14d750683a9b942513c3aae082031ff84e318377a740d29fe705ac0d6",
+          "word_errors": 1,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "В репортажах по телевидеонию сообщается о белом дыме, идущем от завода.",
+          "baseline_word_errors": 1
+        },
+        {
+          "id": "tune-noise",
+          "subset": "no-speech",
+          "audio_sha256": "02089c3cc27f1962f4d68fac4203da1a6aa43fec54269afddde90ff95f61a95c",
+          "word_errors": 1,
+          "hallucinated_words": 1,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "",
+          "baseline_word_errors": 0
+        }
+      ]
+    },
+    {
+      "name": "mixed-retry-development",
+      "artifact_sha256": "702aa7659d890c522fde4e02cb2675b9759f2776c856b5bd4e0a2c17d8e9c46b",
+      "manifest_sha256": "4957a56ace35b5c066daee66928cb36f541d119acf968e4c76b7a568e01f8eac",
+      "sources_sha256": {
+        "PhoneGigaAm": "2c75683a1aa8dcb5db6e94352b272e47647b72e6808912b0cb7e5fbe7b707571",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 78,
+        "wer": 0.203125,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 43,
+          "deletions": 15,
+          "insertions": 20
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 26.896,
+        "real_time_factor": 0.13547444300944195,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 6,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 12.35,
+          "real_time_factor": 0.13241961102994984,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 51,
+          "wer": 0.265625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 32,
+            "deletions": 9,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 13.189,
+          "real_time_factor": 0.1414115037005069,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 1,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.357,
+          "real_time_factor": 0.11307370141666666,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 2,
+      "reference_negations": 8,
+      "changed_cases": []
+    },
+    {
+      "name": "mixed-retry-tune",
+      "artifact_sha256": "ee3ac2758f2e74f38166e21f120aa67162563dda5f053496cc537d4b61dc205d",
+      "manifest_sha256": "35b0ab8fbfd798edc0ae2f25a6dc92a937d495da23e143d0f67a1fd2f71b0a66",
+      "sources_sha256": {
+        "PhoneGigaAm": "2c75683a1aa8dcb5db6e94352b272e47647b72e6808912b0cb7e5fbe7b707571",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 34,
+        "reference_words": 577,
+        "word_errors": 73,
+        "wer": 0.1265164644714038,
+        "hallucinated_words": 0,
+        "noise_cases": 4,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 37,
+          "deletions": 8,
+          "insertions": 28
+        },
+        "duration_seconds": 326.44,
+        "elapsed_seconds": 34.856,
+        "real_time_factor": 0.1067747942439652,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 2
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "mtedx-original": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 5.686,
+          "real_time_factor": 0.09969265426016831,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "mtedx-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 6.747,
+          "real_time_factor": 0.11828974332047686,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-clean": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.694,
+          "real_time_factor": 0.0947144135395875,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 5,
+          "wer": 0.047619047619047616,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 5,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 7.144,
+          "real_time_factor": 0.11882534722222222,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-room-6db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 24,
+          "wer": 0.22857142857142856,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 22,
+            "deletions": 2,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 6.162,
+          "real_time_factor": 0.10250331560212907,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no-speech": {
+          "clips": 4,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 4,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 32.0,
+          "elapsed_seconds": 3.421,
+          "real_time_factor": 0.106916816375,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 19,
+      "reference_negations": 6,
+      "changed_cases": []
+    },
+    {
+      "name": "quiet-clean-development",
+      "artifact_sha256": "1274dd8bc928f006cedabad95fddf736db847a7613751ce45461867a80e802a7",
+      "manifest_sha256": "4957a56ace35b5c066daee66928cb36f541d119acf968e4c76b7a568e01f8eac",
+      "sources_sha256": {
+        "PhoneGigaAm": "05154838ccdc496a12f965286889edf217580c586c40a362dc4c485aa48248b4",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 77,
+        "wer": 0.20052083333333334,
+        "hallucinated_words": 1,
+        "noise_cases": 2,
+        "failed_noise_cases": 1,
+        "word_error_breakdown": {
+          "substitutions": 42,
+          "deletions": 15,
+          "insertions": 20
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 27.454,
+        "real_time_factor": 0.13828985343162317,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 6,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 12.342,
+          "real_time_factor": 0.1323290573933742,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 50,
+          "wer": 0.2604166666666667,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 31,
+            "deletions": 9,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 13.892,
+          "real_time_factor": 0.14895430950230124,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 1,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 1,
+          "noise_cases": 2,
+          "failed_noise_cases": 1,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.221,
+          "real_time_factor": 0.10173290966666666,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 2,
+      "reference_negations": 8,
+      "changed_cases": [
+        {
+          "id": "lecture-3eed7fd33f1e-room",
+          "subset": "openstt_simulated_room",
+          "audio_sha256": "e271e29057a1977b560922e9dc4f1850d7c2cae0b90755f20e25ed7ec6b42dbe",
+          "word_errors": 4,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Сталкиваясь радостной, фантастической, создаёт такуй такую картину мира.",
+          "baseline_word_errors": 4
+        },
+        {
+          "id": "lecture-e2436e1bef04-room",
+          "subset": "openstt_simulated_room",
+          "audio_sha256": "ecaeb798ccc8ffd93b587f81730d0925706bf82bde0f1d47c1be7725fa1c3a79",
+          "word_errors": 4,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Когда ты стоёшь перед церковью Санта-Мария Новелла вохренции?",
+          "baseline_word_errors": 4
+        },
+        {
+          "id": "lecture-90bf6f45bbb0-room",
+          "subset": "openstt_simulated_room",
+          "audio_sha256": "372bc3daa30ca472d6113af19446223bf8dfc25e216d37c60829090b5cb25138",
+          "word_errors": 2,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Потому что от них вокруг озаряется всё, рядом с ними всё.",
+          "baseline_word_errors": 1
+        },
+        {
+          "id": "lecture-5124d1155e3c-room",
+          "subset": "openstt_simulated_room",
+          "audio_sha256": "1d319c0c1a82153fde0c7a1857886d67ad460421e4217228ce85c1ffc844935f",
+          "word_errors": 2,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Мне бы хотелось бы обозначить различие между аналогией и митафарой.",
+          "baseline_word_errors": 3
+        },
+        {
+          "id": "lecture-6340dd656f74-room",
+          "subset": "openstt_simulated_room",
+          "audio_sha256": "754e4cc6e5c10db1e2611b6533ef2304d31474c9c6299554da3fa08bb54b3b77",
+          "word_errors": 5,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "..толь разные результаты деятельности тилки китов являются на самом делее...",
+          "baseline_word_errors": 6
+        },
+        {
+          "id": "development-noise-7722",
+          "subset": "no_speech",
+          "audio_sha256": "14b9c065639e055570c996ed843beab5a89e8c962d5901f9e210a21899d081dd",
+          "word_errors": 1,
+          "hallucinated_words": 1,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "",
+          "baseline_word_errors": 0
+        }
+      ]
+    },
+    {
+      "name": "quiet-clean-tune",
+      "artifact_sha256": "4d6220fd5f09ad462f6c200c5676bd651bbf085178cdeb27fe48eb51ec3d83de",
+      "manifest_sha256": "35b0ab8fbfd798edc0ae2f25a6dc92a937d495da23e143d0f67a1fd2f71b0a66",
+      "sources_sha256": {
+        "PhoneGigaAm": "05154838ccdc496a12f965286889edf217580c586c40a362dc4c485aa48248b4",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 34,
+        "reference_words": 577,
+        "word_errors": 70,
+        "wer": 0.12131715771230503,
+        "hallucinated_words": 0,
+        "noise_cases": 4,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 36,
+          "deletions": 7,
+          "insertions": 27
+        },
+        "duration_seconds": 326.44,
+        "elapsed_seconds": 41.762,
+        "real_time_factor": 0.12793024279806398,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 2
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "mtedx-original": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 5.597,
+          "real_time_factor": 0.09812269458274896,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "mtedx-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 19,
+          "wer": 0.1450381679389313,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 13
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 6.513,
+          "real_time_factor": 0.11417848369565217,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-clean": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 7.016,
+          "real_time_factor": 0.11669709259813707,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 7.862,
+          "real_time_factor": 0.13076989356287427,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-room-6db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 23,
+          "wer": 0.21904761904761905,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 22,
+            "deletions": 1,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 8.185,
+          "real_time_factor": 0.13614626442115768,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no-speech": {
+          "clips": 4,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 4,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 32.0,
+          "elapsed_seconds": 6.589,
+          "real_time_factor": 0.20590814453125,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 19,
+      "reference_negations": 6,
+      "changed_cases": [
+        {
+          "id": "mtedx-6hoeGxsHS6c_0026-quiet",
+          "subset": "mtedx-quiet-minus30db",
+          "audio_sha256": "d9e83ef5d318e920014968740cdfe389b432978495e8e5f66705d1a5b67788d9",
+          "word_errors": 0,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Это наша работа, но нам становится всё труднее и труднее, потому что если раньше это был просто относительно несложный антивирус,п продукт, который защищает, сейчас это целая история.",
+          "baseline_word_errors": 1
+        },
+        {
+          "id": "fleurs-fleurs-38-clean-quiet",
+          "subset": "fleurs-quiet-minus30db",
+          "audio_sha256": "849f52651660287f82706ebeb3e399f65d99a38168096dc9ebe320f9915c3269",
+          "word_errors": 0,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Сегрегация и рекомбинация с каждым поколением тасуют вариации между двумя поулами.",
+          "baseline_word_errors": 1
+        },
+        {
+          "id": "fleurs-fleurs-38-room-6db",
+          "subset": "fleurs-room-6db",
+          "audio_sha256": "4ac5fe35a14eda499109344d1dc095deb7fb234b0ff84d1277e9d766164c61a2",
+          "word_errors": 4,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Дфигация и рекомбинация с каждым поколением проиходят вариации ж вариацию Луны.",
+          "baseline_word_errors": 5
+        },
+        {
+          "id": "fleurs-fleurs-40-room-6db",
+          "subset": "fleurs-room-6db",
+          "audio_sha256": "9dd13574afb095fd5315cbfacfb5e3f5f2f37dc5d0e23a42c1a4579acd198bb1",
+          "word_errors": 10,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "т самы живописны ам т картину остров и находится на побережье полуострова уру.Что находится напротив?",
+          "baseline_word_errors": 10
+        },
+        {
+          "id": "fleurs-fleurs-42-clean-quiet",
+          "subset": "fleurs-quiet-minus30db",
+          "audio_sha256": "d29c2bd14d750683a9b942513c3aae082031ff84e318377a740d29fe705ac0d6",
+          "word_errors": 1,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "В репортажах по телевидеонию сообщается о белом дыме, идущем от завода.",
+          "baseline_word_errors": 1
+        }
+      ]
+    },
+    {
+      "name": "quiet-gain128-development",
+      "artifact_sha256": "bd5aab619ec290531348996f032efaa0a3ff687eb33e0d2c5e8c7c3767f5745d",
+      "manifest_sha256": "4957a56ace35b5c066daee66928cb36f541d119acf968e4c76b7a568e01f8eac",
+      "sources_sha256": {
+        "PhoneGigaAm": "8a205d3d76180d53db0494029c0858933c126d7cc43e3c90bac14895bfe36f74",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 78,
+        "wer": 0.203125,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 43,
+          "deletions": 15,
+          "insertions": 20
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 23.357,
+        "real_time_factor": 0.11764844763850026,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 6,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 10.803,
+          "real_time_factor": 0.11582818087316414,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 51,
+          "wer": 0.265625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 32,
+            "deletions": 9,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 11.376,
+          "real_time_factor": 0.12197613637594255,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 1,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.178,
+          "real_time_factor": 0.09816071183333334,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 2,
+      "reference_negations": 8,
+      "changed_cases": []
+    },
+    {
+      "name": "quiet-gain128-tune",
+      "artifact_sha256": "ac42b48c9d17ae84da64811973b3bd5722f8dfeaf0ff40f1b02c3426eff9c7af",
+      "manifest_sha256": "35b0ab8fbfd798edc0ae2f25a6dc92a937d495da23e143d0f67a1fd2f71b0a66",
+      "sources_sha256": {
+        "PhoneGigaAm": "8a205d3d76180d53db0494029c0858933c126d7cc43e3c90bac14895bfe36f74",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 34,
+        "reference_words": 577,
+        "word_errors": 72,
+        "wer": 0.12478336221837089,
+        "hallucinated_words": 0,
+        "noise_cases": 4,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 36,
+          "deletions": 8,
+          "insertions": 28
+        },
+        "duration_seconds": 326.44,
+        "elapsed_seconds": 30.04,
+        "real_time_factor": 0.09202347472123515,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 2
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "mtedx-original": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 4.763,
+          "real_time_factor": 0.08350808280154279,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "mtedx-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 5.344,
+          "real_time_factor": 0.09368177598176719,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-clean": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.148,
+          "real_time_factor": 0.0856244899201597,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 6.004,
+          "real_time_factor": 0.09986116380572188,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-room-6db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 24,
+          "wer": 0.22857142857142856,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 22,
+            "deletions": 2,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.826,
+          "real_time_factor": 0.09690496019627412,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no-speech": {
+          "clips": 4,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 4,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 32.0,
+          "elapsed_seconds": 2.956,
+          "real_time_factor": 0.0923721823125,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 19,
+      "reference_negations": 6,
+      "changed_cases": [
+        {
+          "id": "fleurs-fleurs-38-clean-quiet",
+          "subset": "fleurs-quiet-minus30db",
+          "audio_sha256": "849f52651660287f82706ebeb3e399f65d99a38168096dc9ebe320f9915c3269",
+          "word_errors": 0,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Сегрегация и рекомбинация с каждым поколением тасуют вариации между двумя поулами.",
+          "baseline_word_errors": 1
+        },
+        {
+          "id": "fleurs-fleurs-42-clean-quiet",
+          "subset": "fleurs-quiet-minus30db",
+          "audio_sha256": "d29c2bd14d750683a9b942513c3aae082031ff84e318377a740d29fe705ac0d6",
+          "word_errors": 1,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "В репортажах по телевидеонию сообщается о белом дыме, идущем от завода.",
+          "baseline_word_errors": 1
+        }
+      ]
+    },
+    {
+      "name": "quiet-gain32-control",
+      "artifact_sha256": "62176397f00934dea23609057f779866108a842e801161848b051273dcf3a092",
+      "manifest_sha256": "fe0bbd57603f4107dcc207d6ce2ffdacb198723b21040f0db4843085bbcbae1c",
+      "sources_sha256": {
+        "PhoneGigaAm": "02e16339b4ba34f2ca74c8fed9e953d87fc287bb706e7692859115bb8d03b752",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 46,
+        "reference_words": 701,
+        "word_errors": 177,
+        "wer": 0.2524964336661912,
+        "hallucinated_words": 0,
+        "noise_cases": 4,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 89,
+          "deletions": 14,
+          "insertions": 74
+        },
+        "duration_seconds": 394.02,
+        "elapsed_seconds": 41.693,
+        "real_time_factor": 0.10581467077559514,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 18,
+          "extra": 4
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "mtedx-original": {
+          "clips": 12,
+          "reference_words": 235,
+          "word_errors": 69,
+          "wer": 0.2936170212765957,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 30,
+            "deletions": 3,
+            "insertions": 36
+          },
+          "duration_seconds": 107.66,
+          "elapsed_seconds": 9.86,
+          "real_time_factor": 0.0915803300390117,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 8,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "mtedx-quiet-minus30db": {
+          "clips": 12,
+          "reference_words": 235,
+          "word_errors": 69,
+          "wer": 0.2936170212765957,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 30,
+            "deletions": 3,
+            "insertions": 36
+          },
+          "duration_seconds": 107.66,
+          "elapsed_seconds": 12.488,
+          "real_time_factor": 0.1159990165706855,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 8,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-clean": {
+          "clips": 6,
+          "reference_words": 77,
+          "word_errors": 3,
+          "wer": 0.03896103896103896,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 2,
+            "deletions": 1,
+            "insertions": 0
+          },
+          "duration_seconds": 48.9,
+          "elapsed_seconds": 4.483,
+          "real_time_factor": 0.09167810494887525,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 77,
+          "word_errors": 3,
+          "wer": 0.03896103896103896,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 2,
+            "deletions": 1,
+            "insertions": 0
+          },
+          "duration_seconds": 48.9,
+          "elapsed_seconds": 5.921,
+          "real_time_factor": 0.1210789280777096,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-room-6db": {
+          "clips": 6,
+          "reference_words": 77,
+          "word_errors": 33,
+          "wer": 0.42857142857142855,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 25,
+            "deletions": 6,
+            "insertions": 2
+          },
+          "duration_seconds": 48.9,
+          "elapsed_seconds": 5.585,
+          "real_time_factor": 0.11421550783231084,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 3
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no-speech": {
+          "clips": 4,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 4,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 32.0,
+          "elapsed_seconds": 3.356,
+          "real_time_factor": 0.10487958984375,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 29,
+      "reference_negations": 10,
+      "changed_cases": []
+    },
+    {
+      "name": "quiet-gain32-development-repeat",
+      "artifact_sha256": "84c108e36390c1465ac296df2df04fc0e26b91bacdb49200deae16fea86d5281",
+      "manifest_sha256": "4957a56ace35b5c066daee66928cb36f541d119acf968e4c76b7a568e01f8eac",
+      "sources_sha256": {
+        "PhoneGigaAm": "02e16339b4ba34f2ca74c8fed9e953d87fc287bb706e7692859115bb8d03b752",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 78,
+        "wer": 0.203125,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 43,
+          "deletions": 15,
+          "insertions": 20
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 22.58,
+        "real_time_factor": 0.11373765456345059,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 6,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 10.652,
+          "real_time_factor": 0.11421020332013605,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 51,
+          "wer": 0.265625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 32,
+            "deletions": 9,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 10.885,
+          "real_time_factor": 0.11670738920861959,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 1,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.044,
+          "real_time_factor": 0.08698415625,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 2,
+      "reference_negations": 8,
+      "changed_cases": []
+    },
+    {
+      "name": "quiet-gain32-development",
+      "artifact_sha256": "24a1bf458690324fdd63f287f0b7dc953551005de087ba0cce21da487bf89038",
+      "manifest_sha256": "4957a56ace35b5c066daee66928cb36f541d119acf968e4c76b7a568e01f8eac",
+      "sources_sha256": {
+        "PhoneGigaAm": "02e16339b4ba34f2ca74c8fed9e953d87fc287bb706e7692859115bb8d03b752",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 78,
+        "wer": 0.203125,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 43,
+          "deletions": 15,
+          "insertions": 20
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 22.316,
+        "real_time_factor": 0.11240923489574545,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 6,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 10.422,
+          "real_time_factor": 0.11174608169797108,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 51,
+          "wer": 0.265625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 32,
+            "deletions": 9,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 10.838,
+          "real_time_factor": 0.11620324237851053,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 1,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.057,
+          "real_time_factor": 0.08807617016666668,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 2,
+      "reference_negations": 8,
+      "changed_cases": []
+    },
+    {
+      "name": "quiet-gain32-farfield",
+      "artifact_sha256": "28782334ae766a409f2976eaf2b7b8742b26c2e4e9ba858139383d17794465bc",
+      "manifest_sha256": "9c4b23a66df1ead7213344b9b32b3f3c670e7ac686d6a684289495b066b7e929",
+      "sources_sha256": {
+        "PhoneGigaAm": "02e16339b4ba34f2ca74c8fed9e953d87fc287bb706e7692859115bb8d03b752",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 26,
+        "reference_words": 150,
+        "word_errors": 13,
+        "wer": 0.08666666666666667,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 10,
+          "deletions": 3,
+          "insertions": 0
+        },
+        "duration_seconds": 91.791,
+        "elapsed_seconds": 17.118,
+        "real_time_factor": 0.1864863220101017,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 3,
+          "extra": 4
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "golos_farfield": {
+          "clips": 24,
+          "reference_words": 150,
+          "word_errors": 13,
+          "wer": 0.08666666666666667,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 10,
+            "deletions": 3,
+            "insertions": 0
+          },
+          "duration_seconds": 79.791,
+          "elapsed_seconds": 15.904,
+          "real_time_factor": 0.19931993588279434,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 3,
+            "extra": 4
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.214,
+          "real_time_factor": 0.10115201391666667,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 3,
+      "reference_negations": 2,
+      "changed_cases": [
+        {
+          "id": "golos-0060",
+          "subset": "golos_farfield",
+          "audio_sha256": "83e94215874f196e8485021493600e60e7dbac51ee02f4bff9a01de9462a7144",
+          "word_errors": 0,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Афина, чему равно число Pи?",
+          "baseline_word_errors": 1
+        },
+        {
+          "id": "golos-0088",
+          "subset": "golos_farfield",
+          "audio_sha256": "04a174515d299bd6633ce97281c3ede1dbbb193c7e0848cc5fa6777cf48093b1",
+          "word_errors": 2,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 1,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Салют, покажи телеканал Три Ангела.",
+          "baseline_word_errors": 0
+        },
+        {
+          "id": "golos-0066",
+          "subset": "golos_farfield",
+          "audio_sha256": "f0eb934dd0b1e0b9736a1bd28e383da88c61877eae075e2bdbe00398a8d70f5d",
+          "word_errors": 1,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Сбер, найди чик зарядка.",
+          "baseline_word_errors": 0
+        }
+      ]
+    },
+    {
+      "name": "quiet-gain32-holdout",
+      "artifact_sha256": "2387969fd365051c348fbe2f04fc8f9d0a4fdc2003c751fa29a09703cb4eecc7",
+      "manifest_sha256": "74ff3fdae9be8584a4846f497f3ea8f3ec87c4285ee58b2fdee95f68876b117d",
+      "sources_sha256": {
+        "PhoneGigaAm": "02e16339b4ba34f2ca74c8fed9e953d87fc287bb706e7692859115bb8d03b752",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 74,
+        "reference_words": 784,
+        "word_errors": 134,
+        "wer": 0.17091836734693877,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 67,
+          "deletions": 23,
+          "insertions": 44
+        },
+        "duration_seconds": 387.941,
+        "elapsed_seconds": 50.376,
+        "real_time_factor": 0.12985392561621847,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 2,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 1,
+          "extra": 1
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 36,
+          "reference_words": 392,
+          "word_errors": 51,
+          "wer": 0.13010204081632654,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 20,
+            "deletions": 7,
+            "insertions": 24
+          },
+          "duration_seconds": 187.97,
+          "elapsed_seconds": 23.426,
+          "real_time_factor": 0.12462349320205379,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 36,
+          "reference_words": 392,
+          "word_errors": 83,
+          "wer": 0.21173469387755103,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 47,
+            "deletions": 16,
+            "insertions": 20
+          },
+          "duration_seconds": 187.97,
+          "elapsed_seconds": 25.745,
+          "real_time_factor": 0.13696367669107432,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 1,
+            "extra": 1
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.205,
+          "real_time_factor": 0.10041590616666667,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 8,
+      "reference_negations": 16,
+      "changed_cases": []
+    },
+    {
+      "name": "quiet-gain32-probes",
+      "artifact_sha256": "0934e76b6990f9aad910e152cc907984215ddb4cdf89c26332faacf790fdf1bd",
+      "manifest_sha256": "67eefe14f9ec29334b15adee3d9d44006257042ada9784a87170c4a7622f4723",
+      "sources_sha256": {
+        "PhoneGigaAm": "02e16339b4ba34f2ca74c8fed9e953d87fc287bb706e7692859115bb8d03b752",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 8,
+        "reference_words": 0,
+        "word_errors": 0,
+        "wer": null,
+        "hallucinated_words": 0,
+        "noise_cases": 8,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0
+        },
+        "duration_seconds": 64.0,
+        "elapsed_seconds": 7.299,
+        "real_time_factor": 0.1140511875,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "noise-probes": {
+          "clips": 8,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 8,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 64.0,
+          "elapsed_seconds": 7.299,
+          "real_time_factor": 0.1140511875,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 0,
+      "reference_negations": 0,
+      "changed_cases": []
+    },
+    {
+      "name": "quiet-gain32-tune",
+      "artifact_sha256": "d52d133106d5b2dd79fa10e54cada7af0ce016b2b1fe95d0a424d2aef3ef8212",
+      "manifest_sha256": "35b0ab8fbfd798edc0ae2f25a6dc92a937d495da23e143d0f67a1fd2f71b0a66",
+      "sources_sha256": {
+        "PhoneGigaAm": "02e16339b4ba34f2ca74c8fed9e953d87fc287bb706e7692859115bb8d03b752",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 34,
+        "reference_words": 577,
+        "word_errors": 72,
+        "wer": 0.12478336221837089,
+        "hallucinated_words": 0,
+        "noise_cases": 4,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 36,
+          "deletions": 8,
+          "insertions": 28
+        },
+        "duration_seconds": 326.44,
+        "elapsed_seconds": 29.827,
+        "real_time_factor": 0.09136932539517216,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 2
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "mtedx-original": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 5.073,
+          "real_time_factor": 0.08893966441093969,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "mtedx-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 5.553,
+          "real_time_factor": 0.09734784216339412,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-clean": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 4.867,
+          "real_time_factor": 0.08095196967731205,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.84,
+          "real_time_factor": 0.09713768502994012,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-room-6db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 24,
+          "wer": 0.22857142857142856,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 22,
+            "deletions": 2,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.508,
+          "real_time_factor": 0.0916182239687292,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no-speech": {
+          "clips": 4,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 4,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 32.0,
+          "elapsed_seconds": 2.986,
+          "real_time_factor": 0.09331017315625,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 19,
+      "reference_negations": 6,
+      "changed_cases": [
+        {
+          "id": "fleurs-fleurs-38-clean-quiet",
+          "subset": "fleurs-quiet-minus30db",
+          "audio_sha256": "849f52651660287f82706ebeb3e399f65d99a38168096dc9ebe320f9915c3269",
+          "word_errors": 0,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "Сегрегация и рекомбинация с каждым поколением тасуют вариации между двумя поулами.",
+          "baseline_word_errors": 1
+        },
+        {
+          "id": "fleurs-fleurs-42-clean-quiet",
+          "subset": "fleurs-quiet-minus30db",
+          "audio_sha256": "d29c2bd14d750683a9b942513c3aae082031ff84e318377a740d29fe705ac0d6",
+          "word_errors": 1,
+          "hallucinated_words": 0,
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          },
+          "baseline_text": "В репортажах по телевидеонию сообщается о белом дыме, идущем от завода.",
+          "baseline_word_errors": 1
+        }
+      ]
+    },
+    {
+      "name": "raw-retry32-development",
+      "artifact_sha256": "0a6953bebe248c6ff3d3b7266a272988b73a2720fb43c2e6851de28179ab2612",
+      "manifest_sha256": "4957a56ace35b5c066daee66928cb36f541d119acf968e4c76b7a568e01f8eac",
+      "sources_sha256": {
+        "PhoneGigaAm": "e9d8701251cca9f7ba2a67f4baf707e8e5d7d20307ad9200f65ec6c359fd4a2e",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 78,
+        "wer": 0.203125,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 43,
+          "deletions": 15,
+          "insertions": 20
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 29.299,
+        "real_time_factor": 0.14758105279594616,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 1,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 11,
+            "deletions": 6,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 14.123,
+          "real_time_factor": 0.15143184686522435,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 51,
+          "wer": 0.265625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 32,
+            "deletions": 9,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 13.869,
+          "real_time_factor": 0.1487090292582635,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 1,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 1.307,
+          "real_time_factor": 0.1088859445,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 2,
+      "reference_negations": 8,
+      "changed_cases": []
+    },
+    {
+      "name": "raw-retry32-tune",
+      "artifact_sha256": "eb467173843057a7c368b7bf8762759a47632484b59efd7d4b424623d849d6a8",
+      "manifest_sha256": "35b0ab8fbfd798edc0ae2f25a6dc92a937d495da23e143d0f67a1fd2f71b0a66",
+      "sources_sha256": {
+        "PhoneGigaAm": "e9d8701251cca9f7ba2a67f4baf707e8e5d7d20307ad9200f65ec6c359fd4a2e",
+        "PcmWave": "a77209aff0849657e5277f3103e58d1c0b2ac48277c0f058182ba9cb0b1f5e80",
+        "PhoneSpeechWindow": "734a2a058e90053dadcc3f5f1b7100aa009f9f0dd7da4d9d28aa954bfb19b5d9",
+        "PhonePhrases": "14ac038bf546aceaa3f201b4342981733eab9df75590fc8d8dd69b29c7eab7b7",
+        "PhoneCtc": "75144db1387cd582303f44050eeb1180e3720e2e45b2baf834bf0f4f46038d4d"
+      },
+      "model_sha256": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+      "resources_sha256": {
+        "gigaam_frontend.onnx": "547ddbaf3a639c12c1a94b7cab1c9fb246045d48c439f1a54b189714376b1a38",
+        "gigaam_tokens.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd"
+      },
+      "summary": {
+        "clips": 34,
+        "reference_words": 577,
+        "word_errors": 73,
+        "wer": 0.1265164644714038,
+        "hallucinated_words": 0,
+        "noise_cases": 4,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 37,
+          "deletions": 8,
+          "insertions": 28
+        },
+        "duration_seconds": 326.44,
+        "elapsed_seconds": 31.392,
+        "real_time_factor": 0.0961656538475677,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 4,
+          "extra": 2
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "mtedx-original": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 4.974,
+          "real_time_factor": 0.08719800727559607,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "mtedx-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 131,
+          "word_errors": 20,
+          "wer": 0.15267175572519084,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 3,
+            "deletions": 3,
+            "insertions": 14
+          },
+          "duration_seconds": 57.04,
+          "elapsed_seconds": 5.511,
+          "real_time_factor": 0.09661687848877981,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-clean": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 4,
+          "wer": 0.0380952380952381,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 4,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.141,
+          "real_time_factor": 0.08551749487691285,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-quiet-minus30db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 5,
+          "wer": 0.047619047619047616,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 5,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 6.473,
+          "real_time_factor": 0.10766541290751831,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "fleurs-room-6db": {
+          "clips": 6,
+          "reference_words": 105,
+          "word_errors": 24,
+          "wer": 0.22857142857142856,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 22,
+            "deletions": 2,
+            "insertions": 0
+          },
+          "duration_seconds": 60.12,
+          "elapsed_seconds": 5.85,
+          "real_time_factor": 0.09730019407850966,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no-speech": {
+          "clips": 4,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 4,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 32.0,
+          "elapsed_seconds": 3.444,
+          "real_time_factor": 0.1076147148125,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "reference_numeric_tokens": 19,
+      "reference_negations": 6,
+      "changed_cases": []
+    }
+  ],
+  "final_audit": {
+    "same_input_model_resources_and_dependencies": true,
+    "sealed_manifest_hashes_match": true,
+    "development_repeat_identical": {
+      "base": true,
+      "quiet-gain32": true
+    },
+    "control_has_improvement": false,
+    "no_extra_noise_words": true,
+    "no_worse_critical_counts": false,
+    "original_openstt_no_worse": true,
+    "golos_no_worse": false,
+    "retain_runtime_patch": false
+  },
+  "lecture_split_plan": {
+    "development": {
+      "manifest_sha256": "4957a56ace35b5c066daee66928cb36f541d119acf968e4c76b7a568e01f8eac",
+      "clips": 38,
+      "source_items": 18
+    },
+    "holdout": {
+      "manifest_sha256": "74ff3fdae9be8584a4846f497f3ea8f3ec87c4285ee58b2fdee95f68876b117d",
+      "clips": 74,
+      "source_items": 36
+    },
+    "farfield": {
+      "manifest_sha256": "9c4b23a66df1ead7213344b9b32b3f3c670e7ac686d6a684289495b066b7e929",
+      "clips": 26,
+      "source_items": 24
+    },
+    "split_overlap": [],
+    "rule": "Development may select; holdout/farfield decoded once per frozen system; no changes after final results."
+  },
+  "tuning_plan": {
+    "baseline": "v0.5.9 / 6abca7c",
+    "candidates": {
+      "base": null,
+      "gain32": [
+        "PhoneGigaAm.java",
+        "PhoneSpeechWindow.normalize(wave, level, 8);",
+        "PhoneSpeechWindow.normalize(wave, level, 32);"
+      ],
+      "gain128": [
+        "PhoneGigaAm.java",
+        "PhoneSpeechWindow.normalize(wave, level, 8);",
+        "PhoneSpeechWindow.normalize(wave, level, 128);"
+      ],
+      "quiet-clean": [
+        "PhoneGigaAm.java",
+        "PhoneSpeechWindow.normalize(wave, level, 8);",
+        "PhoneSpeechWindow.normalize(wave, level, 32);\n                        if (level < .05f) wave = PhoneSpeechWindow.clean(raw);"
+      ]
+    },
+    "acceptance": "Select on tune only: lower total speech errors; no increase on original speech or room-6db; no extra noise words or missed negations/numeric tokens. Open control only for selected candidate. Keep runtime change only if control independently improves and repeats. JVM speed is not phone speed."
+  },
+  "scripts_sha256": {
+    "evaluate_android_asr.py": "f3b7de84fe258a4c0ac2a88f504909e23e21a535b6676abb31a9d62b2080404f",
+    "prepare_android_rear_row.py": "0ca9a751a3130b2826d06434cf61f7357d41fbab28818f05ff79c2327905e5c3",
+    "evaluate_asr.py": "a7d984da49819589568c0223b85c9d1deaf474803150d930a23ed262ecbf170d"
+  },
+  "dependency_provenance": {
+    "dependencies_sha256": {
+      "ort.jar": "ca7664d1bec1527606629cdae0803beb124ef47cadd90e2f0201b092141ec107",
+      "android-json.jar": "dfb7bae2f404cfe0b72b4d23944698cb716b7665171812a0a4d0f5926c0fac79"
+    },
+    "jdk": "openjdk version \"17.0.20.1\" 2026-08-18\nOpenJDK Runtime Environment Temurin-17.0.20.1+1 (build 17.0.20.1+1)\nOpenJDK 64-Bit Server VM Temurin-17.0.20.1+1 (build 17.0.20.1+1, mixed mode, sharing)\n"
+  },
+  "candidate_patches": {
+    "quiet-gain32.patch": "--- a/outputs/android/src/ru/ilya/lecturerecorder/PhoneGigaAm.java\n+++ b/outputs/android/src/ru/ilya/lecturerecorder/PhoneGigaAm.java\n@@ -69,7 +69,7 @@\n                         raw = Arrays.copyOf(raw, length);\n                         float level = PhoneSpeechWindow.level(raw);\n                         float[] wave = raw.clone();\n-                        PhoneSpeechWindow.normalize(wave, level, 8);\n+                        PhoneSpeechWindow.normalize(wave, level, level < .01f ? 32 : 8);\n                         double first = start / (double) RATE, last = end / (double) RATE;\n                         double offset = left / (double) RATE;\n                         JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);\n",
+    "gain128.patch": "--- a/outputs/android/src/ru/ilya/lecturerecorder/PhoneGigaAm.java\n+++ b/outputs/android/src/ru/ilya/lecturerecorder/PhoneGigaAm.java\n@@ -69,7 +69,7 @@\n                         raw = Arrays.copyOf(raw, length);\n                         float level = PhoneSpeechWindow.level(raw);\n                         float[] wave = raw.clone();\n-                        PhoneSpeechWindow.normalize(wave, level, 8);\n+                        PhoneSpeechWindow.normalize(wave, level, 128);\n                         double first = start / (double) RATE, last = end / (double) RATE;\n                         double offset = left / (double) RATE;\n                         JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);\n",
+    "quiet-clean.patch": "--- a/outputs/android/src/ru/ilya/lecturerecorder/PhoneGigaAm.java\n+++ b/outputs/android/src/ru/ilya/lecturerecorder/PhoneGigaAm.java\n@@ -69,7 +69,8 @@\n                         raw = Arrays.copyOf(raw, length);\n                         float level = PhoneSpeechWindow.level(raw);\n                         float[] wave = raw.clone();\n-                        PhoneSpeechWindow.normalize(wave, level, 8);\n+                        PhoneSpeechWindow.normalize(wave, level, 32);\n+                        if (level < .05f) wave = PhoneSpeechWindow.clean(raw);\n                         double first = start / (double) RATE, last = end / (double) RATE;\n                         double offset = left / (double) RATE;\n                         JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);\n",
+    "mixed-retry.patch": "--- a/PhoneGigaAm.java\n+++ b/PhoneGigaAm.java\n@@ -76,6 +76,9 @@\n                         if (level < .05f || weak(words)) {\n                             job.check();\n                             float[] clean = PhoneSpeechWindow.clean(raw);\n+                            float[] normalized = raw.clone();\n+                            PhoneSpeechWindow.normalize(normalized, level, 32);\n+                            for (int i = 0; i < clean.length; i++) clean[i] = (clean[i] + normalized[i]) * .5f;\n                             JSONArray alternate = recognize(environment, frontend, acoustic, clean, tokens, offset, first, last, true);\n                             reconcile(words, alternate);\n                         }\n",
+    "raw-retry32.patch": "--- a/PhoneGigaAm.java\n+++ b/PhoneGigaAm.java\n@@ -75,7 +75,8 @@\n                         JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);\n                         if (level < .05f || weak(words)) {\n                             job.check();\n-                            float[] clean = PhoneSpeechWindow.clean(raw);\n+                            float[] clean = raw.clone();\n+                            PhoneSpeechWindow.normalize(clean, level, 32);\n                             JSONArray alternate = recognize(environment, frontend, acoustic, clean, tokens, offset, first, last, true);\n                             reconcile(words, alternate);\n                         }\n",
+    "quiet-gain128.patch": "--- a/outputs/android/src/ru/ilya/lecturerecorder/PhoneGigaAm.java\n+++ b/outputs/android/src/ru/ilya/lecturerecorder/PhoneGigaAm.java\n@@ -69,7 +69,7 @@\n                         raw = Arrays.copyOf(raw, length);\n                         float level = PhoneSpeechWindow.level(raw);\n                         float[] wave = raw.clone();\n-                        PhoneSpeechWindow.normalize(wave, level, 8);\n+                        PhoneSpeechWindow.normalize(wave, level, level < .01f ? 128 : 8);\n                         double first = start / (double) RATE, last = end / (double) RATE;\n                         double offset = left / (double) RATE;\n                         JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);\n",
+    "gain32.patch": "--- a/outputs/android/src/ru/ilya/lecturerecorder/PhoneGigaAm.java\n+++ b/outputs/android/src/ru/ilya/lecturerecorder/PhoneGigaAm.java\n@@ -69,7 +69,7 @@\n                         raw = Arrays.copyOf(raw, length);\n                         float level = PhoneSpeechWindow.level(raw);\n                         float[] wave = raw.clone();\n-                        PhoneSpeechWindow.normalize(wave, level, 8);\n+                        PhoneSpeechWindow.normalize(wave, level, 32);\n                         double first = start / (double) RATE, last = end / (double) RATE;\n                         double offset = left / (double) RATE;\n                         JSONArray words = recognize(environment, frontend, acoustic, wave, tokens, offset, first, last, true);\n"
+  }
+}

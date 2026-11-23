@@ -1,0 +1,6263 @@
+{
+  "archive": {
+    "date": "2026-11-22",
+    "report_commit": "5098368d526b4ee285e73946eaab2f1d6d3dba5e",
+    "scope": "Архив эксперимента. Ревизии и сценарии указаны в отчёте."
+  },
+  "frozen": {
+    "rule": {
+      "kind": "local",
+      "threshold": 0.5
+    },
+    "selection": "F1 по development; сохранение recall ошибок и снижение FPR предпочтительны",
+    "training_eligible": true,
+    "terms": [
+      "аналогия",
+      "антивирус",
+      "бактерия",
+      "вирус",
+      "клетка",
+      "мейерхольд",
+      "метафора",
+      "митохондрия",
+      "молекула",
+      "мэтр",
+      "одномерный",
+      "политология",
+      "прибыль",
+      "пробирка",
+      "самодостаточность",
+      "теломера",
+      "теорема",
+      "электростанция"
+    ],
+    "tune_sha256": "6b2e89bd87bf8ebe31c7fb9508f04673590144191d5714f6a8c40b5c0be76e01",
+    "control_sha256": "38ba8cba8304c5f071347bac05da674c26da783749650a8882c6f6329350f86b",
+    "script_sha256": "d921af3c6eca4ec116b41b3b5f79a41667e1c0e1e3a8f58ed8ebb3b453fcc3b6",
+    "labels": "Levenshtein по эталону; пропуск относится к следующему слову, в конце к последнему. Полностью пустая речь — виртуальная фраза без флага."
+  },
+  "tune": {
+    "baseline": {
+      "phrases": 53,
+      "tp": 19,
+      "fp": 9,
+      "fn": 10,
+      "tn": 15,
+      "precision": 0.6785714285714286,
+      "phrase_recall": 0.6551724137931034,
+      "false_alarm_rate": 0.375,
+      "f1": 0.6666666666666666,
+      "all": {
+        "errors": 74,
+        "detected": 54,
+        "error_recall": 0.7297297297297297,
+        "clean_phrases": 24,
+        "false_alerts": 9,
+        "false_alarm_rate": 0.375
+      },
+      "short": {
+        "errors": 30,
+        "detected": 21,
+        "error_recall": 0.7,
+        "clean_phrases": 17,
+        "false_alerts": 7,
+        "false_alarm_rate": 0.4117647058823529
+      },
+      "term": {
+        "errors": 2,
+        "detected": 1,
+        "error_recall": 0.5,
+        "clean_phrases": 0,
+        "false_alerts": 0,
+        "false_alarm_rate": null
+      }
+    },
+    "candidate": {
+      "phrases": 53,
+      "tp": 19,
+      "fp": 8,
+      "fn": 10,
+      "tn": 16,
+      "precision": 0.7037037037037037,
+      "phrase_recall": 0.6551724137931034,
+      "false_alarm_rate": 0.3333333333333333,
+      "f1": 0.6785714285714286,
+      "all": {
+        "errors": 74,
+        "detected": 54,
+        "error_recall": 0.7297297297297297,
+        "clean_phrases": 24,
+        "false_alerts": 8,
+        "false_alarm_rate": 0.3333333333333333
+      },
+      "short": {
+        "errors": 30,
+        "detected": 21,
+        "error_recall": 0.7,
+        "clean_phrases": 17,
+        "false_alerts": 7,
+        "false_alarm_rate": 0.4117647058823529
+      },
+      "term": {
+        "errors": 2,
+        "detected": 1,
+        "error_recall": 0.5,
+        "clean_phrases": 0,
+        "false_alerts": 0,
+        "false_alarm_rate": null
+      }
+    },
+    "trials": [
+      {
+        "rule": {
+          "kind": "local",
+          "threshold": 0.5
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 19,
+          "fp": 8,
+          "fn": 10,
+          "tn": 16,
+          "precision": 0.7037037037037037,
+          "phrase_recall": 0.6551724137931034,
+          "false_alarm_rate": 0.3333333333333333,
+          "f1": 0.6785714285714286,
+          "all": {
+            "errors": 74,
+            "detected": 54,
+            "error_recall": 0.7297297297297297,
+            "clean_phrases": 24,
+            "false_alerts": 8,
+            "false_alarm_rate": 0.3333333333333333
+          },
+          "short": {
+            "errors": 30,
+            "detected": 21,
+            "error_recall": 0.7,
+            "clean_phrases": 17,
+            "false_alerts": 7,
+            "false_alarm_rate": 0.4117647058823529
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "local",
+          "threshold": 0.55
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 19,
+          "fp": 8,
+          "fn": 10,
+          "tn": 16,
+          "precision": 0.7037037037037037,
+          "phrase_recall": 0.6551724137931034,
+          "false_alarm_rate": 0.3333333333333333,
+          "f1": 0.6785714285714286,
+          "all": {
+            "errors": 74,
+            "detected": 54,
+            "error_recall": 0.7297297297297297,
+            "clean_phrases": 24,
+            "false_alerts": 8,
+            "false_alarm_rate": 0.3333333333333333
+          },
+          "short": {
+            "errors": 30,
+            "detected": 21,
+            "error_recall": 0.7,
+            "clean_phrases": 17,
+            "false_alerts": 7,
+            "false_alarm_rate": 0.4117647058823529
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "local",
+          "threshold": 0.6
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 19,
+          "fp": 8,
+          "fn": 10,
+          "tn": 16,
+          "precision": 0.7037037037037037,
+          "phrase_recall": 0.6551724137931034,
+          "false_alarm_rate": 0.3333333333333333,
+          "f1": 0.6785714285714286,
+          "all": {
+            "errors": 74,
+            "detected": 54,
+            "error_recall": 0.7297297297297297,
+            "clean_phrases": 24,
+            "false_alerts": 8,
+            "false_alarm_rate": 0.3333333333333333
+          },
+          "short": {
+            "errors": 30,
+            "detected": 21,
+            "error_recall": 0.7,
+            "clean_phrases": 17,
+            "false_alerts": 7,
+            "false_alarm_rate": 0.4117647058823529
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "local",
+          "threshold": 0.65
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 19,
+          "fp": 8,
+          "fn": 10,
+          "tn": 16,
+          "precision": 0.7037037037037037,
+          "phrase_recall": 0.6551724137931034,
+          "false_alarm_rate": 0.3333333333333333,
+          "f1": 0.6785714285714286,
+          "all": {
+            "errors": 74,
+            "detected": 54,
+            "error_recall": 0.7297297297297297,
+            "clean_phrases": 24,
+            "false_alerts": 8,
+            "false_alarm_rate": 0.3333333333333333
+          },
+          "short": {
+            "errors": 30,
+            "detected": 21,
+            "error_recall": 0.7,
+            "clean_phrases": 17,
+            "false_alerts": 7,
+            "false_alarm_rate": 0.4117647058823529
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "local",
+          "threshold": 0.7
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 19,
+          "fp": 8,
+          "fn": 10,
+          "tn": 16,
+          "precision": 0.7037037037037037,
+          "phrase_recall": 0.6551724137931034,
+          "false_alarm_rate": 0.3333333333333333,
+          "f1": 0.6785714285714286,
+          "all": {
+            "errors": 74,
+            "detected": 54,
+            "error_recall": 0.7297297297297297,
+            "clean_phrases": 24,
+            "false_alerts": 8,
+            "false_alarm_rate": 0.3333333333333333
+          },
+          "short": {
+            "errors": 30,
+            "detected": 21,
+            "error_recall": 0.7,
+            "clean_phrases": 17,
+            "false_alerts": 7,
+            "false_alarm_rate": 0.4117647058823529
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "local",
+          "threshold": 0.75
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 19,
+          "fp": 12,
+          "fn": 10,
+          "tn": 12,
+          "precision": 0.6129032258064516,
+          "phrase_recall": 0.6551724137931034,
+          "false_alarm_rate": 0.5,
+          "f1": 0.6333333333333333,
+          "all": {
+            "errors": 74,
+            "detected": 54,
+            "error_recall": 0.7297297297297297,
+            "clean_phrases": 24,
+            "false_alerts": 12,
+            "false_alarm_rate": 0.5
+          },
+          "short": {
+            "errors": 30,
+            "detected": 21,
+            "error_recall": 0.7,
+            "clean_phrases": 17,
+            "false_alerts": 10,
+            "false_alarm_rate": 0.5882352941176471
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "local",
+          "threshold": 0.8
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 20,
+          "fp": 16,
+          "fn": 9,
+          "tn": 8,
+          "precision": 0.5555555555555556,
+          "phrase_recall": 0.6896551724137931,
+          "false_alarm_rate": 0.6666666666666666,
+          "f1": 0.6153846153846154,
+          "all": {
+            "errors": 74,
+            "detected": 56,
+            "error_recall": 0.7567567567567568,
+            "clean_phrases": 24,
+            "false_alerts": 16,
+            "false_alarm_rate": 0.6666666666666666
+          },
+          "short": {
+            "errors": 30,
+            "detected": 22,
+            "error_recall": 0.7333333333333333,
+            "clean_phrases": 17,
+            "false_alerts": 13,
+            "false_alarm_rate": 0.7647058823529411
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "local",
+          "threshold": 0.85
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 26,
+          "fp": 18,
+          "fn": 3,
+          "tn": 6,
+          "precision": 0.5909090909090909,
+          "phrase_recall": 0.896551724137931,
+          "false_alarm_rate": 0.75,
+          "f1": 0.7123287671232876,
+          "all": {
+            "errors": 74,
+            "detected": 68,
+            "error_recall": 0.918918918918919,
+            "clean_phrases": 24,
+            "false_alerts": 18,
+            "false_alarm_rate": 0.75
+          },
+          "short": {
+            "errors": 30,
+            "detected": 27,
+            "error_recall": 0.9,
+            "clean_phrases": 17,
+            "false_alerts": 14,
+            "false_alarm_rate": 0.8235294117647058
+          },
+          "term": {
+            "errors": 2,
+            "detected": 2,
+            "error_recall": 1.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "local",
+          "threshold": 0.9
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 27,
+          "fp": 23,
+          "fn": 2,
+          "tn": 1,
+          "precision": 0.54,
+          "phrase_recall": 0.9310344827586207,
+          "false_alarm_rate": 0.9583333333333334,
+          "f1": 0.6835443037974683,
+          "all": {
+            "errors": 74,
+            "detected": 71,
+            "error_recall": 0.9594594594594594,
+            "clean_phrases": 24,
+            "false_alerts": 23,
+            "false_alarm_rate": 0.9583333333333334
+          },
+          "short": {
+            "errors": 30,
+            "detected": 28,
+            "error_recall": 0.9333333333333333,
+            "clean_phrases": 17,
+            "false_alerts": 17,
+            "false_alarm_rate": 1.0
+          },
+          "term": {
+            "errors": 2,
+            "detected": 2,
+            "error_recall": 1.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "local",
+          "threshold": 0.95
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 28,
+          "fp": 24,
+          "fn": 1,
+          "tn": 0,
+          "precision": 0.5384615384615384,
+          "phrase_recall": 0.9655172413793104,
+          "false_alarm_rate": 1.0,
+          "f1": 0.691358024691358,
+          "all": {
+            "errors": 74,
+            "detected": 73,
+            "error_recall": 0.9864864864864865,
+            "clean_phrases": 24,
+            "false_alerts": 24,
+            "false_alarm_rate": 1.0
+          },
+          "short": {
+            "errors": 30,
+            "detected": 29,
+            "error_recall": 0.9666666666666667,
+            "clean_phrases": 17,
+            "false_alerts": 17,
+            "false_alarm_rate": 1.0
+          },
+          "term": {
+            "errors": 2,
+            "detected": 2,
+            "error_recall": 1.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "min",
+          "threshold": 0.5
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 3,
+          "fp": 1,
+          "fn": 26,
+          "tn": 23,
+          "precision": 0.75,
+          "phrase_recall": 0.10344827586206896,
+          "false_alarm_rate": 0.041666666666666664,
+          "f1": 0.18181818181818182,
+          "all": {
+            "errors": 74,
+            "detected": 10,
+            "error_recall": 0.13513513513513514,
+            "clean_phrases": 24,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.041666666666666664
+          },
+          "short": {
+            "errors": 30,
+            "detected": 4,
+            "error_recall": 0.13333333333333333,
+            "clean_phrases": 17,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.058823529411764705
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "min",
+          "threshold": 0.55
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 6,
+          "fp": 5,
+          "fn": 23,
+          "tn": 19,
+          "precision": 0.5454545454545454,
+          "phrase_recall": 0.20689655172413793,
+          "false_alarm_rate": 0.20833333333333334,
+          "f1": 0.3,
+          "all": {
+            "errors": 74,
+            "detected": 16,
+            "error_recall": 0.21621621621621623,
+            "clean_phrases": 24,
+            "false_alerts": 5,
+            "false_alarm_rate": 0.20833333333333334
+          },
+          "short": {
+            "errors": 30,
+            "detected": 6,
+            "error_recall": 0.2,
+            "clean_phrases": 17,
+            "false_alerts": 5,
+            "false_alarm_rate": 0.29411764705882354
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "min",
+          "threshold": 0.6
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 10,
+          "fp": 5,
+          "fn": 19,
+          "tn": 19,
+          "precision": 0.6666666666666666,
+          "phrase_recall": 0.3448275862068966,
+          "false_alarm_rate": 0.20833333333333334,
+          "f1": 0.45454545454545453,
+          "all": {
+            "errors": 74,
+            "detected": 31,
+            "error_recall": 0.4189189189189189,
+            "clean_phrases": 24,
+            "false_alerts": 5,
+            "false_alarm_rate": 0.20833333333333334
+          },
+          "short": {
+            "errors": 30,
+            "detected": 12,
+            "error_recall": 0.4,
+            "clean_phrases": 17,
+            "false_alerts": 5,
+            "false_alarm_rate": 0.29411764705882354
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "min",
+          "threshold": 0.65
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 12,
+          "fp": 7,
+          "fn": 17,
+          "tn": 17,
+          "precision": 0.631578947368421,
+          "phrase_recall": 0.41379310344827586,
+          "false_alarm_rate": 0.2916666666666667,
+          "f1": 0.5,
+          "all": {
+            "errors": 74,
+            "detected": 41,
+            "error_recall": 0.5540540540540541,
+            "clean_phrases": 24,
+            "false_alerts": 7,
+            "false_alarm_rate": 0.2916666666666667
+          },
+          "short": {
+            "errors": 30,
+            "detected": 15,
+            "error_recall": 0.5,
+            "clean_phrases": 17,
+            "false_alerts": 7,
+            "false_alarm_rate": 0.4117647058823529
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "min",
+          "threshold": 0.7
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 17,
+          "fp": 8,
+          "fn": 12,
+          "tn": 16,
+          "precision": 0.68,
+          "phrase_recall": 0.5862068965517241,
+          "false_alarm_rate": 0.3333333333333333,
+          "f1": 0.6296296296296297,
+          "all": {
+            "errors": 74,
+            "detected": 51,
+            "error_recall": 0.6891891891891891,
+            "clean_phrases": 24,
+            "false_alerts": 8,
+            "false_alarm_rate": 0.3333333333333333
+          },
+          "short": {
+            "errors": 30,
+            "detected": 20,
+            "error_recall": 0.6666666666666666,
+            "clean_phrases": 17,
+            "false_alerts": 7,
+            "false_alarm_rate": 0.4117647058823529
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "min",
+          "threshold": 0.75
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 18,
+          "fp": 12,
+          "fn": 11,
+          "tn": 12,
+          "precision": 0.6,
+          "phrase_recall": 0.6206896551724138,
+          "false_alarm_rate": 0.5,
+          "f1": 0.6101694915254238,
+          "all": {
+            "errors": 74,
+            "detected": 52,
+            "error_recall": 0.7027027027027027,
+            "clean_phrases": 24,
+            "false_alerts": 12,
+            "false_alarm_rate": 0.5
+          },
+          "short": {
+            "errors": 30,
+            "detected": 20,
+            "error_recall": 0.6666666666666666,
+            "clean_phrases": 17,
+            "false_alerts": 10,
+            "false_alarm_rate": 0.5882352941176471
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "min",
+          "threshold": 0.8
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 19,
+          "fp": 16,
+          "fn": 10,
+          "tn": 8,
+          "precision": 0.5428571428571428,
+          "phrase_recall": 0.6551724137931034,
+          "false_alarm_rate": 0.6666666666666666,
+          "f1": 0.59375,
+          "all": {
+            "errors": 74,
+            "detected": 54,
+            "error_recall": 0.7297297297297297,
+            "clean_phrases": 24,
+            "false_alerts": 16,
+            "false_alarm_rate": 0.6666666666666666
+          },
+          "short": {
+            "errors": 30,
+            "detected": 21,
+            "error_recall": 0.7,
+            "clean_phrases": 17,
+            "false_alerts": 13,
+            "false_alarm_rate": 0.7647058823529411
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "min",
+          "threshold": 0.85
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 25,
+          "fp": 18,
+          "fn": 4,
+          "tn": 6,
+          "precision": 0.5813953488372093,
+          "phrase_recall": 0.8620689655172413,
+          "false_alarm_rate": 0.75,
+          "f1": 0.6944444444444444,
+          "all": {
+            "errors": 74,
+            "detected": 66,
+            "error_recall": 0.8918918918918919,
+            "clean_phrases": 24,
+            "false_alerts": 18,
+            "false_alarm_rate": 0.75
+          },
+          "short": {
+            "errors": 30,
+            "detected": 26,
+            "error_recall": 0.8666666666666667,
+            "clean_phrases": 17,
+            "false_alerts": 14,
+            "false_alarm_rate": 0.8235294117647058
+          },
+          "term": {
+            "errors": 2,
+            "detected": 2,
+            "error_recall": 1.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "min",
+          "threshold": 0.9
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 27,
+          "fp": 23,
+          "fn": 2,
+          "tn": 1,
+          "precision": 0.54,
+          "phrase_recall": 0.9310344827586207,
+          "false_alarm_rate": 0.9583333333333334,
+          "f1": 0.6835443037974683,
+          "all": {
+            "errors": 74,
+            "detected": 71,
+            "error_recall": 0.9594594594594594,
+            "clean_phrases": 24,
+            "false_alerts": 23,
+            "false_alarm_rate": 0.9583333333333334
+          },
+          "short": {
+            "errors": 30,
+            "detected": 28,
+            "error_recall": 0.9333333333333333,
+            "clean_phrases": 17,
+            "false_alerts": 17,
+            "false_alarm_rate": 1.0
+          },
+          "term": {
+            "errors": 2,
+            "detected": 2,
+            "error_recall": 1.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "min",
+          "threshold": 0.95
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 28,
+          "fp": 24,
+          "fn": 1,
+          "tn": 0,
+          "precision": 0.5384615384615384,
+          "phrase_recall": 0.9655172413793104,
+          "false_alarm_rate": 1.0,
+          "f1": 0.691358024691358,
+          "all": {
+            "errors": 74,
+            "detected": 73,
+            "error_recall": 0.9864864864864865,
+            "clean_phrases": 24,
+            "false_alerts": 24,
+            "false_alarm_rate": 1.0
+          },
+          "short": {
+            "errors": 30,
+            "detected": 29,
+            "error_recall": 0.9666666666666667,
+            "clean_phrases": 17,
+            "false_alerts": 17,
+            "false_alarm_rate": 1.0
+          },
+          "term": {
+            "errors": 2,
+            "detected": 2,
+            "error_recall": 1.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "mean",
+          "threshold": 0.5
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 0,
+          "fp": 1,
+          "fn": 29,
+          "tn": 23,
+          "precision": 0.0,
+          "phrase_recall": 0.0,
+          "false_alarm_rate": 0.041666666666666664,
+          "f1": 0.0,
+          "all": {
+            "errors": 74,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 24,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.041666666666666664
+          },
+          "short": {
+            "errors": 30,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 17,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.058823529411764705
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "mean",
+          "threshold": 0.55
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 0,
+          "fp": 1,
+          "fn": 29,
+          "tn": 23,
+          "precision": 0.0,
+          "phrase_recall": 0.0,
+          "false_alarm_rate": 0.041666666666666664,
+          "f1": 0.0,
+          "all": {
+            "errors": 74,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 24,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.041666666666666664
+          },
+          "short": {
+            "errors": 30,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 17,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.058823529411764705
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "mean",
+          "threshold": 0.6
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 0,
+          "fp": 1,
+          "fn": 29,
+          "tn": 23,
+          "precision": 0.0,
+          "phrase_recall": 0.0,
+          "false_alarm_rate": 0.041666666666666664,
+          "f1": 0.0,
+          "all": {
+            "errors": 74,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 24,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.041666666666666664
+          },
+          "short": {
+            "errors": 30,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 17,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.058823529411764705
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "mean",
+          "threshold": 0.65
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 0,
+          "fp": 1,
+          "fn": 29,
+          "tn": 23,
+          "precision": 0.0,
+          "phrase_recall": 0.0,
+          "false_alarm_rate": 0.041666666666666664,
+          "f1": 0.0,
+          "all": {
+            "errors": 74,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 24,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.041666666666666664
+          },
+          "short": {
+            "errors": 30,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 17,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.058823529411764705
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "mean",
+          "threshold": 0.7
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 3,
+          "fp": 1,
+          "fn": 26,
+          "tn": 23,
+          "precision": 0.75,
+          "phrase_recall": 0.10344827586206896,
+          "false_alarm_rate": 0.041666666666666664,
+          "f1": 0.18181818181818182,
+          "all": {
+            "errors": 74,
+            "detected": 11,
+            "error_recall": 0.14864864864864866,
+            "clean_phrases": 24,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.041666666666666664
+          },
+          "short": {
+            "errors": 30,
+            "detected": 4,
+            "error_recall": 0.13333333333333333,
+            "clean_phrases": 17,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.058823529411764705
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "mean",
+          "threshold": 0.75
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 3,
+          "fp": 1,
+          "fn": 26,
+          "tn": 23,
+          "precision": 0.75,
+          "phrase_recall": 0.10344827586206896,
+          "false_alarm_rate": 0.041666666666666664,
+          "f1": 0.18181818181818182,
+          "all": {
+            "errors": 74,
+            "detected": 11,
+            "error_recall": 0.14864864864864866,
+            "clean_phrases": 24,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.041666666666666664
+          },
+          "short": {
+            "errors": 30,
+            "detected": 4,
+            "error_recall": 0.13333333333333333,
+            "clean_phrases": 17,
+            "false_alerts": 1,
+            "false_alarm_rate": 0.058823529411764705
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "mean",
+          "threshold": 0.8
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 4,
+          "fp": 3,
+          "fn": 25,
+          "tn": 21,
+          "precision": 0.5714285714285714,
+          "phrase_recall": 0.13793103448275862,
+          "false_alarm_rate": 0.125,
+          "f1": 0.2222222222222222,
+          "all": {
+            "errors": 74,
+            "detected": 13,
+            "error_recall": 0.17567567567567569,
+            "clean_phrases": 24,
+            "false_alerts": 3,
+            "false_alarm_rate": 0.125
+          },
+          "short": {
+            "errors": 30,
+            "detected": 5,
+            "error_recall": 0.16666666666666666,
+            "clean_phrases": 17,
+            "false_alerts": 3,
+            "false_alarm_rate": 0.17647058823529413
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "mean",
+          "threshold": 0.85
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 8,
+          "fp": 3,
+          "fn": 21,
+          "tn": 21,
+          "precision": 0.7272727272727273,
+          "phrase_recall": 0.27586206896551724,
+          "false_alarm_rate": 0.125,
+          "f1": 0.4,
+          "all": {
+            "errors": 74,
+            "detected": 24,
+            "error_recall": 0.32432432432432434,
+            "clean_phrases": 24,
+            "false_alerts": 3,
+            "false_alarm_rate": 0.125
+          },
+          "short": {
+            "errors": 30,
+            "detected": 10,
+            "error_recall": 0.3333333333333333,
+            "clean_phrases": 17,
+            "false_alerts": 3,
+            "false_alarm_rate": 0.17647058823529413
+          },
+          "term": {
+            "errors": 2,
+            "detected": 0,
+            "error_recall": 0.0,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "mean",
+          "threshold": 0.9
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 17,
+          "fp": 10,
+          "fn": 12,
+          "tn": 14,
+          "precision": 0.6296296296296297,
+          "phrase_recall": 0.5862068965517241,
+          "false_alarm_rate": 0.4166666666666667,
+          "f1": 0.6071428571428571,
+          "all": {
+            "errors": 74,
+            "detected": 41,
+            "error_recall": 0.5540540540540541,
+            "clean_phrases": 24,
+            "false_alerts": 10,
+            "false_alarm_rate": 0.4166666666666667
+          },
+          "short": {
+            "errors": 30,
+            "detected": 17,
+            "error_recall": 0.5666666666666667,
+            "clean_phrases": 17,
+            "false_alerts": 7,
+            "false_alarm_rate": 0.4117647058823529
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      },
+      {
+        "rule": {
+          "kind": "mean",
+          "threshold": 0.95
+        },
+        "score": {
+          "phrases": 53,
+          "tp": 24,
+          "fp": 23,
+          "fn": 5,
+          "tn": 1,
+          "precision": 0.5106382978723404,
+          "phrase_recall": 0.8275862068965517,
+          "false_alarm_rate": 0.9583333333333334,
+          "f1": 0.631578947368421,
+          "all": {
+            "errors": 74,
+            "detected": 63,
+            "error_recall": 0.8513513513513513,
+            "clean_phrases": 24,
+            "false_alerts": 23,
+            "false_alarm_rate": 0.9583333333333334
+          },
+          "short": {
+            "errors": 30,
+            "detected": 25,
+            "error_recall": 0.8333333333333334,
+            "clean_phrases": 17,
+            "false_alerts": 16,
+            "false_alarm_rate": 0.9411764705882353
+          },
+          "term": {
+            "errors": 2,
+            "detected": 1,
+            "error_recall": 0.5,
+            "clean_phrases": 0,
+            "false_alerts": 0,
+            "false_alarm_rate": null
+          }
+        }
+      }
+    ]
+  },
+  "control": {
+    "baseline": {
+      "phrases": 147,
+      "tp": 48,
+      "fp": 31,
+      "fn": 29,
+      "tn": 39,
+      "precision": 0.6075949367088608,
+      "phrase_recall": 0.6233766233766234,
+      "false_alarm_rate": 0.44285714285714284,
+      "f1": 0.6153846153846154,
+      "all": {
+        "errors": 177,
+        "detected": 115,
+        "error_recall": 0.6497175141242938,
+        "clean_phrases": 70,
+        "false_alerts": 31,
+        "false_alarm_rate": 0.44285714285714284
+      },
+      "short": {
+        "errors": 88,
+        "detected": 58,
+        "error_recall": 0.6590909090909091,
+        "clean_phrases": 56,
+        "false_alerts": 28,
+        "false_alarm_rate": 0.5
+      },
+      "term": {
+        "errors": 4,
+        "detected": 4,
+        "error_recall": 1.0,
+        "clean_phrases": 1,
+        "false_alerts": 0,
+        "false_alarm_rate": 0.0
+      }
+    },
+    "candidate": {
+      "phrases": 147,
+      "tp": 48,
+      "fp": 31,
+      "fn": 29,
+      "tn": 39,
+      "precision": 0.6075949367088608,
+      "phrase_recall": 0.6233766233766234,
+      "false_alarm_rate": 0.44285714285714284,
+      "f1": 0.6153846153846154,
+      "all": {
+        "errors": 177,
+        "detected": 116,
+        "error_recall": 0.655367231638418,
+        "clean_phrases": 70,
+        "false_alerts": 31,
+        "false_alarm_rate": 0.44285714285714284
+      },
+      "short": {
+        "errors": 88,
+        "detected": 58,
+        "error_recall": 0.6590909090909091,
+        "clean_phrases": 56,
+        "false_alerts": 28,
+        "false_alarm_rate": 0.5
+      },
+      "term": {
+        "errors": 4,
+        "detected": 4,
+        "error_recall": 1.0,
+        "clean_phrases": 1,
+        "false_alerts": 0,
+        "false_alarm_rate": 0.0
+      }
+    },
+    "passed": false
+  },
+  "rows": [
+    {
+      "case": "openstt-0a7b5a064c66-room",
+      "row": 0,
+      "text": "Мы заболеем гораздо с большей вероятностью через восемь лет, чем сейчас.",
+      "baseline": true,
+      "confidence": [
+        0.97,
+        0.918,
+        0.957,
+        0.845,
+        0.705,
+        0.994,
+        0.998,
+        0.97,
+        0.828,
+        0.997,
+        0.847
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "то",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "есть",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 4,
+          "hypothesis_index": 2,
+          "reference": "с",
+          "hypothesis": "гораздо",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 5,
+          "hypothesis_index": 3,
+          "reference": "гораздо",
+          "hypothesis": "с",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-1ab681ecbe5e-room",
+      "row": 0,
+      "text": "Среди которых художники, дизайнеры, программисты и даже один филолог.",
+      "baseline": false,
+      "confidence": [
+        0.97,
+        0.997,
+        0.972,
+        0.99,
+        0.963,
+        0.994,
+        0.999,
+        0.876,
+        0.996
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-2375e6120786-room",
+      "row": 0,
+      "text": "я сделала очень важное и мощное открытие для",
+      "baseline": true,
+      "confidence": [
+        0.84,
+        0.884,
+        0.899,
+        0.962,
+        0.56,
+        0.948,
+        0.801,
+        0.724
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "и",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 3,
+          "hypothesis_index": null,
+          "reference": "одно",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 10,
+          "hypothesis_index": null,
+          "reference": "себя",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-27901c3425f8-room",
+      "row": 0,
+      "text": "А именно, о многом я уже сказал.",
+      "baseline": true,
+      "confidence": [
+        0.692,
+        0.985,
+        0.789,
+        0.628,
+        0.979,
+        0.859,
+        0.99
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-27901c3425f8-room",
+      "row": 1,
+      "text": "То есть это уничтожение старых клеток.",
+      "baseline": true,
+      "confidence": [
+        0.972,
+        0.581,
+        0.86,
+        0.947,
+        0.818,
+        0.923
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": true,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 10,
+          "hypothesis_index": null,
+          "reference": "и",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-43e4552fba3b-room",
+      "row": 0,
+      "text": "Сделать перерыв в том, чтобы не есть мяса.",
+      "baseline": true,
+      "confidence": [
+        0.761,
+        0.801,
+        0.788,
+        0.971,
+        0.667,
+        1.0,
+        0.689,
+        0.779
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 0,
+          "reference": null,
+          "hypothesis": "сделать",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 3,
+          "hypothesis_index": null,
+          "reference": "что",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 4,
+          "hypothesis_index": 4,
+          "reference": "бы",
+          "hypothesis": "чтобы",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-43e4552fba3b-room",
+      "row": 1,
+      "text": "Почему без мяса?",
+      "baseline": false,
+      "confidence": [
+        0.999,
+        0.926,
+        0.998
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-479312bb66bb-room",
+      "row": 0,
+      "text": "Есть такой человечек по истории театра",
+      "baseline": true,
+      "confidence": [
+        0.969,
+        0.993,
+        0.894,
+        0.925,
+        0.91,
+        0.9
+      ],
+      "complete": true,
+      "forced": true,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 3,
+          "hypothesis_index": 3,
+          "reference": "в",
+          "hypothesis": "по",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-479312bb66bb-room",
+      "row": 1,
+      "text": "И он говорит:«Хочет",
+      "baseline": true,
+      "confidence": [
+        0.967,
+        0.504,
+        0.761,
+        0.863
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 6,
+          "hypothesis_index": null,
+          "reference": "мейерхольд",
+          "hypothesis": null,
+          "short": false,
+          "term": true
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 9,
+          "reference": null,
+          "hypothesis": "хочет",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-70c26c3264de-room",
+      "row": 0,
+      "text": "в котором есть не только свобода действия, но и свобода воли",
+      "baseline": true,
+      "confidence": [
+        0.975,
+        0.976,
+        0.96,
+        0.899,
+        0.881,
+        0.873,
+        0.667,
+        0.53,
+        0.854,
+        0.993,
+        0.827
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-730579c37c60-room",
+      "row": 0,
+      "text": "пожалуйста, кто из вас родом не из Москвы,",
+      "baseline": true,
+      "confidence": [
+        0.795,
+        0.707,
+        0.717,
+        0.844,
+        0.998,
+        0.517,
+        0.597,
+        0.995
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "скажите",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 9,
+          "hypothesis_index": null,
+          "reference": "поднимите",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 10,
+          "hypothesis_index": null,
+          "reference": "руки",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-743c1c8ed8fd-room",
+      "row": 0,
+      "text": "технология, если она удачная, может означать миллионные прибыль.",
+      "baseline": true,
+      "confidence": [
+        0.983,
+        0.93,
+        0.74,
+        0.956,
+        0.996,
+        0.946,
+        0.839,
+        0.791
+      ],
+      "complete": true,
+      "forced": true,
+      "local": true,
+      "short": true,
+      "term": true,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "то",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "новая",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 9,
+          "hypothesis_index": 7,
+          "reference": "прибыли",
+          "hypothesis": "прибыль",
+          "short": false,
+          "term": true
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-775b92b47d6e-room",
+      "row": 0,
+      "text": "Есть ещё один важный стереотип, который нам не даёт принять ну, заметить",
+      "baseline": true,
+      "confidence": [
+        0.978,
+        0.994,
+        0.93,
+        0.893,
+        0.84,
+        0.961,
+        0.984,
+        0.999,
+        0.85,
+        0.595,
+        0.961,
+        0.935
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 10,
+          "hypothesis_index": 10,
+          "reference": "или",
+          "hypothesis": "ну",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-779809ee0c5e-room",
+      "row": 0,
+      "text": "Испытуемых добровольцев просили осуществить какое-нибудь простое телесное движение.",
+      "baseline": false,
+      "confidence": [
+        0.968,
+        0.901,
+        0.998,
+        0.981,
+        0.956,
+        0.711,
+        0.917,
+        0.997
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 3,
+          "hypothesis_index": 3,
+          "reference": "сделать",
+          "hypothesis": "осуществить",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-8b650b06fc0c-room",
+      "row": 0,
+      "text": "Хотя, может быть, мы не хотели бы этого до такой степени хорошо",
+      "baseline": false,
+      "confidence": [
+        1.0,
+        0.999,
+        0.775,
+        0.992,
+        0.997,
+        0.981,
+        0.993,
+        0.802,
+        0.983,
+        0.951,
+        0.94,
+        0.982
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-8b650b06fc0c-room",
+      "row": 1,
+      "text": "понимать.",
+      "baseline": false,
+      "confidence": [
+        0.981
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-8c62836f51b7-room",
+      "row": 0,
+      "text": "Нам потребуется всего лишь один",
+      "baseline": false,
+      "confidence": [
+        0.709,
+        0.906,
+        0.974,
+        0.913,
+        0.945
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-8c62836f51b7-room",
+      "row": 1,
+      "text": "небольшой совершенно вопрос.",
+      "baseline": false,
+      "confidence": [
+        0.964,
+        0.962,
+        0.956
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 6,
+          "reference": null,
+          "hypothesis": "совершенно",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-92f9ec6707f0-room",
+      "row": 0,
+      "text": "Команда, в которой есть две основные вещи это доверие и поддержка.",
+      "baseline": true,
+      "confidence": [
+        0.967,
+        1.0,
+        0.995,
+        0.949,
+        0.799,
+        0.776,
+        0.856,
+        0.704,
+        0.823,
+        0.666,
+        0.87
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 7,
+          "reference": null,
+          "hypothesis": "это",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-af93af386c05-room",
+      "row": 0,
+      "text": "В левую руку,",
+      "baseline": true,
+      "confidence": [
+        0.591,
+        0.696,
+        0.912
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "хотите",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "ли",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 2,
+          "hypothesis_index": null,
+          "reference": "вы",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 3,
+          "hypothesis_index": null,
+          "reference": "поднять",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 4,
+          "hypothesis_index": 0,
+          "reference": "свою",
+          "hypothesis": "в",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-af93af386c05-room",
+      "row": 1,
+      "text": "а затем я считаю до трёх.",
+      "baseline": false,
+      "confidence": [
+        0.931,
+        0.999,
+        0.901,
+        0.87,
+        0.998,
+        0.961
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-c976db04c63b-room",
+      "row": 0,
+      "text": "А другой стем",
+      "baseline": true,
+      "confidence": [
+        0.749,
+        0.832,
+        0.483
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 2,
+          "hypothesis_index": null,
+          "reference": "сел",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 3,
+          "hypothesis_index": 2,
+          "reference": "красота",
+          "hypothesis": "стем",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-c976db04c63b-room",
+      "row": 1,
+      "text": "вот я уже счасть.",
+      "baseline": true,
+      "confidence": [
+        0.466,
+        0.973,
+        0.98,
+        0.621
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 7,
+          "hypothesis_index": null,
+          "reference": "в",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 8,
+          "hypothesis_index": null,
+          "reference": "счастье",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 9,
+          "hypothesis_index": null,
+          "reference": "нахожусь",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 10,
+          "hypothesis_index": 6,
+          "reference": "не",
+          "hypothesis": "счасть",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-c976db04c63b-room",
+      "row": 2,
+      "text": "И чем надо.",
+      "baseline": true,
+      "confidence": [
+        0.48,
+        0.465,
+        0.816
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 11,
+          "hypothesis_index": 7,
+          "reference": "всем",
+          "hypothesis": "и",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 12,
+          "hypothesis_index": 8,
+          "reference": "все",
+          "hypothesis": "чем",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-cc06f7543107-room",
+      "row": 0,
+      "text": "Не питающую жизнь воду,",
+      "baseline": true,
+      "confidence": [
+        0.49,
+        0.891,
+        0.716,
+        0.729
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-cc06f7543107-room",
+      "row": 1,
+      "text": "а участки твёрдой поверхности.",
+      "baseline": true,
+      "confidence": [
+        0.558,
+        0.979,
+        0.999,
+        0.893
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-ce72df517e34-room",
+      "row": 0,
+      "text": "...на цзионном диске.",
+      "baseline": true,
+      "confidence": [
+        0.537,
+        0.824,
+        0.966
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "или",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 2,
+          "hypothesis_index": 1,
+          "reference": "лицензионном",
+          "hypothesis": "цзионном",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-ce72df517e34-room",
+      "row": 1,
+      "text": "Получается, что всего, что?",
+      "baseline": true,
+      "confidence": [
+        0.983,
+        0.999,
+        1.0,
+        0.552
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 6,
+          "reference": null,
+          "hypothesis": "что",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-ce72df517e34-room",
+      "row": 2,
+      "text": "С0 филлимов в год.",
+      "baseline": true,
+      "confidence": [
+        0.543,
+        0.515,
+        0.905,
+        0.958
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 7,
+          "hypothesis_index": 7,
+          "reference": "сто",
+          "hypothesis": "с0",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 8,
+          "hypothesis_index": 8,
+          "reference": "фильмов",
+          "hypothesis": "филлимов",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-e1f06e06e5d6-room",
+      "row": 0,
+      "text": "Сыпется",
+      "baseline": false,
+      "confidence": [
+        0.794
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "никто",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "не",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 2,
+          "hypothesis_index": 0,
+          "reference": "знает",
+          "hypothesis": "сыпется",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-e1f06e06e5d6-room",
+      "row": 1,
+      "text": "и вот время уходит.",
+      "baseline": true,
+      "confidence": [
+        0.635,
+        0.577,
+        0.593,
+        0.985
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 3,
+          "hypothesis_index": 1,
+          "reference": "сыплется",
+          "hypothesis": "и",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 4,
+          "hypothesis_index": 2,
+          "reference": "и",
+          "hypothesis": "вот",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-e5e94c4f50fb-room",
+      "row": 0,
+      "text": "И это всё поменялось.",
+      "baseline": true,
+      "confidence": [
+        0.957,
+        0.505,
+        0.906,
+        0.743
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-e5e94c4f50fb-room",
+      "row": 1,
+      "text": "Потому что это не я, это он, чего ты там выпянивает.",
+      "baseline": true,
+      "confidence": [
+        0.718,
+        0.971,
+        0.882,
+        0.596,
+        0.652,
+        0.978,
+        0.892,
+        0.852,
+        0.456,
+        0.782,
+        0.615
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 7,
+          "hypothesis_index": null,
+          "reference": "же",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 13,
+          "hypothesis_index": 12,
+          "reference": "то",
+          "hypothesis": "ты",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 15,
+          "hypothesis_index": 14,
+          "reference": "выпендривается",
+          "hypothesis": "выпянивает",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-ea81341d63ce-room",
+      "row": 0,
+      "text": "Они, кстати, очень близко к нашей отрасли",
+      "baseline": true,
+      "confidence": [
+        0.682,
+        0.92,
+        0.999,
+        0.965,
+        0.787,
+        0.901,
+        0.824
+      ],
+      "complete": true,
+      "forced": true,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-ea81341d63ce-room",
+      "row": 1,
+      "text": "проводились.",
+      "baseline": false,
+      "confidence": [
+        0.868
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 7,
+          "hypothesis_index": null,
+          "reference": "проводили",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 8,
+          "hypothesis_index": 7,
+          "reference": "эксперимент",
+          "hypothesis": "проводились",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-eadee6e2a54b-room",
+      "row": 0,
+      "text": "Бежала марафон без врачей, реабилитации, лекарств, препаратов, э-э-э",
+      "baseline": true,
+      "confidence": [
+        0.786,
+        0.898,
+        0.71,
+        0.999,
+        0.824,
+        0.9,
+        0.979,
+        0.928
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "с",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 2,
+          "hypothesis_index": null,
+          "reference": "ней",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 3,
+          "hypothesis_index": null,
+          "reference": "этот",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 5,
+          "hypothesis_index": 2,
+          "reference": "из",
+          "hypothesis": "без",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 7,
+          "hypothesis_index": 4,
+          "reference": "реабилитаций",
+          "hypothesis": "реабилитации",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 7,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 8,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 9,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-eb496ac51c88-room",
+      "row": 0,
+      "text": "И это очень есть хорошо, но теперь давайте мне сюда вашу пробилку.",
+      "baseline": true,
+      "confidence": [
+        0.592,
+        0.906,
+        0.978,
+        0.515,
+        0.943,
+        0.801,
+        0.899,
+        0.935,
+        0.956,
+        0.994,
+        0.954,
+        0.721
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "с",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 1,
+          "hypothesis_index": 0,
+          "reference": "акцентом",
+          "hypothesis": "и",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 12,
+          "hypothesis_index": 11,
+          "reference": "пробирку",
+          "hypothesis": "пробилку",
+          "short": false,
+          "term": true
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-f25c905ab78a-room",
+      "row": 0,
+      "text": "В Калачной коломне организовали очередь за хлебом.",
+      "baseline": true,
+      "confidence": [
+        0.689,
+        0.642,
+        0.565,
+        0.861,
+        0.937,
+        0.904,
+        0.967
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 2,
+          "hypothesis_index": null,
+          "reference": "в",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-0a7b5a064c66",
+      "row": 0,
+      "text": "Мы, э-э-э,",
+      "baseline": false,
+      "confidence": [
+        0.835,
+        0.782
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 0,
+          "reference": null,
+          "hypothesis": "мы",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 1,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 0,
+          "hypothesis_index": 2,
+          "reference": "то",
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 1,
+          "hypothesis_index": 3,
+          "reference": "есть",
+          "hypothesis": "э",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-0a7b5a064c66",
+      "row": 1,
+      "text": "мы заболеем, э-э, гораздо с большей вероятностью через 8 лет, чем сейчас.",
+      "baseline": false,
+      "confidence": [
+        0.855,
+        1.0,
+        0.997,
+        0.999,
+        0.998,
+        1.0,
+        0.993,
+        0.796,
+        0.989,
+        1.0,
+        1.0,
+        0.986
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 6,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 4,
+          "hypothesis_index": 7,
+          "reference": "с",
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 9,
+          "reference": null,
+          "hypothesis": "с",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 9,
+          "hypothesis_index": 13,
+          "reference": "восемь",
+          "hypothesis": "8",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-1ab681ecbe5e",
+      "row": 0,
+      "text": "Среди которых художники, дизайнеры, программисты и даже один филолог.",
+      "baseline": false,
+      "confidence": [
+        0.991,
+        0.968,
+        0.983,
+        0.998,
+        0.987,
+        0.999,
+        0.999,
+        0.965,
+        0.893
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-2375e6120786",
+      "row": 0,
+      "text": "И я сделала одно очень важное и мощное открытие для себя,",
+      "baseline": true,
+      "confidence": [
+        0.804,
+        0.988,
+        0.838,
+        0.993,
+        0.961,
+        0.982,
+        0.986,
+        0.872,
+        0.998,
+        0.967,
+        0.628
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-2375e6120786",
+      "row": 1,
+      "text": "а-а",
+      "baseline": false,
+      "confidence": [
+        0.757
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 11,
+          "reference": null,
+          "hypothesis": "а",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 12,
+          "reference": null,
+          "hypothesis": "а",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-27901c3425f8",
+      "row": 0,
+      "text": "А именно, о многом я уже сказал.",
+      "baseline": false,
+      "confidence": [
+        0.932,
+        0.787,
+        0.849,
+        0.908,
+        0.988,
+        0.788,
+        0.957
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-27901c3425f8",
+      "row": 1,
+      "text": "То есть, это и уничтожение старых клеток.",
+      "baseline": false,
+      "confidence": [
+        0.764,
+        0.996,
+        0.839,
+        0.956,
+        0.994,
+        0.998,
+        0.939
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": true,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-43e4552fba3b",
+      "row": 0,
+      "text": "Сделать перерыв в том, чтобы не есть мяса.",
+      "baseline": true,
+      "confidence": [
+        0.966,
+        0.887,
+        0.972,
+        0.989,
+        0.916,
+        0.84,
+        0.524,
+        0.853
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 0,
+          "reference": null,
+          "hypothesis": "сделать",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 3,
+          "hypothesis_index": null,
+          "reference": "что",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 4,
+          "hypothesis_index": 4,
+          "reference": "бы",
+          "hypothesis": "чтобы",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-43e4552fba3b",
+      "row": 1,
+      "text": "Почему без мяса?",
+      "baseline": true,
+      "confidence": [
+        0.884,
+        0.995,
+        0.976
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-43e4552fba3b",
+      "row": 2,
+      "text": "Потому",
+      "baseline": true,
+      "confidence": [
+        0.642
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 11,
+          "reference": null,
+          "hypothesis": "потому",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-479312bb66bb",
+      "row": 0,
+      "text": "Есть такой человечек в истории театра Мир Холь.",
+      "baseline": true,
+      "confidence": [
+        0.913,
+        0.978,
+        0.974,
+        0.993,
+        0.999,
+        0.995,
+        0.694,
+        0.74
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 6,
+          "reference": null,
+          "hypothesis": "мир",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 6,
+          "hypothesis_index": 7,
+          "reference": "мейерхольд",
+          "hypothesis": "холь",
+          "short": false,
+          "term": true
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-479312bb66bb",
+      "row": 1,
+      "text": "И он говорит:«Хочет",
+      "baseline": false,
+      "confidence": [
+        0.763,
+        0.995,
+        0.975,
+        0.991
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 11,
+          "reference": null,
+          "hypothesis": "хочет",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-70c26c3264de",
+      "row": 0,
+      "text": "в котором есть не только свобода действия, но и свобода воли",
+      "baseline": true,
+      "confidence": [
+        0.998,
+        0.99,
+        0.98,
+        0.997,
+        0.998,
+        0.957,
+        0.886,
+        0.936,
+        0.939,
+        0.998,
+        0.674
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-730579c37c60",
+      "row": 0,
+      "text": "Скажите, пожалуйста, кто из вас родом не из Москвы?",
+      "baseline": true,
+      "confidence": [
+        0.938,
+        0.984,
+        0.776,
+        0.926,
+        0.595,
+        0.832,
+        0.999,
+        1.0,
+        0.994
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-730579c37c60",
+      "row": 1,
+      "text": "Поднимите руки.",
+      "baseline": false,
+      "confidence": [
+        0.853,
+        0.983
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-743c1c8ed8fd",
+      "row": 0,
+      "text": "Новая технология, если она удачная, может означать миллионные прибыли.",
+      "baseline": false,
+      "confidence": [
+        0.977,
+        0.983,
+        0.996,
+        0.996,
+        0.97,
+        0.959,
+        0.914,
+        0.913,
+        1.0
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": true,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "то",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-775b92b47d6e",
+      "row": 0,
+      "text": "Есть ещё один важный стереотип, который нам не даёт принять или, ну, заметить то",
+      "baseline": true,
+      "confidence": [
+        0.891,
+        0.997,
+        0.973,
+        0.961,
+        0.979,
+        0.995,
+        0.997,
+        1.0,
+        0.953,
+        0.847,
+        0.997,
+        0.984,
+        0.993,
+        0.645
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 11,
+          "reference": null,
+          "hypothesis": "ну",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 13,
+          "reference": null,
+          "hypothesis": "то",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-779809ee0c5e",
+      "row": 0,
+      "text": "Испытуемых добровольцев просили осуществить какое-нибудь простое телесное движение.",
+      "baseline": false,
+      "confidence": [
+        0.78,
+        0.839,
+        1.0,
+        0.994,
+        0.998,
+        0.738,
+        0.927,
+        1.0
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 3,
+          "hypothesis_index": 3,
+          "reference": "сделать",
+          "hypothesis": "осуществить",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-8b650b06fc0c",
+      "row": 0,
+      "text": "Понятно, хотя, может быть, мы не хотели бы этого до такой степени хорошо",
+      "baseline": true,
+      "confidence": [
+        0.963,
+        0.809,
+        0.928,
+        0.955,
+        0.987,
+        0.863,
+        0.829,
+        0.998,
+        0.86,
+        0.827,
+        0.985,
+        0.986,
+        0.674
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 0,
+          "reference": null,
+          "hypothesis": "понятно",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-8b650b06fc0c",
+      "row": 1,
+      "text": "понимать.",
+      "baseline": false,
+      "confidence": [
+        0.811
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-8c62836f51b7",
+      "row": 0,
+      "text": "Нам потребуется всего лишь один",
+      "baseline": false,
+      "confidence": [
+        0.902,
+        0.958,
+        1.0,
+        1.0,
+        0.836
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-8c62836f51b7",
+      "row": 1,
+      "text": "небольшой совершенно вопрос.",
+      "baseline": true,
+      "confidence": [
+        0.904,
+        0.978,
+        0.664
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 6,
+          "reference": null,
+          "hypothesis": "совершенно",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-92f9ec6707f0",
+      "row": 0,
+      "text": "Команда, в которой есть две основные вещи: это доверие и поддержка.",
+      "baseline": false,
+      "confidence": [
+        0.997,
+        0.971,
+        0.998,
+        0.978,
+        0.99,
+        0.98,
+        0.994,
+        0.994,
+        0.883,
+        0.955,
+        0.884
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 7,
+          "reference": null,
+          "hypothesis": "это",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-af93af386c05",
+      "row": 0,
+      "text": "Хотите ли вы поднять свою левую руку?",
+      "baseline": false,
+      "confidence": [
+        0.991,
+        0.985,
+        0.988,
+        0.992,
+        0.991,
+        0.984,
+        0.998
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-af93af386c05",
+      "row": 1,
+      "text": "А затем я считаю до трёх.",
+      "baseline": false,
+      "confidence": [
+        0.914,
+        0.987,
+        0.998,
+        0.909,
+        0.997,
+        0.947
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-c976db04c63b",
+      "row": 0,
+      "text": "А другой сел так:«Красота, вот я уже в счастье нахожусь».",
+      "baseline": false,
+      "confidence": [
+        0.988,
+        0.913,
+        0.831,
+        0.954,
+        0.858,
+        0.995,
+        0.999,
+        0.98,
+        0.999,
+        0.974,
+        0.99
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 3,
+          "reference": null,
+          "hypothesis": "так",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-c976db04c63b",
+      "row": 1,
+      "text": "Мне всем всё надо.",
+      "baseline": true,
+      "confidence": [
+        0.577,
+        0.962,
+        0.8,
+        0.87
+      ],
+      "complete": true,
+      "forced": true,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 10,
+          "hypothesis_index": 11,
+          "reference": "не",
+          "hypothesis": "мне",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-cc06f7543107",
+      "row": 0,
+      "text": "Не питающую жизнь воду,",
+      "baseline": true,
+      "confidence": [
+        0.625,
+        0.886,
+        0.526,
+        0.983
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-cc06f7543107",
+      "row": 1,
+      "text": "а участки твёрдой поверхности.",
+      "baseline": true,
+      "confidence": [
+        0.638,
+        0.902,
+        0.986,
+        0.945
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-ce72df517e34",
+      "row": 0,
+      "text": "Значит, на лицензионном диске.",
+      "baseline": true,
+      "confidence": [
+        0.698,
+        0.888,
+        0.966,
+        0.878
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 0,
+          "hypothesis_index": 0,
+          "reference": "или",
+          "hypothesis": "значит",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-ce72df517e34",
+      "row": 1,
+      "text": "И получается, что всего что?",
+      "baseline": true,
+      "confidence": [
+        0.621,
+        0.995,
+        0.701,
+        0.984,
+        0.722
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 4,
+          "reference": null,
+          "hypothesis": "и",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 8,
+          "reference": null,
+          "hypothesis": "что",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-ce72df517e34",
+      "row": 2,
+      "text": "100 фильмов в год?",
+      "baseline": true,
+      "confidence": [
+        0.914,
+        0.815,
+        0.642,
+        0.999
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 7,
+          "hypothesis_index": 9,
+          "reference": "сто",
+          "hypothesis": "100",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-e1f06e06e5d6",
+      "row": 0,
+      "text": "Никто не знает.",
+      "baseline": false,
+      "confidence": [
+        0.986,
+        0.834,
+        0.927
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "openstt-e1f06e06e5d6",
+      "row": 1,
+      "text": "Сыпется.",
+      "baseline": false,
+      "confidence": [
+        0.856
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 3,
+          "hypothesis_index": 3,
+          "reference": "сыплется",
+          "hypothesis": "сыпется",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-e1f06e06e5d6",
+      "row": 2,
+      "text": "И вот время уходит.",
+      "baseline": false,
+      "confidence": [
+        0.891,
+        0.993,
+        0.907,
+        0.998
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 5,
+          "reference": null,
+          "hypothesis": "вот",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-e5e94c4f50fb",
+      "row": 0,
+      "text": "И это всё поменялось, потому что это же не я, это он чего-то там выпендривается.",
+      "baseline": true,
+      "confidence": [
+        0.976,
+        0.977,
+        0.669,
+        0.981,
+        0.994,
+        0.795,
+        0.924,
+        0.668,
+        0.834,
+        0.799,
+        0.954,
+        0.702,
+        0.988,
+        0.823,
+        0.91
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-ea81341d63ce",
+      "row": 0,
+      "text": "Они, кстати, очень близко к нашей отрасли",
+      "baseline": true,
+      "confidence": [
+        0.981,
+        1.0,
+        1.0,
+        0.989,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "complete": true,
+      "forced": true,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "openstt-ea81341d63ce",
+      "row": 1,
+      "text": "проводили эксперт.",
+      "baseline": true,
+      "confidence": [
+        0.85,
+        0.849
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 8,
+          "hypothesis_index": 8,
+          "reference": "эксперимент",
+          "hypothesis": "эксперт",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-eadee6e2a54b",
+      "row": 0,
+      "text": "Бежалостнее этот марафон из врачей, реабилитации, лекарств, препаратов, э-э-э",
+      "baseline": false,
+      "confidence": [
+        0.756,
+        0.765,
+        0.982,
+        1.0,
+        0.953,
+        0.875,
+        0.964,
+        0.996,
+        0.982
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "бежала",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "с",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 2,
+          "hypothesis_index": 0,
+          "reference": "ней",
+          "hypothesis": "бежалостнее",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 7,
+          "hypothesis_index": 5,
+          "reference": "реабилитаций",
+          "hypothesis": "реабилитации",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 8,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 9,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 10,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "openstt-eb496ac51c88",
+      "row": 0,
+      "text": "И это очень есть хорошо, но теперь давайте мне сюда вашу пробирку.",
+      "baseline": true,
+      "confidence": [
+        0.564,
+        0.9,
+        0.979,
+        0.623,
+        0.992,
+        0.999,
+        0.997,
+        0.95,
+        0.978,
+        0.999,
+        0.984,
+        0.956
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": true,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "с",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 1,
+          "hypothesis_index": 0,
+          "reference": "акцентом",
+          "hypothesis": "и",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "openstt-f25c905ab78a",
+      "row": 0,
+      "text": "В Калачной, в Коломне организовали очередь за хлебом.",
+      "baseline": false,
+      "confidence": [
+        0.989,
+        0.848,
+        0.993,
+        0.894,
+        0.993,
+        0.987,
+        0.78,
+        0.959
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-7hkxVyhoMoQ_0001",
+      "row": 0,
+      "text": "О том, как этот год изменил меня,",
+      "baseline": true,
+      "confidence": [
+        0.814,
+        0.898,
+        0.939,
+        0.877,
+        0.645,
+        0.911,
+        0.94
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "я",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "хочу",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 2,
+          "hypothesis_index": null,
+          "reference": "рассказать",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-7hkxVyhoMoQ_0001",
+      "row": 1,
+      "text": "изменил мой народ и изменил мою страну.",
+      "baseline": false,
+      "confidence": [
+        0.916,
+        0.932,
+        0.986,
+        0.795,
+        0.856,
+        0.993,
+        0.853
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-7hkxVyhoMoQ_0012",
+      "row": 0,
+      "text": "Тридцать новость о покупке Медиахолдинга появилась на сайте Forbs.",
+      "baseline": true,
+      "confidence": [
+        0.798,
+        0.812,
+        0.711,
+        0.978,
+        0.927,
+        0.997,
+        0.998,
+        1.0,
+        0.799
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "в",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "23",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 2,
+          "hypothesis_index": 0,
+          "reference": "30",
+          "hypothesis": "тридцать",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 6,
+          "hypothesis_index": null,
+          "reference": "медиа",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 7,
+          "hypothesis_index": 4,
+          "reference": "холдинга",
+          "hypothesis": "медиахолдинга",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 11,
+          "hypothesis_index": 8,
+          "reference": "forbes",
+          "hypothesis": "forbs",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-7hkxVyhoMoQ_0015",
+      "row": 0,
+      "text": "За месяц до этого уволились журналисты канала TVI из-за рейдерского захвата.",
+      "baseline": true,
+      "confidence": [
+        1.0,
+        0.998,
+        1.0,
+        0.967,
+        0.964,
+        0.994,
+        0.698,
+        0.789,
+        1.0,
+        0.928,
+        0.986
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-7hkxVyhoMoQ_0028",
+      "row": 0,
+      "text": "...равно, и общество не понимает, что вот это их деньги, которые воруют из их кармана.",
+      "baseline": true,
+      "confidence": [
+        0.725,
+        0.905,
+        0.999,
+        0.999,
+        0.953,
+        0.995,
+        0.672,
+        0.993,
+        0.84,
+        0.962,
+        0.926,
+        0.998,
+        0.997,
+        0.973,
+        0.93
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "то",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "есть",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 2,
+          "hypothesis_index": null,
+          "reference": "обществу",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 3,
+          "hypothesis_index": null,
+          "reference": "все",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-7hkxVyhoMoQ_0028",
+      "row": 1,
+      "text": "Я долго думала...",
+      "baseline": false,
+      "confidence": [
+        0.984,
+        0.996,
+        0.911
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 15,
+          "reference": null,
+          "hypothesis": "я",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 16,
+          "reference": null,
+          "hypothesis": "долго",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 17,
+          "reference": null,
+          "hypothesis": "думала",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-7hkxVyhoMoQ_0068",
+      "row": 0,
+      "text": "Эти диктаторские законы, я подумала, что вот это, наверное, точно уже конец, потому что в Беларуси я точно работать не",
+      "baseline": true,
+      "confidence": [
+        0.602,
+        0.912,
+        0.98,
+        0.632,
+        0.731,
+        1.0,
+        0.996,
+        0.998,
+        0.886,
+        0.993,
+        0.988,
+        0.984,
+        0.996,
+        0.568,
+        1.0,
+        0.986,
+        0.999,
+        0.94,
+        0.851,
+        0.998
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "когда",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "16",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 2,
+          "hypothesis_index": null,
+          "reference": "января",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 3,
+          "hypothesis_index": null,
+          "reference": "были",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 4,
+          "hypothesis_index": 0,
+          "reference": "приняты",
+          "hypothesis": "эти",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 12,
+          "hypothesis_index": 8,
+          "reference": "наверно",
+          "hypothesis": "наверное",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 12,
+          "reference": null,
+          "hypothesis": "потому",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 13,
+          "reference": null,
+          "hypothesis": "что",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 14,
+          "reference": null,
+          "hypothesis": "в",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 15,
+          "reference": null,
+          "hypothesis": "беларуси",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 16,
+          "reference": null,
+          "hypothesis": "я",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 17,
+          "reference": null,
+          "hypothesis": "точно",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 18,
+          "reference": null,
+          "hypothesis": "работать",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 19,
+          "reference": null,
+          "hypothesis": "не",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-7hkxVyhoMoQ_0092",
+      "row": 0,
+      "text": "Как и не могла представить то, что первым текстом на нашем портале станет текст«Последний день ВитТек».",
+      "baseline": true,
+      "confidence": [
+        0.577,
+        0.725,
+        0.833,
+        0.998,
+        1.0,
+        0.979,
+        0.877,
+        0.837,
+        0.988,
+        0.99,
+        0.998,
+        0.836,
+        0.864,
+        0.999,
+        0.874,
+        0.961,
+        0.644
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 16,
+          "hypothesis_index": 16,
+          "reference": "ветэк",
+          "hypothesis": "виттек",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0027",
+      "row": 0,
+      "text": "Мой хороший знакомый кинул мне ссылку, подумав о том, что это будет интересно мне как тренеру.",
+      "baseline": true,
+      "confidence": [
+        0.999,
+        0.992,
+        0.999,
+        0.912,
+        0.994,
+        0.903,
+        0.996,
+        1.0,
+        0.998,
+        0.999,
+        0.973,
+        0.56,
+        0.97,
+        0.974,
+        1.0,
+        0.944
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0027",
+      "row": 1,
+      "text": "Но вы знаете, это событие, оно открыло совершенно новую веху в моей жизни",
+      "baseline": true,
+      "confidence": [
+        0.914,
+        0.999,
+        0.985,
+        0.992,
+        0.915,
+        0.504,
+        0.997,
+        0.955,
+        0.952,
+        0.938,
+        1.0,
+        0.969,
+        0.997
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0027",
+      "row": 2,
+      "text": "и жизни ещё как минимум тридцати людей в нашей стране.",
+      "baseline": true,
+      "confidence": [
+        0.974,
+        0.996,
+        0.762,
+        0.574,
+        0.981,
+        0.918,
+        0.763,
+        1.0,
+        0.999,
+        0.998
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 35,
+          "hypothesis_index": 35,
+          "reference": "человек",
+          "hypothesis": "людей",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0043",
+      "row": 0,
+      "text": "И насколько в нашей стране не развита, не поддерживается",
+      "baseline": true,
+      "confidence": [
+        0.794,
+        0.959,
+        0.99,
+        0.996,
+        0.903,
+        0.958,
+        0.969,
+        0.999,
+        0.86
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 7,
+          "hypothesis_index": null,
+          "reference": "и",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0043",
+      "row": 1,
+      "text": "эта среда?",
+      "baseline": false,
+      "confidence": [
+        0.988,
+        0.994
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0043",
+      "row": 2,
+      "text": "Насколько этим людям трудно, но они всё равно борются, не сдаются.",
+      "baseline": false,
+      "confidence": [
+        0.827,
+        0.943,
+        0.998,
+        1.0,
+        0.996,
+        0.848,
+        0.934,
+        0.924,
+        1.0,
+        1.0,
+        0.998
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0055",
+      "row": 0,
+      "text": "Многие спортивные секции избегают брать таких людей, э-э, на занятия, потому что с ними много возни.",
+      "baseline": true,
+      "confidence": [
+        0.975,
+        0.945,
+        0.93,
+        0.998,
+        0.851,
+        0.952,
+        0.992,
+        0.652,
+        0.998,
+        0.994,
+        1.0,
+        0.989,
+        0.982,
+        0.991,
+        0.966,
+        0.991
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 7,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 8,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0055",
+      "row": 1,
+      "text": "Организация транспортировки, поиск лидеров, волонтёров.",
+      "baseline": false,
+      "confidence": [
+        0.942,
+        0.945,
+        0.983,
+        0.96,
+        0.931
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0055",
+      "row": 2,
+      "text": "Сложность в обучении, потому что эти люди не видят.",
+      "baseline": true,
+      "confidence": [
+        0.965,
+        1.0,
+        0.895,
+        0.999,
+        0.904,
+        0.854,
+        0.667,
+        1.0,
+        0.987
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0070",
+      "row": 0,
+      "text": "На сегодняшний день за его плечами три забега на 10 км",
+      "baseline": false,
+      "confidence": [
+        0.998,
+        0.978,
+        0.944,
+        0.998,
+        0.997,
+        0.999,
+        0.781,
+        0.872,
+        0.91,
+        0.999,
+        0.952
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 10,
+          "hypothesis_index": 10,
+          "reference": "километров",
+          "hypothesis": "км",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0070",
+      "row": 1,
+      "text": "и один полумарафон 21 км.",
+      "baseline": true,
+      "confidence": [
+        0.727,
+        0.543,
+        0.986,
+        0.986,
+        0.967
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 14,
+          "hypothesis_index": null,
+          "reference": "на",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 16,
+          "hypothesis_index": 15,
+          "reference": "километр",
+          "hypothesis": "км",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0103",
+      "row": 0,
+      "text": "Именно в ней,",
+      "baseline": false,
+      "confidence": [
+        0.777,
+        0.997,
+        0.959
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0103",
+      "row": 1,
+      "text": "только в ней, вы принимаете абсолютно все решения.",
+      "baseline": true,
+      "confidence": [
+        0.972,
+        0.964,
+        0.991,
+        0.54,
+        0.902,
+        1.0,
+        0.506,
+        0.997
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0112",
+      "row": 0,
+      "text": "Вспомните тех, кто живёт в вашем или соседнем доме.",
+      "baseline": false,
+      "confidence": [
+        0.916,
+        0.948,
+        1.0,
+        0.998,
+        1.0,
+        0.971,
+        0.985,
+        0.887,
+        0.839
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-As7ngXw-X8U_0112",
+      "row": 1,
+      "text": "Тех, с кем учатся ваши дети, тех, с кем вы работаете.",
+      "baseline": false,
+      "confidence": [
+        0.9,
+        0.972,
+        0.978,
+        0.996,
+        0.991,
+        0.796,
+        0.998,
+        1.0,
+        1.0,
+        0.999,
+        0.996
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0022",
+      "row": 0,
+      "text": "Заметьте, никто не жалеет о том, что",
+      "baseline": false,
+      "confidence": [
+        0.982,
+        0.913,
+        0.986,
+        0.952,
+        1.0,
+        0.968,
+        0.976
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0022",
+      "row": 1,
+      "text": "мало выпивал или мало постил фотографий в социальных сетях.",
+      "baseline": false,
+      "confidence": [
+        0.969,
+        0.986,
+        0.98,
+        0.856,
+        0.963,
+        0.973,
+        0.987,
+        0.98,
+        0.892
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0044",
+      "row": 0,
+      "text": "Ни один человек,",
+      "baseline": true,
+      "confidence": [
+        0.642,
+        0.95,
+        0.891
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0044",
+      "row": 1,
+      "text": "которого я знаю, не добивался успеха без вот этого шага в пропасть.",
+      "baseline": true,
+      "confidence": [
+        0.921,
+        0.912,
+        0.942,
+        0.997,
+        0.998,
+        0.873,
+        0.984,
+        0.69,
+        0.994,
+        1.0,
+        1.0,
+        0.982
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 10,
+          "reference": null,
+          "hypothesis": "вот",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0048",
+      "row": 0,
+      "text": "В нашем мире не принято говорить о том, что у тебя нет денег, э-э,",
+      "baseline": false,
+      "confidence": [
+        0.959,
+        0.996,
+        0.906,
+        0.999,
+        0.944,
+        0.992,
+        1.0,
+        1.0,
+        1.0,
+        0.996,
+        1.0,
+        0.963,
+        0.989,
+        0.711
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "в",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "целом",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 13,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 14,
+          "reference": null,
+          "hypothesis": "э",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0048",
+      "row": 1,
+      "text": "потому что если тебе 25 и у тебя нет денег, то ты, ну, как бы неудачник немного.",
+      "baseline": true,
+      "confidence": [
+        0.999,
+        0.84,
+        0.982,
+        0.748,
+        0.71,
+        0.706,
+        0.618,
+        0.503,
+        0.908,
+        0.994,
+        0.525,
+        0.761,
+        0.997,
+        0.935,
+        0.978,
+        0.999,
+        0.999
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 27,
+          "reference": null,
+          "hypothesis": "ну",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0054",
+      "row": 0,
+      "text": "занималась тем, что искала, что же я люблю делать по-настоящему",
+      "baseline": false,
+      "confidence": [
+        0.779,
+        0.774,
+        0.841,
+        0.953,
+        0.952,
+        0.757,
+        0.998,
+        0.959,
+        0.991,
+        0.995
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "я",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "просто",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0071",
+      "row": 0,
+      "text": "Два часа в неделю мы думаем о том, что",
+      "baseline": false,
+      "confidence": [
+        0.723,
+        0.87,
+        0.999,
+        0.965,
+        0.873,
+        0.998,
+        0.998,
+        0.997,
+        0.827
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "то",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "есть",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0071",
+      "row": 1,
+      "text": "мы неудачники.",
+      "baseline": false,
+      "confidence": [
+        0.907,
+        0.999
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0082",
+      "row": 0,
+      "text": "А всё остальное время я, в принципе, бездельничала.",
+      "baseline": false,
+      "confidence": [
+        0.813,
+        0.989,
+        1.0,
+        0.999,
+        0.995,
+        0.998,
+        0.993,
+        0.843
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 0,
+          "reference": null,
+          "hypothesis": "а",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 5,
+          "reference": null,
+          "hypothesis": "в",
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 6,
+          "reference": null,
+          "hypothesis": "принципе",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0082",
+      "row": 1,
+      "text": "И",
+      "baseline": false,
+      "confidence": [
+        0.872
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 8,
+          "reference": null,
+          "hypothesis": "и",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "mtedx-dd5R6wgQlp8_0082",
+      "row": 2,
+      "text": "я просто гуляла, читала книги, общалась с людьми.",
+      "baseline": true,
+      "confidence": [
+        0.985,
+        0.663,
+        0.976,
+        0.727,
+        0.974,
+        0.994,
+        1.0,
+        1.0
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "insertions",
+          "reference_index": null,
+          "hypothesis_index": 9,
+          "reference": null,
+          "hypothesis": "я",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "golos-0060",
+      "row": 0,
+      "text": "Афина, чему равно число",
+      "baseline": true,
+      "confidence": [
+        0.681,
+        0.894,
+        0.988,
+        0.98
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 4,
+          "hypothesis_index": null,
+          "reference": "пи",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "golos-0008",
+      "row": 0,
+      "text": "Сбер, привет!",
+      "baseline": false,
+      "confidence": [
+        0.942,
+        0.936
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0008",
+      "row": 1,
+      "text": "Переведи маме 1 000",
+      "baseline": false,
+      "confidence": [
+        0.931,
+        0.786,
+        0.907,
+        0.977
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 4,
+          "hypothesis_index": 4,
+          "reference": "тысячу",
+          "hypothesis": "1",
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 5,
+          "hypothesis_index": 5,
+          "reference": "рублей",
+          "hypothesis": "000",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "golos-0039",
+      "row": 0,
+      "text": "Сбер, перетасуй эти песни.",
+      "baseline": true,
+      "confidence": [
+        0.561,
+        0.796,
+        0.996,
+        0.961
+      ],
+      "complete": true,
+      "forced": true,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "golos-0079",
+      "row": 0,
+      "text": "батюшка у католиков?",
+      "baseline": false,
+      "confidence": [
+        0.998,
+        0.771,
+        0.992
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "кто",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "такой",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "golos-0042",
+      "row": 0,
+      "text": "Джой, хочу уточнить, почему мне не одобрили кредит?",
+      "baseline": true,
+      "confidence": [
+        0.863,
+        0.996,
+        0.905,
+        0.542,
+        0.953,
+        0.985,
+        0.835,
+        0.99
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "golos-0024",
+      "row": null,
+      "text": "",
+      "baseline": false,
+      "confidence": [],
+      "complete": false,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 0,
+          "hypothesis_index": null,
+          "reference": "джой",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "как",
+          "hypothesis": null,
+          "short": true,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 2,
+          "hypothesis_index": null,
+          "reference": "зовут",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 3,
+          "hypothesis_index": null,
+          "reference": "твоего",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "deletions",
+          "reference_index": 4,
+          "hypothesis_index": null,
+          "reference": "папу",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "golos-0040",
+      "row": 0,
+      "text": "Сбер, какие виды пиратский кодекс ты знаешь?",
+      "baseline": true,
+      "confidence": [
+        0.62,
+        0.936,
+        0.95,
+        0.72,
+        0.873,
+        1.0,
+        0.852
+      ],
+      "complete": true,
+      "forced": true,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "golos-0000",
+      "row": 0,
+      "text": "Салют, сколько предприятий являются клиентами Сбера?",
+      "baseline": false,
+      "confidence": [
+        0.827,
+        0.994,
+        0.917,
+        0.972,
+        0.916,
+        0.784
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0054",
+      "row": 0,
+      "text": "Салют, мне нужен ближайший банкомат, найди мне его.",
+      "baseline": true,
+      "confidence": [
+        0.861,
+        0.994,
+        0.998,
+        0.914,
+        0.879,
+        0.956,
+        0.848,
+        0.657
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "golos-0059",
+      "row": 0,
+      "text": "Джой, в каком случае",
+      "baseline": true,
+      "confidence": [
+        0.66,
+        1.0,
+        0.976,
+        0.904
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "golos-0059",
+      "row": 1,
+      "text": "ставится запятая перед словом«как»?",
+      "baseline": false,
+      "confidence": [
+        0.977,
+        0.996,
+        0.997,
+        0.826,
+        0.961
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0012",
+      "row": 0,
+      "text": "Афина, как отправить видео на сайт канала Карусель Фиксикам?",
+      "baseline": false,
+      "confidence": [
+        0.865,
+        0.989,
+        0.712,
+        0.98,
+        0.778,
+        0.941,
+        0.882,
+        0.892,
+        0.897
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0018",
+      "row": 0,
+      "text": "Сбер, любимая дочь, переведи 700",
+      "baseline": false,
+      "confidence": [
+        0.884,
+        0.979,
+        0.734,
+        0.816,
+        0.928
+      ],
+      "complete": true,
+      "forced": true,
+      "local": true,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 4,
+          "hypothesis_index": null,
+          "reference": "семьсот",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 5,
+          "hypothesis_index": 4,
+          "reference": "рублей",
+          "hypothesis": "700",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "golos-0030",
+      "row": 0,
+      "text": "Джой, интересно, а есть то, что я не знаю?",
+      "baseline": true,
+      "confidence": [
+        0.639,
+        0.976,
+        0.985,
+        0.979,
+        0.697,
+        1.0,
+        0.995,
+        0.989,
+        0.689
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "golos-0022",
+      "row": 0,
+      "text": "Кто такой Человек-паук?",
+      "baseline": false,
+      "confidence": [
+        0.872,
+        0.99,
+        0.924
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0088",
+      "row": 0,
+      "text": "Салют, покажи телеканал Три Ангела.",
+      "baseline": true,
+      "confidence": [
+        0.771,
+        0.726,
+        0.781,
+        0.981,
+        0.963
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "golos-0041",
+      "row": 0,
+      "text": "Салют, набери Розу Владимировну Орехову.",
+      "baseline": true,
+      "confidence": [
+        0.959,
+        0.957,
+        0.842,
+        0.68,
+        0.855
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "golos-0061",
+      "row": 0,
+      "text": "Джой, зачем льву Гри?",
+      "baseline": false,
+      "confidence": [
+        0.827,
+        0.996,
+        0.859,
+        0.935
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 3,
+          "hypothesis_index": 3,
+          "reference": "грива",
+          "hypothesis": "гри",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "golos-0066",
+      "row": 0,
+      "text": "Сбер, налечик зарядка.",
+      "baseline": true,
+      "confidence": [
+        0.986,
+        0.461,
+        0.94
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 1,
+          "hypothesis_index": null,
+          "reference": "найди",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 2,
+          "hypothesis_index": 1,
+          "reference": "чик",
+          "hypothesis": "налечик",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": true
+    },
+    {
+      "case": "golos-0095",
+      "row": 0,
+      "text": "Салют.",
+      "baseline": false,
+      "confidence": [
+        0.843
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0095",
+      "row": 1,
+      "text": "Фильм с Эдди Мерфи, как он искал невесту в Америке.",
+      "baseline": false,
+      "confidence": [
+        0.997,
+        0.995,
+        0.983,
+        0.968,
+        0.803,
+        0.983,
+        0.928,
+        0.875,
+        0.974,
+        0.974
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [
+        {
+          "op": "substitutions",
+          "reference_index": 3,
+          "hypothesis_index": 3,
+          "reference": "эди",
+          "hypothesis": "эдди",
+          "short": true,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "golos-0044",
+      "row": 0,
+      "text": "Сбер,",
+      "baseline": false,
+      "confidence": [
+        0.742
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0044",
+      "row": 1,
+      "text": "что обладает минимальным временем?",
+      "baseline": false,
+      "confidence": [
+        0.987,
+        0.902,
+        0.975,
+        0.812
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0028",
+      "row": 0,
+      "text": "Сбер,",
+      "baseline": true,
+      "confidence": [
+        0.534
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "golos-0028",
+      "row": 1,
+      "text": "перевести на МТС с расчётного счёта",
+      "baseline": false,
+      "confidence": [
+        0.719,
+        0.971,
+        0.706,
+        0.735,
+        0.855,
+        0.895
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0028",
+      "row": 2,
+      "text": "500",
+      "baseline": false,
+      "confidence": [
+        0.93
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [
+        {
+          "op": "deletions",
+          "reference_index": 7,
+          "hypothesis_index": null,
+          "reference": "пятьсот",
+          "hypothesis": null,
+          "short": false,
+          "term": false
+        },
+        {
+          "op": "substitutions",
+          "reference_index": 8,
+          "hypothesis_index": 7,
+          "reference": "рублей",
+          "hypothesis": "500",
+          "short": false,
+          "term": false
+        }
+      ],
+      "candidate": false
+    },
+    {
+      "case": "golos-0064",
+      "row": 0,
+      "text": "Сбер,",
+      "baseline": true,
+      "confidence": [
+        0.522
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "golos-0064",
+      "row": 1,
+      "text": "найди ближайшую запись",
+      "baseline": false,
+      "confidence": [
+        0.882,
+        0.918,
+        0.926
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0064",
+      "row": 2,
+      "text": "на маникюр и педикюр.",
+      "baseline": false,
+      "confidence": [
+        0.955,
+        0.948,
+        0.944,
+        0.977
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0009",
+      "row": 0,
+      "text": "Салют,",
+      "baseline": false,
+      "confidence": [
+        0.939
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": false
+    },
+    {
+      "case": "golos-0009",
+      "row": 1,
+      "text": "включи хип-хоп.",
+      "baseline": true,
+      "confidence": [
+        0.582,
+        0.996
+      ],
+      "complete": true,
+      "forced": false,
+      "local": true,
+      "short": true,
+      "term": false,
+      "events": [],
+      "candidate": true
+    },
+    {
+      "case": "golos-0016",
+      "row": 0,
+      "text": "Салют, помощник, оплати связь.",
+      "baseline": false,
+      "confidence": [
+        0.849,
+        0.995,
+        0.963,
+        0.833
+      ],
+      "complete": true,
+      "forced": false,
+      "local": false,
+      "short": false,
+      "term": false,
+      "events": [],
+      "candidate": false
+    }
+  ],
+  "limitations": "Ошибки размечены сравнением с субтитрами, не ручным прослушиванием каждого слова. Словарь терминов ограничен. Полностью потерянные фразы не имеют интерфейсного флага.",
+  "artifact_sha256": "4feb71ab8a468d67d28c632b25996fa290c2ae16664933b8b30b3db3d4b88b4c",
+  "tests": 4,
+  "production_change": false
+}

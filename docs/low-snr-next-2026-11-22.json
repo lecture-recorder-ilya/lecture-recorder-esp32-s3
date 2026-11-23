@@ -1,0 +1,2097 @@
+{
+  "archive": {
+    "date": "2026-11-22",
+    "report_commit": "029b46d9d67ef513c7bf86d4534f890dc34bfee7",
+    "scope": "Архив эксперимента. Ревизии и сценарии указаны в отчёте."
+  },
+  "frozen": {
+    "frozen_at_utc": "2026-11-22T19:08:04.543302+00:00",
+    "candidates": [
+      {
+        "policy": "choice",
+        "profile": "argmax",
+        "tune_errors": 73
+      },
+      {
+        "policy": "gaps",
+        "profile": "strict",
+        "tune_errors": 74
+      }
+    ],
+    "current_tune_errors": 74,
+    "code_sha256": {
+      "tools/asr_low_snr_policy.py": "d25af56768257e210530ca8bf29257441e87be0f04e7772ad72a4b89ec79b3f1",
+      "tools/benchmark_low_snr.py": "75f2ed3ad9e4e00c33934b87a4cc1e78acf8e02b58c7e8820ad86cefbd0255a2",
+      "tools/apply_low_snr.py": "fb5e3e17ad5b39f74326ea21330c8e3c1ad9aef43ea0fde8f43a18d0d3ffaa91",
+      "work/test_asr_low_snr.py": "61859e71f5d1cfdd68b29044e5edebf2bfa40446fee2d0ef722e028620617166"
+    },
+    "control_manifest_sha256": "edda2b42572f28fc7352be2a084a08ac5d1d07b6972af77a72b3610a2a9a375d",
+    "retention_rule": "Keep only a fixed rule that lowers word errors on fresh OpenSTT/mTEDx vs current; no increased deletions, number/negation errors, noise words, or Golos regression. If none improves, commit experiment only. No policy changes after this freeze.",
+    "gaps_note": "40 focused raw crops tested on tune; no admissible word insertion under strict or relaxed confidence. Strict selected on tie."
+  },
+  "plan": {
+    "base_commit": "68f22367e5f496b157d1fb3607aa93e5dfdd37cc",
+    "stable": "6abca7c",
+    "platform": "Mac CPU / GigaAM CTC + RNN-T",
+    "tune_manifest_sha256": "4e5a56ce2b75900f819a259ef917bbb4cb5c78af43f567ecad58272c9ee5b2c3",
+    "rules": {
+      "choose_audio": {
+        "same_ctc_confidence_margin": 0.04,
+        "matching_fraction": 0.65,
+        "minimum_length_fraction": 0.9,
+        "protected_tokens": "must match"
+      },
+      "recover_gaps": {
+        "decoders": [
+          "raw_ctc",
+          "raw_rnnt"
+        ],
+        "minimum_word_confidence": 0.75,
+        "mean_confidence": 0.85,
+        "max_words": 2,
+        "max_seconds": 1.2,
+        "anchor_time_tolerance": 0.28,
+        "vote_time_tolerance": 0.24,
+        "protected_words": "never insert",
+        "edges": "never insert"
+      }
+    },
+    "control_protocol": "Independent manifest is prepared by QA chat. Its bytes/hash must be frozen before candidate inference. No parameter changes after final control. Old OpenSTT holdout and Golos are regression data already decoded in previous work, not new independent evidence.",
+    "regression_manifests": {
+      "work/rear-row/corpus/wav/holdout.json": "74ff3fdae9be8584a4846f497f3ea8f3ec87c4285ee58b2fdee95f68876b117d",
+      "work/rear-row/corpus/wav/farfield.json": "9c4b23a66df1ead7213344b9b32b3f3c670e7ac686d6a684289495b066b7e929"
+    },
+    "tuning_profiles_before_policy_scoring": {
+      "choice_confidence_margin": [
+        0.04,
+        0.02,
+        0
+      ],
+      "gap_min_mean_confidence": [
+        [
+          0.75,
+          0.85
+        ],
+        [
+          0.65,
+          0.75
+        ]
+      ],
+      "other_guards": "unchanged; no thresholds fit on control"
+    },
+    "qa_control_freeze_before_policy_scoring": {
+      "path": "docs/asr-qa-control.json",
+      "sha256": "c18444db4df950f650fac8a31ace89609135df1cbe64a09b1394ce699f0adaf7"
+    },
+    "gap_crops_tuning_stage": {
+      "voice_gap_seconds": [
+        0.35,
+        2.0
+      ],
+      "context_seconds": 0.65,
+      "max_crops_per_chunk": 2,
+      "existing_VAD_support": "max(.16, .3 * gap_duration)",
+      "decoders": [
+        "ctc",
+        "rnnt"
+      ],
+      "reason": "No common eligible internal insertion in full-utterance raw hypotheses on tune; test focused context before opening final control."
+    },
+    "independent_control": {
+      "owner": "ClipMic · Распознавание и конспект",
+      "owner_manifest": "work/asr-qa/control/manifest.json",
+      "owner_manifest_sha256": "5eace2c3911a018f0dfad92237cedcccd71f262ef633513c5ebbbf1b446cd8ad",
+      "local_manifest_sha256": "edda2b42572f28fc7352be2a084a08ac5d1d07b6972af77a72b3610a2a9a375d",
+      "clips": 92,
+      "frozen_cases": [
+        {
+          "id": "openstt-0a7b5a064c66-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "1a40ac9e12292f9119c4c28614235ce9a19256936268770584425e97a91df330",
+          "source_id": "public_lecture_1/1/37/0a7b5a064c66.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-1ab681ecbe5e-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "82e78d4933fe6a5beaa7fb09dbf0aebc420e83ae535306c8d7a30d7c1e050977",
+          "source_id": "public_lecture_1/f/f7/1ab681ecbe5e.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-2375e6120786-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "f71eca95d512d92bb70c875a0d3ad364f3b2cb0b215920c55c860ea27e01be8d",
+          "source_id": "public_lecture_1/a/ad/2375e6120786.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-27901c3425f8-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "686a69bc31415552fca17131916e5feb73128e016a8ec6f3fab6411f5ab3ae2a",
+          "source_id": "public_lecture_1/d/4a/27901c3425f8.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-43e4552fba3b-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "86ea23d935d6df8bd5ed41764b609ffc2b4d5748dc3b2f0b1071631920672533",
+          "source_id": "public_lecture_1/9/00/43e4552fba3b.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-479312bb66bb-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "75ca4e691a7a3d21a794df2bff555c4ea2ac787220a38a4388d5603473961a1e",
+          "source_id": "public_lecture_1/5/06/479312bb66bb.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-70c26c3264de-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "865ae12d37e5655122158eda9fdfdc1a9ee32efb7c7fa6a84e1059b65fa11970",
+          "source_id": "public_lecture_1/4/9a/70c26c3264de.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-730579c37c60-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "b73f50df723d27f330ae47feadaff1550aa90d2c68e0c997d3367f9e17fb5f3f",
+          "source_id": "public_lecture_1/4/0d/730579c37c60.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-743c1c8ed8fd-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "10a26bde7315e892e143dd738e15241fc036888f71f286bc685ea0fc05a131e9",
+          "source_id": "public_lecture_1/9/e0/743c1c8ed8fd.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-775b92b47d6e-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "d88e8fd686b284261566ed275e9f38715fd1066409192ab3b477e8d38b9c934f",
+          "source_id": "public_lecture_1/8/4d/775b92b47d6e.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-779809ee0c5e-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "7ef3701423a6f87b412bae7d0bf25f2e9168b63dba4e2aa303e1412624012a28",
+          "source_id": "public_lecture_1/9/ca/779809ee0c5e.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-8b650b06fc0c-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "78b8e0c202bed56f6e484ac564b388bc4ecc1b6fc66101c643294c09afa3db3f",
+          "source_id": "public_lecture_1/3/6d/8b650b06fc0c.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-8c62836f51b7-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "5f7562576ff7ae85fc86d6ecf5c3e8f3142f895219e8c507a800843bcd63a1cb",
+          "source_id": "public_lecture_1/a/51/8c62836f51b7.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-92f9ec6707f0-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "7c7fcd8c6e61e92ada15c1ebfd79eff5f649709835f12155f1b28c6d1ea04c48",
+          "source_id": "public_lecture_1/c/22/92f9ec6707f0.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-af93af386c05-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "23c32554b2062226f965841a6d9576d3893ef9ff9bfccb9dd2925ee4e1a49bcf",
+          "source_id": "public_lecture_1/d/ff/af93af386c05.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-c976db04c63b-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "dd8d85c7da828508d5459ca13e92df886d2e4d46f9f512e97bf2f2833f697103",
+          "source_id": "public_lecture_1/8/9d/c976db04c63b.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-cc06f7543107-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "13b341595527b665c51c4327da4561cd56c2286abf9875096152ffd36bb4a752",
+          "source_id": "public_lecture_1/b/97/cc06f7543107.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-ce72df517e34-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "f72616c90e108e9de26524f52650beeecbb3c44f970f1a803754c7c31f911308",
+          "source_id": "public_lecture_1/7/f6/ce72df517e34.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-e1f06e06e5d6-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "4221cea104429609fbc1cd66d2df2215fdd6b9f7173b67ffcfa35457703a5f81",
+          "source_id": "public_lecture_1/7/31/e1f06e06e5d6.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-e5e94c4f50fb-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "5ba3cf98e96f6d1d6f1f80d450ba3ec703850e14d0520ad7fa74727b2ec8d2fb",
+          "source_id": "public_lecture_1/f/33/e5e94c4f50fb.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-ea81341d63ce-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "9755ec74873709fa38909ffea2e242dac8cdbfe6e444433099791f3ec7f2542d",
+          "source_id": "public_lecture_1/f/23/ea81341d63ce.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-eadee6e2a54b-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "e58f513786cc4f915850e3785d5fd2692a483a05a32cc3933ec53a4dc9e3c678",
+          "source_id": "public_lecture_1/d/a3/eadee6e2a54b.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-eb496ac51c88-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "a7970fcae1e73e5d1efb6dd06d79623301a6ec4fa4690c17bfad0117965fabd4",
+          "source_id": "public_lecture_1/7/92/eb496ac51c88.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-f25c905ab78a-room",
+          "subset": "modeled_room_6db",
+          "audio_sha256": "586576287fa4a4a22aebf75352f261f34126d6cbc2f15ba9ab9bd8f3b368d8ef",
+          "source_id": "public_lecture_1/e/5d/f25c905ab78a.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-0a7b5a064c66",
+          "subset": "openstt_lectures",
+          "audio_sha256": "2bc232fc4b5f637675f66acebd7160a442fd1d94d61412a042dfc207f50767d3",
+          "source_id": "public_lecture_1/1/37/0a7b5a064c66.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-1ab681ecbe5e",
+          "subset": "openstt_lectures",
+          "audio_sha256": "8aac489d7077834d39fad709eb7ffa4809c702bb6bec6d0ea8281ae8b72d1ea0",
+          "source_id": "public_lecture_1/f/f7/1ab681ecbe5e.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-2375e6120786",
+          "subset": "openstt_lectures",
+          "audio_sha256": "babf8345aa5acaa2181b5b405973e85fbf79aebe8bee2ba7f59d2325ff822bc0",
+          "source_id": "public_lecture_1/a/ad/2375e6120786.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-27901c3425f8",
+          "subset": "openstt_lectures",
+          "audio_sha256": "d7a0ccbd9692d13ab66750be1aae86a8c0bb9c4b5d20a610d8c6e12591bca295",
+          "source_id": "public_lecture_1/d/4a/27901c3425f8.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-43e4552fba3b",
+          "subset": "openstt_lectures",
+          "audio_sha256": "b544077ed0b23e2f7e5173d35a240786f7cd597ada15163e6c5e33f7c25a4439",
+          "source_id": "public_lecture_1/9/00/43e4552fba3b.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-479312bb66bb",
+          "subset": "openstt_lectures",
+          "audio_sha256": "b23ea990a5f131acde24ec65dd464ac06919fd2dfd4da66f77b7dee6f160bf84",
+          "source_id": "public_lecture_1/5/06/479312bb66bb.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-70c26c3264de",
+          "subset": "openstt_lectures",
+          "audio_sha256": "8ac117939a7538c6dcf7b3a9a617c22efa40cc3e77f18d14b14cfcfd8dcafa50",
+          "source_id": "public_lecture_1/4/9a/70c26c3264de.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-730579c37c60",
+          "subset": "openstt_lectures",
+          "audio_sha256": "1807be01c60bf8739f50e09781fc53ad233a8744a2d1ccb57483b57ac0eafb4f",
+          "source_id": "public_lecture_1/4/0d/730579c37c60.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-743c1c8ed8fd",
+          "subset": "openstt_lectures",
+          "audio_sha256": "d234f85809c8847507dcb1df0433b05f3b6d6c14ed8b6a62a53cf744444052a7",
+          "source_id": "public_lecture_1/9/e0/743c1c8ed8fd.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-775b92b47d6e",
+          "subset": "openstt_lectures",
+          "audio_sha256": "2c0fa8e347a59c10fc69187334bf2b0c4f91b75ce5653aa0cd7913ac89990cee",
+          "source_id": "public_lecture_1/8/4d/775b92b47d6e.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-779809ee0c5e",
+          "subset": "openstt_lectures",
+          "audio_sha256": "743ac90a3c2723f8074a7fca3b132053c184ddc3902102057bf8c9f43d39f49d",
+          "source_id": "public_lecture_1/9/ca/779809ee0c5e.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-8b650b06fc0c",
+          "subset": "openstt_lectures",
+          "audio_sha256": "ba07baa9cbcf089fed6c96bae3e4821bc7084baefde4b0711dcd3d732096f036",
+          "source_id": "public_lecture_1/3/6d/8b650b06fc0c.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-8c62836f51b7",
+          "subset": "openstt_lectures",
+          "audio_sha256": "c48167f7fae13a11d3c3a104a22f2361754b738723b183955eedb561c59ca6dd",
+          "source_id": "public_lecture_1/a/51/8c62836f51b7.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-92f9ec6707f0",
+          "subset": "openstt_lectures",
+          "audio_sha256": "a4040aa8d3e0c986b962ef33a1f7f0dc49d18ac5f75e4631b6ecf2db1483dbfe",
+          "source_id": "public_lecture_1/c/22/92f9ec6707f0.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-af93af386c05",
+          "subset": "openstt_lectures",
+          "audio_sha256": "12346ddb01f3ad35beab731fb3dcd4f2db9deec0b1253db4ea42ce29ef40ac8c",
+          "source_id": "public_lecture_1/d/ff/af93af386c05.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-c976db04c63b",
+          "subset": "openstt_lectures",
+          "audio_sha256": "dde22430d8fbdfe760f740ab252806af31522fa8b1c40ab1915ffb6874687c2c",
+          "source_id": "public_lecture_1/8/9d/c976db04c63b.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-cc06f7543107",
+          "subset": "openstt_lectures",
+          "audio_sha256": "ba8442ce56e215cdee14549626e236fafb1c5258b14facbd4499b85afaccbd95",
+          "source_id": "public_lecture_1/b/97/cc06f7543107.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-ce72df517e34",
+          "subset": "openstt_lectures",
+          "audio_sha256": "0d7af9df577457b96c11bd000ecde7590cd20af2b6ee4520edc8ae48608a1315",
+          "source_id": "public_lecture_1/7/f6/ce72df517e34.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-e1f06e06e5d6",
+          "subset": "openstt_lectures",
+          "audio_sha256": "b7c6484410014dbc96111a9bb2435c2a117f06748a1f83c725ba067afac560cc",
+          "source_id": "public_lecture_1/7/31/e1f06e06e5d6.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-e5e94c4f50fb",
+          "subset": "openstt_lectures",
+          "audio_sha256": "dc68ec9522c82db7c9b8a09863d6c9bc80810b714e8a12470ecb2bd987cd3728",
+          "source_id": "public_lecture_1/f/33/e5e94c4f50fb.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-ea81341d63ce",
+          "subset": "openstt_lectures",
+          "audio_sha256": "ba60fb3d231dabb84b28d37923eabf90afb67966104508f39b0ef54dbe40801e",
+          "source_id": "public_lecture_1/f/23/ea81341d63ce.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-eadee6e2a54b",
+          "subset": "openstt_lectures",
+          "audio_sha256": "afd4d3bddaa58511707982fa01e10b794fc8c7a536a7a79b557612f742720007",
+          "source_id": "public_lecture_1/d/a3/eadee6e2a54b.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-eb496ac51c88",
+          "subset": "openstt_lectures",
+          "audio_sha256": "fa07e21cbd7fc2a562265e41c25b5169451f7e1f9d74f2629dda3b6cfed8faee",
+          "source_id": "public_lecture_1/7/92/eb496ac51c88.opus",
+          "source_item": null
+        },
+        {
+          "id": "openstt-f25c905ab78a",
+          "subset": "openstt_lectures",
+          "audio_sha256": "7701868e3bbe6f00046a4fb52cd270691ecdfad7467f21068c54c5b77107e532",
+          "source_id": "public_lecture_1/e/5d/f25c905ab78a.opus",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-7hkxVyhoMoQ_0001",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "3cdc57c685966b56aeac899a4f734cd14e1403e82bba171d7932b5888d1a7797",
+          "source_id": "7hkxVyhoMoQ_0001",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-7hkxVyhoMoQ_0012",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "2fd064ff1f2520e15013060dcaba2de76dfe6716d1f16660dfbccadf62781e72",
+          "source_id": "7hkxVyhoMoQ_0012",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-7hkxVyhoMoQ_0015",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "c7f8561126f407a36559a157e0c224b886edeabfbf830a7609fbfb68707bf6d8",
+          "source_id": "7hkxVyhoMoQ_0015",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-7hkxVyhoMoQ_0028",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "0c48f7b40b377de0e9c7447b4c05df729fa99d70ad4d5f9616767e14c7e63e2a",
+          "source_id": "7hkxVyhoMoQ_0028",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-7hkxVyhoMoQ_0068",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "8d08abc4c7ef9b47cfeb737fb4a7f7488204926012033ff122835e8e111c9330",
+          "source_id": "7hkxVyhoMoQ_0068",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-7hkxVyhoMoQ_0092",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "d65938fd78a7640476e9ba1c6d828197f2b6ef8b83f3511efed32061ab0ecd7c",
+          "source_id": "7hkxVyhoMoQ_0092",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-As7ngXw-X8U_0027",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "7fa9cb2491de3ab5142cc275b03ab7c1230c0620bd0cffcb9f8599feef0e18b8",
+          "source_id": "As7ngXw-X8U_0027",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-As7ngXw-X8U_0043",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "13e91bc7cfa45d8409b3d1b9664b86c15537a5e87acc6ea050a05150ea0cec3b",
+          "source_id": "As7ngXw-X8U_0043",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-As7ngXw-X8U_0055",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "016fa6c4dfc13bfb8c23f74f33f4a5db46f01438b457524458792884dd4c1e56",
+          "source_id": "As7ngXw-X8U_0055",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-As7ngXw-X8U_0070",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "be0da7ac30078901654cce7251e748d36d06116613cac9c868f80dc5dce9835a",
+          "source_id": "As7ngXw-X8U_0070",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-As7ngXw-X8U_0103",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "daed065a09f047a410bd8bdaca7e2799016598a6bca2dcaffbfbe40d5b0f5a24",
+          "source_id": "As7ngXw-X8U_0103",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-As7ngXw-X8U_0112",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "733971428b71c4ba94705ccd75e161afbbda624f644a770521e06204f6271970",
+          "source_id": "As7ngXw-X8U_0112",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-dd5R6wgQlp8_0022",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "adaca76334202da1e719e4664f180e8dd26eadd14c28c5f166b5b9a27104f8dd",
+          "source_id": "dd5R6wgQlp8_0022",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-dd5R6wgQlp8_0044",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "eefd47210944560ae7867e23a25f7dfd5cf9d8c31b3962931f6544c39811406b",
+          "source_id": "dd5R6wgQlp8_0044",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-dd5R6wgQlp8_0048",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "01d2cf317e8abb44d26d8a877c67848bd30ddbe8dbf37f7e17c62c4535ca427c",
+          "source_id": "dd5R6wgQlp8_0048",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-dd5R6wgQlp8_0054",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "7de10a0fdf3aefeeede89c41610299548a2be1438ab208f871bf046705d29d62",
+          "source_id": "dd5R6wgQlp8_0054",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-dd5R6wgQlp8_0071",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "3890dd1437a81680eb1105579d0210993053c4d81c8e4356c291e7428ef7fdfe",
+          "source_id": "dd5R6wgQlp8_0071",
+          "source_item": null
+        },
+        {
+          "id": "mtedx-dd5R6wgQlp8_0082",
+          "subset": "mtedx_public_talks",
+          "audio_sha256": "66ddfc0889ddbee7c0faf10908dc34b3cb68afb077aa596225ffb5a8536fac56",
+          "source_id": "dd5R6wgQlp8_0082",
+          "source_item": null
+        },
+        {
+          "id": "golos-0060",
+          "subset": "golos_farfield",
+          "audio_sha256": "83e94215874f196e8485021493600e60e7dbac51ee02f4bff9a01de9462a7144",
+          "source_id": null,
+          "source_item": 60
+        },
+        {
+          "id": "golos-0008",
+          "subset": "golos_farfield",
+          "audio_sha256": "7215b0038ca1cd40164b907d0e711ceb47ad23a1589f5609e441358705e5d288",
+          "source_id": null,
+          "source_item": 8
+        },
+        {
+          "id": "golos-0039",
+          "subset": "golos_farfield",
+          "audio_sha256": "132f41c88f583bda085e81d5363c32253849e78519b8e76f3b37198884b30d7c",
+          "source_id": null,
+          "source_item": 39
+        },
+        {
+          "id": "golos-0079",
+          "subset": "golos_farfield",
+          "audio_sha256": "735d5ffa2a9e690c7b78a8a97b5283b891bc9e19759dba26469230e8f2765602",
+          "source_id": null,
+          "source_item": 79
+        },
+        {
+          "id": "golos-0042",
+          "subset": "golos_farfield",
+          "audio_sha256": "6e5a14a19bc780be37496aeff65d1e6620d8aa21eb8dfd7b3ea0bfdf2b00bfce",
+          "source_id": null,
+          "source_item": 42
+        },
+        {
+          "id": "golos-0024",
+          "subset": "golos_farfield",
+          "audio_sha256": "a49e83b5361cfb10fb40e351c8640aa60985ea040093787a48c17c73140deb25",
+          "source_id": null,
+          "source_item": 24
+        },
+        {
+          "id": "golos-0040",
+          "subset": "golos_farfield",
+          "audio_sha256": "cc3a13307a86aae15ed0c4633abfd25af17ee14d378c218589182d7dfdb5c19f",
+          "source_id": null,
+          "source_item": 40
+        },
+        {
+          "id": "golos-0000",
+          "subset": "golos_farfield",
+          "audio_sha256": "a2b1a10fb33863147cc3dc19e35a9a7d1a0dc85def6fb0b9130b12eb80cc5a15",
+          "source_id": null,
+          "source_item": 0
+        },
+        {
+          "id": "golos-0054",
+          "subset": "golos_farfield",
+          "audio_sha256": "91e5aaf1c8c6e362b361cc53cf6c698a0ac38332c431cdf9cb4054183a55956f",
+          "source_id": null,
+          "source_item": 54
+        },
+        {
+          "id": "golos-0059",
+          "subset": "golos_farfield",
+          "audio_sha256": "2167337466ebc75f63c15e9aadf74af720fa1f038023d0e6e8a2d9c1916d052b",
+          "source_id": null,
+          "source_item": 59
+        },
+        {
+          "id": "golos-0012",
+          "subset": "golos_farfield",
+          "audio_sha256": "cbe5e0e318b4b6f277b322d2b483becde759fc2cf491baac32ecec8d49efc040",
+          "source_id": null,
+          "source_item": 12
+        },
+        {
+          "id": "golos-0018",
+          "subset": "golos_farfield",
+          "audio_sha256": "68c6c158b5f750540934e876a886a560e52880cd78ddd72711d95110eed409ef",
+          "source_id": null,
+          "source_item": 18
+        },
+        {
+          "id": "golos-0030",
+          "subset": "golos_farfield",
+          "audio_sha256": "c5c7684a98945e21f177c5aeaa85e8bd6a849b0210991267033591280e7ab9cf",
+          "source_id": null,
+          "source_item": 30
+        },
+        {
+          "id": "golos-0022",
+          "subset": "golos_farfield",
+          "audio_sha256": "6e0c3090a86d6bfe2f3ac2451e7a4040216620618313e73344e335c33e16d141",
+          "source_id": null,
+          "source_item": 22
+        },
+        {
+          "id": "golos-0088",
+          "subset": "golos_farfield",
+          "audio_sha256": "04a174515d299bd6633ce97281c3ede1dbbb193c7e0848cc5fa6777cf48093b1",
+          "source_id": null,
+          "source_item": 88
+        },
+        {
+          "id": "golos-0041",
+          "subset": "golos_farfield",
+          "audio_sha256": "2af6627bc728a8c8aa9e543ac852c72b77a69538d3768262bfaea913aa5165c8",
+          "source_id": null,
+          "source_item": 41
+        },
+        {
+          "id": "golos-0061",
+          "subset": "golos_farfield",
+          "audio_sha256": "4d2a79a2512dc4b4053696135839e09ca8d0c61b7adb3d773206ac341ffd46ae",
+          "source_id": null,
+          "source_item": 61
+        },
+        {
+          "id": "golos-0066",
+          "subset": "golos_farfield",
+          "audio_sha256": "f0eb934dd0b1e0b9736a1bd28e383da88c61877eae075e2bdbe00398a8d70f5d",
+          "source_id": null,
+          "source_item": 66
+        },
+        {
+          "id": "golos-0095",
+          "subset": "golos_farfield",
+          "audio_sha256": "cfbd815e57104dd8120ac2f8dfb8b3d874da9ce107afa396bc34116e453e51f7",
+          "source_id": null,
+          "source_item": 95
+        },
+        {
+          "id": "golos-0044",
+          "subset": "golos_farfield",
+          "audio_sha256": "38ca657d7b8cfc1270a14bdbc32a5b2f8331d0fc291c10a45393887df69413e0",
+          "source_id": null,
+          "source_item": 44
+        },
+        {
+          "id": "golos-0028",
+          "subset": "golos_farfield",
+          "audio_sha256": "eddf858dcff613436835f41523d8e8547ab9a91c589e8e9e179fecd525f4f1df",
+          "source_id": null,
+          "source_item": 28
+        },
+        {
+          "id": "golos-0064",
+          "subset": "golos_farfield",
+          "audio_sha256": "edc97d97b839c0c866f03856eb14a25612503ae7d8b3effba65795c5f783465a",
+          "source_id": null,
+          "source_item": 64
+        },
+        {
+          "id": "golos-0009",
+          "subset": "golos_farfield",
+          "audio_sha256": "650c51c80ea7de1f2373358f2e585cb9a98d9048a0f11031e8103c2538bf8200",
+          "source_id": null,
+          "source_item": 9
+        },
+        {
+          "id": "golos-0016",
+          "subset": "golos_farfield",
+          "audio_sha256": "958c8c589c177414e5b410438eb17b0fa46348b71965db7b11f09b0968a0ea73",
+          "source_id": null,
+          "source_item": 16
+        },
+        {
+          "id": "farfield-noise-7721",
+          "subset": "no_speech",
+          "audio_sha256": "47b589098cc9e4b92774cd5b6a57ccca0713c02396bf755b2318f7e81cdc534e",
+          "source_id": null,
+          "source_item": null
+        },
+        {
+          "id": "farfield-noise-7722",
+          "subset": "no_speech",
+          "audio_sha256": "14b9c065639e055570c996ed843beab5a89e8c962d5901f9e210a21899d081dd",
+          "source_id": null,
+          "source_item": null
+        }
+      ]
+    }
+  },
+  "decision": "В приложение не перенесено: выбор аудио даёт 177→175 ошибок при +82% стоимости опыта и дополнительной замене; согласованные вставки не дали выигрыша. Нужна проверка устойчивости малого эффекта и его цены, а также реальные дальние записи.",
+  "tests": {
+    "new_policy": 12,
+    "asr_guard": 11,
+    "scoring": 7,
+    "input_manifests_reproduced_byte_for_byte": true,
+    "same_WAV_PCM_models": true,
+    "phrase_and_word_time_bounds": true
+  },
+  "systems": {
+    "v059": {
+      "artifact": "work/low-snr-next/v059-control.json",
+      "artifact_sha256": "f630add72e2473b4d2990f3ea43894dec75299afa3f5b06af3a4a0c938d08ae7",
+      "summary": {
+        "clips": 92,
+        "reference_words": 1001,
+        "word_errors": 177,
+        "wer": 0.17682317682317683,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 56,
+          "deletions": 69,
+          "insertions": 52
+        },
+        "duration_seconds": 466.682,
+        "elapsed_seconds": 87.829,
+        "real_time_factor": 0.18819928946707404,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 9,
+          "extra": 7
+        },
+        "negations": {
+          "missed": 3,
+          "extra": 2
+        }
+      },
+      "subsets": {
+        "modeled_room_6db": {
+          "clips": 24,
+          "reference_words": 260,
+          "word_errors": 64,
+          "wer": 0.24615384615384617,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 25,
+            "deletions": 31,
+            "insertions": 8
+          },
+          "duration_seconds": 121.42,
+          "elapsed_seconds": 29.431,
+          "real_time_factor": 0.24238997539740417,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 2,
+            "extra": 1
+          }
+        },
+        "openstt_lectures": {
+          "clips": 24,
+          "reference_words": 260,
+          "word_errors": 42,
+          "wer": 0.16153846153846155,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 15,
+            "deletions": 5,
+            "insertions": 22
+          },
+          "duration_seconds": 121.42,
+          "elapsed_seconds": 20.725,
+          "real_time_factor": 0.17069149705714415,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 2
+          },
+          "negations": {
+            "missed": 1,
+            "extra": 0
+          }
+        },
+        "mtedx_public_talks": {
+          "clips": 18,
+          "reference_words": 331,
+          "word_errors": 53,
+          "wer": 0.16012084592145015,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 9,
+            "deletions": 22,
+            "insertions": 22
+          },
+          "duration_seconds": 132.05,
+          "elapsed_seconds": 23.682,
+          "real_time_factor": 0.17933935568342657,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 3,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 1
+          }
+        },
+        "golos_farfield": {
+          "clips": 24,
+          "reference_words": 150,
+          "word_errors": 18,
+          "wer": 0.12,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 7,
+            "deletions": 11,
+            "insertions": 0
+          },
+          "duration_seconds": 79.791,
+          "elapsed_seconds": 13.951,
+          "real_time_factor": 0.1748410056600864,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 4
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 0.04,
+          "real_time_factor": 0.0033475729169367696,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "sources_sha256": {
+        "quality_asr.py": "cdfb237c58547c28505e7af56102d62a31e127cba24376698e3f901dea9fcad5",
+        "asr_guard.py": "0c4420494943616a1e81e918032ea934352e837f506f8be476bbf179548da890",
+        "speech_gate.py": "55722d5f1be2a99f68257d3ffaccf8297fd394962399106350109600251ac838",
+        "speech_audio.py": "fd622c592e2e5fe0e798033d5c7fe8eaac9df53ce2bcbe1683e37b4c64a3d04b",
+        "context_review.py": "b65c84dd83ffec54dfcc1e220dce8ce986cf4554a4a12ba7c99807741fd95ccf",
+        "asr_terms.py": "5b0d9e03068586b8cfc2dc4c75330658365be28f8b6950efeb11006a5ef5e9cf",
+        "asr_segments.py": "60271c71df06cb6e80962654d4e07f07ba7677fc10e8739ee8a9ae45102df543",
+        "speech_quality.py": "13e5ec16b14b646fba1d6fd94890d14520b0b21916505d21ae45ff1fe42810ea"
+      },
+      "runtime": {
+        "onnx-asr": "0.12.0",
+        "onnxruntime": "1.24.3",
+        "numpy": "2.5.4",
+        "torch": "2.14.1",
+        "silero-vad": "6.2.3"
+      },
+      "models_sha256": {
+        "gigaam/v3_e2e_ctc_vocab.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd",
+        "gigaam/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam/v3_e2e_ctc.int8.onnx": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+        "gigaam-rnnt/v3_e2e_rnnt_vocab.txt": "39abae20e692998290c574e606f11a9edef2902a1995463fcff63d1490cf22b7",
+        "gigaam-rnnt/v3_e2e_rnnt_joint.onnx": "602ff7017a93311aad34df1437c8d7f49911353c13d6eae7a6ee7b041339465c",
+        "gigaam-rnnt/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam-rnnt/v3_e2e_rnnt_decoder.onnx": "7b0a16d67fd2cb37061decc93c69e364a9ab27afee3c57495d55b1c974cf7231",
+        "gigaam-rnnt/v3_e2e_rnnt_encoder.onnx": "cd60b3764a832e8560ae6d3ad0b10adc1a42ffae412b9476f25620aae4f4a508",
+        "gigaam-beam/v3_ctc.onnx": "1fb978d4f41e1334003fae9d29f2d9844d4132315a90553a4b986839051ba9d3",
+        "gigaam-beam/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam-beam/v3_vocab.txt": "a9143c30844d3c0bee3e9e927e4084774eb1b9eeaafc473b2c4521e4911a7c07"
+      }
+    },
+    "current": {
+      "artifact": "work/low-snr-next/current-control.json",
+      "artifact_sha256": "38ba8cba8304c5f071347bac05da674c26da783749650a8882c6f6329350f86b",
+      "summary": {
+        "clips": 92,
+        "reference_words": 1001,
+        "word_errors": 177,
+        "wer": 0.17682317682317683,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 56,
+          "deletions": 69,
+          "insertions": 52
+        },
+        "duration_seconds": 466.682,
+        "elapsed_seconds": 99.32,
+        "real_time_factor": 0.21282074950049212,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 9,
+          "extra": 7
+        },
+        "negations": {
+          "missed": 3,
+          "extra": 2
+        }
+      },
+      "subsets": {
+        "modeled_room_6db": {
+          "clips": 24,
+          "reference_words": 260,
+          "word_errors": 64,
+          "wer": 0.24615384615384617,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 25,
+            "deletions": 31,
+            "insertions": 8
+          },
+          "duration_seconds": 121.42,
+          "elapsed_seconds": 24.447,
+          "real_time_factor": 0.20134059529130632,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 2,
+            "extra": 1
+          }
+        },
+        "openstt_lectures": {
+          "clips": 24,
+          "reference_words": 260,
+          "word_errors": 42,
+          "wer": 0.16153846153846155,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 15,
+            "deletions": 5,
+            "insertions": 22
+          },
+          "duration_seconds": 121.42,
+          "elapsed_seconds": 26.551,
+          "real_time_factor": 0.21867178006159085,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 2
+          },
+          "negations": {
+            "missed": 1,
+            "extra": 0
+          }
+        },
+        "mtedx_public_talks": {
+          "clips": 18,
+          "reference_words": 331,
+          "word_errors": 53,
+          "wer": 0.16012084592145015,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 9,
+            "deletions": 22,
+            "insertions": 22
+          },
+          "duration_seconds": 132.05,
+          "elapsed_seconds": 31.133,
+          "real_time_factor": 0.23576889466848613,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 3,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 1
+          }
+        },
+        "golos_farfield": {
+          "clips": 24,
+          "reference_words": 150,
+          "word_errors": 18,
+          "wer": 0.12,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 7,
+            "deletions": 11,
+            "insertions": 0
+          },
+          "duration_seconds": 79.791,
+          "elapsed_seconds": 17.12,
+          "real_time_factor": 0.21455561876225995,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 4
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 0.069,
+          "real_time_factor": 0.005717427083557898,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      },
+      "sources_sha256": {
+        "quality_asr.py": "181584d5cd64a1f18ca5abd466823e372091391dfdbfb4906655f759023b28c9",
+        "asr_guard.py": "add15e8f787e267a314afe11bb9f4d36fad96407f29d4a5c968c8b8cadc47cd9",
+        "speech_gate.py": "f1d97e07bffd3bd176a54457977c53b73053c21b55eecae47df6a277e212d4e0",
+        "speech_audio.py": "fd622c592e2e5fe0e798033d5c7fe8eaac9df53ce2bcbe1683e37b4c64a3d04b",
+        "context_review.py": "b65c84dd83ffec54dfcc1e220dce8ce986cf4554a4a12ba7c99807741fd95ccf",
+        "asr_terms.py": "5b0d9e03068586b8cfc2dc4c75330658365be28f8b6950efeb11006a5ef5e9cf",
+        "asr_segments.py": "60271c71df06cb6e80962654d4e07f07ba7677fc10e8739ee8a9ae45102df543",
+        "speech_quality.py": "13e5ec16b14b646fba1d6fd94890d14520b0b21916505d21ae45ff1fe42810ea"
+      },
+      "runtime": {
+        "onnx-asr": "0.12.0",
+        "onnxruntime": "1.24.3",
+        "numpy": "2.5.4",
+        "torch": "2.14.1",
+        "silero-vad": "6.2.3"
+      },
+      "models_sha256": {
+        "gigaam/v3_e2e_ctc_vocab.txt": "142de7570b3de5b3035ce111a89c228e80e6085273731d944093ddf24fa539cd",
+        "gigaam/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam/v3_e2e_ctc.int8.onnx": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+        "gigaam-rnnt/v3_e2e_rnnt_vocab.txt": "39abae20e692998290c574e606f11a9edef2902a1995463fcff63d1490cf22b7",
+        "gigaam-rnnt/v3_e2e_rnnt_joint.onnx": "602ff7017a93311aad34df1437c8d7f49911353c13d6eae7a6ee7b041339465c",
+        "gigaam-rnnt/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam-rnnt/v3_e2e_rnnt_decoder.onnx": "7b0a16d67fd2cb37061decc93c69e364a9ab27afee3c57495d55b1c974cf7231",
+        "gigaam-rnnt/v3_e2e_rnnt_encoder.onnx": "cd60b3764a832e8560ae6d3ad0b10adc1a42ffae412b9476f25620aae4f4a508",
+        "gigaam-beam/v3_ctc.onnx": "1fb978d4f41e1334003fae9d29f2d9844d4132315a90553a4b986839051ba9d3",
+        "gigaam-beam/config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+        "gigaam-beam/v3_vocab.txt": "a9143c30844d3c0bee3e9e927e4084774eb1b9eeaafc473b2c4521e4911a7c07"
+      }
+    },
+    "choice": {
+      "artifact": "work/low-snr-next/choice-control.json",
+      "artifact_sha256": "39613cab1c0befbfeecc8bf9bc13958989973296f070c02c8461d9c9ed8e8544",
+      "summary": {
+        "clips": 92,
+        "reference_words": 1001,
+        "word_errors": 175,
+        "wer": 0.17482517482517482,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 57,
+          "deletions": 67,
+          "insertions": 51
+        },
+        "duration_seconds": 466.682,
+        "elapsed_seconds": 181.216,
+        "real_time_factor": 0.388306525916343,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 9,
+          "extra": 7
+        },
+        "negations": {
+          "missed": 3,
+          "extra": 2
+        }
+      },
+      "subsets": {
+        "modeled_room_6db": {
+          "clips": 24,
+          "reference_words": 260,
+          "word_errors": 62,
+          "wer": 0.23846153846153847,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 26,
+            "deletions": 29,
+            "insertions": 7
+          },
+          "duration_seconds": 121.42,
+          "elapsed_seconds": 47.309,
+          "real_time_factor": 0.38962828829168206,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 2,
+            "extra": 1
+          }
+        },
+        "openstt_lectures": {
+          "clips": 24,
+          "reference_words": 260,
+          "word_errors": 42,
+          "wer": 0.16153846153846155,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 15,
+            "deletions": 5,
+            "insertions": 22
+          },
+          "duration_seconds": 121.42,
+          "elapsed_seconds": 47.787,
+          "real_time_factor": 0.3935679167357351,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 2
+          },
+          "negations": {
+            "missed": 1,
+            "extra": 0
+          }
+        },
+        "mtedx_public_talks": {
+          "clips": 18,
+          "reference_words": 331,
+          "word_errors": 53,
+          "wer": 0.16012084592145015,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 9,
+            "deletions": 22,
+            "insertions": 22
+          },
+          "duration_seconds": 132.05,
+          "elapsed_seconds": 54.907,
+          "real_time_factor": 0.41580376309706757,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 3,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 1
+          }
+        },
+        "golos_farfield": {
+          "clips": 24,
+          "reference_words": 150,
+          "word_errors": 18,
+          "wer": 0.12,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 7,
+            "deletions": 11,
+            "insertions": 0
+          },
+          "duration_seconds": 79.791,
+          "elapsed_seconds": 31.098,
+          "real_time_factor": 0.38974420117499553,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 4
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 0.115,
+          "real_time_factor": 0.009552093833614586,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      }
+    },
+    "gaps": {
+      "artifact": "work/low-snr-next/gaps-control.json",
+      "artifact_sha256": "f28a136e12438ea36b1f7703eb48e087bc8a206351cf8a4d5adac67f1896d8d6",
+      "summary": {
+        "clips": 92,
+        "reference_words": 1001,
+        "word_errors": 177,
+        "wer": 0.17682317682317683,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 56,
+          "deletions": 69,
+          "insertions": 52
+        },
+        "duration_seconds": 466.682,
+        "elapsed_seconds": 134.505,
+        "real_time_factor": 0.28821452662026714,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 9,
+          "extra": 7
+        },
+        "negations": {
+          "missed": 3,
+          "extra": 2
+        }
+      },
+      "subsets": {
+        "modeled_room_6db": {
+          "clips": 24,
+          "reference_words": 260,
+          "word_errors": 64,
+          "wer": 0.24615384615384617,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 25,
+            "deletions": 31,
+            "insertions": 8
+          },
+          "duration_seconds": 121.42,
+          "elapsed_seconds": 31.359,
+          "real_time_factor": 0.25826633605764465,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 2,
+            "extra": 1
+          }
+        },
+        "openstt_lectures": {
+          "clips": 24,
+          "reference_words": 260,
+          "word_errors": 42,
+          "wer": 0.16153846153846155,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 15,
+            "deletions": 5,
+            "insertions": 22
+          },
+          "duration_seconds": 121.42,
+          "elapsed_seconds": 36.301,
+          "real_time_factor": 0.29897125238663247,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 2
+          },
+          "negations": {
+            "missed": 1,
+            "extra": 0
+          }
+        },
+        "mtedx_public_talks": {
+          "clips": 18,
+          "reference_words": 331,
+          "word_errors": 53,
+          "wer": 0.16012084592145015,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 9,
+            "deletions": 22,
+            "insertions": 22
+          },
+          "duration_seconds": 132.05,
+          "elapsed_seconds": 40.902,
+          "real_time_factor": 0.3097500536235838,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 3,
+            "extra": 1
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 1
+          }
+        },
+        "golos_farfield": {
+          "clips": 24,
+          "reference_words": 150,
+          "word_errors": 18,
+          "wer": 0.12,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 7,
+            "deletions": 11,
+            "insertions": 0
+          },
+          "duration_seconds": 79.791,
+          "elapsed_seconds": 25.873,
+          "real_time_factor": 0.3242637063971114,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 2,
+            "extra": 4
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 0.069,
+          "real_time_factor": 0.005719100749956851,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      }
+    }
+  },
+  "tune": {
+    "v059": {
+      "artifact_sha256": "9480fd98842c0d429d0d6d4776c65c68e153ed668852ae6ae6ff6ff70eafe020",
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 76,
+        "wer": 0.19791666666666666,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 34,
+          "deletions": 24,
+          "insertions": 18
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 49.766,
+        "real_time_factor": 0.2506744317163078,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 10,
+            "deletions": 7,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 28.609,
+          "real_time_factor": 0.30674901915798525,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 49,
+          "wer": 0.2552083333333333,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 24,
+            "deletions": 17,
+            "insertions": 8
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 21.116,
+          "real_time_factor": 0.22641448758754104,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 0.041,
+          "real_time_factor": 0.0034103610832971754,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      }
+    },
+    "current": {
+      "artifact_sha256": "6b2e89bd87bf8ebe31c7fb9508f04673590144191d5714f6a8c40b5c0be76e01",
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 74,
+        "wer": 0.19270833333333334,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 34,
+          "deletions": 22,
+          "insertions": 18
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 46.831,
+        "real_time_factor": 0.23588908121502586,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 10,
+            "deletions": 7,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 26.271,
+          "real_time_factor": 0.281682944793945,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 47,
+          "wer": 0.24479166666666666,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 24,
+            "deletions": 15,
+            "insertions": 8
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 20.521,
+          "real_time_factor": 0.22002654108084044,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 0.039,
+          "real_time_factor": 0.0032622118333165417,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      }
+    },
+    "choice": {
+      "artifact_sha256": "924f2c9bc25757491051fcec68b65b0298d823cc65071b64ff68adde44a933e0",
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 73,
+        "wer": 0.19010416666666666,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 33,
+          "deletions": 22,
+          "insertions": 18
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 127.076,
+        "real_time_factor": 0.6400899663322555,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 10,
+            "deletions": 7,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 61.21,
+          "real_time_factor": 0.6563019967673176,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 46,
+          "wer": 0.23958333333333334,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 23,
+            "deletions": 15,
+            "insertions": 8
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 65.766,
+          "real_time_factor": 0.7051540386052039,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 0.101,
+          "real_time_factor": 0.008410402833457434,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      }
+    },
+    "gaps": {
+      "artifact_sha256": "44384ed549811a058a7c35f1c052ebb2d6b4ee6d3960e324006365b67d95468f",
+      "summary": {
+        "clips": 38,
+        "reference_words": 384,
+        "word_errors": 74,
+        "wer": 0.19270833333333334,
+        "hallucinated_words": 0,
+        "noise_cases": 2,
+        "failed_noise_cases": 0,
+        "word_error_breakdown": {
+          "substitutions": 34,
+          "deletions": 22,
+          "insertions": 18
+        },
+        "duration_seconds": 198.529,
+        "elapsed_seconds": 142.803,
+        "real_time_factor": 0.7193094194786767,
+        "critical_phrases": {
+          "missed": 0,
+          "extra": 0
+        },
+        "numeric_tokens": {
+          "missed": 0,
+          "extra": 0
+        },
+        "negations": {
+          "missed": 0,
+          "extra": 0
+        }
+      },
+      "subsets": {
+        "openstt_original": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 27,
+          "wer": 0.140625,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 10,
+            "deletions": 7,
+            "insertions": 10
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 74.535,
+          "real_time_factor": 0.7991824225358677,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "openstt_simulated_room": {
+          "clips": 18,
+          "reference_words": 192,
+          "word_errors": 47,
+          "wer": 0.24479166666666666,
+          "hallucinated_words": 0,
+          "noise_cases": 0,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 24,
+            "deletions": 15,
+            "insertions": 8
+          },
+          "duration_seconds": 93.264,
+          "elapsed_seconds": 68.183,
+          "real_time_factor": 0.7310732975602755,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        },
+        "no_speech": {
+          "clips": 2,
+          "reference_words": 0,
+          "word_errors": 0,
+          "wer": null,
+          "hallucinated_words": 0,
+          "noise_cases": 2,
+          "failed_noise_cases": 0,
+          "word_error_breakdown": {
+            "substitutions": 0,
+            "deletions": 0,
+            "insertions": 0
+          },
+          "duration_seconds": 12.0,
+          "elapsed_seconds": 0.085,
+          "real_time_factor": 0.007105670166311029,
+          "critical_phrases": {
+            "missed": 0,
+            "extra": 0
+          },
+          "numeric_tokens": {
+            "missed": 0,
+            "extra": 0
+          },
+          "negations": {
+            "missed": 0,
+            "extra": 0
+          }
+        }
+      }
+    }
+  },
+  "changes": {
+    "choice": [
+      {
+        "id": "openstt-2375e6120786-room",
+        "audio_sha256": "f71eca95d512d92bb70c875a0d3ad364f3b2cb0b215920c55c860ea27e01be8d",
+        "reference": "и я сделала одно очень важное и мощное открытие для себя",
+        "before": "я сделала очень важное и мощное открытие для",
+        "after": "я сделала очень важное и мощное открытие для себя.",
+        "before_errors": 3,
+        "after_errors": 2
+      },
+      {
+        "id": "openstt-479312bb66bb-room",
+        "audio_sha256": "75ca4e691a7a3d21a794df2bff555c4ea2ac787220a38a4388d5603473961a1e",
+        "reference": "есть такой человечек в истории театра мейерхольд и он говорит",
+        "before": "Есть такой человечек по истории театра И он говорит:«Хочет",
+        "after": "Есть такой человечек по истории театра мир. И он говорит:«Хочет",
+        "before_errors": 3,
+        "after_errors": 3
+      },
+      {
+        "id": "openstt-92f9ec6707f0-room",
+        "audio_sha256": "7c7fcd8c6e61e92ada15c1ebfd79eff5f649709835f12155f1b28c6d1ea04c48",
+        "reference": "команда в которой есть две основные вещи доверие и поддержка",
+        "before": "Команда, в которой есть две основные вещи это доверие и поддержка.",
+        "after": "Команда, в которой есть две основные вещи: доверие и поддержка.",
+        "before_errors": 1,
+        "after_errors": 0
+      },
+      {
+        "id": "openstt-cc06f7543107-room",
+        "audio_sha256": "13b341595527b665c51c4327da4561cd56c2286abf9875096152ffd36bb4a752",
+        "reference": "не питающую жизнь воду а участки твёрдой поверхности",
+        "before": "Не питающую жизнь воду, а участки твёрдой поверхности.",
+        "after": "не питающую жизнь воду, а участки твёрдой поверхности",
+        "before_errors": 0,
+        "after_errors": 0
+      },
+      {
+        "id": "openstt-f25c905ab78a-room",
+        "audio_sha256": "586576287fa4a4a22aebf75352f261f34126d6cbc2f15ba9ab9bd8f3b368d8ef",
+        "reference": "в калачной в коломне организовали очередь за хлебом",
+        "before": "В Калачной коломне организовали очередь за хлебом.",
+        "after": "В Калачной Коломне организовали очередь за хлебом.",
+        "before_errors": 1,
+        "after_errors": 1
+      },
+      {
+        "id": "mtedx-dd5R6wgQlp8_0054",
+        "audio_sha256": "7de10a0fdf3aefeeede89c41610299548a2be1438ab208f871bf046705d29d62",
+        "reference": "Я просто занималась тем, что искала, что же я люблю делать по-настоящему.",
+        "before": "занималась тем, что искала, что же я люблю делать по-настоящему",
+        "after": "Занималась тем, что искала, что же я люблю делать по-настоящему.",
+        "before_errors": 2,
+        "after_errors": 2
+      }
+    ],
+    "gaps": []
+  },
+  "code_sha256": {
+    "tools/asr_low_snr_policy.py": "d25af56768257e210530ca8bf29257441e87be0f04e7772ad72a4b89ec79b3f1",
+    "tools/benchmark_low_snr.py": "75f2ed3ad9e4e00c33934b87a4cc1e78acf8e02b58c7e8820ad86cefbd0255a2",
+    "tools/apply_low_snr.py": "fb5e3e17ad5b39f74326ea21330c8e3c1ad9aef43ea0fde8f43a18d0d3ffaa91",
+    "tools/freeze_low_snr_inputs.py": "4acd8d4c3c439c24b67c61aebd33e9fd896f61fe65d0e50534793895ec9b9d76",
+    "work/test_asr_low_snr.py": "61859e71f5d1cfdd68b29044e5edebf2bfa40446fee2d0ef722e028620617166"
+  }
+}
