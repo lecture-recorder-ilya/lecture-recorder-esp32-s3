@@ -1,0 +1,52 @@
+{
+  "archive": {
+    "date": "2026-11-22",
+    "report_commit": "96110a635162af07a242d91eff0395a49854a34f",
+    "scope": "Архив эксперимента. Ревизии и сценарии указаны в отчёте."
+  },
+  "date": "2026-11-22",
+  "code_revision": "68f22367e5f496b157d1fb3607aa93e5dfdd37cc",
+  "audio_sha256": "4c0c97d8a8ce22e0634bff1f59b84deeba85193f48d0c9d020e413529a97ac28",
+  "actual_mac_worker": {
+    "stage_observed": "done",
+    "hardware_memory_gib": 16,
+    "hardware": "arm64 Mac",
+    "segments": [
+      {
+        "id": 0,
+        "start": 0.828,
+        "end": 5.748,
+        "text": "Согласно плану, мост полностью введён в эксплуатацию с сентября 2017 года,",
+        "needs_review": true
+      },
+      {
+        "id": 1,
+        "start": 6.188,
+        "end": 10.188,
+        "text": "когда бразильские пункты таможенной проверки, как ожидается, будут завершены.",
+        "needs_review": false
+      }
+    ],
+    "summary": [],
+    "summary_evidence": [],
+    "topic": "健康与营养",
+    "overview": "",
+    "models": {
+      "speech": "GigaAM-v3-3pass-phrases-v11-quiet-edges",
+      "analysis": "Qwen2.5-7B-Instruct-4bit"
+    },
+    "analysis_worker_elapsed_seconds": 789.1
+  },
+  "validator_fixture": {
+    "method": "Тест правил на программно исправленном тексте по эталону. Ручной ввод в приложении и проверка человеком не измерялись.",
+    "initial_evidence": [],
+    "after_simulated_reference_edit": [
+      {
+        "quote": "Согласно плану, мост полностью войдёт в эксплуатацию в сентябре 2017 года, когда бразильские пункты таможенной проверки, как ожидается, будут завершены.",
+        "start": 0.828,
+        "end": 10.188,
+        "segment_id": 0
+      }
+    ]
+  }
+}

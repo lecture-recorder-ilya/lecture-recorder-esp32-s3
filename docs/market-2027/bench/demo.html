@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проверка цитаты · ClipMic</title>
+<style>
+:root { color-scheme: light; font-family: "Inter", system-ui, sans-serif; background: #f6f5ee; color: #182c2a }
+body { margin: 0 auto; max-width: 760px; padding: 32px 22px }
+h1 { font-size: clamp(30px,5vw,47px); letter-spacing: -.035em; line-height: 1.06 }
+h2 { font-size: 20px; margin-bottom: 6px }
+p { line-height: 1.5 }
+section { border-top: 1px solid #a1b2a7; padding: 8px 0 18px }
+blockquote { margin: 12px 0; font-size: 21px; line-height: 1.4 }
+mark { background: #ffe0a4 }
+button { background: #174a43; color: white; font: inherit; padding: 9px 14px; border: 0; border-radius: 5px; cursor: pointer; margin: 6px 8px 6px 0 }
+button:disabled { background: #52655d; cursor: default }
+audio { width: 100%; margin: 8px 0 }
+small,a { color: #345c53 }
+</style>
+<main>
+<small>Локальная карточка для защиты · учебный пример</small>
+<h1>Мост уже ввели в эксплуатацию?</h1>
+<section><h2>Что выдал ClipMic</h2>
+<blockquote>«Согласно плану, мост полностью <mark>введён</mark> в эксплуатацию с сентября 2017 года…»</blockquote>
+<p>Фразу пометили обе версии декодера. Проверьте глагол и дату по оригиналу.</p>
+<audio id="audio" controls preload="auto" src="fleurs-41-room-6db.wav"></audio>
+<button type="button" id="start">Слушать фразу с начала</button>
+<button type="button" id="tail">Слушать оговорку с 6,1 с</button></section>
+<section><h2>Запись для конспекта</h2>
+<p>По плану мост войдёт в эксплуатацию в сентябре 2017 года, когда, как ожидалось, завершат бразильские пункты таможенной проверки.</p>
+<p><small>Формулировка ведущего по эталону FLEURS. Сверьте её со звуком, затем поставьте свою отметку. Она действует до закрытия страницы.</small></p>
+<button type="button" id="confirm" disabled>Подтвердить по звуку</button>
+<p id="status" role="status">Ожидает прослушивания.</p></section>
+<small>Русский FLEURS, Google и авторы набора, CC BY 4.0. Добавлены шум и отражения. <a href="README.md">Источник, лицензия и замер</a>.</small>
+</main>
+<script>
+const audio = document.getElementById('audio');
+const confirmButton = document.getElementById('confirm');
+const statusText = document.getElementById('status');
+function playFrom(second) {
+  audio.currentTime = second;
+  audio.play().catch(() => { statusText.textContent = 'Запустите воспроизведение кнопкой плеера.'; });
+}
+document.getElementById('start').onclick = () => playFrom(0);
+document.getElementById('tail').onclick = () => playFrom(6.1);
+function updateListening() {
+  for (let i = 0; i < audio.played.length; i++) {
+    if (audio.played.start(i) <= 0.3 && audio.played.end(i) >= 10.2 && !confirmed) {
+      confirmButton.disabled = false;
+      statusText.textContent = 'Фраза прослушана. Подтвердите, только если услышали и план, и оговорку.';
+    }
+  }
+}
+let confirmed = false;
+audio.addEventListener('timeupdate', updateListening);
+audio.addEventListener('ended', updateListening);
+confirmButton.onclick = () => {
+  confirmed = true;
+  statusText.textContent = 'Формулировка сверена слушателем с исходной записью.';
+  confirmButton.disabled = true;
+};
+</script>
+</html>

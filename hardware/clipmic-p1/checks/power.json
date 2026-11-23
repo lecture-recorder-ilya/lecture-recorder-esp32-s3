@@ -3,6 +3,10 @@
   "usable_assumption_mAh": 320.0,
   "led_bat_mA": 1.2543859649122804,
   "steady_modes": {
+    "awake_reference": {
+      "mA": 43.2,
+      "h": 7.4074074074074066
+    },
     "deep_sleep": {
       "mA": 3.0,
       "h": 106.66666666666667
@@ -65,5 +69,46 @@
   ],
   "dropout_current_load_scenario_A": 0.36630000000000007,
   "dropout_sag_scenario_V": 0.10989000000000002,
-  "charge_setpoint_nominal_mA": 109.0909090909091
+  "charge_setpoint_nominal_mA": 109.0909090909091,
+  "runtime_scenarios": {
+    "short": {
+      "usable_capacity_mAh": 260.0,
+      "average_current_factor": 1.2,
+      "hours": {
+        "awake_reference": 5.02,
+        "deep_sleep": 72.22,
+        "light_sleep": 43.33,
+        "modem_sleep": 4.92,
+        "record_sd_led": 3.3,
+        "sync_wifi_sd_read_led": 1.72,
+        "sync_ble_sd_read_led": 1.83
+      }
+    },
+    "central": {
+      "usable_capacity_mAh": 320.0,
+      "average_current_factor": 1.0,
+      "hours": {
+        "awake_reference": 7.41,
+        "deep_sleep": 106.67,
+        "light_sleep": 64.0,
+        "modem_sleep": 7.27,
+        "record_sd_led": 4.87,
+        "sync_wifi_sd_read_led": 2.53,
+        "sync_ble_sd_read_led": 2.71
+      }
+    },
+    "long": {
+      "usable_capacity_mAh": 380.0,
+      "average_current_factor": 0.8,
+      "hours": {
+        "awake_reference": 11.0,
+        "deep_sleep": 158.33,
+        "light_sleep": 95.0,
+        "modem_sleep": 10.8,
+        "record_sd_led": 7.22,
+        "sync_wifi_sd_read_led": 3.76,
+        "sync_ble_sd_read_led": 4.02
+      }
+    }
+  }
 }

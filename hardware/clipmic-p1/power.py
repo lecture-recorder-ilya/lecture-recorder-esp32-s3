@@ -3,11 +3,13 @@
 import json
 from pathlib import Path
 
-usable_mah = 400 * 0.80
+capacity_min_mah = 400
+usable_mah = capacity_min_mah * 0.80
 bat_v, efficiency = 3.8, 0.90
 led_ma = (3.3 - 2.0) / 1.0  # 1 kOhm, assumed red LED Vf
 led_at_bat = led_ma * 3.3 / (bat_v * efficiency)
 modes = {
+    "awake_reference": 43.2,
     "deep_sleep": 3.0,
     "light_sleep": 5.0,
     "modem_sleep": 44.0,
@@ -25,7 +27,7 @@ mixed = sum(
 )
 resistance = 0.30  # scenario for total battery + PCM + connector and wires in ohms
 result = {
-    "capacity_min_mAh": 400,
+    "capacity_min_mAh": capacity_min_mah,
     "usable_assumption_mAh": usable_mah,
     "led_bat_mA": led_at_bat,
     "steady_modes": {k: {"mA": v, "h": usable_mah / v} for k, v in modes.items()},
@@ -52,5 +54,22 @@ result["dropout_sag_scenario_V"] = (
     resistance * result["dropout_current_load_scenario_A"]
 )
 result["charge_setpoint_nominal_mA"] = 24000 / 220
+# Sensitivity cases, not statistical bounds or measured component limits.
+cases = {
+    "short": (0.65, 1.20),
+    "central": (0.80, 1.00),
+    "long": (0.95, 0.80),
+}
+result["runtime_scenarios"] = {
+    name: {
+        "usable_capacity_mAh": capacity_min_mah * usable_fraction,
+        "average_current_factor": current_factor,
+        "hours": {
+            mode: round(capacity_min_mah * usable_fraction / (current * current_factor), 2)
+            for mode, current in modes.items()
+        },
+    }
+    for name, (usable_fraction, current_factor) in cases.items()
+}
 p = Path(__file__).parent / "checks" / "power.json"
 p.write_text(json.dumps(result, indent=2) + "\n")
