@@ -19,5 +19,9 @@ final class PcmResampler {
   if(written>16000L*8*3600)throw new IOException("Поддерживаются записи длительностью до 8 часов");
  }
  void finish()throws IOException{long expected=Math.round(frames/step);while(written<expected)write(previous);}
+ void clearSignalHistory() {
+  previous = 0;
+  if (history != null) java.util.Arrays.fill(history, 0);
+ }
  long frames(){return written;}
 }

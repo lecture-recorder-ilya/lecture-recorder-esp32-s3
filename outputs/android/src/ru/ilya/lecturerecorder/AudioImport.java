@@ -41,12 +41,28 @@ final class AudioImport {
    extractor.selectTrack(track);String mime=format.getString(MediaFormat.KEY_MIME);boolean raw=mime.equals("audio/raw");
    if(!raw){codec=MediaCodec.createDecoderByType(mime);format.setInteger(MediaFormat.KEY_PCM_ENCODING,AudioFormat.ENCODING_PCM_16BIT);codec.configure(format,null,null,0);codec.start();}
    int sampleRate=format.getInteger(MediaFormat.KEY_SAMPLE_RATE),channels=format.getInteger(MediaFormat.KEY_CHANNEL_COUNT),encoding=format.containsKey(MediaFormat.KEY_PCM_ENCODING)?format.getInteger(MediaFormat.KEY_PCM_ENCODING):AudioFormat.ENCODING_PCM_16BIT;
-   try(RandomAccessFile header=new RandomAccessFile(target,"rw")){Store.header(header,0);}
+   StereoPcmMix stereo = raw && channels == 2 && encoding == AudioFormat.ENCODING_PCM_16BIT
+           ? new StereoPcmMix() : null;
+   long dataOffset;
+   try (RandomAccessFile header = new RandomAccessFile(target, "rw")) {
+    Store.header(header, 0);
+    dataOffset = header.getFilePointer();
+   }
    try(OutputStream output=new BufferedOutputStream(new FileOutputStream(target,true),65536)){
     PcmResampler resampler=new PcmResampler(output,sampleRate);boolean ended=false,sent=false;long last=System.currentTimeMillis(),duration=format.containsKey(MediaFormat.KEY_DURATION)?format.getLong(MediaFormat.KEY_DURATION):0;
     MediaCodec.BufferInfo info=new MediaCodec.BufferInfo();ByteBuffer rawBuffer=ByteBuffer.allocate(1024*1024);
     while(!ended){
-     if(raw){rawBuffer.clear();int size=extractor.readSampleData(rawBuffer,0);if(size<0){ended=true;continue;}rawBuffer.position(0);rawBuffer.limit(size);consume(rawBuffer,channels,encoding,resampler);extractor.advance();last=System.currentTimeMillis();}
+     if (raw) {
+      rawBuffer.clear();
+      int size = extractor.readSampleData(rawBuffer, 0);
+      if (size < 0) { ended = true; continue; }
+      rawBuffer.position(0);
+      rawBuffer.limit(size);
+      if (stereo == null) consume(rawBuffer, channels, encoding, resampler);
+      else stereo.consume(rawBuffer, resampler);
+      extractor.advance();
+      last = System.currentTimeMillis();
+     }
      else{
       if(!sent){int index=codec.dequeueInputBuffer(10000);if(index>=0){ByteBuffer input=codec.getInputBuffer(index);int size=extractor.readSampleData(input,0);if(size<0){codec.queueInputBuffer(index,0,0,0,MediaCodec.BUFFER_FLAG_END_OF_STREAM);sent=true;}else{codec.queueInputBuffer(index,0,size,Math.max(0,extractor.getSampleTime()),0);extractor.advance();last=System.currentTimeMillis();}}}
       int index=codec.dequeueOutputBuffer(info,10000);
@@ -58,6 +74,7 @@ final class AudioImport {
     }
     resampler.finish();
    }
+   if (stereo != null) stereo.finish(target, dataOffset);
   }finally{extractor.release();if(codec!=null){try{codec.stop();}catch(Exception ignored){}codec.release();}}
  }
  private static void consume(ByteBuffer buffer,int channels,int encoding,PcmResampler resampler)throws IOException{
