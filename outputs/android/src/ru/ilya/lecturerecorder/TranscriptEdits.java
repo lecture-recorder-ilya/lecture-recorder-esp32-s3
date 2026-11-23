@@ -73,6 +73,7 @@ final class TranscriptEdits {
                 if (line.corrected) {
                     segment.put("text", line.text());
                     segment.remove("word_times");
+                    segment.remove("word_reviews");
                     changed = true;
                 }
             }

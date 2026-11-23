@@ -24,6 +24,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 public class LectureReaderActivity extends Activity {
@@ -52,6 +54,7 @@ public class LectureReaderActivity extends Activity {
     private boolean local;
     private String stamp = "";
     private String tab = "text";
+    private String reviewKind = "all";
     private MediaPlayer player;
     private ForegroundAudio focus;
     private int pendingSeek, contentScroll;
@@ -76,6 +79,8 @@ public class LectureReaderActivity extends Activity {
         String requestedTab = saved == null ? getIntent().getStringExtra("tab") : saved.getString("reader_tab");
         if ("summary".equals(requestedTab) || "review".equals(requestedTab)) tab = requestedTab;
         if (saved != null) {
+            String selectedKind = saved.getString("reader_review_kind", "all");
+            for (String kind : TranscriptReview.KINDS) if (kind.equals(selectedKind)) reviewKind = kind;
             pendingSeek = saved.getInt("reader_seek");
             contentScroll = saved.getInt("reader_scroll");
         }
@@ -312,11 +317,37 @@ public class LectureReaderActivity extends Activity {
     }
 
     private void renderTranscript(JSONObject report, boolean reviewOnly) {
+        if (reviewOnly) {
+            LinearLayout filters = new LinearLayout(this);
+            for (int index = 0; index < TranscriptReview.KINDS.length; index++) {
+                String kind = TranscriptReview.KINDS[index];
+                Button filter = button(TranscriptReview.LABELS[index], () -> {
+                    reviewKind = kind;
+                    scroll.scrollTo(0, 0);
+                    contentScroll = 0;
+                    render();
+                });
+                StudioStyle.fitLabel(filter, 9, 13);
+                filter.setPadding(dp(2), 0, dp(2), 0);
+                filter.setSelected(kind.equals(reviewKind));
+                filter.setTextColor(kind.equals(reviewKind) ? ACCENT : TEXT);
+                filters.addView(filter, new LinearLayout.LayoutParams(0, dp(48), 1));
+            }
+            body.addView(filters, spaced(-1, -2, 8));
+            body.addView(text("Подсказки для проверки по звуку. Сомнение по фразе не означает ошибку в каждом слове.",
+                    13, MUTED), spaced(-1, -2, 6));
+        }
         JSONArray rows = report.optJSONArray("segments");
         int count = 0;
         if (rows != null) for (int index = 0; index < rows.length(); index++) {
             JSONObject row = rows.optJSONObject(index);
             if (row == null || reviewOnly && (!row.optBoolean("needs_review") || reviewed(row))) continue;
+            List<TranscriptReview.Item> candidates = reviewOnly ? TranscriptReview.words(row) : Collections.emptyList();
+            if (reviewOnly && !reviewKind.equals("all")) {
+                boolean matches = false;
+                for (TranscriptReview.Item item : candidates) matches |= item.kind.equals(reviewKind);
+                if (!matches) continue;
+            }
             count++;
             LinearLayout block = card();
             boolean timed = row.has("start") && row.has("end");
@@ -335,6 +366,18 @@ public class LectureReaderActivity extends Activity {
             }
             block.addView(timestamp, new LinearLayout.LayoutParams(-2, -2));
             block.addView(phrase, spaced(-1, -2, 5));
+            if (reviewOnly) for (TranscriptReview.Item item : candidates) {
+                if (!reviewKind.equals("all") && !item.kind.equals(reviewKind)) continue;
+                String reason = item.direct ? "сомнение в слове" : "сомнение по фразе";
+                String location = item.millis < 0 ? "без таймкода"
+                        : clock(item.millis / 1000.0) + (item.timedWord ? "" : " · начало фразы");
+                Button listen = button(TranscriptReview.label(item.kind) + " «" + item.text + "» · " + location,
+                        () -> playAt(item.millis));
+                listen.setEnabled(item.millis >= 0);
+                listen.setContentDescription("Слушать: " + item.text + ". " + reason + ". " + location);
+                block.addView(listen, spaced(-1, -2, 6));
+                block.addView(text(reason, 12, MUTED), spaced(-1, -2, 2));
+            }
             if (row.optBoolean("needs_review")) {
                 boolean checked = reviewed(row);
                 block.addView(text(checked ? "Проверено по записи" : "Нужно проверить", 13, MUTED),
@@ -354,7 +397,8 @@ public class LectureReaderActivity extends Activity {
             body.addView(block, spaced(-1, -2, 8));
         }
         if (count == 0) {
-            body.addView(text(reviewOnly ? "Непроверенных отметок нет" : "Текст пока недоступен", 16, MUTED),
+            body.addView(text(reviewOnly ? (reviewKind.equals("all") ? "Непроверенных отметок нет"
+                    : "Непроверенных отметок этой категории нет") : "Текст пока недоступен", 16, MUTED),
                     spaced(-1, -2, 12));
         }
     }
@@ -462,6 +506,7 @@ public class LectureReaderActivity extends Activity {
     @Override public void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
         state.putString("reader_tab", tab);
+        state.putString("reader_review_kind", reviewKind);
         state.putInt("reader_seek", ready ? player.getCurrentPosition() : pendingSeek);
         if (scroll != null) state.putInt("reader_scroll", scroll.getScrollY());
     }

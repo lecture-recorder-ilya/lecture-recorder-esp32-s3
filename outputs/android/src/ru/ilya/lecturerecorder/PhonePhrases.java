@@ -13,6 +13,7 @@ final class PhonePhrases {
     private final JSONArray segments = new JSONArray();
     private final StringBuilder text = new StringBuilder();
     private JSONArray wordTimes = new JSONArray();
+    private JSONArray wordReviews = new JSONArray();
     private double start, end, confidence;
     private boolean uncertain, sentenceEnd;
     private int count;
@@ -43,7 +44,11 @@ final class PhonePhrases {
             end = until;
             double score = word.optDouble("conf", 1);
             confidence += score;
-            uncertain |= score < .55 || word.optDouble("speech_conf", score) < .55 || word.optBoolean("needs_review");
+            boolean wordUncertain = score < .55 || word.optDouble("speech_conf", score) < .55 || word.optBoolean("needs_review");
+            uncertain |= wordUncertain;
+            if (wordUncertain && WORD.matcher(token).find()) {
+                wordReviews.put(new JSONArray().put(firstChar).put(text.length()));
+            }
             sentenceEnd = token.matches(".*[.!?…][»\\\"’)]*$");
             count++;
         }
@@ -58,13 +63,15 @@ final class PhonePhrases {
         if (count == 0) return;
         if (WORD.matcher(text).find()) {
             JSONObject phrase = new JSONObject().put("start", start).put("end", end).put("text", text.toString())
-                    .put("needs_review", uncertain || confidence / count < .78).put("word_times", wordTimes);
+                    .put("needs_review", uncertain || confidence / count < .78).put("word_times", wordTimes)
+                    .put("word_reviews", wordReviews);
             segments.put(phrase);
             onPhrase.accept(phrase);
         }
         count = 0;
         text.setLength(0);
         wordTimes = new JSONArray();
+        wordReviews = new JSONArray();
         confidence = 0;
         uncertain = false;
         sentenceEnd = false;

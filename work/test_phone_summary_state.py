@@ -290,9 +290,10 @@ public final class SummaryStateTest {
 
         builder = new PhonePhrases();
         builder.accept(new JSONArray()
-                .put(new JSONObject().put("word", "Это").put("start", 4).put("end", 4.2))
+                .put(new JSONObject().put("word", "Это").put("start", 4).put("end", 4.2).put("needs_review", true))
                 .put(new JSONObject().put("word", "по-русски.").put("start", 4.37).put("end", 4.8)));
         JSONObject row = builder.finish().getJSONObject(0);
+        require(row.getJSONArray("word_reviews").length() == 1, "Word doubt must survive phrase assembly");
         TranscriptEdits.Line line = new TranscriptEdits.Line(row, 0, true, new JSONObject());
         require(line.words.size() == 2 && line.words.get(0).audioStartMillis == 4000
                 && line.words.get(1).audioStartMillis == 4370, "Word seek must keep millisecond timing and hyphens");
@@ -305,6 +306,7 @@ public final class SummaryStateTest {
         JSONObject note = new JSONObject().put("report", new JSONObject().put("segments",new JSONArray().put(row)));
         TranscriptEdits.apply(note, corrections, true);
         require(!row.has("word_times"), "Rewritten export cannot reuse old offsets");
+        require(!row.has("word_reviews"), "Rewritten export cannot reuse old review spans");
         require(new TranscriptEdits.Line(row, 0, true, new JSONObject()).words.get(0).audioStartMillis == -1,
                 "Old transcripts must not invent a word timestamp");
     }
