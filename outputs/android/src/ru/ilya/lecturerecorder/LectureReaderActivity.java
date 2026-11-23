@@ -53,11 +53,13 @@ public class LectureReaderActivity extends Activity {
     private String stamp = "";
     private String tab = "text";
     private MediaPlayer player;
+    private ForegroundAudio focus;
     private int pendingSeek, contentScroll;
     private boolean ready, foreground;
 
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
+        focus = new ForegroundAudio(this, this::pausePlayback);
         String file = getIntent().getStringExtra("file");
         if (file == null || !file.endsWith(".json")) {
             finish();
@@ -79,17 +81,9 @@ public class LectureReaderActivity extends Activity {
         }
 
         boolean landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
-        getWindow().setStatusBarColor(BACKGROUND);
-        getWindow().setNavigationBarColor(BACKGROUND);
         LinearLayout page = column();
         page.setBackgroundColor(BACKGROUND);
-        page.setOnApplyWindowInsetsListener((view, insets) -> {
-            view.setPadding(insets.getSystemWindowInsetLeft() + dp(16),
-                    insets.getSystemWindowInsetTop() + dp(8),
-                    insets.getSystemWindowInsetRight() + dp(16),
-                    insets.getSystemWindowInsetBottom() + dp(8));
-            return insets.consumeSystemWindowInsets();
-        });
+        StudioStyle.fitWindow(getWindow(), page, dp(StudioStyle.PAGE_INSET), dp(8), dp(8));
         addNavigation(page, landscape);
 
         scroll = new ScrollView(this);
@@ -107,7 +101,6 @@ public class LectureReaderActivity extends Activity {
         File audio = Store.audio(this, recording);
         if (audio.isFile()) addPlayer(page, audio);
         setContentView(page);
-        scroll.requestFocus();
         page.requestApplyInsets();
         if (saved == null) StudioStyle.enter(body, true);
     }
@@ -139,8 +132,10 @@ public class LectureReaderActivity extends Activity {
                 render();
                 StudioStyle.enter(body, false);
             });
+            StudioStyle.fitLabel(button, 9, 14);
+            button.setPadding(dp(3), 0, dp(3), 0);
             tabButtons[index] = button;
-            tabs.addView(button, new LinearLayout.LayoutParams(0, dp(42), 1));
+            tabs.addView(button, new LinearLayout.LayoutParams(0, dp(48), 1));
         }
         if (landscape) {
             LinearLayout.LayoutParams area = withGap(0, -2, 12);
@@ -169,13 +164,14 @@ public class LectureReaderActivity extends Activity {
         controls.setBackground(StudioStyle.card(this, 16));
         toggle = button("Слушать", () -> {
             if (ready && player.isPlaying()) {
-                player.pause();
-                toggle.setText("Продолжить");
+                pausePlayback();
             } else {
                 playAt(ready ? player.getCurrentPosition() : pendingSeek);
             }
         });
-        controls.addView(toggle, new LinearLayout.LayoutParams(-2, dp(48)));
+        StudioStyle.actionTone(toggle, ACCENT, StudioStyle.INK);
+        StudioStyle.fitLabel(toggle, 10, 14);
+        controls.addView(toggle, new LinearLayout.LayoutParams(dp(94), dp(48)));
 
         position = new SeekBar(this);
         position.setContentDescription("Позиция записи");
@@ -189,12 +185,14 @@ public class LectureReaderActivity extends Activity {
                 if (user) playAt(value);
             }
         });
-        LinearLayout.LayoutParams track = withGap(0, dp(44), 8);
+        LinearLayout.LayoutParams track = withGap(0, dp(48), 4);
         track.weight = 1;
         controls.addView(position, track);
         long seconds = Math.max(0, audio.length() - 44) / (2 * PcmWave.SAMPLE_RATE);
         elapsed = text(clock(pendingSeek / 1000.0) + " / " + clock(seconds), 13, MUTED);
-        controls.addView(elapsed, withGap(-2, -2, 8));
+        elapsed.setTypeface(Typeface.MONOSPACE);
+        StudioStyle.fitLabel(elapsed, 8, 12);
+        controls.addView(elapsed, withGap(dp(100), dp(36), 4));
         page.addView(controls, spaced(-1, -2, 8));
     }
 
@@ -370,8 +368,7 @@ public class LectureReaderActivity extends Activity {
         pendingSeek = Math.max(0, millis);
         if (ready) {
             player.seekTo(Math.min(pendingSeek, player.getDuration()));
-            player.start();
-            toggle.setText("Пауза");
+            startPlayback();
             return;
         }
         try {
@@ -383,6 +380,7 @@ public class LectureReaderActivity extends Activity {
             if (player != null) return;
             status.setVisibility(View.GONE);
             player = new MediaPlayer();
+            player.setAudioAttributes(ForegroundAudio.SPEECH);
             player.setDataSource(audio.getPath());
             player.setOnPreparedListener(prepared -> {
                 if (prepared != player || isFinishing()) return;
@@ -390,12 +388,10 @@ public class LectureReaderActivity extends Activity {
                 position.setEnabled(true);
                 position.setMax(prepared.getDuration());
                 prepared.seekTo(Math.min(pendingSeek, prepared.getDuration()));
-                if (foreground) {
-                    prepared.start();
-                    toggle.setText("Пауза");
-                }
+                if (foreground) startPlayback();
             });
             player.setOnCompletionListener(complete -> {
+                focus.release();
                 pendingSeek = 0;
                 complete.seekTo(0);
                 toggle.setText("Слушать");
@@ -437,7 +433,25 @@ public class LectureReaderActivity extends Activity {
         timer.postDelayed(this::refresh, 500);
     }
 
+    private void startPlayback() {
+        if (!foreground || !focus.acquire()) {
+            if (foreground) showStatus("Аудио занято другим приложением");
+            return;
+        }
+        player.start();
+        toggle.setText("Пауза");
+    }
+
+    private void pausePlayback() {
+        if (ready && player.isPlaying()) {
+            player.pause();
+            toggle.setText("Слушать");
+        }
+        focus.release();
+    }
+
     private void releasePlayer() {
+        focus.release();
         ready = false;
         if (player != null) {
             player.release();
@@ -469,10 +483,7 @@ public class LectureReaderActivity extends Activity {
     @Override public void onPause() {
         foreground = false;
         timer.removeCallbacksAndMessages(null);
-        if (ready && player.isPlaying()) {
-            player.pause();
-            toggle.setText("Продолжить");
-        }
+        pausePlayback();
         super.onPause();
     }
 

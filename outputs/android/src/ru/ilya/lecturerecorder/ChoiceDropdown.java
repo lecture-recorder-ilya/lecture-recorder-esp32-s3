@@ -162,6 +162,7 @@ final class ChoiceDropdown {
     private void updateButton() {
         boolean open = isOpen();
         button.setText((selected == null ? label : selected.title) + (open ? "  ▴" : "  ▾"));
+        button.setTooltipText(selected == null ? null : selected.title);
         button.setContentDescription(open ? "Свернуть список" : selected == null ? label : label + ". " + selected.title);
     }
 

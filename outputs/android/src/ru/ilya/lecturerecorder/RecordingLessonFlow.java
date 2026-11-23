@@ -2,14 +2,18 @@ package ru.ilya.lecturerecorder;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
+import android.text.Editable;
 import android.text.InputFilter;
+import android.text.TextWatcher;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.*;
 import org.json.JSONObject;
 
@@ -28,22 +32,26 @@ final class RecordingLessonFlow {
     private static final String DEFERRED = "deferred_lessons";
     private final Activity activity;
     private final SharedPreferences profile;
+    private final SharedPreferences choiceDrafts;
     private final Consumer<String> onSaved;
     private final Runnable onDeferred;
+    private final Runnable onDiscarded;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final ExecutorService saves = Executors.newSingleThreadExecutor();
-    private AlertDialog dialog;
+    private AlertDialog dialog, discardDialog;
     private String checkedGroup = "";
     private boolean disposed;
     private boolean pendingChecked;
     private String pending = "";
     private String lastRecording = "";
 
-    RecordingLessonFlow(Activity activity, Consumer<String> onSaved, Runnable onDeferred) {
+    RecordingLessonFlow(Activity activity, Consumer<String> onSaved, Runnable onDeferred, Runnable onDiscarded) {
         this.activity = activity;
         this.onSaved = onSaved;
         this.onDeferred = onDeferred;
+        this.onDiscarded = onDiscarded;
         profile = MireaSchedule.profile(activity);
+        choiceDrafts = activity.getSharedPreferences("lesson_choice_drafts", Context.MODE_PRIVATE);
     }
 
     String profileLabel() {
@@ -62,7 +70,12 @@ final class RecordingLessonFlow {
         if (hasPending()) choose(pending);
     }
 
-    void refresh(boolean recording) {
+    void openPending(String name) {
+        if (disposed || dialog != null || CaptureService.recording) return;
+        choose(name);
+    }
+
+    void refresh(boolean recording, boolean allowAutomaticChoice) {
         if (recording) {
             pendingChecked = false;
             return;
@@ -72,15 +85,13 @@ final class RecordingLessonFlow {
             pendingChecked = false;
         }
         if (dialog != null) return;
-        if (!profile.getBoolean("seen", false)) {
-            profile(false);
-        } else if (!pendingChecked) {
+        if (!pendingChecked) {
             pendingChecked = true;
             pending = Store.pendingLesson(activity);
             if (!hasPending()) {
                 if (profile.contains(DEFERRED)) profile.edit().remove(DEFERRED).apply();
                 warmSchedule();
-            } else if (!deferred().contains(pending)) choose(pending);
+            } else if (allowAutomaticChoice && !deferred().contains(pending)) choose(pending);
         }
     }
 
@@ -95,6 +106,7 @@ final class RecordingLessonFlow {
     }
 
     private void resolve(String name) {
+        choiceDrafts.edit().remove(name + ".choice").remove(name + ".title").apply();
         Set<String> entries = new HashSet<>(deferred());
         if (entries.remove(name)) profile.edit().putStringSet(DEFERRED, entries).apply();
         pending = "";
@@ -159,6 +171,15 @@ final class RecordingLessonFlow {
         });
     }
 
+    static String draftTitle(Context context, String name) {
+        return context.getSharedPreferences("lesson_choice_drafts", Context.MODE_PRIVATE)
+                .getString(name + ".title", "").trim().replaceAll("\\s*\\R\\s*", " ");
+    }
+
+    private static String lessonKey(MireaSchedule.Lesson lesson) {
+        return "schedule:" + lesson.start + "|" + lesson.end + "|" + lesson.subject + "|" + lesson.type + "|" + lesson.room;
+    }
+
     private void choose(String name) {
         JSONObject recording;
         try { recording = Store.pendingMetadata(activity, name); }
@@ -190,14 +211,28 @@ final class RecordingLessonFlow {
         content.addView(options);
         List<MireaSchedule.Lesson> lessons = new ArrayList<>();
         EditText manual = edit("Название предмета");
-        manual.setVisibility(View.GONE);
+        String[] draftChoice = {choiceDrafts.getString(name + ".choice", "")};
+        manual.setSingleLine(false);
+        manual.setRawInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        manual.setHorizontallyScrolling(false);
+        manual.setMaxLines(3);
+        manual.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        manual.setText(choiceDrafts.getString(name + ".title", ""));
+        manual.setVisibility("manual".equals(draftChoice[0]) ? View.VISIBLE : View.GONE);
+        manual.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
+                choiceDrafts.edit().putString(name + ".title", text.toString()).apply();
+            }
+            @Override public void afterTextChanged(Editable text) {}
+        });
         content.addView(manual);
         TextView saveStatus = text("", 14, StudioStyle.MUTED);
         saveStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         saveStatus.setVisibility(View.GONE);
         content.addView(saveStatus);
         Button delete = new Button(activity, null, android.R.attr.borderlessButtonStyle);
-        delete.setText("Удалить запись");
+        delete.setText("Отменить запись…");
         delete.setAllCaps(false);
         delete.setTextColor(StudioStyle.RECORDING);
         delete.setMinimumHeight(dp(48));
@@ -208,16 +243,14 @@ final class RecordingLessonFlow {
         options.addView(own);
         outside.setTag(-1);
         own.setTag(-2);
-        options.check(outside.getId());
-        boolean[] userChose = {false};
-        outside.setOnClickListener(view -> userChose[0] = true);
-        own.setOnClickListener(view -> userChose[0] = true);
-        options.setOnCheckedChangeListener((layout, id) -> {
-            manual.setVisibility(id == own.getId() ? View.VISIBLE : View.GONE);
-            if (id == own.getId()) StudioStyle.enter(manual, false);
-            View selected = layout.findViewById(id);
-            if (selected != null) StudioStyle.changeAction(selected);
-        });
+        if ("manual".equals(draftChoice[0])) options.check(own.getId());
+        else if (!draftChoice[0].startsWith("schedule:")) options.check(outside.getId());
+        Consumer<String> rememberChoice = value -> {
+            draftChoice[0] = value;
+            choiceDrafts.edit().putString(name + ".choice", value).apply();
+        };
+        outside.setOnClickListener(view -> rememberChoice.accept("outside"));
+        own.setOnClickListener(view -> rememberChoice.accept("manual"));
 
         AlertDialog choice = new AlertDialog.Builder(activity)
                 .setTitle("К какой паре отнести запись?")
@@ -229,6 +262,12 @@ final class RecordingLessonFlow {
         show(choice, content, true);
         Button later = choice.getButton(AlertDialog.BUTTON_NEGATIVE);
         Button save = choice.getButton(AlertDialog.BUTTON_POSITIVE);
+        save.setEnabled(options.getCheckedRadioButtonId() != View.NO_ID);
+        options.setOnCheckedChangeListener((layout, id) -> {
+            manual.setVisibility(id == own.getId() ? View.VISIBLE : View.GONE);
+            if (id == own.getId()) StudioStyle.enter(manual, false);
+            save.setEnabled(id != View.NO_ID);
+        });
         boolean[] saving = {false};
         boolean[] scheduleFailed = {false};
         later.setAllCaps(false);
@@ -237,8 +276,9 @@ final class RecordingLessonFlow {
         save.setOnClickListener(view -> {
             if (saving[0]) return;
             RadioButton selected = options.findViewById(options.getCheckedRadioButtonId());
+            if (selected == null) return;
             int index = (Integer) selected.getTag();
-            String title = manual.getText().toString().trim();
+            String title = manual.getText().toString().trim().replaceAll("\\s*\\R\\s*", " ");
             if (index == -2 && title.isEmpty()) {
                 manual.setError("Введи название предмета");
                 manual.requestFocus();
@@ -296,19 +336,32 @@ final class RecordingLessonFlow {
             }
         });
         delete.setOnClickListener(view -> {
-            AlertDialog confirmationDialog = new AlertDialog.Builder(activity).setTitle("Удалить эту запись?")
+            delete.setEnabled(false);
+            AlertDialog confirmationDialog = new AlertDialog.Builder(activity).setTitle("Отменить запись?")
                 .setMessage("Аудио будет удалено с телефона.")
-                .setNegativeButton("Оставить", null)
-                .setPositiveButton("Удалить", (confirmation, which) -> {
-                    try {
-                        Store.discardLesson(activity, name);
-                        resolve(name);
-                        choice.dismiss();
-                    } catch (Exception error) {
-                        Toast.makeText(activity, error.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                }).show();
+                .setNegativeButton("Оставить аудио", null)
+                .setPositiveButton("Удалить", null)
+                .show();
+            discardDialog = confirmationDialog;
             decorate(confirmationDialog, true);
+            confirmationDialog.setOnDismissListener(ignored -> {
+                discardDialog = null;
+                delete.setEnabled(true);
+            });
+            Button discard = confirmationDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            discard.setOnClickListener(confirm -> {
+                discard.setEnabled(false);
+                try {
+                    Store.discardLesson(activity, name);
+                    resolve(name);
+                    confirmationDialog.dismiss();
+                    choice.dismiss();
+                    onDiscarded.run();
+                } catch (Exception error) {
+                    discard.setEnabled(true);
+                    Toast.makeText(activity, error.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
         });
         if (group.isEmpty()) return;
 
@@ -324,7 +377,7 @@ final class RecordingLessonFlow {
                         if (disposed || dialog != choice || !choice.isShowing()) return;
                         lessons.addAll(result);
                         int recommended = MireaSchedule.suggestion(lessons, start, seconds);
-                        boolean unchanged = !saving[0] && !userChose[0] && options.getCheckedRadioButtonId() == outside.getId();
+                        boolean suggest = !saving[0] && draftChoice[0].isEmpty() && options.getCheckedRadioButtonId() == outside.getId();
                         hint.setText(lessons.isEmpty() ? "В расписании на этот день занятий нет."
                                 : recommended >= 0 ? "Предложение по времени начала записи · Москва"
                                 : "Выбери занятие из расписания на день записи · Москва");
@@ -332,10 +385,17 @@ final class RecordingLessonFlow {
                             MireaSchedule.Lesson lesson = lessons.get(i);
                             RadioButton button = option(lesson.subject + "\n" + lesson.detail() + (i == recommended ? " · предложено" : ""),
                                     i == recommended);
+                            String key = lessonKey(lesson);
                             button.setTag(i);
                             button.setEnabled(!saving[0]);
+                            button.setOnClickListener(view -> rememberChoice.accept(key));
                             options.addView(button, i);
-                            if (i == recommended && unchanged) options.check(button.getId());
+                            if (!saving[0] && (key.equals(draftChoice[0]) || i == recommended && suggest)) {
+                                options.check(button.getId());
+                            }
+                        }
+                        if (draftChoice[0].startsWith("schedule:") && options.getCheckedRadioButtonId() == View.NO_ID) {
+                            hint.setText("Сохранённой пары нет в расписании. Выбери пару заново.");
                         }
                         if (!lessons.isEmpty()) StudioStyle.enter(options, false);
                     });
@@ -377,7 +437,8 @@ final class RecordingLessonFlow {
         value.setOnDismissListener(ignored -> { if (dialog == value) dialog = null; });
         value.show();
         decorate(value, false);
-        value.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        value.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
+                | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         StudioStyle.enter(content, true);
     }
 
@@ -432,6 +493,7 @@ final class RecordingLessonFlow {
 
     void dispose() {
         disposed = true;
+        if (discardDialog != null) discardDialog.dismiss();
         if (dialog != null) dialog.dismiss();
         worker.shutdownNow();
         saves.shutdown();
