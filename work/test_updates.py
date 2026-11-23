@@ -151,7 +151,8 @@ class Notes(unittest.TestCase):
     evidence=[{'quote':'готовый текст','segment_id':0,'start':0,'end':1}]
     final=p.with_name(p.name.replace('.live.json','.json'));final.write_text(json.dumps({'segments':[{'text':'готовый текст','start':0,'end':1}],'summary':['готовый текст'],'summary_evidence':evidence}))
     self.assertEqual(phone_notes.push('fixture','token',root),1);self.assertFalse(calls[-1]['report']['draft'])
-    self.assertEqual(calls[-1]['report']['summary_evidence'],evidence)
+    source_id=hashlib.sha256('0|0|1000|готовый текст'.encode()).hexdigest()
+    self.assertEqual(calls[-1]['report']['summary_evidence'],[dict(evidence[0],source_status='confirmed',source_fingerprint=source_id)])
  def test_long_russian_transcript_uses_wire_size_and_retries_without_duplicate(self):
   with tempfile.TemporaryDirectory() as directory:
    root=Path(directory); analysis=root/'analysis';analysis.mkdir()
