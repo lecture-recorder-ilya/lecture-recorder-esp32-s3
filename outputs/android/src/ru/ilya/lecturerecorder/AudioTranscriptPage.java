@@ -544,7 +544,8 @@ final class AudioTranscriptPage extends LinearLayout {
             exports.add(0, 200 + kind.ordinal(), kind.ordinal(), label).setEnabled(available);
         }
         exports.getItem().setEnabled(audio.isFile() || notes);
-        if (localSummaryPending && audio.isFile() && android.os.Process.is64Bit()) {
+        boolean savedText = !transcriptRows.isEmpty() && transcribe.getVisibility() == View.GONE;
+        if ((localSummaryPending || savedText) && audio.isFile() && android.os.Process.is64Bit()) {
             menu.getMenu().add(0, 111, 4, "Расшифровать заново").setEnabled(!PhoneAnalysisService.busy());
         }
         if (selected.equals(lastExportFile) && lastExportKind != null) {
@@ -725,7 +726,8 @@ final class AudioTranscriptPage extends LinearLayout {
         if (!TextUtils.equals(transcriptStatus.getText(), message)) transcriptStatus.setText(message);
         transcriptStatus.setTextColor(retry ? StudioStyle.WARNING : MUTED);
         transcriptStatus.setVisibility(message.isEmpty() ? View.GONE : View.VISIBLE);
-        boolean showAnalysisAction = supported && (hasAudio || localSummaryPending || loading);
+        boolean showAnalysisAction = supported && (loading || localSummaryPending
+                || (hasAudio && (transcriptRows.isEmpty() || retry)));
         transcribe.setVisibility(showAnalysisAction ? View.VISIBLE : View.GONE);
         boolean analysisEnabled = (!busy || loading) && !modelRequestStopping;
         transcribe.setEnabled(analysisEnabled);
@@ -735,8 +737,8 @@ final class AudioTranscriptPage extends LinearLayout {
             StudioStyle.actionTone(transcribe, primary ? ACCENT : StudioStyle.CONTROL, primary ? StudioStyle.INK : TEXT);
             StudioStyle.actionTone(play, primary ? StudioStyle.CONTROL : ACCENT, primary ? TEXT : StudioStyle.INK);
         }
-        String label = loading ? "Остановить" : localSummaryPending ? "Завершить конспект" : retry ? "Повторить разбор"
-                : transcriptRows.isEmpty() ? "Разобрать запись" : "Расшифровать заново";
+        String label = loading ? "Остановить" : localSummaryPending ? "Завершить конспект"
+                : retry ? "Повторить разбор" : "Разобрать запись";
         if (!TextUtils.equals(transcribe.getText(), label)) transcribe.setText(label);
         if (!TextUtils.equals(transcribe.getContentDescription(), label)) transcribe.setContentDescription(label);
     }
