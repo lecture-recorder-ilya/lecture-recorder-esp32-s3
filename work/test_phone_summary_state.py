@@ -21,10 +21,12 @@ STUBS = {
 import java.io.File;
 public final class Context {
     private final File root;
-    public Context(File root) { this.root = root; }
+    private final boolean keepAudio;
+    public Context(File root) { this(root, true); }
+    public Context(File root, boolean keepAudio) { this.root = root; this.keepAudio = keepAudio; }
     public File getFilesDir() { return root; }
     public SharedPreferences getSharedPreferences(String name, int mode) {
-        throw new UnsupportedOperationException();
+        return (key, fallback) -> key.equals("keep_audio_copy") ? keepAudio : fallback;
     }
     public interface SharedPreferences { boolean getBoolean(String key, boolean fallback); }
 }
@@ -72,6 +74,7 @@ public final class SummaryStateTest {
             checkHomeworkKinds(new JSONArray(new String(Files.readAllBytes(new File(args[2]).toPath()), java.nio.charset.StandardCharsets.UTF_8)));
             checkEditedDerivedData(new Context(new File(root, "derived-data")));
             checkHistoryExport(new Context(new File(root,"history-export")));
+            checkRecordingTitle(root);
             checkPhrases();
             JSONArray oldSegments = segments(OLD_TEXT);
             oldSegments.getJSONObject(0).put("review_key", OLD_KEY);
@@ -160,6 +163,42 @@ public final class SummaryStateTest {
             require(shared.contains(NEW_TEXT) && !shared.contains(OLD_TEXT), "Shared summary is stale");
             require(archive(history).equals(Store.read(mac)), "Finishing re-archived or altered the previous result");
             System.out.println("PASS: separate JVM resumed summary from disk and preserved the previous result");
+        }
+    }
+
+    private static void checkRecordingTitle(File root) throws Exception {
+        String title = "Линейная алгебра";
+        for (boolean keepAudio : new boolean[]{true, false}) {
+            Context context = new Context(new File(root, "import-" + keepAudio), keepAudio);
+            File pending = Store.file(context, NAME);
+            Files.write(pending.toPath(), new byte[]{7, 5, 3});
+            JSONObject metadata = new JSONObject().put("imported", true).put("title", title)
+                    .put("original_name", title + ".m4a");
+            Store.write(new File(pending.getPath() + ".json"), metadata);
+            String digest = Store.hash(pending);
+            String expected = title + " · " + Store.recordingTitle(NAME);
+            require(expected.equals(Store.recordingTitle(context, NAME)), "Потерялось название импорта");
+            Store.acknowledge(context, NAME, digest);
+            Store.acknowledge(context, NAME, digest);
+            require(!pending.exists(), "Переданная запись осталась в очереди");
+            File saved = Store.audio(context, NAME);
+            require(saved.isFile() == keepAudio, "Не учтён выбор хранения аудио");
+            if (keepAudio) require(Store.hash(saved).equals(digest), "Изменилось аудио после передачи");
+            require(Store.recordingTitle(context, NAME).equals(expected), "После синхронизации исчезло название");
+            Store.write(Store.lessonFile(context, NAME), new JSONObject().put("subject", "Матстат"));
+            require(Store.recordingTitle(context, NAME).startsWith("Матстат · "), "Выбранная пара должна идти первой");
+        }
+        Context conflict = new Context(new File(root, "import-conflict"));
+        File saved = new File(Store.library(conflict), NAME);
+        Files.write(saved.toPath(), new byte[]{1, 2});
+        File pending = Store.file(conflict, NAME);
+        Files.write(pending.toPath(), new byte[]{3, 4});
+        Store.write(new File(pending.getPath() + ".json"), new JSONObject().put("imported", true).put("title", title));
+        try {
+            Store.acknowledge(conflict, NAME, Store.hash(pending));
+            throw new AssertionError("Разные записи объединились");
+        } catch (IOException expected) {
+            require(pending.exists() && !new File(saved.getPath() + ".json").exists(), "Изменился конфликтующий импорт");
         }
     }
 

@@ -19,7 +19,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -296,16 +295,8 @@ final class RecordingLibraryPage extends LinearLayout {
     }
 
     static String title(Context context, String name, File audio) {
-        try {
-            String subject = Store.lesson(context, name).optString("subject").trim();
-            if (!subject.isEmpty()) return subject;
-        } catch (Exception ignored) {}
-        try {
-            JSONObject metadata = Store.readObject(new File(audio.getPath() + ".json"));
-            String imported = metadata.optString("title").trim();
-            if (metadata.optBoolean("imported") && !imported.isEmpty()) return imported;
-        } catch (Exception ignored) {}
-        return "Запись пары";
+        String title = Store.recordingName(context, name, audio);
+        return title.isEmpty() ? "Запись пары" : title;
     }
 
     private LayoutParams spaced(int gap) {

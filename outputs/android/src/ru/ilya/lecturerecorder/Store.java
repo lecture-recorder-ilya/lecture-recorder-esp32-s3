@@ -22,12 +22,22 @@ final class Store {
   }
   return audio.values();
  }
- static String recordingTitle(Context c,String file){
-  try{
-   String title=lesson(c,file).optString("subject");
-   if(!title.isEmpty())return title+" · "+recordingTitle(file);
-  }catch(Exception ignored){}
-  return recordingTitle(file);
+ static String recordingName(Context context, String name, File audio) {
+  try {
+   String subject = lesson(context, name).optString("subject").trim();
+   if (!subject.isEmpty()) return subject;
+  } catch (Exception ignored) {}
+  try {
+   JSONObject metadata = readObject(new File(audio.getPath() + ".json"));
+   if (metadata.optBoolean("imported")) return metadata.optString("title").trim();
+  } catch (Exception ignored) {}
+  return "";
+ }
+
+ static String recordingTitle(Context context, String file) {
+  String date = recordingTitle(file);
+  String title = recordingName(context, file, audio(context, file));
+  return title.isEmpty() ? date : title + " · " + date;
  }
  static String recordingTitle(String file){
   String name=file.substring("lecture-".length(),file.length()-".wav".length());
@@ -133,5 +143,37 @@ final class Store {
  }
  static String read(File f)throws IOException{try(InputStream i=new FileInputStream(f);ByteArrayOutputStream o=new ByteArrayOutputStream()){byte[] b=new byte[8192];int n;while((n=i.read(b))>0)o.write(b,0,n);return o.toString("UTF-8");}}
  static void write(File f,JSONObject j)throws IOException{File temp=new File(f.getPath()+".tmp");try(FileOutputStream o=new FileOutputStream(temp)){o.write(j.toString().getBytes("UTF-8"));o.getFD().sync();}if(!temp.renameTo(f))throw new IOException("Не удалось сохранить метаданные");}
- static synchronized void acknowledge(Context c,String name,String digest)throws Exception{File f=file(c,name);if(!f.exists())return;if(readObject(new File(f.getPath()+".json")).optBoolean("awaiting_lesson"))throw new IOException("Нужно выбрать пару");if(!hash(f).equals(digest))throw new IOException("Контрольная сумма отличается");if(name.endsWith(".wav")&&c.getSharedPreferences("settings",0).getBoolean("keep_audio_copy",true)){File saved=new File(library(c),name);if(saved.exists()){if(!hash(saved).equals(digest))throw new IOException("Аудиокопия в библиотеке отличается");if(!f.delete())throw new IOException("Не удалось завершить перенос в библиотеку");}else if(!f.renameTo(saved))throw new IOException("Не удалось сохранить аудиокопию для прослушивания");}else if(!f.delete())throw new IOException("Не удалось удалить подтверждённую копию");new File(f.getPath()+".json").delete();if(name.startsWith("board-")){String id=name.substring(name.lastIndexOf('-')+1,name.length()-4);new File(BoardPhotos.camera(c),id+".jpg").delete();new File(BoardPhotos.camera(c),id+".json").delete();}}
+ static synchronized void acknowledge(Context context, String name, String digest) throws Exception {
+  File pending = file(context, name);
+  if (!pending.isFile()) return;
+  File sidecar = new File(pending.getPath() + ".json");
+  JSONObject metadata = readObject(sidecar);
+  if (metadata.optBoolean("awaiting_lesson")) throw new IOException("Нужно выбрать пару");
+  if (!hash(pending).equals(digest)) throw new IOException("Контрольная сумма отличается");
+
+  if (name.endsWith(".wav")) {
+   File saved = new File(library(context), name);
+   boolean keep = context.getSharedPreferences("settings", 0).getBoolean("keep_audio_copy", true);
+   if (saved.exists() && !hash(saved).equals(digest))
+    throw new IOException("Аудиокопия в библиотеке отличается");
+   if ((keep && metadata.length() > 0) || metadata.optBoolean("imported")) {
+    JSONObject labels = new JSONObject();
+    for (String key : new String[]{"imported", "title", "original_name", "source"}) {
+     if (!metadata.isNull(key)) labels.put(key, metadata.get(key));
+    }
+    if (labels.length() > 0) write(new File(saved.getPath() + ".json"), labels);
+   }
+   if (keep && !saved.exists()) {
+    if (!pending.renameTo(saved)) throw new IOException("Не удалось сохранить аудиокопию для прослушивания");
+   } else if (!pending.delete()) {
+    throw new IOException("Не удалось удалить подтверждённую копию");
+   }
+  } else {
+   if (!pending.delete()) throw new IOException("Не удалось удалить подтверждённую копию");
+   String id = name.substring(name.lastIndexOf('-') + 1, name.length() - 4);
+   new File(BoardPhotos.camera(context), id + ".jpg").delete();
+   new File(BoardPhotos.camera(context), id + ".json").delete();
+  }
+  sidecar.delete();
+ }
 }
