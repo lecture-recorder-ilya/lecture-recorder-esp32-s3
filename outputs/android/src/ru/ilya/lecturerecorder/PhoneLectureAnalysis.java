@@ -41,16 +41,8 @@ final class PhoneLectureAnalysis {
             try {
                 File model = PhoneModels.acoustic(context, job);
                 job.update("Загружаю модель речи");
-                try {
-                    segments = PhoneGigaAm.transcribe(context, job, name, model);
-                    recognizer = PhoneModels.personalized(model) ? "gigaam-v3-personal" : "gigaam-v3";
-                } catch (ai.onnxruntime.OrtException error) {
-                    job.check();
-                    if (!PhoneModels.personalized(model)) throw error;
-                    Log.w("LectureAnalysis", "Personal acoustic model unavailable", error);
-                    segments = PhoneGigaAm.transcribe(context, job, name, PhoneModels.acousticBase(context, job));
-                    recognizer = "gigaam-v3";
-                }
+                segments = PhoneGigaAm.transcribe(context, job, name, model);
+                recognizer = "gigaam-v3";
             } catch (IOException | ai.onnxruntime.OrtException | LinkageError error) {
                 job.check();
                 Log.w("LectureAnalysis", "Using the fallback speech model", error);

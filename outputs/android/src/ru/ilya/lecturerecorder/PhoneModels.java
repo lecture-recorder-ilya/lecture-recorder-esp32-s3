@@ -11,14 +11,12 @@ final class PhoneModels {
     private static final String SPEECH = "vosk-model-small-ru-0.22";
     private static final String GIGAAM = "gigaam-v3-e2e-ctc.int8.onnx";
     private static final long GIGAAM_BYTES = 224893347L;
-    private static final String PERSONAL = "gigaam-personal.int8.onnx";
     private static final String TEXT = "qwen3-0.6b-int4.litertlm";
     private static final long TEXT_BYTES = 343490560L;
 
     static boolean ready(Context context) {
         File directory = directory(context);
-        return (new File(directory, PERSONAL).isFile() || new File(directory, GIGAAM).length() == GIGAAM_BYTES)
-                && summaryReady(context);
+        return new File(directory, GIGAAM).length() == GIGAAM_BYTES && summaryReady(context);
     }
 
     static boolean summaryReady(Context context) {
@@ -26,17 +24,6 @@ final class PhoneModels {
     }
 
     static File acoustic(Context context, PhoneAnalysisService.Job job) throws Exception {
-        File directory = directory(context);
-        File personal = new File(directory, PERSONAL);
-        if (personal.isFile()) return personal;
-        return acousticBase(context, job);
-    }
-
-    static boolean personalized(File model) {
-        return PERSONAL.equals(model.getName());
-    }
-
-    static File acousticBase(Context context, PhoneAnalysisService.Job job) throws Exception {
         return download(directory(context), GIGAAM,
                 "https://huggingface.co/istupakov/gigaam-v3-onnx/resolve/"
                         + "322c3b29492673eb7d0b434bfa9dfb8653e34d02/v3_e2e_ctc.int8.onnx",
