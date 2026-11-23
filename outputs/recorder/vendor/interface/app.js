@@ -26,6 +26,7 @@
  }
  const navFoot=create('div','nav-foot','Аудио остаётся на этом Mac');nav.append(navFoot);document.body.prepend(nav);
  function show(id,refresh=true){
+  if(id!=='library'&&!views.library.hidden)window.LectureWorkflow?.pauseLibrary();
   for(const key of Object.keys(views)){views[key].hidden=key!==id;buttons[key].setAttribute('aria-current',key===id?'page':'false')}
   document.body.dataset.view=id;
   try{localStorage.setItem('lecture-view',id)}catch{}

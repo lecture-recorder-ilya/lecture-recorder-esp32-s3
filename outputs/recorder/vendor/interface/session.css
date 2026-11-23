@@ -9,9 +9,9 @@
   border-radius: 22px;
   box-shadow: 0 24px 74px #000a;
 }
-.session-dialog[open] { animation: session-in .23s var(--motion-ease) both; }
-.session-dialog::backdrop { background: #070c13bb; animation: session-dim .20s ease-out both; }
-@keyframes session-in { from { opacity: 0; transform: translateY(10px) scale(.987); } to { opacity: 1; transform: none; } }
+.session-dialog[open] { animation: session-in 160ms var(--motion-ease) both; }
+.session-dialog::backdrop { background: #070c13bb; animation: session-dim 120ms ease-out both; }
+@keyframes session-in { from { opacity: 0; transform: translateY(6px) scale(.993); } to { opacity: 1; transform: none; } }
 @keyframes session-dim { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .session-dialog[open], .session-dialog::backdrop { animation: none; }
@@ -58,10 +58,10 @@
 @media (prefers-reduced-motion: no-preference) {
   #selection-confirm:not([hidden]), #selection-manual-label:not([hidden]),
   #selection-choices:not([hidden]) {
-    animation: session-in 180ms var(--motion-ease) both;
+    animation: session-in 160ms var(--motion-ease) both;
   }
   .session-choice { transition: background-color 150ms ease, border-color 150ms ease; }
-  .session-saved:not([hidden]) { animation: session-in 180ms var(--motion-ease) both; }
+  .session-saved:not([hidden]) { animation: session-in 160ms var(--motion-ease) both; }
 }
 
 #selection-operation:empty { display: none; }
@@ -79,3 +79,20 @@
   border-color: var(--accent);
   background: var(--active);
 }
+
+.organized #selection-manual {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 8px 0 14px;
+  padding: 11px 12px;
+  min-height: 68px;
+  resize: vertical;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+.organized #selection-manual:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -29,10 +29,10 @@ body{margin:0;background:#121212;color:#f4eee8;font:16px system-ui}main{max-widt
   <p id="selection-note" class="muted" role="status">Загружаю расписание…</p>
   <button type="button" id="selection-retry" class="secondary" hidden>Повторить загрузку расписания</button>
   <fieldset id="selection-choices" hidden><legend class="session-sr">Пары в этот день</legend></fieldset>
-  <label id="selection-manual-label" for="selection-manual" hidden>Название пары<input id="selection-manual" maxlength="160" placeholder="Например, Математический анализ" autocomplete="off"></label>
+  <label id="selection-manual-label" for="selection-manual" hidden>Название пары<textarea id="selection-manual" rows="2" maxlength="160" placeholder="Например, Математический анализ" autocomplete="off"></textarea></label>
   <div class="session-actions session-edit"><button type="button" id="selection-name" class="secondary">Указать название</button><button type="button" id="selection-outside" class="secondary">Без пары</button></div>
   <div class="session-actions"><button type="button" id="selection-later" class="secondary">Позже</button><button type="submit" id="selection-save" disabled>Сохранить запись</button></div>
-  <button type="button" id="selection-delete" class="session-text-danger">Удалить запись</button>
+  <button type="button" id="selection-delete" class="session-text-danger">Отменить запись…</button>
  </form>
  <section id="selection-confirm" hidden>
   <p>Удалить эту запись? Восстановить её после удаления нельзя.</p>
@@ -58,7 +58,10 @@ $('#save-asr-terms').disabled=true;
 $('#save-asr-terms').onclick=async()=>{try{const file=vocabularyFile;if(!file)return;await post('/asr-vocabulary',{file,terms:$('#asr-terms').value});$('#asr-terms-status').textContent='Сохранено для этой записи'}catch(e){$('#asr-terms-status').textContent=e.message}};
 $('#speech-model').onchange=async()=>{try{await post('/ai-settings',{speech:$('#speech-model').value});await update()}catch(e){$('#error').textContent=e.message;await update()}};
 async function post(path,body){const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});const value=await r.json();if(!r.ok)throw Error(value.error||'Ошибка');return value}
-async function action(path){if(inFlight||stopping)return;inFlight=true;
+async function action(path){
+ if(inFlight||stopping)return;
+ inFlight=true;
+ if(path==='/start')$('#start').setAttribute('aria-disabled','true');
  if(path==='/stop'){
   stopping=true;
   stopError='';
@@ -74,19 +77,27 @@ async function action(path){if(inFlight||stopping)return;inFlight=true;
  if(path==='/pair')$('#wifi-result').textContent='Подключи Mac к резервной сети ESP.';
  if(path==='/setup-hotspot'){$('#wifi-result').textContent='ESP подключилась к телефону. Подключи Mac к той же сети и проверь связь.';$('#hotspot-password').value=''}
  await update();
- }catch(e){if(path==='/stop'){stopping=false;stopError='Не удалось завершить запись. Повтори попытку.';$('#stop').removeAttribute('aria-disabled');}$('#error').textContent=path==='/stop'?stopError:e.message;if(path==='/check-wifi'){$('#wifi-result').textContent='Нет связи. Проверь выбранную сеть и питание ESP.';$('#wifi-result').className='error'}}finally{inFlight=false}}
-for(const [id,path] of [['start','/start'],['stop','/stop'],['pair','/pair'],['check','/check-wifi'],['setup','/setup-hotspot'],['reserve-check','/check-wifi']])$('#'+id).onclick=()=>action(path);
+ }catch(e){if(path==='/stop'){stopping=false;stopError='Не удалось завершить запись. Повтори попытку.';$('#stop').removeAttribute('aria-disabled');}$('#error').textContent=path==='/stop'?stopError:e.message;if(path==='/check-wifi'){$('#wifi-result').textContent='Нет связи. Проверь выбранную сеть и питание ESP.';$('#wifi-result').className='error'}}finally{
+  if(path==='/start')$('#start').removeAttribute('aria-disabled');
+  inFlight=false;
+ }}
+for(const [id,path] of [['start','/start'],['stop','/stop'],['pair','/pair'],['check','/check-wifi'],['setup','/setup-hotspot'],['reserve-check','/check-wifi']])$('#'+id).onclick=event=>{if(event.detail<2||!['/start','/stop'].includes(path))action(path);};
+for(const id of ['start','stop'])$('#'+id).addEventListener('keydown',event=>{
+ if(event.repeat&&(event.key==='Enter'||event.key===' '))event.preventDefault();
+});
 $('#transport').value=localStorage.getItem('transport')||'usb';$('#transport').onchange=e=>{localStorage.setItem('transport',e.target.value);update()};
 $('#auto-ai').onchange=async e=>{try{await post('/ai-settings',{auto:e.target.checked})}catch(error){$('#error').textContent=error.message}};
 function el(tag,text,cls){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node}
 function timeLabel(seconds){const s=Math.max(0,Math.floor(Number(seconds)||0)),h=Math.floor(s/3600);return (h?[h,Math.floor(s/60)%60,s%60]:[Math.floor(s/60),s%60]).map(v=>String(v).padStart(2,'0')).join(':')}
 function jumpButton(seconds,audio){const button=el('button',timeLabel(seconds),'secondary');button.onclick=()=>{if(window.LectureWorkflow){const card=[...cards.values()].find(c=>c.audio===audio)||{audio,audioTools:audio.closest('details')};window.LectureWorkflow.seek(card,seconds)}else{audio.currentTime=seconds;audio.play().catch(()=>{})}};return button}
 function showResult(card,result,name){
- if(card.readerTimeline&&card.readerState)card.readerState.scroll=card.readerTimeline.scrollTop;
+ const readerFocus=card.readerRoot?.contains(document.activeElement)?document.activeElement:null;
+ if(card.readerTimeline?.isConnected&&card.readerState)card.readerState.scroll=card.readerTimeline.scrollTop;
  const openSections=[...card.result.querySelectorAll('.temporal-section[open]')].map(d=>d.dataset.start);
- card.audioTools.querySelectorAll('.voice-details').forEach(node=>node.remove());card.voiceBox=null;card.voiceStamp='';card.result.replaceChildren();card.chapters.hidden=true;const box=el('div',undefined,'ai-result');
+ card.audioTools.querySelectorAll('.voice-details').forEach(node=>node.remove());card.voiceBox=null;card.voiceStamp='';card.chapters.hidden=true;const box=el('div',undefined,'ai-result');
+ card.result.replaceChildren(box);
  box.append(el('h3',result.topic||card.lesson?.title||result.subject||card.lesson?.subject||'Содержание занятия'));
- if(window.LectureWorkflow)window.LectureWorkflow.renderReader(box,card,result,name);else renderFullLecture(box,card,result,name);
+ if(window.LectureWorkflow)window.LectureWorkflow.renderReader(box,card,result,name,readerFocus);else renderFullLecture(box,card,result,name);
  const extras=el('details',undefined,'lesson-extras');extras.append(el('summary','Фото, метки и другие материалы занятия'));box.append(extras);
  renderTelegramExport(extras,result,card.lesson||{},name);
  renderTeacherRemarks(extras,card,result);
@@ -94,16 +105,21 @@ function showResult(card,result,name){
  renderTemporalSections(extras,card,result,name);
  const info=el('details',undefined,'lesson-info');info.append(el('summary','О занятии'));info.append(el('p','Предмет: '+(card.lesson?.subject||result.subject||'не определён')));const teacher=card.lesson?.teacher||result.teacher;if(teacher)info.append(el('p','Преподаватель: '+teacher));extras.append(info);
  for(const warning of result.warnings||[])extras.append(el('p',warning,'muted'));
- card.result.append(box);for(const d of box.querySelectorAll('.temporal-section'))if(openSections.includes(d.dataset.start))d.open=true;voiceControls(card,name).catch(studyError);
+ for(const d of box.querySelectorAll('.temporal-section'))if(openSections.includes(d.dataset.start))d.open=true;voiceControls(card,name).catch(studyError);
 }
 
 function addCard(name){
  const li=el('li');const link=el('a',name);link.href='/recordings/'+encodeURIComponent(name);link.download=name;
  const audio=el('audio');audio.controls=true;audio.preload='none';audio.src=link.href;link.textContent='Скачать аудио';
  const button=el('button','Разобрать запись','secondary ai-button');const progress=el('div','','ai-progress');const result=el('div');
- const card={li,audio,button,progress,result,lesson:null,loaded:false,loading:false,lastStatus:''};
+ const card={name,li,audio,button,progress,result,lesson:null,loaded:false,loading:false,lastStatus:''};
  button.onclick=async()=>{try{await post('/analyze',{file:name});card.loaded=false;await update()}catch(e){$('#error').textContent=e.message}};
- li.append(link,audio,button,progress,result);cards.set(name,card);initStudyCard(card,name);return card;
+ li.append(link,audio,button,progress,result);cards.set(name,card);initStudyCard(card,name);
+ card.details.addEventListener('toggle',()=>{
+  if(card.details.open)window.LectureWorkflow?.bindAudio(card);
+  else audio.pause();
+ });
+ return card;
 }
 let updating=false;
 async function update(){if(updating)return;updating=true;try{

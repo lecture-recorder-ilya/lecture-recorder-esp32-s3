@@ -11,16 +11,43 @@
   if(audio.readyState){audio.currentTime=Math.min(card.pendingSeek,Number.isFinite(audio.duration)?audio.duration:card.pendingSeek);card.pendingSeek=null;}
   audio.play().then(()=>{if(card.readerNotice)card.readerNotice.textContent=''}).catch(()=>{if(card.readerNotice)card.readerNotice.textContent='Не удалось включить звук. Нажми воспроизведение в плеере или проверь аудиофайл.'});
  }
+ function rememberPosition(card){
+  const time=card.audio.currentTime;
+  if(!card.name||!card.audio.readyState||card.pendingSeek!=null||!Number.isFinite(time))return;
+  const seconds=Math.round(time*10)/10;
+  if(seconds===card.lastPlaybackPosition)return;
+  card.lastPlaybackPosition=seconds;
+  try{localStorage.setItem('lecture-playback:'+card.name,String(seconds));}catch{}
+ }
+ function pauseLibrary(){
+  for(const card of cards.values())if(card.workflowAudioBound){
+   card.audio.pause();
+   rememberPosition(card);
+  }
+ }
+ window.addEventListener('pagehide',pauseLibrary);
  function bindAudio(card){
   if(card.workflowAudioBound)return;card.workflowAudioBound=true;
-  const audio=card.audio;if(audio.preload==='none')audio.preload='metadata';
-  audio.addEventListener('loadedmetadata',()=>{if(card.pendingSeek!==null&&card.pendingSeek!==undefined){audio.currentTime=Math.min(card.pendingSeek,audio.duration);card.pendingSeek=null}});
+  const audio=card.audio;
+  try{
+   const seconds=Number(localStorage.getItem('lecture-playback:'+card.name));
+   if(Number.isFinite(seconds)&&seconds>0){card.pendingSeek=seconds;card.lastPlaybackPosition=seconds;}
+  }catch{}
+  const restore=()=>{
+   if(card.pendingSeek==null)return;
+   const seconds=card.pendingSeek;
+   card.pendingSeek=null;
+   audio.currentTime=Number.isFinite(audio.duration)?Math.min(seconds,audio.duration):seconds;
+  };
+  audio.addEventListener('loadedmetadata',restore);
+  for(const event of ['pause','seeked','ended'])audio.addEventListener(event,()=>rememberPosition(card));
   audio.addEventListener('play',()=>{for(const other of document.querySelectorAll('audio'))if(other!==audio)other.pause()});
+  if(audio.readyState)restore();
+  if(audio.preload==='none')audio.preload='metadata';
  }
- function renderReader(parent,card,report,name){
+ function renderReader(parent,card,report,name,previousFocus){
   bindAudio(card);
   const state=card.readerState||(card.readerState={tab:'text',query:'',follow:false,scroll:0});
-  if(card.readerTimeline)state.scroll=card.readerTimeline.scrollTop;
   card.readerAbort?.abort();const controller=new AbortController();card.readerAbort=controller;
   const signal=controller.signal;
   const root=node('section',undefined,'lecture-reader');root.setAttribute('aria-label','Расшифровка и конспект');
@@ -31,8 +58,14 @@
   const rows=report.segments||[];const timedRows=rows.filter(r=>Number.isFinite(r.start)&&Number.isFinite(r.end));
   const pending=()=>rows.filter(r=>r.needs_review&&!r.reviewed).length;
   const buttons={};
+  const indicator=node('span',undefined,'reader-tab-indicator');
+  indicator.setAttribute('aria-hidden','true');
+  const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+  let indicatorMotion,panelMotion;
+  const cancelMotion=()=>{indicatorMotion?.cancel();panelMotion?.cancel()};
+  reducedMotion.addEventListener('change',cancelMotion,{signal});
   for(const [key,title] of [['text','Текст'],['summary','Конспект'],['review','Проверить']]){
-   const b=node('button',title);b.type='button';b.setAttribute('role','tab');b.id='reader-'+name.replace(/\W/g,'')+'-'+key;b.onclick=()=>show(key);buttons[key]=b;tabs.append(b);
+   const b=node('button',title);b.type='button';b.setAttribute('role','tab');b.id='reader-'+encodeURIComponent(name)+'-'+key;b.onclick=()=>show(key);buttons[key]=b;tabs.append(b);
    b.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const keys=Object.keys(buttons),i=keys.indexOf(key);const next=e.key==='Home'?0:e.key==='End'?keys.length-1:(i+(e.key==='ArrowRight'?1:-1)+keys.length)%keys.length;show(keys[next]);buttons[keys[next]].focus()};
   }
   const badge=node('span',report.draft?'Текст появляется по мере обработки':'Разбор готов','reader-badge');
@@ -43,6 +76,20 @@
   }
   const play=node('button','Слушать','secondary reader-play');
   play.type='button';
+  const steps=node('div',undefined,'reader-transport');
+  const step=(label,description,seconds)=>{
+   const button=node('button',label,'secondary reader-skip');
+   button.type='button';
+   button.title=description;
+   button.setAttribute('aria-label',description);
+   button.onclick=()=>{
+    if(!button.disabled)card.audio.currentTime=Math.max(0,Math.min(card.audio.duration,card.audio.currentTime+seconds));
+   };
+   return button;
+  };
+  const back=step('−10','На 10 секунд назад',-10);
+  const ahead=step('+10','На 10 секунд вперёд',10);
+  steps.append(back,play,ahead);
   const timecode=node('span','','reader-position');
   const seekRange=node('input',undefined,'reader-seek');
   seekRange.type='range';seekRange.min='0';seekRange.step='0.25';seekRange.value='0';
@@ -50,8 +97,10 @@
   const updatePlayback=()=>{
    const label=card.audio.paused?'Слушать':'Пауза';
    if(play.textContent!==label)play.textContent=label;
+   playback.classList.toggle('is-playing',!card.audio.paused);
    const duration=card.audio.duration,available=Number.isFinite(duration)&&duration>0;
    seekRange.disabled=!available;
+   back.disabled=ahead.disabled=!available;
    if(available&&Number(seekRange.max)!==duration)seekRange.max=duration;
    seekRange.value=card.audio.currentTime;
    const position=clock(card.audio.currentTime);
@@ -62,11 +111,11 @@
     seekRange.setAttribute('aria-valuetext',time);
    }
   };
-  play.onclick=()=>{if(card.audio.paused)seek(card,card.audio.currentTime||0);else card.audio.pause()};
+  play.onclick=()=>{if(card.audio.paused)seek(card,card.pendingSeek??card.audio.currentTime??0);else card.audio.pause()};
   seekRange.oninput=()=>{if(!seekRange.disabled)card.audio.currentTime=Number(seekRange.value)};
-  for(const event of ['play','pause','ended','loadedmetadata','durationchange','timeupdate'])card.audio.addEventListener(event,updatePlayback,{signal});
+  for(const event of ['play','pause','ended','loadedmetadata','durationchange','timeupdate','seeked'])card.audio.addEventListener(event,updatePlayback,{signal});
   updatePlayback();
-  playback.append(play,seekRange,timecode);
+  playback.append(steps,seekRange,timecode);
   top.append(tabs,badge);root.append(top,playback,notice,panel);parent.append(root);
   card.readerRoot=root;card.workflowBadge=badge;
   const caption=node('p','Нажми на фразу, чтобы услышать её в записи.','reader-caption');
@@ -80,13 +129,16 @@
   const footer=node('div',undefined,'reader-footer');
   const download=node('a','Скачать текст с таймкодами');download.href='/transcript-export/'+encodeURIComponent(name);download.download=name.replace(/\.wav$/,'.txt');footer.append(download);
   const itemNodes=new Map();
+  let activeItem=null;
   let reviewIndex=-1;
   const reviewNavigation=node('div',undefined,'reader-review-navigation');
   const reviewPosition=node('span','','reader-review-position');
   reviewPosition.setAttribute('role','status');
-  const reviewPrevious=node('button','Предыдущая','secondary reader-step-prev');
-  const reviewNext=node('button','Следующий фрагмент','secondary reader-step-next');
-  const reviewInText=node('button','К фрагменту в тексте','secondary reader-step-text');
+  const reviewPrevious=node('button','Назад','secondary reader-step-prev');
+  const reviewNext=node('button','Дальше','secondary reader-step-next');
+  const reviewInText=node('button','Весь текст','secondary reader-step-text');
+  reviewPrevious.setAttribute('aria-label','Предыдущий фрагмент');
+  reviewNext.setAttribute('aria-label','Следующий фрагмент');
   reviewInText.type='button';
   reviewInText.onclick=()=>{
    const item=Array.from(itemNodes.values())[reviewIndex];
@@ -98,13 +150,14 @@
   reviewPrevious.onclick=()=>jumpReview(reviewIndex-1);
   reviewNext.onclick=()=>jumpReview(reviewIndex+1);
   reviewNavigation.append(reviewPosition,reviewPrevious,reviewNext,reviewInText);
-  function counts(){buttons.review.textContent='Проверить'+(pending()?' · '+pending():'');}
+  function counts(){buttons.review.firstChild.data='Проверить'+(pending()?' · '+pending():'');}
   function updateReviewNavigation(){
    const count=itemNodes.size;
    reviewPosition.textContent=count?(reviewIndex<0?count+' фрагм.':String(reviewIndex+1)+' из '+count):'';
    reviewPosition.hidden=!count;
    reviewPrevious.hidden=reviewNext.hidden=!count;
-   reviewInText.textContent=reviewIndex<0?'Весь текст':'К фрагменту в тексте';
+   reviewInText.textContent=reviewIndex<0?'Весь текст':'К тексту';
+   reviewInText.setAttribute('aria-label',reviewIndex<0?'Весь текст':'К фрагменту в тексте');
    reviewPrevious.disabled=reviewIndex<=0;
    reviewNext.disabled=reviewIndex>=count-1;
    if(state.tab==='review'){
@@ -127,6 +180,7 @@
   }
   function renderRows(){
    const previous=timeline.scrollTop;timeline.replaceChildren();itemNodes.clear();
+   activeItem=null;
    const query=state.query.trim().toLocaleLowerCase('ru');
    const visible=rows.filter(r=>(state.tab!=='review'||r.needs_review&&!r.reviewed)&&(!query||r.text.toLocaleLowerCase('ru').includes(query)));
    for(const [index,segment] of visible.entries()){
@@ -146,7 +200,9 @@
     if(segment.needs_review||segment.reviewed){
      const reviewBar=node('div',undefined,'transcript-review');
      const label=node('span',segment.reviewed?'Проверено по записи':'Проверь по записи','review-label');
-     const reasons=(segment.quality?.reasons||[]).join(' · ');if(reasons&&!segment.reviewed){label.title=reasons;reviewBar.append(label,node('span',reasons,'review-reasons'))}else reviewBar.append(label);
+     const reasons=(segment.quality?.reasons||[]).filter(reason=>reason!=='Распознавание требует проверки по записи').join(' · ');
+     reviewBar.append(label);
+     if(reasons&&!segment.reviewed)reviewBar.append(node('span',reasons,'review-reasons'));
      if(state.tab==='review'){
       for(const span of segment.quality?.unrecognized_audio||[]){
        if(!Number.isFinite(span?.start)||!Number.isFinite(span.end)||span.start<0||span.end<=span.start)continue;
@@ -180,15 +236,23 @@
    updateReviewNavigation();
    timeline.scrollTop=previous;highlight();
   }
-  let activeId=null;
   function highlight(){
    const position=card.audio.currentTime;
    let lo=0,hi=timedRows.length-1,index=-1;
    while(lo<=hi){const mid=(lo+hi)>>1;if(timedRows[mid].start<=position){index=mid;lo=mid+1}else hi=mid-1}
-   const active=index>=0&&position<timedRows[index].end?timedRows[index].id:null;
-   for(const [id,item]of itemNodes){const yes=id===active;item.row.classList.toggle('is-playing',yes);if(yes)item.line.setAttribute('aria-current','true');else item.line.removeAttribute('aria-current')}
-   if(state.follow&&active!==activeId&&active!==null&&itemNodes.has(active)){const item=itemNodes.get(active).row;timeline.scrollTo({top:Math.max(0,item.offsetTop-timeline.offsetTop-timeline.clientHeight*.3),behavior:motion()})}
-   activeId=active;
+   const next=index>=0&&position<timedRows[index].end?itemNodes.get(timedRows[index].id):null;
+   if(next===activeItem)return;
+   if(activeItem){
+    activeItem.row.classList.remove('is-playing');
+    activeItem.line.removeAttribute('aria-current');
+   }
+   activeItem=next||null;
+   if(!next)return;
+   next.row.classList.add('is-playing');
+   next.line.setAttribute('aria-current','true');
+   if(state.follow&&timeline.isConnected){
+    timeline.scrollTo({top:Math.max(0,next.row.offsetTop-timeline.clientHeight*.3),behavior:motion()});
+   }
   }
   card.audio.addEventListener('timeupdate',highlight,{signal});card.audio.addEventListener('seeked',highlight,{signal});
   function summary(){
@@ -219,19 +283,45 @@
    return summary;
   }
   function show(tab){
-   if(card.readerTimeline?.isConnected)state.scroll=timeline.scrollTop;
+   const previous=state.tab,changed=previous!==tab;
+   if(!changed&&panel.hasChildNodes())return;
+   const from=changed&&indicator.isConnected&&!reducedMotion.matches?indicator.getBoundingClientRect():null;
+   cancelMotion();
+   if(timeline.isConnected)state.scroll=timeline.scrollTop;
    state.tab=tab;counts();
    for(const [key,b]of Object.entries(buttons)){b.setAttribute('aria-selected',key===tab?'true':'false');b.tabIndex=key===tab?0:-1}
    panel.setAttribute('aria-labelledby',buttons[tab].id);panel.replaceChildren();
-   panel.classList.remove('is-entering');
-   requestAnimationFrame(()=>panel.classList.add('is-entering'));
+   buttons[tab].append(indicator);
+   if(from){
+    const to=indicator.getBoundingClientRect(),forward=buttons[previous].compareDocumentPosition(buttons[tab])&Node.DOCUMENT_POSITION_FOLLOWING;
+    const easing='cubic-bezier(.2,.72,.2,1)';
+    if(to.width>0)indicatorMotion=indicator.animate([
+     {transform:'translate('+ (from.left-to.left) +'px,'+ (from.top-to.top) +'px) scaleX('+ (from.width/to.width) +')'},
+     {transform:'none'}
+    ],{duration:190,easing});
+    panelMotion=panel.animate([{opacity:.82,transform:'translateX('+(forward?6:-6)+'px)'},{opacity:1,transform:'none'}],{duration:150,easing});
+   }
    if(tab==='summary')panel.append(summary());
-   else{caption.textContent=tab==='review'?'Прослушай отмеченные фразы и подтверди те, что проверил.':'Нажми на фразу, чтобы услышать её в записи.';panel.append(caption,toolbar);if(tab==='review'){reviewIndex=-1;panel.append(reviewNavigation)}panel.append(timeline,footer);renderRows();timeline.scrollTop=state.scroll;
+   else{caption.textContent=tab==='review'?'Прослушай отмеченные фразы и подтверди те, что проверил.':'Нажми на фразу, чтобы услышать её в записи.';panel.append(caption,toolbar);if(tab==='review')panel.append(reviewNavigation);panel.append(timeline,footer);renderRows();timeline.scrollTop=state.scroll;
     if(report.quality?.unassessed)panel.append(node('p','Для '+report.quality.unassessed+' фрагм. оценка качества распознавания недоступна.','reader-caption'));
    }
   }
   search.oninput=()=>{state.query=search.value;reviewIndex=-1;renderRows()};
+  const controls={...buttons,search,follow,speed,timeline,play,back,ahead,seek:seekRange,reviewPrevious,reviewNext,reviewInText,download};
+  for(const [key,control] of Object.entries(controls))control.dataset.readerControl=key;
   show(state.tab);
+  if(previousFocus){
+   const anchor=previousFocus.closest('.transcript-row');
+   let target=controls[previousFocus.dataset.readerControl];
+   if(anchor){
+    const row=timeline.querySelector('[data-segment="'+CSS.escape(anchor.dataset.segment)+'"][data-start="'+CSS.escape(anchor.dataset.start)+'"]');
+    const peers='button, summary';
+    const index=Array.from(anchor.querySelectorAll(peers)).indexOf(previousFocus);
+    target=row?.querySelectorAll(peers)[index]||row?.querySelector('.transcript-line');
+   }
+   (target?.isConnected&&!target.disabled?target:buttons[state.tab]).focus({preventScroll:true});
+   if(target===search)search.setSelectionRange(previousFocus.selectionStart,previousFocus.selectionEnd);
+  }
  }
  function refreshCard(card,job){
   if(!card.workflowBadge)return;
@@ -244,6 +334,7 @@
   if(!card){await update();card=cards.get(name)}
   if(!card)return;
   window.revealCalendarFile?.(name);
+  bindAudio(card);
   card.details.open=true;
   card.li.closest('#files>li>details')?.setAttribute('open','');
   card.details.querySelector('summary')?.focus({preventScroll:true});
@@ -342,6 +433,6 @@
   const loop=async()=>{if(!document.hidden)await poll();setTimeout(loop,2000)};loop();
  }
  let refreshLibrary=()=>{};
- window.LectureWorkflow={renderReader,refreshCard,seek,clock,openRecording,refreshLibrary:status=>refreshLibrary(status)};
+ window.LectureWorkflow={renderReader,refreshCard,seek,clock,openRecording,bindAudio,pauseLibrary,refreshLibrary:status=>refreshLibrary(status)};
  initImport();
 })();

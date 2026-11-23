@@ -65,7 +65,21 @@
   keepDeferred();
  };
  let selected=null;
+ let rememberedSlot='';
  let slots=[];
+ const draftKey=file=>'lecture-choice-draft:'+file;
+ const slotKey=lesson=>JSON.stringify([lesson.date,lesson.start,lesson.end,lesson.subject,lesson.type,lesson.room]);
+ const manualTitle=()=>manual.value.trim().replace(/\s*\n\s*/g,' ');
+ function keepDraft(){
+  if(!active)return;
+  const slot=slots[selected];
+  rememberedSlot=slot?slotKey(slot):selected===null?rememberedSlot:'';
+  const choice=rememberedSlot?'schedule':selected;
+  try{localStorage.setItem(draftKey(active),JSON.stringify({choice,slot:rememberedSlot,title:manual.value}));}catch{}
+ }
+ function forgetDraft(file){
+  try{localStorage.removeItem(draftKey(file));}catch{}
+ }
  let selecting=false;
  let savingProfile=false;
 
@@ -124,6 +138,7 @@
    radio.checked=selected===index;
    radio.onchange=()=>{
     selected=index;
+    keepDraft();
     $('#selection-manual-label').hidden=true;
     updateSave();
    };
@@ -149,9 +164,16 @@
  function openSelection(name){
   active=name;
   selected=null;
+  rememberedSlot='';
   slots=[];
   manual.value='';
-  $('#selection-manual-label').hidden=true;
+  try{
+   const draft=JSON.parse(localStorage.getItem(draftKey(name))||'null');
+   if(draft?.choice==='manual'||draft?.choice==='outside')selected=draft.choice;
+   if(draft?.choice==='schedule'&&typeof draft.slot==='string')rememberedSlot=draft.slot;
+   if(typeof draft?.title==='string')manual.value=draft.title.slice(0,manual.maxLength);
+  }catch{}
+  $('#selection-manual-label').hidden=selected!=='manual';
   $('#selection-details').textContent='Аудио сохранено на этом Mac.';
   selectionForm.hidden=false;
   confirm.hidden=true;
@@ -177,9 +199,9 @@
    const date=new Date(value.date+'T12:00:00Z');
    const day=new Intl.DateTimeFormat('ru',{day:'numeric',month:'long',timeZone:'UTC'}).format(date);
    $('#selection-details').textContent='Аудио сохранено · '+day+' · '+value.start+' · '+timeLabel(value.seconds);
-   const previous=slots[selected];
+   const previous=slots[selected]?slotKey(slots[selected]):rememberedSlot;
    if(previous){
-    const index=value.choices.findIndex(row=>row.date===previous.date&&row.start===previous.start&&row.subject===previous.subject&&row.type===previous.type);
+    const index=value.choices.findIndex(row=>slotKey(row)===previous);
     selected=index<0?null:index;
    }else if(selected===null)selected=value.suggested??'outside';
    showOptions(value.choices,value.suggested);
@@ -190,7 +212,7 @@
    if(!request.signal.aborted&&active===name&&selectionDialog.open){
     note.textContent='Расписание недоступно. Можно указать название или сохранить без пары.';
     retry.hidden=false;
-    if(selected===null)selected='outside';
+    if(selected===null&&!rememberedSlot)selected='outside';
     updateSave();
    }
   }
@@ -199,7 +221,7 @@
  function updatePendingLibrary(pending){
   if(status&&deferred.size){
    const resolved=[...deferred].filter(file=>!pending.includes(file)&&status?.file!==file);
-   if(resolved.length){for(const file of resolved)deferred.delete(file);keepDeferred();}
+   if(resolved.length){for(const file of resolved){deferred.delete(file);forgetDraft(file);}keepDeferred();}
   }
   const stamp=pending.join('|');
   if(stamp===pendingStamp)return;
@@ -278,12 +300,16 @@
  });
  manualChoice.onclick=()=>{
   selected='manual';
+  keepDraft();
   for(const radio of choices.querySelectorAll('input'))radio.checked=false;
   $('#selection-manual-label').hidden=false;
   manual.focus();
   updateSave();
  };
- manual.oninput=updateSave;
+ manual.oninput=()=>{keepDraft();updateSave();};
+ selectionDialog.addEventListener('keydown',event=>{
+  if(event.repeat&&(event.key==='Enter'||event.key===' ')&&event.target instanceof HTMLButtonElement)event.preventDefault();
+ });
  $('#selection-delete').onclick=()=>showConfirm(true);
  $('#selection-back').onclick=()=>showConfirm(false);
 
@@ -305,6 +331,7 @@
     try{localStorage.setItem('lecture-last-saved',lastSaved);}catch{}
    }
    deferred.delete(file);
+   forgetDraft(file);
    keepDeferred();
    if(status)status={...status,pending_lessons:status.pending_lessons.filter(name=>name!==file)};
    selectionDialog.close();
@@ -322,12 +349,13 @@
  }
  selectionForm.onsubmit=event=>{
   event.preventDefault();
-  if(selected==='manual'&&manual.value.trim())decide('save',{subject:manual.value.trim()});
+  if(selected==='manual'&&manualTitle())decide('save',{subject:manualTitle()});
   else if(selected==='outside')decide('save',null);
   else if(Number.isInteger(selected)&&slots[selected])decide('save',slots[selected]);
  };
  outsideChoice.onclick=()=>{
   selected='outside';
+  keepDraft();
   for(const radio of choices.querySelectorAll('input'))radio.checked=false;
   $('#selection-manual-label').hidden=true;
   updateSave();
