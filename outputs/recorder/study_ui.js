@@ -147,6 +147,17 @@ function initStudyCard(card,name){
  const playerDock=el('div',undefined,'workflow-player');playerDock.append(el('span','Аудиозапись пары','player-title'),card.audio);body.insertBefore(playerDock,card.result);body.insertBefore(card.progress,card.result);body.insertBefore(card.button,card.result);card.playerDock=playerDock;
  window.AudioEnhancement?.attach(card,name);
  window.AudioFragment?.attach(card,name);
+ const reviewPanel=el('details',undefined,'review-launcher'),reviewHost=el('div');
+ reviewPanel.append(el('summary','Карточки для повторения'),reviewHost);
+ body.insertBefore(reviewPanel,card.result);
+ let reviewRevision='';
+ reviewPanel.addEventListener('toggle',()=>{
+  if(!reviewPanel.open)return;
+  const revision=JSON.stringify((card.lesson?.material_revision||[]).slice(0,3));
+  if(!card.reviewCards)card.reviewCards=window.ClipMicReviewCards?.mount(reviewHost,{file:name,onSeek:seconds=>window.LectureWorkflow?.seek(card,seconds)});
+  else if(reviewRevision!==revision)card.reviewCards.refresh();
+  reviewRevision=revision;
+ });
  details.ontoggle=()=>{if(details.open)update()};
 
 }

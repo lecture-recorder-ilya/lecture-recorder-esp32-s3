@@ -179,7 +179,7 @@ class Handler(BaseHTTPRequestHandler):
         route = urlsplit(self.path)
         query = parse_qs(route.query)
         try:
-            if route.path in ('/mirea-profile', '/recording-selection', '/calendar'):
+            if route.path in ('/mirea-profile', '/recording-selection', '/calendar', '/review-cards'):
                 port = self.server.server_port
                 if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
                     return self.reply({'error':'Запрос отклонён'},403)
@@ -300,6 +300,9 @@ class Handler(BaseHTTPRequestHandler):
                 if not topic or private_name_query(topic,item.get('quote','')+' '+item.get('context','')):return self.reply({'status':'unavailable'})
                 try:return self.reply(illustrations.lookup(topic))
                 except (OSError,URLError,ValueError):return self.reply({'status':'unavailable','message':'Иллюстрация пока недоступна'})
+            if route.path == '/review-cards':
+                import review_cards
+                return self.reply(review_cards.list_cards(query.get('file', [''])[0]))
             if route.path == '/notes':
                 return self.reply(study_store.notes(query.get('file', [''])[0]))
             if route.path.startswith('/photos/'):
@@ -339,6 +342,13 @@ class Handler(BaseHTTPRequestHandler):
         try:
             length = int(self.headers.get('Content-Length', 0))
             route = urlsplit(self.path)
+            if route.path == '/review-cards':
+                if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
+                    return self.reply({'error':'Запрос отклонён'}, 403)
+                if not 0 < length <= 64 * 1024:
+                    return self.reply({'error':'Некорректный размер карточки'}, 413)
+                import review_cards
+                return self.reply(review_cards.apply(json.loads(self.rfile.read(length))))
             if route.path == '/import-audio':
                 self.close_connection = True
                 if self.headers.get('Host') not in (f'127.0.0.1:{port}', f'localhost:{port}'):
