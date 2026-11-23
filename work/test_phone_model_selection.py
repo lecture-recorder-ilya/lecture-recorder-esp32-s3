@@ -12,6 +12,7 @@ public final class Context {
  private final File directory;
  public Context(File value) { directory=value; }
  public File getFilesDir() { return directory; }
+ public android.content.res.AssetManager getAssets() { return new android.content.res.AssetManager(); }
 }'''
 HARNESS = '''package ru.ilya.lecturerecorder;
 import android.content.Context;
@@ -43,10 +44,21 @@ def observe(source):
     with tempfile.TemporaryDirectory() as directory:
         root=Path(directory);classes=root/'classes';classes.mkdir();files=root/'files';files.mkdir()
         (root/'Context.java').write_text(CONTEXT)
+        (root/'AssetManager.java').write_text('''package android.content.res;
+import java.io.*;
+public class AssetManager {
+ public AssetFileDescriptor openFd(String name) throws IOException { throw new FileNotFoundException(name); }
+ public InputStream open(String name) throws IOException { throw new FileNotFoundException(name); }
+}''')
+        (root/'AssetFileDescriptor.java').write_text('''package android.content.res;
+public class AssetFileDescriptor implements java.io.Closeable {
+ public long getLength(){ return 0; }
+ public void close() {}
+}''')
         (root/'ModelSelectionHarness.java').write_text(HARNESS)
         subprocess.run([java/'javac','--release','8','-encoding','UTF-8','-d',classes,
                         source/'outputs/android/src/ru/ilya/lecturerecorder/PhoneModels.java',
-                        root/'Context.java',root/'ModelSelectionHarness.java'],check=True,capture_output=True,text=True)
+                        root/'Context.java',root/'AssetManager.java',root/'AssetFileDescriptor.java',root/'ModelSelectionHarness.java'],check=True,capture_output=True,text=True)
         result=subprocess.check_output([java/'java','-cp',classes,PACKAGE+'.ModelSelectionHarness',files],text=True)
         return dict(line.split('=',1) for line in result.splitlines())
 

@@ -87,7 +87,11 @@ def manifest_for_preview(build):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--preview", action="store_true", help="Собрать отдельное приложение для проверки")
+    parser.add_argument("--offline-models", type=Path, metavar="DIR",
+                        help="Собрать ещё один APK со встроенными моделями речи и конспекта из этой папки")
     args = parser.parse_args()
+    if args.preview and args.offline_models:
+        parser.error("Автономный APK собирается для основного приложения")
     version = json.loads((PROJECT / "release.json").read_text())
     TOOLS.mkdir(parents=True, exist_ok=True)
     jdk = Path(os.environ["JAVA_HOME"]) if os.environ.get("JAVA_HOME") else next((TOOLS / "jdk").glob("*/Contents/Home"))
@@ -155,9 +159,6 @@ def main():
                     for name in dependency.namelist():
                         if name.rsplit("/", 1)[-1].upper().startswith(("LICENSE", "NOTICE", "COPYING")):
                             package.writestr(f"assets/licenses/{jar.stem}/{name}", dependency.read(name))
-        aligned = build / "aligned.apk"
-        run(tools / "zipalign", "-P", "16", "-f", "4", apk, aligned)
-
         key_variable = "LECTURE_PREVIEW_KEYSTORE" if args.preview else "LECTURE_KEYSTORE"
         key_default = "preview.keystore" if args.preview else "lectures.keystore"
         key = Path(os.environ.get(key_variable, TOOLS / key_default))
@@ -172,9 +173,27 @@ def main():
                 "-keyalg", "RSA", "-validity", "10000")
             key.chmod(0o600)
         output = ROOT / ("Запись лекций · ИИ.apk" if args.preview else "Запись лекций.apk")
-        run(tools / "apksigner", "sign", "--ks", key, "--ks-pass", "env:LECTURE_KEY_PASSWORD", "--out", output, aligned)
-        run(tools / "apksigner", "verify", output)
-        print(f"APK ready: {output}")
+        def sign(destination):
+            aligned = build / "aligned.apk"
+            run(tools / "zipalign", "-P", "16", "-f", "4", apk, aligned)
+            run(tools / "apksigner", "sign", "--ks", key, "--ks-pass", "env:LECTURE_KEY_PASSWORD", "--out", destination, aligned)
+            run(tools / "apksigner", "verify", destination)
+            print(f"APK ready: {destination}")
+
+        sign(output)
+        if args.offline_models:
+            models = {
+                "gigaam-v3-e2e-ctc.int8.onnx": "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e",
+                "qwen3-0.6b-int4.litertlm": "bf1aba9ce8d963124407353c6aa4cbf72eba78db21ae133de983eac672ce83e0",
+            }
+            with zipfile.ZipFile(apk, "a") as package:
+                for name, sha in models.items():
+                    path = args.offline_models / name
+                    with path.open("rb") as stream:
+                        if hashlib.file_digest(stream, "sha256").hexdigest() != sha:
+                            raise ValueError(f"Не совпала контрольная сумма {name}")
+                    package.write(path, "assets/models/" + name, compress_type=zipfile.ZIP_STORED)
+            sign(ROOT / "lecture-recorder-offline.apk")
 
 
 if __name__ == "__main__":
