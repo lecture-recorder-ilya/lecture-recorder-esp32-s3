@@ -2,7 +2,6 @@ package ru.ilya.lecturerecorder;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -69,7 +68,8 @@ final class AudioTranscriptPage extends LinearLayout {
     private static final int ACCENT = StudioStyle.ACCENT;
 
     private final Activity activity;
-    private final SharedPreferences playbackPositions;
+    private final ListeningLibrary library;
+    private int lastSavedPosition;
     private final ForegroundAudio focus;
     private final BiConsumer<String, RecordingExport.Kind> export;
     private final boolean landscape;
@@ -130,12 +130,14 @@ final class AudioTranscriptPage extends LinearLayout {
     private List<TranscriptEdits.Line> reviewRows = Collections.emptyList();
     private Waveform waveform;
 
-    AudioTranscriptPage(Activity activity, Bundle state, Runnable library, BiConsumer<String, RecordingExport.Kind> export) {
+    AudioTranscriptPage(Activity activity, Bundle state, Runnable openLibraryPage, BiConsumer<String, RecordingExport.Kind> export) {
         super(activity);
         this.activity = activity;
         focus = new ForegroundAudio(activity, this::pausePlayback);
         this.export = export;
-        playbackPositions = activity.getSharedPreferences("playback_positions", Context.MODE_PRIVATE);
+        library = new ListeningLibrary(activity);
+        speedIndex = library.speed();
+        speed = ListeningLibrary.SPEEDS[speedIndex];
         setOrientation(VERTICAL);
         setBackgroundColor(BACKGROUND);
         int inset = dp(StudioStyle.PAGE_INSET);
@@ -174,7 +176,7 @@ final class AudioTranscriptPage extends LinearLayout {
 
         recordingHint = text("Выбери запись в библиотеке.", 15, MUTED);
         playback.addView(recordingHint, spaced(-1, -2, 12));
-        openLibrary = StudioStyle.action(activity, "Открыть библиотеку", library, true);
+        openLibrary = StudioStyle.action(activity, "Открыть библиотеку", openLibraryPage, true);
         playback.addView(openLibrary, spaced(-1, -2, 8));
 
         audioPanel = card();
@@ -202,7 +204,7 @@ final class AudioTranscriptPage extends LinearLayout {
             if (exportKind != null) lastExportKind = RecordingExport.Kind.valueOf(exportKind);
             String name = state.getString("recording");
             if (LectureNotes.valid(name)) {
-                select(name, state.getInt("position"));
+                select(name, state.getInt("position", -1));
                 if (!reviewRows.isEmpty()) {
                     reviewKey = state.getString("review_key");
                     reviewFilter.setChecked(state.getBoolean("reviewOnly"));
@@ -397,7 +399,8 @@ final class AudioTranscriptPage extends LinearLayout {
         noteRevision = null;
         modelRequestStopping = false;
         setTranscriptRows(Collections.emptyList());
-        position = initialPosition >= 0 ? initialPosition : playbackPositions.getInt(name, 0);
+        lastSavedPosition = library.position(name, 0);
+        position = initialPosition >= 0 ? initialPosition : lastSavedPosition;
         duration = 0;
         File audioFile = Store.audio(activity, name);
         String title = RecordingLibraryPage.title(activity, name, audioFile);
@@ -448,6 +451,8 @@ final class AudioTranscriptPage extends LinearLayout {
                 if (ready != player) return;
                 prepared = true;
                 duration = ready.getDuration();
+                position = ListeningLibrary.resumable(position, duration);
+                lastSavedPosition = library.position(name, duration);
                 enablePlayback(duration > 0);
                 if (position > 0 || playWhenReady) seek(position, playWhenReady);
                 playWhenReady = false;
@@ -465,8 +470,10 @@ final class AudioTranscriptPage extends LinearLayout {
                     return;
                 }
                 focus.release();
-                position = duration;
-                updatePosition();
+                position = 0;
+                library.savePosition(name, 0, duration);
+                lastSavedPosition = 0;
+                seek(0, false);
             });
             player.setOnErrorListener((failed, what, extra) -> {
                 if (failed == player) playbackError();
@@ -521,11 +528,8 @@ final class AudioTranscriptPage extends LinearLayout {
         updatePosition();
     }
 
-    private static final float[] SPEEDS = {.75f, 1f, 1.25f, 1.5f, 2f};
-    private static final String[] SPEED_LABELS = {"0,75×", "1×", "1,25×", "1,5×", "2×"};
-
     private void updatePlaybackOptions() {
-        String label = SPEED_LABELS[speedIndex];
+        String label = ListeningLibrary.SPEED_LABELS[speedIndex];
         playbackOptions.setText("⋯");
         playbackOptions.setContentDescription("Действия записи, скорость " + label
                 + (repeating ? ", повтор фразы включён" : ""));
@@ -534,10 +538,10 @@ final class AudioTranscriptPage extends LinearLayout {
 
     private void showPlaybackOptions() {
         PopupMenu menu = new PopupMenu(activity, playbackOptions);
-        android.view.SubMenu speeds = menu.getMenu().addSubMenu("Скорость " + SPEED_LABELS[speedIndex]);
+        android.view.SubMenu speeds = menu.getMenu().addSubMenu("Скорость " + ListeningLibrary.SPEED_LABELS[speedIndex]);
         speeds.getItem().setEnabled(prepared);
-        for (int index = 0; index < SPEEDS.length; index++) {
-            speeds.add(1, index + 1, index, SPEED_LABELS[index]).setCheckable(true).setChecked(index == speedIndex);
+        for (int index = 0; index < ListeningLibrary.SPEEDS.length; index++) {
+            speeds.add(1, index + 1, index, ListeningLibrary.SPEED_LABELS[index]).setCheckable(true).setChecked(index == speedIndex);
         }
         speeds.setGroupCheckable(1, true, true);
         menu.getMenu().add(0, 100, 1, repeating ? "Выключить повтор фразы" : "Повторять фразу")
@@ -580,9 +584,10 @@ final class AudioTranscriptPage extends LinearLayout {
                     seek(phraseStart, true);
                 } else ui.removeCallbacks(repeatTick);
             } else {
-                if (item.getItemId() < 1 || item.getItemId() > SPEEDS.length) return false;
+                if (item.getItemId() < 1 || item.getItemId() > ListeningLibrary.SPEEDS.length) return false;
                 speedIndex = item.getItemId() - 1;
-                speed = SPEEDS[speedIndex];
+                library.speed(speedIndex);
+                speed = ListeningLibrary.SPEEDS[speedIndex];
                 if (prepared && player.isPlaying()) startPlayback();
                 updatePlaybackOptions();
             }
@@ -599,7 +604,8 @@ final class AudioTranscriptPage extends LinearLayout {
         try {
             player.setPlaybackParams(new PlaybackParams().setSpeed(speed).setPitch(1f));
         } catch (IllegalArgumentException error) {
-            speedIndex = 1;
+            speedIndex = ListeningLibrary.NORMAL;
+            library.speed(speedIndex);
             speed = 1f;
             player.start();
             updatePlaybackOptions();
@@ -641,7 +647,7 @@ final class AudioTranscriptPage extends LinearLayout {
     }
 
     private void refreshPlayback() {
-        if (prepared && player.isPlaying()) {
+        if (prepared && !seeking && player.isPlaying()) {
             position = player.getCurrentPosition();
             long now = SystemClock.elapsedRealtime();
             if (now >= nextPlaybackCheckpoint) {
@@ -932,9 +938,11 @@ final class AudioTranscriptPage extends LinearLayout {
 
     private void rememberPosition() {
         if (selected == null || !prepared) return;
-        if (player.isPlaying()) position = player.getCurrentPosition();
-        if (playbackPositions.getInt(selected, 0) != position) {
-            playbackPositions.edit().putInt(selected, position).apply();
+        if (!seeking && player.isPlaying()) position = player.getCurrentPosition();
+        int saved = ListeningLibrary.resumable(position, duration);
+        if (saved != lastSavedPosition) {
+            library.savePosition(selected, saved, duration);
+            lastSavedPosition = saved;
         }
     }
 
@@ -961,6 +969,16 @@ final class AudioTranscriptPage extends LinearLayout {
         if (active == visible) return;
         visible = active;
         if (active) {
+            speedIndex = library.speed();
+            speed = ListeningLibrary.SPEEDS[speedIndex];
+            updatePlaybackOptions();
+            if (selected != null) {
+                int resume = library.position(selected, duration);
+                if (resume != lastSavedPosition) {
+                    lastSavedPosition = resume;
+                    seek(resume, false);
+                }
+            }
             refreshPlayback();
             refreshTranscript();
             return;
@@ -1128,7 +1146,7 @@ final class AudioTranscriptPage extends LinearLayout {
             addView(badges, badge);
             words.setLineSpacing(dp(3), 1);
             words.setMovementMethod(LinkMovementMethod.getInstance());
-            words.setHighlightColor(0x55c5b5ff);
+            words.setHighlightColor(0x5580e2ce);
             addView(words, new LinearLayout.LayoutParams(0, -2, 1));
         }
     }
@@ -1182,7 +1200,7 @@ final class AudioTranscriptPage extends LinearLayout {
                 float peak = envelope.peaks[i];
                 float height = Math.max(.5f, peak * (midpoint - dp(7)));
                 boolean played = x <= marker;
-                paint.setColor(played ? StudioStyle.TEXT : peak > .6f ? 0xffaaa0cf : 0xff77728e);
+                paint.setColor(played ? StudioStyle.TEXT : peak > .6f ? 0xff8ab8ae : 0xff6d8985);
                 paint.setShader(played ? spectrum : null);
                 canvas.drawLine(x, midpoint - height, x, midpoint + height, paint);
             }

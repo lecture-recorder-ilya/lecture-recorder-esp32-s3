@@ -24,23 +24,23 @@ import android.widget.TextView;
 import android.graphics.Typeface;
 
 final class StudioStyle {
-    static final int BACKGROUND = 0xff0e1217;
-    static final int PANEL = 0xff171e27;
-    static final int CONTROL = 0xff202a35;
-    static final int LINE = 0xff334252;
-    static final int TEXT = 0xffeef3f8;
-    static final int MUTED = 0xffa5b4c3;
-    static final int ACCENT = 0xffa8d7fa;
-    static final int ACTIVE = 0xff263c50;
+    static final int BACKGROUND = 0xff101517;
+    static final int PANEL = 0xff1a2022;
+    static final int CONTROL = 0xff273034;
+    static final int LINE = 0xff4e6061;
+    static final int TEXT = 0xffeff6f4;
+    static final int MUTED = 0xffb1c3c1;
+    static final int ACCENT = 0xff80e2ce;
+    static final int ACTIVE = 0xff214440;
     static final int RECORDING = 0xffffc0b1;
     private static final int RECORDING_LINE = 0xff915d58;
     static final int GOOD = 0xff9fdfc6;
     static final int WARNING = 0xfff3c287;
-    static final int INK = 0xff102135;
+    static final int INK = 0xff102725;
     static final int ACTION_HEIGHT = 48;
     static final int PAGE_INSET = 16;
     static final int CARD_RADIUS = 18;
-    static final int[] SPECTRUM = {0xff6493ba, 0xff7fb3dc, ACCENT, RECORDING, WARNING};
+    static final int[] SPECTRUM = {0xff5d9d96, 0xff6cbcaf, ACCENT, RECORDING, WARNING};
     private static final PathInterpolator MOTION = new PathInterpolator(.2f, .72f, .27f, 1f);
 
     private StudioStyle() {}
@@ -100,7 +100,7 @@ final class StudioStyle {
 
     static GradientDrawable recorderCard(Context context, boolean recording) {
         GradientDrawable drawable = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                new int[] {0xff202e40, PANEL, PANEL});
+                new int[] {0xff233735, PANEL, PANEL});
         drawable.setCornerRadius(dp(context, 20));
         drawable.setStroke(dp(context, 1), recording ? RECORDING_LINE : LINE);
         return drawable;
@@ -166,7 +166,7 @@ final class StudioStyle {
 
     static ColorStateList actionColors(int color) {
         return new ColorStateList(new int[][] {{-android.R.attr.state_enabled}, {}},
-                new int[] {0xff76899b, color});
+                new int[] {0xff839895, color});
     }
 
     static Drawable control(Context context, int color, int radius) {

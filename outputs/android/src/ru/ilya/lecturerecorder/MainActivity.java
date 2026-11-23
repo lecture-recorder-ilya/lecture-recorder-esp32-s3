@@ -305,7 +305,7 @@ public class MainActivity extends Activity {
     openRecording(entry.file);
    }
   });
-  if(saved!=null)libraryPage.restoreQuery(saved.getString("library_query",""),saved.getBoolean("library_waiting"));
+  if(saved!=null)libraryPage.restoreQuery(saved.getString("library_query",""),saved.getBoolean("library_waiting"),saved.getBoolean("library_favorites"));
   pages[LIBRARY_PAGE]=libraryPage;
   host.addView(libraryPage,new FrameLayout.LayoutParams(-1,-1));
 
@@ -477,7 +477,7 @@ public class MainActivity extends Activity {
   },"Lecture export").start();
  }
  @Override protected void onActivityResult(int code,int result,Intent data){super.onActivityResult(code,result,data);if(code==EXPORT_DOCUMENT){finishExport(result,data);return;}if(code==EspPairing.ENABLE_BLUETOOTH){if(devicePairing!=null)devicePairing.bluetoothEnableResult(result);return;}if(code==7&&result==RESULT_OK&&data!=null&&data.getData()!=null){android.net.Uri uri=data.getData();try{getContentResolver().takePersistableUriPermission(uri,data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}AudioImport.start(this,uri);return;}if(code==4&&result==RESULT_OK)begin();if(code==6&&result==RESULT_OK){final String id=pendingPhoto;pendingPhoto=null;new Thread(()->{try{BoardPhotos.markReady(this,id);BoardPhotos.finish(this,id);runOnUiThread(()->{Toast.makeText(this,"Фото сохранено · будет перенесено и разобрано на Mac",1).show();transfer();});}catch(Exception e){runOnUiThread(()->Toast.makeText(this,e.getMessage(),1).show());}},"Save board photo").start();}else if(code==6){BoardPhotos.cancel(this,pendingPhoto);pendingPhoto=null;}}
- @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putString("pending_photo",pendingPhoto);out.putInt("page",selectedPage);out.putBundle("audio_page",audioPage.snapshot());out.putBoolean("device_expanded",deviceExpanded);out.putInt("device_charge",deviceCharge);out.putFloat("device_rotation",deviceModel.rotation());out.putBoolean("stopping_recording",stoppingRecording);out.putString("library_query",libraryPage.queryText());out.putBoolean("library_waiting",libraryPage.waitingOnly());if(exportKind!=null){out.putString("export_file",exportFile);out.putString("export_kind",exportKind.name());}}
+ @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putString("pending_photo",pendingPhoto);out.putInt("page",selectedPage);out.putBundle("audio_page",audioPage.snapshot());out.putBoolean("device_expanded",deviceExpanded);out.putInt("device_charge",deviceCharge);out.putFloat("device_rotation",deviceModel.rotation());out.putBoolean("stopping_recording",stoppingRecording);out.putString("library_query",libraryPage.queryText());out.putBoolean("library_waiting",libraryPage.waitingOnly());out.putBoolean("library_favorites",libraryPage.favoritesOnly());if(exportKind!=null){out.putString("export_file",exportFile);out.putString("export_kind",exportKind.name());}}
  private void showSavedRecording(String file){
   lastSavedRecording=file;
   getPreferences(MODE_PRIVATE).edit().putString("last_saved_recording",file).apply();
@@ -603,7 +603,7 @@ public class MainActivity extends Activity {
   GradientDrawable tile=surface(StudioStyle.CONTROL,18);
   tile.setStroke(dp(1),line);
   square.setBackground(new android.graphics.drawable.RippleDrawable(
-   android.content.res.ColorStateList.valueOf(0x26c5b5ff),tile,null));
+   android.content.res.ColorStateList.valueOf(0x2680e2ce),tile,null));
   square.setContentDescription("Добавить устройство");
   square.setFocusable(true);
   square.setOnClickListener(view->openDevicePairing());

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="LectureTheme" parent="android:style/Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#0e1217</item>
-        <item name="android:colorAccent">#a8d7fa</item>
-        <item name="android:statusBarColor">#0e1217</item>
-        <item name="android:navigationBarColor">#0e1217</item>
+        <item name="android:windowBackground">#101517</item>
+        <item name="android:colorAccent">#80e2ce</item>
+        <item name="android:statusBarColor">#101517</item>
+        <item name="android:navigationBarColor">#101517</item>
     </style>
 </resources>

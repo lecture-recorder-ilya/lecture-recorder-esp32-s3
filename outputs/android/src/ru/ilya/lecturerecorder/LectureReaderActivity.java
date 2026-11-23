@@ -10,6 +10,9 @@ import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
 import android.media.MediaPlayer;
+import android.media.PlaybackParams;
+import android.os.SystemClock;
+import android.widget.PopupMenu;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -47,13 +50,21 @@ public class LectureReaderActivity extends Activity {
     private TextView status, elapsed;
     private TextView pendingSummaryStatus;
     private SeekBar position;
-    private Button toggle;
+    private Button toggle, speedButton;
+    private ListeningLibrary library;
+    private int speedIndex;
+    private boolean seekPending, finishedListening;
+    private long nextCheckpoint;
     private Button finishSummary;
     private JSONObject document;
     private File note, edits;
     private String recording;
     private boolean local;
     private String stamp = "";
+    private String searchQuery = "";
+    private AlertDialog searchDialog;
+    private final android.util.SparseArray<View> textRows = new android.util.SparseArray<>();
+    private int highlightedSegment = -1;
     private String tab = "text";
     private String reviewKind = "all";
     private int reviewPage;
@@ -80,6 +91,9 @@ public class LectureReaderActivity extends Activity {
             finish();
             return;
         }
+        library = new ListeningLibrary(this);
+        speedIndex = library.speed();
+        pendingSeek = library.position(recording, 0);
         local = getIntent().getBooleanExtra("local", false);
         note = LectureNotes.file(this, recording, local);
         edits = TranscriptEdits.file(this, recording);
@@ -89,7 +103,9 @@ public class LectureReaderActivity extends Activity {
             String selectedKind = saved.getString("reader_review_kind", "all");
             for (String kind : TranscriptReview.KINDS) if (kind.equals(selectedKind)) reviewKind = kind;
             reviewPage = Math.max(0, saved.getInt("review_page"));
-            pendingSeek = saved.getInt("reader_seek");
+            pendingSeek = saved.getInt("reader_seek", pendingSeek);
+            finishedListening = saved.getBoolean("reader_finished");
+            searchQuery = saved.getString("text_query", "");
             contentScroll = saved.getInt("reader_scroll");
         }
 
@@ -120,16 +136,25 @@ public class LectureReaderActivity extends Activity {
 
     private void addNavigation(LinearLayout page, boolean landscape) {
         LinearLayout navigation = new LinearLayout(this);
+        boolean compact = getResources().getConfiguration().screenWidthDp < 560
+                || getResources().getConfiguration().fontScale > 1.25f;
         Button back = button("‹ Аудио", this::finish);
-        navigation.addView(back, new LinearLayout.LayoutParams(-2, dp(48)));
+        navigation.addView(back, new LinearLayout.LayoutParams(compact ? 0 : -2, -2, compact ? 1 : 0));
         if (LectureNotes.file(this, recording, !local).isFile()) {
             Button source = button(local ? "Версия с Mac" : "Версия с телефона", () -> {
                 startActivity(new Intent(this, LectureReaderActivity.class)
                         .putExtra("file", note.getName()).putExtra("local", !local).putExtra("tab", tab));
                 finish();
             });
-            navigation.addView(source, withGap(-2, dp(48), 8));
+            LinearLayout.LayoutParams item = withGap(compact ? 0 : -2, -2, 4);
+            item.weight = compact ? 1.55f : 0;
+            navigation.addView(source, item);
         }
+        Button search = button("Найти", this::findInTranscript);
+        search.setContentDescription("Найти в тексте лекции");
+        LinearLayout.LayoutParams searchSize = withGap(compact ? 0 : -2, -2, 4);
+        searchSize.weight = compact ? 1 : 0;
+        navigation.addView(search, searchSize);
         page.addView(navigation);
         LinearLayout tabs = new LinearLayout(this);
         tabs.setBackground(StudioStyle.card(this, 15));
@@ -150,7 +175,7 @@ public class LectureReaderActivity extends Activity {
             tabButtons[index] = button;
             tabs.addView(button, new LinearLayout.LayoutParams(0, dp(48), 1));
         }
-        if (landscape) {
+        if (landscape && !compact && getResources().getConfiguration().screenWidthDp >= 760) {
             LinearLayout.LayoutParams area = withGap(0, -2, 12);
             area.weight = 1;
             navigation.addView(tabs, area);
@@ -171,20 +196,29 @@ public class LectureReaderActivity extends Activity {
     }
 
     private void addPlayer(LinearLayout page, File audio) {
-        LinearLayout controls = new LinearLayout(this);
-        controls.setGravity(Gravity.CENTER_VERTICAL);
-        controls.setPadding(dp(8), dp(4), dp(10), dp(4));
-        controls.setBackground(StudioStyle.card(this, 16));
-        toggle = button("Слушать", () -> {
-            if (ready && player.isPlaying()) {
-                pausePlayback();
-            } else {
-                playAt(ready ? player.getCurrentPosition() : pendingSeek);
-            }
+        int duration = (int)Math.min(Integer.MAX_VALUE, Math.max(0L, audio.length() - 44) / 32);
+        pendingSeek = ListeningLibrary.resumable(pendingSeek, duration);
+        library.position(recording, duration);
+        boolean compact = getResources().getConfiguration().screenWidthDp < 560
+                || getResources().getConfiguration().fontScale > 1.25f;
+        LinearLayout panel = column();
+        panel.setPadding(dp(8), dp(4), dp(8), dp(4));
+        panel.setBackground(StudioStyle.card(this, 16));
+        LinearLayout commands = new LinearLayout(this);
+        commands.setGravity(Gravity.CENTER_VERTICAL);
+        panel.addView(commands);
+        toggle = button(idlePlayLabel(), () -> {
+            if (ready && player.isPlaying()) pausePlayback();
+            else playAt(actualPosition());
         });
         StudioStyle.actionTone(toggle, ACCENT, StudioStyle.INK);
-        StudioStyle.fitLabel(toggle, 10, 14);
-        controls.addView(toggle, new LinearLayout.LayoutParams(dp(94), dp(48)));
+        commands.addView(toggle, new LinearLayout.LayoutParams(compact ? 0 : -2, -2, compact ? 1 : 0));
+        speedButton = button(ListeningLibrary.SPEED_LABELS[speedIndex], this::chooseSpeed);
+        updateSpeedLabel();
+        commands.addView(speedButton, withGap(-2, -2, 6));
+        LinearLayout trackRow = compact ? new LinearLayout(this) : commands;
+        trackRow.setGravity(Gravity.CENTER_VERTICAL);
+        if (compact) panel.addView(trackRow);
 
         position = new SeekBar(this);
         position.setContentDescription("Позиция записи");
@@ -200,13 +234,14 @@ public class LectureReaderActivity extends Activity {
         });
         LinearLayout.LayoutParams track = withGap(0, dp(48), 4);
         track.weight = 1;
-        controls.addView(position, track);
-        long seconds = Math.max(0, audio.length() - 44) / (2 * PcmWave.SAMPLE_RATE);
-        elapsed = text(clock(pendingSeek / 1000.0) + " / " + clock(seconds), 13, MUTED);
+        position.setMax(duration);
+        position.setProgress(pendingSeek);
+        trackRow.addView(position, track);
+        elapsed = text(clock(pendingSeek / 1000.0) + " / " + clock(duration / 1000.0), 13, MUTED);
         elapsed.setTypeface(Typeface.MONOSPACE);
         StudioStyle.fitLabel(elapsed, 8, 12);
-        controls.addView(elapsed, withGap(dp(100), dp(36), 4));
-        page.addView(controls, spaced(-1, -2, 8));
+        trackRow.addView(elapsed, withGap(dp(100), dp(36), 4));
+        page.addView(panel, spaced(-1, -2, 8));
     }
 
     private void render() {
@@ -217,6 +252,7 @@ public class LectureReaderActivity extends Activity {
         int offset = Math.max(scroll.getScrollY(), contentScroll);
         contentScroll = 0;
         body.removeAllViews();
+        textRows.clear();
         pendingSummaryStatus = null;
         finishSummary = null;
         TextView heading = heading(report.optString("topic", LectureNotes.title(document)), 24);
@@ -362,6 +398,10 @@ public class LectureReaderActivity extends Activity {
             }
             count++;
             LinearLayout block = card();
+            if (!reviewOnly) {
+                textRows.put(index, block);
+                if (index == highlightedSegment) block.setBackground(StudioStyle.control(this, StudioStyle.ACTIVE, 12));
+            }
             boolean timed = row.has("start") && row.has("end");
             int start = (int) (row.optDouble("start") * 1000);
             TextView phrase = text(row.optString("text"), 16, TEXT);
@@ -433,6 +473,32 @@ public class LectureReaderActivity extends Activity {
         render();
     }
 
+    private void findInTranscript() {
+        if (searchDialog != null) return;
+        JSONObject report = document == null ? null : document.optJSONObject("report");
+        JSONArray segments = report == null ? null : report.optJSONArray("segments");
+        if (segments == null || segments.length() == 0) { showStatus("В этой записи пока нет расшифровки"); return; }
+        String revision = stamp;
+        searchDialog = TranscriptSearch.open(this, segments, searchQuery, value -> searchQuery = value, index -> {
+            if (!revision.equals(TranscriptEdits.stamp(note) + "/" + TranscriptEdits.stamp(edits))) {
+                showStatus("Расшифровка обновилась. Повтори поиск.");
+                return;
+            }
+            highlightedSegment = index;
+            tab = "text";
+            updateTabs();
+            render();
+            View result = textRows.get(index);
+            if (result != null) scroll.post(() -> {
+                scroll.scrollTo(0, result.getTop());
+                StudioStyle.enter(result, false);
+                JSONObject segment = segments.optJSONObject(index);
+                if (segment != null) result.announceForAccessibility(segment.optString("text"));
+            });
+        });
+        searchDialog.setOnDismissListener(dialog -> searchDialog = null);
+    }
+
     private void repeatFragment(JSONObject row, List<TranscriptReview.Item> candidates) {
         if (replayDialog != null) return;
         double from = row.optDouble("start"), to = row.optDouble("end"), anchor = Double.NaN;
@@ -498,10 +564,47 @@ public class LectureReaderActivity extends Activity {
         return getSharedPreferences("transcript-review", 0).getBoolean(key, row.optBoolean("reviewed"));
     }
 
+    private String idlePlayLabel() {
+        return finishedListening ? "С начала" : pendingSeek > 0 ? "Продолжить" : "Слушать";
+    }
+
+    private int actualPosition() {
+        return ready && !seekPending && !finishedListening ? player.getCurrentPosition() : pendingSeek;
+    }
+
+    private void savePosition() {
+        if (toggle == null || player == null) return;
+        pendingSeek = actualPosition();
+        library.savePosition(recording, pendingSeek, ready ? player.getDuration() : 0);
+    }
+
+    private void updateSpeedLabel() {
+        speedButton.setText(ListeningLibrary.SPEED_LABELS[speedIndex]);
+        speedButton.setContentDescription("Скорость воспроизведения " + ListeningLibrary.SPEED_LABELS[speedIndex]);
+    }
+
+    private void chooseSpeed() {
+        PopupMenu menu = new PopupMenu(this, speedButton);
+        for (int i = 0; i < ListeningLibrary.SPEEDS.length; i++)
+            menu.getMenu().add(1, i + 1, i, ListeningLibrary.SPEED_LABELS[i]).setCheckable(true).setChecked(i == speedIndex);
+        menu.getMenu().setGroupCheckable(1, true, true);
+        menu.setOnMenuItemClickListener(item -> {
+            speedIndex = item.getItemId() - 1;
+            library.speed(speedIndex);
+            updateSpeedLabel();
+            if (ready && player.isPlaying()) startPlayback();
+            StudioStyle.changeAction(speedButton);
+            return true;
+        });
+        menu.show();
+    }
+
     private void playAt(int millis) {
         pendingSeek = Math.max(0, millis);
+        finishedListening = false;
+        seekPending = true;
         if (ready) {
-            player.seekTo(Math.min(pendingSeek, player.getDuration()));
+            player.seekTo(Math.min(pendingSeek, player.getDuration()), MediaPlayer.SEEK_CLOSEST);
             startPlayback();
             return;
         }
@@ -517,21 +620,24 @@ public class LectureReaderActivity extends Activity {
             player.setAudioAttributes(ForegroundAudio.SPEECH);
             player.setDataSource(audio.getPath());
             player.setOnSeekCompleteListener(seekingPlayer -> {
-                if (player == seekingPlayer) replaySeeking = false;
+                if (player == seekingPlayer) { replaySeeking = false; seekPending = false; }
             });
             player.setOnPreparedListener(prepared -> {
                 if (prepared != player || isFinishing()) return;
                 ready = true;
                 position.setEnabled(true);
                 position.setMax(prepared.getDuration());
-                prepared.seekTo(Math.min(pendingSeek, prepared.getDuration()));
+                pendingSeek = ListeningLibrary.resumable(pendingSeek, prepared.getDuration());
+                prepared.seekTo(pendingSeek, MediaPlayer.SEEK_CLOSEST);
                 if (foreground) startPlayback();
             });
             player.setOnCompletionListener(complete -> {
                 focus.release();
+                finishedListening = true;
                 pendingSeek = 0;
+                library.savePosition(recording, 0, complete.getDuration());
                 complete.seekTo(0);
-                toggle.setText("Слушать");
+                toggle.setText(idlePlayLabel());
             });
             player.setOnErrorListener((failed, what, extra) -> {
                 releasePlayer();
@@ -564,8 +670,13 @@ public class LectureReaderActivity extends Activity {
                     replayAudioEnd = -1;
                     pausePlayback();
                 }
-                position.setProgress(player.getCurrentPosition());
-                elapsed.setText(clock(player.getCurrentPosition() / 1000.0)
+                if (player.isPlaying() && !seekPending && SystemClock.elapsedRealtime() >= nextCheckpoint) {
+                    savePosition();
+                    nextCheckpoint = SystemClock.elapsedRealtime() + 5000;
+                }
+                int current = actualPosition();
+                position.setProgress(current);
+                elapsed.setText(clock(current / 1000.0)
                         + " / " + clock(player.getDuration() / 1000.0));
             }
         } catch (Exception error) {
@@ -579,14 +690,23 @@ public class LectureReaderActivity extends Activity {
             if (foreground) showStatus("Аудио занято другим приложением");
             return;
         }
+        try {
+            player.setPlaybackParams(new PlaybackParams().setSpeed(ListeningLibrary.SPEEDS[speedIndex]).setPitch(1f));
+        } catch (IllegalArgumentException unsupported) {
+            speedIndex = ListeningLibrary.NORMAL;
+            library.speed(speedIndex);
+            updateSpeedLabel();
+            showStatus("На этом устройстве доступна обычная скорость");
+        }
         player.start();
         toggle.setText("Пауза");
     }
 
     private void pausePlayback() {
+        savePosition();
         if (ready && player.isPlaying()) {
             player.pause();
-            toggle.setText("Слушать");
+            toggle.setText(idlePlayLabel());
         }
         focus.release();
     }
@@ -603,9 +723,11 @@ public class LectureReaderActivity extends Activity {
     @Override public void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
         state.putString("reader_tab", tab);
+        state.putString("text_query", searchQuery);
         state.putString("reader_review_kind", reviewKind);
         state.putInt("review_page", reviewPage);
-        state.putInt("reader_seek", ready ? player.getCurrentPosition() : pendingSeek);
+        state.putInt("reader_seek", actualPosition());
+        state.putBoolean("reader_finished", finishedListening);
         if (scroll != null) state.putInt("reader_scroll", scroll.getScrollY());
     }
 
@@ -626,6 +748,7 @@ public class LectureReaderActivity extends Activity {
     @Override public void onPause() {
         foreground = false;
         if (replayDialog != null) replayDialog.dismiss();
+        if (searchDialog != null) searchDialog.dismiss();
         timer.removeCallbacksAndMessages(null);
         pausePlayback();
         super.onPause();
@@ -695,6 +818,8 @@ public class LectureReaderActivity extends Activity {
         Button button = new Button(this);
         button.setText(value);
         button.setTextSize(14);
+        button.setMinHeight(dp(48));
+        button.setMinimumHeight(dp(48));
         button.setAllCaps(false);
         button.setTextColor(TEXT);
         button.setPadding(dp(10), 0, dp(10), 0);
@@ -711,7 +836,7 @@ public class LectureReaderActivity extends Activity {
     }
 
     private RippleDrawable control(int color) {
-        return new RippleDrawable(ColorStateList.valueOf(0x28c5b5ff), surface(color, 12), null);
+        return new RippleDrawable(ColorStateList.valueOf(0x2880e2ce), surface(color, 12), null);
     }
 
     private LinearLayout.LayoutParams spaced(int width, int height, int gap) {

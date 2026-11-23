@@ -24,7 +24,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.Consumer;
@@ -58,7 +57,10 @@ final class RecordingLibraryPage extends LinearLayout {
     }
 
     private final EditText query;
-    private final CheckBox waiting;
+    private final CheckBox waiting, starred;
+    private final ListeningLibrary library;
+    private final LinearLayout searchBar, filters;
+    private final Button clear, reset;
     private final ExecutorService catalogReader = Executors.newSingleThreadExecutor();
     private boolean reading, refreshAgain, disposed;
     private final ListView list;
@@ -75,6 +77,7 @@ final class RecordingLibraryPage extends LinearLayout {
 
     RecordingLibraryPage(Context context, Runnable importAudio, Runnable record, Consumer<Entry> open) {
         super(context);
+        library = new ListeningLibrary(context);
         setOrientation(VERTICAL);
         int inset = dp(StudioStyle.PAGE_INSET);
         setPadding(inset, dp(12), inset, dp(8));
@@ -121,23 +124,41 @@ final class RecordingLibraryPage extends LinearLayout {
         query.setPadding(dp(12), dp(4), dp(12), dp(4));
         query.setMinHeight(dp(StudioStyle.ACTION_HEIGHT));
         query.setBackground(StudioStyle.control(context, StudioStyle.CONTROL, 12));
-        addView(query, spaced(8));
+        searchBar = new LinearLayout(context);
+        searchBar.setGravity(Gravity.CENTER_VERTICAL);
+        searchBar.addView(query, new LayoutParams(0, -2, 1));
+        clear = StudioStyle.action(context, "×", () -> query.setText(""), false);
+        clear.setTextSize(22);
+        clear.setContentDescription("Очистить поиск");
+        LayoutParams clearSize = new LayoutParams(dp(48), dp(48));
+        clearSize.setMarginStart(dp(4));
+        searchBar.addView(clear, clearSize);
+        addView(searchBar, spaced(8));
         query.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence text, int start, int before, int count) { filter(); }
             @Override public void afterTextChanged(Editable text) {}
         });
 
-        waiting = new CheckBox(context);
-        waiting.setText("Ждёт разбора");
-        waiting.setTextColor(StudioStyle.TEXT);
-        waiting.setButtonTintList(ColorStateList.valueOf(StudioStyle.ACCENT));
-        waiting.setMinHeight(dp(StudioStyle.ACTION_HEIGHT));
-        waiting.setOnCheckedChangeListener((button, checked) -> filter());
-        addView(waiting, spaced(2));
+        filters = new LinearLayout(context);
+        boolean stacked = getResources().getConfiguration().screenWidthDp < 345
+                || getResources().getConfiguration().fontScale > 1.25f;
+        filters.setOrientation(stacked ? VERTICAL : HORIZONTAL);
+        starred = filterControl(context, "Избранное");
+        waiting = filterControl(context, "Ждёт разбора");
+        filters.addView(starred, new LayoutParams(stacked ? -1 : -2, -2));
+        filters.addView(waiting, new LayoutParams(stacked ? -1 : -2, -2));
+        addView(filters, spaced(2));
 
         empty = text("", 15, StudioStyle.MUTED);
+        empty.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         addView(empty, spaced(12));
+        reset = StudioStyle.action(context, "Сбросить фильтры", () -> {
+            query.setText("");
+            waiting.setChecked(false);
+            starred.setChecked(false);
+        }, false);
+        addView(reset, spaced(6));
         recordButton = StudioStyle.action(context, "К записи пары", record, false);
         addView(recordButton, spaced(8));
 
@@ -151,10 +172,24 @@ final class RecordingLibraryPage extends LinearLayout {
                 row.title.setText(item.title);
                 row.details.setText(item.details);
                 row.details.setTextColor(item.pending ? StudioStyle.WARNING : StudioStyle.MUTED);
-                row.setContentDescription(item.title + ". " + item.details);
+                row.content.setContentDescription(item.title + ". " + item.details);
+                row.content.setOnClickListener(view -> open.accept(item));
+                boolean pinned = library.favorite(item.file);
+                row.star.setChecked(pinned);
+                row.star.setText(pinned ? "★" : "☆");
+                row.star.setTextColor(pinned ? StudioStyle.ACCENT : StudioStyle.MUTED);
+                row.star.setContentDescription((pinned ? "Убрать из избранного. " : "Добавить в избранное. ") + item.title);
+                row.star.setOnClickListener(view -> {
+                    boolean selected = row.star.isChecked();
+                    library.favorite(item.file, selected);
+                    row.star.announceForAccessibility(selected ? "Добавлено в избранное" : "Убрано из избранного");
+                    StudioStyle.changeAction(row.star);
+                    filter();
+                });
                 return row;
             }
         };
+        list.setItemsCanFocus(true);
         list.setAdapter(adapter);
         list.setOnItemClickListener((parent, row, index, id) -> open.accept(adapter.getItem(index)));
         LayoutParams rows = new LayoutParams(-1, 0, 1);
@@ -212,13 +247,22 @@ final class RecordingLibraryPage extends LinearLayout {
 
     boolean waitingOnly() { return waiting.isChecked(); }
 
-    void restoreQuery(String saved, boolean onlyWaiting) {
+    boolean favoritesOnly() { return starred.isChecked(); }
+
+    void restoreQuery(String saved, boolean onlyWaiting, boolean onlyFavorites) {
         query.setText(saved);
         waiting.setChecked(onlyWaiting);
+        starred.setChecked(onlyFavorites);
     }
 
-    private static String normalize(String value) {
-        return value.toLowerCase(Locale.ROOT).replace('ё', 'е');
+    private CheckBox filterControl(Context context, String title) {
+        CheckBox button = new CheckBox(context);
+        button.setText(title);
+        button.setTextColor(StudioStyle.TEXT);
+        button.setButtonTintList(ColorStateList.valueOf(StudioStyle.ACCENT));
+        button.setMinHeight(dp(StudioStyle.ACTION_HEIGHT));
+        button.setOnCheckedChangeListener((view, checked) -> filter());
+        return button;
     }
 
     private static String index(String file, String title, String details) {
@@ -228,31 +272,34 @@ final class RecordingLibraryPage extends LinearLayout {
             numeric = date.substring(0, 10) + " " + date.substring(8, 10) + "." + date.substring(5, 7)
                     + "." + date.substring(0, 4);
         }
-        return normalize(title + " " + details + " " + numeric);
+        return ListeningLibrary.normalize(title + " " + details + " " + numeric);
     }
 
     private void filter() {
-        String[] words = normalize(query.getText().toString().trim()).split("\\s+");
+        String[] words = ListeningLibrary.terms(query.getText().toString());
         List<Entry> visible = new ArrayList<>();
         for (Entry entry : entries) {
+            if (starred.isChecked() && !library.favorite(entry.file)) continue;
             if (waiting.isChecked() && !entry.awaitingText) continue;
-            boolean matches = true;
-            for (String word : words) {
-                if (!entry.search.contains(word)) {
-                    matches = false;
-                    break;
-                }
-            }
-            if (matches) visible.add(entry);
+            if (ListeningLibrary.matches(entry.search, words)) visible.add(entry);
         }
         adapter.setNotifyOnChange(false);
         adapter.clear();
         adapter.addAll(visible);
         adapter.notifyDataSetChanged();
-        query.setVisibility(entries.isEmpty() ? GONE : VISIBLE);
-        waiting.setVisibility(entries.isEmpty() ? GONE : VISIBLE);
+        searchBar.setVisibility(entries.isEmpty() ? GONE : VISIBLE);
+        clear.setVisibility(query.length() == 0 ? GONE : VISIBLE);
+        filters.setVisibility(entries.isEmpty() ? GONE : VISIBLE);
         empty.setVisibility(visible.isEmpty() ? VISIBLE : GONE);
-        empty.setText(entries.isEmpty() ? "Записей пока нет. Запиши пару или импортируй аудиофайл." : "Записи не найдены.");
+        String explanation = "Записей пока нет. Запиши пару или импортируй аудиофайл.";
+        if (!entries.isEmpty()) {
+            if (words.length > 0) explanation = "По этому запросу записей нет.";
+            else if (starred.isChecked() && waiting.isChecked()) explanation = "В избранном нет записей, которые ждут разбора.";
+            else if (starred.isChecked()) explanation = "В избранном пока пусто. Нажми на звезду рядом с нужной записью.";
+            else explanation = "Все записи уже разобраны.";
+        }
+        if (!explanation.contentEquals(empty.getText())) empty.setText(explanation);
+        reset.setVisibility(!entries.isEmpty() && visible.isEmpty() ? VISIBLE : GONE);
         recordButton.setVisibility(entries.isEmpty() ? VISIBLE : GONE);
         list.setVisibility(visible.isEmpty() ? GONE : VISIBLE);
     }
@@ -317,27 +364,38 @@ final class RecordingLibraryPage extends LinearLayout {
     private final class Row extends LinearLayout {
         final TextView title = text("", 16, StudioStyle.TEXT);
         final TextView details = text("", 13, StudioStyle.MUTED);
+        final LinearLayout content;
+        final CheckBox star;
 
         Row(Context context) {
             super(context);
             setOrientation(HORIZONTAL);
             setGravity(Gravity.CENTER_VERTICAL);
             setMinimumHeight(dp(64));
-            if (android.os.Build.VERSION.SDK_INT >= 28) setScreenReaderFocusable(true);
+            setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
             setPadding(dp(12), dp(8), dp(12), dp(8));
             setBackground(StudioStyle.control(context, StudioStyle.PANEL, 12));
-            LinearLayout content = new LinearLayout(context);
+            content = new LinearLayout(context);
             content.setOrientation(VERTICAL);
+            content.setGravity(Gravity.CENTER_VERTICAL);
+            content.setMinimumHeight(dp(48));
+            content.setFocusable(true);
+            content.setBackground(StudioStyle.control(context, StudioStyle.PANEL, 8));
             title.setTypeface(Typeface.DEFAULT_BOLD);
             title.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
             details.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
             content.addView(title);
             content.addView(details);
             addView(content, new LayoutParams(0, -2, 1));
-            TextView arrow = text("›", 22, StudioStyle.ACCENT);
-            arrow.setPadding(dp(8), 0, 0, 0);
-            arrow.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-            addView(arrow);
+            star = new CheckBox(context);
+            star.setButtonDrawable((android.graphics.drawable.Drawable) null);
+            star.setTextSize(23);
+            star.setGravity(Gravity.CENTER);
+            star.setPadding(0, 0, 0, 0);
+            star.setBackground(StudioStyle.control(context, StudioStyle.CONTROL, 10));
+            LayoutParams starSize = new LayoutParams(dp(48), dp(48));
+            starSize.setMarginStart(dp(8));
+            addView(star, starSize);
         }
     }
 }
