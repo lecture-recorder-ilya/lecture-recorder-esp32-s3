@@ -272,6 +272,34 @@ public final class SummaryStateTest {
                 "Old transcripts must not invent a word timestamp");
     }
 
+    private static void checkLabeledSelections(JSONArray rows, String point, String assignment) throws Exception {
+        for (String response : new String[]{"1. 2.\nKEY: 1,2, TASK: 3", "task: 3; key: 1", "KEY: 1 TASK: 3", "KEY: 1\r\nTASK: 3"}) {
+            JSONArray points = new JSONArray(), sources = new JSONArray(), tasks = new JSONArray();
+            PhoneSummaryEvidence.add(response, 0, rows.length(), rows, points, sources, tasks,
+                    new HashSet<>(), new HashSet<>());
+            require(points.length() == 1 && point.equals(points.getString(0))
+                    && sources.getJSONObject(0).getInt("segment_id") == 0 && tasks.length() == 1
+                    && assignment.equals(tasks.getJSONObject(0).getString("quote")), "Потеряны роли или источник: " + response);
+        }
+        for (String response : new String[]{"1. 6\n2. 5", "1,3", "KEY: 1,3, 4x", "Ответ KEY: 1, TASK: 3",
+                "KEY: 1, TASK: 3 — сделайте", "KEY: 1, KEY: 3", "KEY: 1, TASK: 3, TASK: 4",
+                "KEY: 1, TASK: -3", "KEY: 1-3, TASK: 3", "MONKEY: 1, TASK: 3", "KEY: 0, TASK: 99"}) {
+            JSONArray points = new JSONArray(), sources = new JSONArray(), tasks = new JSONArray(), review = new JSONArray();
+            PhoneSummaryEvidence.add(response, 0, rows.length(), rows, points, sources, tasks, review,
+                    new HashSet<>(), new HashSet<>());
+            require(points.length() == 0 && sources.length() == 0 && tasks.length() == 0 && review.length() == 0,
+                    "Принят посторонний ответ: " + response);
+        }
+        JSONArray homework = new JSONArray();
+        PhoneSummaryEvidence.add("KEY: ; TASK: 1", 2, 3, rows, new JSONArray(), new JSONArray(),
+                homework, new HashSet<>(), new HashSet<>());
+        require(homework.length() == 1 && homework.getJSONObject(0).getInt("segment_id") == 2,
+                "Номер из окна попал в другую фразу");
+        require("audience".equals(HomeworkEvidence.kind("Он сказал, на дом надо решить задачу.", new JSONObject()))
+                && "assignment".equals(HomeworkEvidence.kind("Закон говорит об энергии. К следующему занятию решите задачу.", new JSONObject())),
+                "Указание на чужую реплику должно совпадать с целым словом");
+    }
+
     private static void checkEvidence() throws Exception {
         JSONArray rows = new JSONArray();
         String point = "Если функция непрерывна, то предел совпадает с её значением";
@@ -283,6 +311,7 @@ public final class SummaryStateTest {
                     .put("end", rows.length() * 2 + 1));
         }
         rows.getJSONObject(1).put("needs_review", true);
+        checkLabeledSelections(rows, point, assignment);
         JSONArray points = new JSONArray(), sources = new JSONArray(), tasks = new JSONArray();
         PhoneSummaryEvidence.add("KEY: 1,2,99\nTASK: 3,4,5,6", 0, 7, rows,
                 points, sources, tasks, new HashSet<>(), new HashSet<>());

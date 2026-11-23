@@ -9,7 +9,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 final class PhoneSummaryEvidence {
-    private static final Pattern INDEXES = Pattern.compile("(?im)^[ \\t]*(KEY|TASK)[ \\t]*:[ \\t]*([0-9, ]{0,40})[ \\t]*$");
+    private static final String LABEL = "(KEY|TASK)[ \\t]*:[ \\t]*";
+    private static final String NUMBERS = "([0-9]{1,2}(?:(?:[ \\t]*,[ \\t]*|[ \\t]+)[0-9]{1,2})*)?";
+    private static final Pattern SINGLE = Pattern.compile("(?i)[ \\t]*" + LABEL + "([0-9, ]{0,40})[ \\t]*");
+    private static final Pattern PAIR = Pattern.compile("(?i)[ \\t]*" + LABEL + NUMBERS
+            + "(?:[ \\t]*[,;|][ \\t]*|[ \\t]+)" + LABEL + NUMBERS + "[ \\t]*");
     private static final Pattern AFTER_CLASS = Pattern.compile(
             "на дом(?![\\p{L}])|домашнее задание|к следующ(?:ей|ему|им) (?:паре|занятию|уроку|семинару)",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
@@ -50,14 +54,17 @@ final class PhoneSummaryEvidence {
             throws JSONException {
         Set<Integer> keys = new TreeSet<>();
         Set<Integer> exercises = new TreeSet<>();
-        Matcher matcher = INDEXES.matcher(response);
-        while (matcher.find()) {
-            Set<Integer> selection = matcher.group(1).equalsIgnoreCase("KEY") ? keys : exercises;
-            for (String number : matcher.group(2).trim().split("[, ]+")) {
-                if (!number.matches("[0-9]{1,2}")) continue;
-                int index = first + Integer.parseInt(number) - 1;
-                if (index >= first && index < next && selection.size() < 4) selection.add(index);
+        for (String line : response.split("\\r\\n|[\\r\\n]")) {
+            Matcher single = SINGLE.matcher(line);
+            if (single.matches()) {
+                addIndexes(single.group(1), single.group(2), first, next, keys, exercises);
+                continue;
             }
+            if (line.length() > 128) continue;
+            Matcher pair = PAIR.matcher(line);
+            if (!pair.matches() || pair.group(1).equalsIgnoreCase(pair.group(3))) continue;
+            addIndexes(pair.group(1), pair.group(2), first, next, keys, exercises);
+            addIndexes(pair.group(3), pair.group(4), first, next, keys, exercises);
         }
         for (int index : keys) {
             JSONObject evidence = point(segments, index);
@@ -93,6 +100,16 @@ final class PhoneSummaryEvidence {
             if (EXCLUDED_TASK.matcher(taskContext).find()
                     || !tasks.add(quote)) continue;
             homework.put(anchor(row, index, quote).put("end", end).put("task", quote));
+        }
+    }
+
+    private static void addIndexes(String role, String numbers, int first, int next, Set<Integer> keys, Set<Integer> exercises) {
+        if (numbers == null) return;
+        Set<Integer> selected = role.equalsIgnoreCase("KEY") ? keys : exercises;
+        for (String number : numbers.trim().split("[, \\t]+")) {
+            if (!number.matches("[0-9]{1,2}")) continue;
+            int index = first + Integer.parseInt(number) - 1;
+            if (index >= first && index < next && selected.size() < 4) selected.add(index);
         }
     }
 
