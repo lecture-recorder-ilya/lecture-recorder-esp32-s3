@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 final class TranscriptReview {
     static final String[] KINDS = {"all", "number", "unit", "negation"};
-    static final String[] LABELS = {"Все", "Числа", "Единицы", "Отрицания"};
+    static final String[] LABELS = {"Сомнения", "Числа", "Единицы", "Отрицания"};
     private static final Pattern WORD = Pattern.compile("[+−-]?\\p{N}+(?:[.,:/]\\p{N}+)*(?:[%°]|\\p{L}+)?|[\\p{L}\\p{M}]+(?:['’‑-][\\p{L}\\p{M}]+)*|[%°₽]");
     private static final Set<String> NUMBERS = new HashSet<>(Arrays.asList((
             "ноль нуль ноля нуля нулю нулем нуле один одна одно одну одни одного одной одному одним одних одними "
@@ -32,7 +32,7 @@ final class TranscriptReview {
             + "|(?:милли)?литр(?:а|ы|ов|е|у|ом|ам|ами|ах)?|секунд(?:а|ы|у|ой|е|ам|ами|ах)?|минут(?:а|ы|у|ой|е|ам|ами|ах)?"
             + "|час(?:а|ы|ов|е|у|ом|ам|ами|ах)?|рубл(?:ь|я|ей|ю|ем|е|ям|ями|ях)|копе(?:йка|йки|ек|йку|йке|йкой|йкам|йками|йках)"
             + "|доллар(?:а|ы|ов|е|у|ом|ам|ами|ах)?|евро|процент(?:а|ы|ов|е|у|ом|ам|ами|ах)?|градус(?:а|ы|ов|е|у|ом|ам|ами|ах)?"
-            + "|(?:кило|милли)?(?:вольт|ватт|герц)(?:а|ы|ов|е|у|ом|ам|ами|ах)?|(?:кило|мега|гига|тера)?байт(?:а|ы|ов|е|у|ом|ам|ами|ах)?"
+            + "|(?:кило|милли)?(?:ампер|вольт|ватт|герц|ом)(?:а|ы|ов|е|у|ом|ам|ами|ах)?|(?:кило|мега|гига|тера)?байт(?:а|ы|ов|е|у|ом|ам|ами|ах)?"
             + "|кг|мг|км|см|мм|мл|сек|мин|руб|коп|квт|гц|мгц|%|°|₽");
 
     static String kind(String word) {
@@ -44,8 +44,12 @@ final class TranscriptReview {
     }
 
     static List<Item> words(JSONObject row) {
+        return words(row, false);
+    }
+
+    static List<Item> words(JSONObject row, boolean searchAllPhrases) {
         List<Item> result = new ArrayList<>();
-        if (!row.optBoolean("needs_review")) return result;
+        if (!searchAllPhrases && !row.optBoolean("needs_review")) return result;
         String text = row.optString("text");
         JSONArray reviews = row.optJSONArray("word_reviews");
         JSONArray times = row.optJSONArray("word_times");

@@ -53,6 +53,9 @@ public final class WordReviewTest {
     words=TranscriptReview.words(row);
     assert words.size()==2 && !words.get(0).direct && !words.get(1).direct;
     row.put("needs_review",false);assert TranscriptReview.words(row).isEmpty();
+    words=TranscriptReview.words(row,true);
+    assert words.size()==2 && !words.get(0).direct && words.get(1).kind.equals("unit");
+    assert TranscriptReview.kind("амперах").equals("unit");
     break;
    case "seek":
     row=row("😀 Не три.").put("word_times",new JSONArray().put(new JSONArray("[3,5,11240]"))

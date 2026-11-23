@@ -56,6 +56,8 @@ public class LectureReaderActivity extends Activity {
     private String stamp = "";
     private String tab = "text";
     private String reviewKind = "all";
+    private int reviewPage;
+    private static final int REVIEW_PAGE_SIZE = 24;
     private MediaPlayer player;
     private ForegroundAudio focus;
     private int pendingSeek, contentScroll;
@@ -86,6 +88,7 @@ public class LectureReaderActivity extends Activity {
         if (saved != null) {
             String selectedKind = saved.getString("reader_review_kind", "all");
             for (String kind : TranscriptReview.KINDS) if (kind.equals(selectedKind)) reviewKind = kind;
+            reviewPage = Math.max(0, saved.getInt("review_page"));
             pendingSeek = saved.getInt("reader_seek");
             contentScroll = saved.getInt("reader_scroll");
         }
@@ -329,9 +332,7 @@ public class LectureReaderActivity extends Activity {
                 String kind = TranscriptReview.KINDS[index];
                 Button filter = button(TranscriptReview.LABELS[index], () -> {
                     reviewKind = kind;
-                    scroll.scrollTo(0, 0);
-                    contentScroll = 0;
-                    render();
+                    showReviewPage(0);
                 });
                 StudioStyle.fitLabel(filter, 9, 13);
                 filter.setPadding(dp(2), 0, dp(2), 0);
@@ -340,19 +341,24 @@ public class LectureReaderActivity extends Activity {
                 filters.addView(filter, new LinearLayout.LayoutParams(0, dp(48), 1));
             }
             body.addView(filters, spaced(-1, -2, 8));
-            body.addView(text("Подсказки для проверки по звуку. Сомнение по фразе не означает ошибку в каждом слове.",
-                    13, MUTED), spaced(-1, -2, 6));
+            String guidance = reviewKind.equals("all") ? "Отметки распознавания. Нажми слово, чтобы свериться с записью."
+                    : "Совпадения по всей расшифровке, включая уверенно распознанные фразы.";
+            body.addView(text(guidance, 13, MUTED), spaced(-1, -2, 6));
         }
         JSONArray rows = report.optJSONArray("segments");
-        int count = 0;
+        boolean searchTerms = reviewOnly && !reviewKind.equals("all");
+        int count = 0, matchesBeforePage = 0;
+        boolean more = false;
         if (rows != null) for (int index = 0; index < rows.length(); index++) {
             JSONObject row = rows.optJSONObject(index);
-            if (row == null || reviewOnly && (!row.optBoolean("needs_review") || reviewed(row))) continue;
-            List<TranscriptReview.Item> candidates = reviewOnly ? TranscriptReview.words(row) : Collections.emptyList();
-            if (reviewOnly && !reviewKind.equals("all")) {
+            if (row == null || reviewOnly && !searchTerms && (!row.optBoolean("needs_review") || reviewed(row))) continue;
+            List<TranscriptReview.Item> candidates = reviewOnly ? TranscriptReview.words(row, searchTerms) : Collections.emptyList();
+            if (searchTerms) {
                 boolean matches = false;
                 for (TranscriptReview.Item item : candidates) matches |= item.kind.equals(reviewKind);
                 if (!matches) continue;
+                if (matchesBeforePage++ < reviewPage * REVIEW_PAGE_SIZE) continue;
+                if (count == REVIEW_PAGE_SIZE) { more = true; break; }
             }
             count++;
             LinearLayout block = card();
@@ -374,7 +380,8 @@ public class LectureReaderActivity extends Activity {
             block.addView(phrase, spaced(-1, -2, 5));
             if (reviewOnly) for (TranscriptReview.Item item : candidates) {
                 if (!reviewKind.equals("all") && !item.kind.equals(reviewKind)) continue;
-                String reason = item.direct ? "сомнение в слове" : "сомнение по фразе";
+                String reason = item.direct ? "сомнение в слове"
+                        : row.optBoolean("needs_review") ? "сомнение по фразе" : "совпадение в тексте";
                 String location = item.millis < 0 ? "без таймкода"
                         : clock(item.millis / 1000.0) + (item.timedWord ? "" : " · начало фразы");
                 Button listen = button(TranscriptReview.label(item.kind) + " «" + item.text + "» · " + location,
@@ -408,9 +415,22 @@ public class LectureReaderActivity extends Activity {
         }
         if (count == 0) {
             body.addView(text(reviewOnly ? (reviewKind.equals("all") ? "Непроверенных отметок нет"
-                    : "Непроверенных отметок этой категории нет") : "Текст пока недоступен", 16, MUTED),
+                    : "Совпадений нет") : "Текст пока недоступен", 16, MUTED),
                     spaced(-1, -2, 12));
         }
+        if (searchTerms && (reviewPage > 0 || more)) {
+            LinearLayout pages = new LinearLayout(this);
+            if (reviewPage > 0) pages.addView(button("Назад", () -> showReviewPage(reviewPage - 1)));
+            if (more) pages.addView(button("Дальше", () -> showReviewPage(reviewPage + 1)));
+            body.addView(pages, spaced(-1, -2, 8));
+        }
+    }
+
+    private void showReviewPage(int page) {
+        reviewPage = page;
+        contentScroll = 0;
+        scroll.scrollTo(0, 0);
+        render();
     }
 
     private void repeatFragment(JSONObject row, List<TranscriptReview.Item> candidates) {
@@ -584,6 +604,7 @@ public class LectureReaderActivity extends Activity {
         super.onSaveInstanceState(state);
         state.putString("reader_tab", tab);
         state.putString("reader_review_kind", reviewKind);
+        state.putInt("review_page", reviewPage);
         state.putInt("reader_seek", ready ? player.getCurrentPosition() : pendingSeek);
         if (scroll != null) state.putInt("reader_scroll", scroll.getScrollY());
     }
