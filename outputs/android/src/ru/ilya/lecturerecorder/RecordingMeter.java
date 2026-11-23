@@ -46,17 +46,18 @@ final class RecordingMeter extends View {
             postInvalidateDelayed(nextSample - now);
         }
 
-        float inset = StudioStyle.dp(getContext(), 10);
-        float stepX = (getWidth() - 2 * inset) / COLUMNS;
-        float stepY = (getHeight() - 2 * inset) / ROWS;
+        float insetX = StudioStyle.dp(getContext(), 10);
+        float insetY = StudioStyle.dp(getContext(), 3);
+        float stepX = (getWidth() - 2 * insetX) / COLUMNS;
+        float stepY = (getHeight() - 2 * insetY) / ROWS;
         float width = Math.min(stepX * .68f, stepY * .7f);
         if (width <= 0) return;
 
         for (int i = 0; i < COLUMNS; i++) {
             int level = history[(cursor + i) % COLUMNS];
-            float x = inset + (i + .5f) * stepX;
+            float x = insetX + (i + .5f) * stepX;
             for (int row = 0; row < ROWS; row++) {
-                float y = getHeight() - inset - (row + .5f) * stepY;
+                float y = getHeight() - insetY - (row + .5f) * stepY;
                 if (row < level) {
                     paint.setColor(StudioStyle.SPECTRUM[row * (StudioStyle.SPECTRUM.length - 1) / (ROWS - 1)]);
                     canvas.drawRoundRect(x - width / 2, y - width / 2, x + width / 2, y + width / 2,

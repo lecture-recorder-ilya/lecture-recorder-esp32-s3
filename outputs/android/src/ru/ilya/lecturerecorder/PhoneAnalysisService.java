@@ -50,7 +50,7 @@ public final class PhoneAnalysisService extends Service {
         if (busy() || !LectureNotes.valid(name)) return;
         Runnable start = () -> screen.startForegroundService(new Intent(screen, PhoneAnalysisService.class)
                 .setAction("analyze").putExtra("name", name).putExtra("title", title)
-                .putExtra("retranscribe", retranscribe));
+                .putExtra("retranscribe", retranscribe).putExtra("summaryOnly", summaryOnly));
         if (summaryOnly ? PhoneModels.summaryReady(screen) : PhoneModels.ready(screen)) start.run();
         else new AlertDialog.Builder(screen).setTitle("Модели для разбора")
                 .setMessage(summaryOnly ? "Для конспекта нужно скачать модель (около 344 МБ)."
@@ -97,16 +97,17 @@ public final class PhoneAnalysisService extends Service {
         startForeground(NOTIFICATION, notification(status));
         String title = intent.getStringExtra("title");
         boolean retranscribe = intent.getBooleanExtra("retranscribe", false);
-        new Thread(() -> process(job, name, title, retranscribe), "Lecture analysis").start();
+        boolean summaryOnly = intent.getBooleanExtra("summaryOnly", false);
+        new Thread(() -> process(job, name, title, retranscribe, summaryOnly), "Lecture analysis").start();
         return START_NOT_STICKY;
     }
 
-    private void process(Job job, String name, String title, boolean retranscribe) {
+    private void process(Job job, String name, String title, boolean retranscribe, boolean summaryOnly) {
         PowerManager.WakeLock wakeLock = getSystemService(PowerManager.class)
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "lectures:phone-analysis");
         wakeLock.acquire(2 * 60 * 60 * 1000L);
         try {
-            PhoneLectureAnalysis.run(getApplicationContext(), job, name, title, retranscribe);
+            PhoneLectureAnalysis.run(getApplicationContext(), job, name, title, retranscribe, summaryOnly);
             status = retranscribe ? "Расшифровка и конспект готовы" : "Конспект готов";
         } catch (Exception | LinkageError error) {
             if (job.cancelled) {

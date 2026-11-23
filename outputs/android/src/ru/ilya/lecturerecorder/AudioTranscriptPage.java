@@ -96,6 +96,7 @@ final class AudioTranscriptPage extends LinearLayout {
     private String lastExportFile;
     private RecordingExport.Kind lastExportKind;
     private String noteRevision;
+    private boolean localSummaryPending;
     private Button play;
     private Button backTen;
     private Button aheadTen;
@@ -285,8 +286,11 @@ final class AudioTranscriptPage extends LinearLayout {
                     transcribe.setEnabled(false);
                     activity.startService(PhoneAnalysisService.cancel(activity));
                 }
-            } else if (selected != null && Store.audio(activity, selected).isFile()) {
-                PhoneAnalysisService.request(activity, selected, Store.recordingTitle(activity, selected), true);
+            } else if (selected != null) {
+                refreshTranscriptState();
+                String title = Store.recordingTitle(activity, selected);
+                if (localSummaryPending) PhoneAnalysisService.requestSummary(activity, selected, title);
+                else if (Store.audio(activity, selected).isFile()) PhoneAnalysisService.request(activity, selected, title, true);
             }
         });
         StudioStyle.fitLabel(transcribe, 11, 15);
@@ -545,6 +549,9 @@ final class AudioTranscriptPage extends LinearLayout {
             exports.add(0, 200 + kind.ordinal(), kind.ordinal(), label).setEnabled(available);
         }
         exports.getItem().setEnabled(audio.isFile() || notes);
+        if (localSummaryPending && audio.isFile() && android.os.Process.is64Bit()) {
+            menu.getMenu().add(0, 111, 4, "Расшифровать заново").setEnabled(!PhoneAnalysisService.busy());
+        }
         if (selected.equals(lastExportFile) && lastExportKind != null) {
             menu.getMenu().add(0, 110, 3, "Повторить экспорт " + lastExportKind.format)
                     .setEnabled(lastExportKind == RecordingExport.Kind.WAV ? audio.isFile() : notes);
@@ -556,6 +563,8 @@ final class AudioTranscriptPage extends LinearLayout {
                 export.accept(lastExportFile, lastExportKind);
             } else if (item.getItemId() == 110) {
                 export.accept(lastExportFile, lastExportKind);
+            } else if (item.getItemId() == 111) {
+                PhoneAnalysisService.request(activity, selected, Store.recordingTitle(activity, selected), true);
             } else if (item.getItemId() == 100) {
                 if (!hasPhrase()) return true;
                 repeating = !repeating;
@@ -678,21 +687,24 @@ final class AudioTranscriptPage extends LinearLayout {
                 corrections = new JSONObject();
                 Toast.makeText(activity, "Не удалось открыть правки", Toast.LENGTH_SHORT).show();
             }
+            localSummaryPending = false;
             List<TranscriptEdits.Line> rows = readSegments(local, true, corrections);
             if (rows.isEmpty()) rows = readSegments(mac, false, corrections);
             setTranscriptRows(rows);
             noteRevision = revision;
         }
 
-        summary.setVisibility(local.isFile() || mac.isFile() ? View.VISIBLE : View.GONE);
+        boolean hasNotes = local.isFile() || mac.isFile();
+        summary.setVisibility(hasNotes ? View.VISIBLE : View.GONE);
         boolean loading = PhoneAnalysisService.busyFor(selected);
         boolean supported = android.os.Process.is64Bit();
         boolean busy = PhoneAnalysisService.busy();
         boolean hasAudio = Store.audio(activity, selected).isFile();
-        audioPanel.setVisibility(hasAudio ? View.VISIBLE : View.GONE);
+        boolean showAction = landscape || largeText ? localSummaryPending || loading : hasNotes;
+        audioPanel.setVisibility(hasAudio || showAction ? View.VISIBLE : View.GONE);
         transcriptSpinner.setVisibility(loading ? View.VISIBLE : View.GONE);
         String message = PhoneAnalysisService.statusFor(selected);
-        boolean readyOffline = supported && PhoneModels.ready(activity);
+        boolean readyOffline = supported && (localSummaryPending ? PhoneModels.summaryReady(activity) : PhoneModels.ready(activity));
         if (!loading) modelRequestStopping = false;
         boolean retry = message.startsWith("Не удалось") || message.contains("место")
                 || message.contains("недоступен") || message.equals("Разбор отменён");
@@ -703,6 +715,8 @@ final class AudioTranscriptPage extends LinearLayout {
             else if (message.isEmpty()) message = "Готовлю расшифровку…";
         } else if (busy) {
             message = "Жду завершения другой расшифровки";
+        } else if (localSummaryPending && (message.isEmpty() || message.equals("Разбор отменён"))) {
+            message = "Текст сохранён. Можно продолжить конспект.";
         } else if (message.equals("Разбор отменён")) {
             message = readyOffline ? "Разбор остановлен. Можно повторить."
                     : "Загрузка остановлена. При повторе загрузка начнётся заново.";
@@ -716,14 +730,14 @@ final class AudioTranscriptPage extends LinearLayout {
         if (!TextUtils.equals(transcriptStatus.getText(), message)) transcriptStatus.setText(message);
         transcriptStatus.setTextColor(retry ? StudioStyle.WARNING : MUTED);
         transcriptStatus.setVisibility(message.isEmpty() ? View.GONE : View.VISIBLE);
-        transcribe.setVisibility(supported && hasAudio ? View.VISIBLE : View.GONE);
+        transcribe.setVisibility(supported && (hasAudio || localSummaryPending || loading) ? View.VISIBLE : View.GONE);
         transcribe.setEnabled((!busy || loading) && !modelRequestStopping);
         boolean primary = transcriptRows.isEmpty() && !loading;
         if (primaryTranscribe == null || primaryTranscribe != primary) {
             primaryTranscribe = primary;
             StudioStyle.actionTone(transcribe, primary ? ACCENT : StudioStyle.CONTROL, primary ? StudioStyle.INK : TEXT);
         }
-        String label = loading ? "Остановить" : retry ? "Повторить"
+        String label = loading ? "Остановить" : localSummaryPending ? "Завершить конспект" : retry ? "Повторить"
                 : transcriptRows.isEmpty() ? (readyOffline ? "Расшифровать" : "Скачать модели") : "Заново";
         if (!TextUtils.equals(transcribe.getText(), label)) transcribe.setText(label);
         String action = label.equals("Заново") ? "Расшифровать заново" : label;
@@ -744,7 +758,8 @@ final class AudioTranscriptPage extends LinearLayout {
 
     private void updateVisibleTranscript() {
         boolean filtered = reviewFilter.isChecked();
-        waveform.setVisibility(filtered && largeText && !landscape ? View.GONE : View.VISIBLE);
+        boolean showWaveform = audioAvailable && !(filtered && largeText && !landscape);
+        waveform.setVisibility(showWaveform ? View.VISIBLE : View.GONE);
         transcript.replace(filtered ? reviewRows : transcriptRows);
         String filterLabel = "Сомнительные (" + reviewRows.size() + ")";
         reviewFilter.setText(filterLabel);
@@ -785,13 +800,15 @@ final class AudioTranscriptPage extends LinearLayout {
         List<TranscriptEdits.Line> rows = new ArrayList<>();
         if (!note.isFile()) return rows;
         try {
-            JSONArray segments = new JSONObject(Store.read(note)).getJSONObject("report").optJSONArray("segments");
+            JSONObject report = new JSONObject(Store.read(note)).getJSONObject("report");
+            JSONArray segments = report.optJSONArray("segments");
             if (segments != null) for (int i = 0; i < segments.length(); i++) {
                 JSONObject part = segments.optJSONObject(i);
                 if (part != null && !part.optString("text").isEmpty()) {
                     rows.add(new TranscriptEdits.Line(part, i, local, corrections));
                 }
             }
+            if (local && !rows.isEmpty()) localSummaryPending = report.optBoolean(LectureNotes.SUMMARY_PENDING);
         } catch (Exception ignored) {
             // The other transcript may still be available.
         }

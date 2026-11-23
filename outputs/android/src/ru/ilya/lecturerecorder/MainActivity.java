@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
    StudioStyle.tabIcon(tabs[i],i==LIBRARY_PAGE?5:i,color);
   }
   positionNavSelection(pageShown&&entering);
-  meter.setRecording(index==0&&CaptureService.recording);
+  meter.setRecording(CaptureService.recording);
   audioPage.setActive(resumed&&index==AUDIO_PAGE);
   if(index==0&&resumed)refreshConnection();
   if(index==SETTINGS_PAGE)refreshSyncSettings(CaptureService.recording);
@@ -872,7 +872,7 @@ public class MainActivity extends Activity {
    if(recordAction.isEnabled())showStoppingRecording();
   }else recordAction.setEnabled(active||startPendingUntil==0&&firmwareQuery==null);
   transport.setEnabled(!active&&startPendingUntil==0);
-  meter.setRecording(active&&selectedPage==0);
+  meter.setRecording(active);
   if(selectedPage==SETTINGS_PAGE)refreshSyncSettings(active);
   String profile=lessonFlow.profileLabel();
   if(!profile.contentEquals(mireaProfileStatus.getText()))mireaProfileStatus.setText(profile);

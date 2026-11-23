@@ -22,7 +22,7 @@ import java.util.*;
 
 final class PhoneLectureAnalysis {
     static void run(Context context, PhoneAnalysisService.Job job, String name, String title,
-                    boolean retranscribe) throws Exception {
+                    boolean retranscribe, boolean summaryOnly) throws Exception {
         File existing = LectureNotes.file(context, name, true);
         JSONObject document = null;
         if (existing.isFile()) {
@@ -34,7 +34,8 @@ final class PhoneLectureAnalysis {
                 if (!retranscribe) throw error;
             }
         }
-        if (document == null || retranscribe) {
+        if (summaryOnly && document == null) throw new IOException("Расшифровка для конспекта не найдена");
+        if (!summaryOnly && (document == null || retranscribe)) {
             JSONArray segments;
             String recognizer;
             try {
