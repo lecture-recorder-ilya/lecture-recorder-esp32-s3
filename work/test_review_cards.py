@@ -61,6 +61,13 @@ class ReviewCardsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             cards.apply(dict(body, request_id=uuid.uuid4().hex, source_key='invented'))
 
+    def test_manual_cards_survive_an_unreadable_audio_header(self):
+        (store.ROOT / 'recordings' / self.name).write_bytes(b'')
+        _, item = self.create(source=False)
+        saved = cards.list_cards(self.name)
+        self.assertEqual(saved['sources'], [])
+        self.assertEqual(saved['cards'][0]['id'], item['id'])
+
     def test_repeated_creation_and_grading_do_not_duplicate(self):
         body, card = self.create()
         for _ in range(3):

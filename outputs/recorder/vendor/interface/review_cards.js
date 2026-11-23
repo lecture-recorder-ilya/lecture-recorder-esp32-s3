@@ -62,8 +62,10 @@
       form.append(label);
     }
     form.append(preview, sourceNote, reload, submit);
+    const compose = make('details', undefined, 'review-cards-compose');
+    compose.append(make('summary', 'Добавить карточку'), form);
     const review = make('section', undefined, 'review-cards-session');
-    root.append(heading, form, status, retry, review);
+    root.append(heading, status, retry, review, compose);
     host.append(root);
     let cards = [], sources = [], queue = [], revealed = false, pending = null, confirming = false;
     let busy = false, disposed = false, loaded = false, generation = 0;
@@ -96,7 +98,7 @@
       source.value = sources.some(item => item.key === selected) ? selected : '';
       sourcePreview();
     }
-    function renderReview() {
+    function renderReview(focusAnswer = false) {
       review.replaceChildren();
       heading.textContent = `Карточки для повторения · ${cards.length}`;
       const card = cards.find(item => item.id === queue[0]);
@@ -115,6 +117,7 @@
         confirmation.append(make('p', 'Удалить эту карточку?'), button('Удалить карточку', () => {
           mutate({action: 'delete', card_id: card.id}, () => {
             cards = cards.filter(item => item.id !== card.id);
+            if (!cards.length) compose.open = true;
             queue = queue.filter(id => id !== card.id);
             revealed = false;
             confirming = false;
@@ -150,12 +153,15 @@
         if (citation.source_note || !verified) review.append(make('p', citation.source_note || 'Источник нужно сверить.', 'review-cards-source-note'));
       }
       if (!revealed) {
-        const flip = button('Показать ответ', () => { revealed = true; renderReview(); });
+        const flip = button('Показать ответ', () => { revealed = true; renderReview(true); });
         flip.disabled = busy || Boolean(pending);
         review.append(flip);
         return;
       }
-      review.append(make('p', card.answer, 'review-cards-answer'));
+      const shownAnswer = make('p', card.answer, 'review-cards-answer');
+      shownAnswer.tabIndex = -1;
+      review.append(shownAnswer);
+      if (focusAnswer) shownAnswer.focus?.();
       if (citation) review.append(make('blockquote', citation.quote, 'review-cards-quote'));
       const grades = make('div', undefined, 'review-cards-grades');
       for (const [label, result] of [['Помню', 'remember'], ['Ещё раз', 'again']]) {
@@ -212,6 +218,7 @@
         answer.value = '';
         source.value = '';
         sourcePreview();
+        compose.open = false;
         revealed = false;
       });
     });
@@ -227,6 +234,7 @@
         queue = cards.map(card => card.id);
         revealed = false;
         confirming = false;
+        if (!loaded) compose.open = !cards.length;
         loaded = true;
         status.textContent = '';
         sourceChoices();

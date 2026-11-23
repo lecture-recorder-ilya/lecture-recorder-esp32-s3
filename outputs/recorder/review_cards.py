@@ -5,6 +5,7 @@ import math
 import re
 import time
 import uuid
+import wave
 from pathlib import Path
 
 import study_store as store
@@ -37,10 +38,15 @@ def _data(name):
 
 
 def _sources(name):
-    limit = store.duration(name)
-    report = report_for(store.ROOT, name) or {}
+    rows = (report_for(store.ROOT, name) or {}).get('segments') or []
+    if not rows:
+        return []
+    try:
+        limit = store.duration(name)
+    except (wave.Error, EOFError):
+        return []
     sources = []
-    for index, row in enumerate(report.get('segments') or []):
+    for index, row in enumerate(rows):
         start, end, quote = row.get('start'), row.get('end'), row.get('text')
         if not isinstance(quote, str) or not quote.strip():
             continue

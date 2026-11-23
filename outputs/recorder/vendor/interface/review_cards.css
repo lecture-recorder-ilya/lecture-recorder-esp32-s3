@@ -1,10 +1,10 @@
 .review-cards {
   margin-block: 18px;
   padding: 18px;
-  border: 1px solid var(--line, #d8d4cf);
+  border: 1px solid var(--line, #38464a);
   border-radius: 14px;
-  background: var(--surface, #fbf9f5);
-  color: var(--text, #272522);
+  background: var(--panel, #1b2225);
+  color: var(--text, #eef3f8);
 }
 .review-cards h3, .review-cards h4 { margin: 0 0 14px; }
 .review-cards-form { display: grid; gap: 12px; }
@@ -15,26 +15,34 @@
   max-width: 100%;
   min-width: 0;
   padding: 10px;
-  border: 1px solid var(--line, #d8d4cf);
+  border: 1px solid var(--line, #38464a);
   border-radius: 8px;
   font: inherit;
-  background: var(--control, #fff);
+  background: var(--control, #253034);
   color: inherit;
 }
 .review-cards textarea { resize: vertical; }
 .review-cards button { min-height: 44px; padding: 9px 14px; font: inherit; cursor: pointer; }
 .review-cards button:disabled { cursor: default; opacity: .55; }
-.review-cards :focus-visible { outline: 2px solid var(--accent, #b3472d); outline-offset: 3px; }
+.review-cards :focus-visible { outline: 2px solid var(--accent, #97dfd1); outline-offset: 3px; }
 .review-cards [hidden] { display: none !important; }
-.review-cards-status, .review-cards-source-note, .review-cards-progress { font-size: 13px; color: var(--muted, #71695f); }
+.review-cards-status, .review-cards-source-note, .review-cards-progress { font-size: 13px; color: var(--muted, #a9bbbd); }
 .review-cards-status { min-height: 1.4em; }
-.review-cards-session { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line, #d8d4cf); }
+.review-cards-session { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line, #38464a); }
 .review-cards-session h4, .review-cards-answer, .review-cards-quote { white-space: pre-wrap; overflow-wrap: anywhere; }
 .review-cards-answer { padding-block: 12px; font-size: 17px; line-height: 1.5; }
-.review-cards-quote { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--accent, #b3472d); font-size: 14px; }
+.review-cards-quote { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--accent, #97dfd1); font-size: 14px; }
 .review-cards-grades { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
 @media (max-width: 520px) {
   .review-cards { padding: 12px; }
   .review-cards select { font-size: 13px; }
   .review-cards-grades button { flex: 1; }
+}
+
+.review-launcher > summary, .review-cards-compose > summary { padding-block: .7rem; cursor: pointer; font-weight: 650; }
+.review-cards-compose { margin-top: .8rem; border-top: 1px solid var(--line, #38464a); }
+.review-cards-status:empty { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .review-cards-answer, .review-cards-compose[open] form { animation: review-reveal .16s ease-out; }
+  @keyframes review-reveal { from { opacity: .4; transform: translateY(3px); } }
 }
