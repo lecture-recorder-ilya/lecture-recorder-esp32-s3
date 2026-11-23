@@ -5,6 +5,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import org.json.*;
 
 final class SummarySources {
@@ -12,7 +13,8 @@ final class SummarySources {
     private static final String WARNING="Источники конспекта:";
     private static final String[] ACTIVE={"start","end","segment_id","source_fingerprint"};
 
-    private static String norm(String text) { return text.replaceAll("(?U)\\s+"," ").trim().toLowerCase(Locale.ROOT); }
+    private static final Pattern SPACE=Pattern.compile("[\\s\\p{Z}\\u0085\\u001c-\\u001f]+");
+    private static String norm(String text) { return SPACE.matcher(text).replaceAll(" ").trim().toLowerCase(Locale.ROOT); }
     private static final class Span { final int first,last; Span(int a,int b){first=a;last=b;} }
 
     private static String fingerprint(JSONArray rows,Span span)throws Exception {

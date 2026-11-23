@@ -1,0 +1,291 @@
+{
+  "origin": "Искусственные учебные и отрицательные тексты, без личных данных и аудио. Роли заданы в тесте.",
+  "limits": "Разметка функции фразы; внешняя истинность и фактический автор не проверены. Набор зафиксирован до живого прогона.",
+  "cases": [
+    {
+      "name": "regression_derivative",
+      "partition": "regression",
+      "rows": [
+        {
+          "text": "Производная функции в точке равна пределу отношения приращения функции к приращению аргумента.",
+          "start": 0,
+          "end": 7,
+          "review_key": "stable-derivative",
+          "needs_review": false
+        },
+        {
+          "text": "Дома решите задачи номер три и четыре.",
+          "start": 7,
+          "end": 15,
+          "review_key": "stable-homework",
+          "needs_review": false
+        }
+      ],
+      "academic_rows": [
+        0
+      ],
+      "homework_rows": [
+        1
+      ],
+      "summary_min": 1
+    },
+    {
+      "name": "regression_ohm",
+      "partition": "regression",
+      "rows": [
+        {
+          "text": "Электрический ток — это упорядоченное движение электрических зарядов.",
+          "start": 0,
+          "end": 4.8,
+          "needs_review": false
+        },
+        {
+          "text": "Сила тока измеряется в амперах.",
+          "start": 5,
+          "end": 9.8,
+          "needs_review": false
+        },
+        {
+          "text": "Напряжение измеряется в вольтах.",
+          "start": 10,
+          "end": 14.8,
+          "needs_review": false
+        },
+        {
+          "text": "Сопротивление измеряется в омах.",
+          "start": 15,
+          "end": 19.8,
+          "needs_review": false
+        },
+        {
+          "text": "Закон Ома связывает силу тока, напряжение и сопротивление.",
+          "start": 20,
+          "end": 24.8,
+          "needs_review": false
+        },
+        {
+          "text": "К следующему занятию решите задачу номер три.",
+          "start": 25,
+          "end": 29.8,
+          "needs_review": false
+        }
+      ],
+      "academic_rows": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "homework_rows": [
+        5
+      ],
+      "summary_min": 4
+    },
+    {
+      "name": "mechanics",
+      "partition": "holdout",
+      "rows": [
+        {
+          "id": 0,
+          "start": 0,
+          "end": 3,
+          "text": "Ускорение равно отношению изменения скорости ко времени."
+        },
+        {
+          "id": 1,
+          "start": 4,
+          "end": 7,
+          "text": "Импульс замкнутой системы сохраняется."
+        },
+        {
+          "id": 2,
+          "start": 8,
+          "end": 11,
+          "text": "К следующему занятию решите упражнение двенадцать."
+        }
+      ],
+      "academic_rows": [
+        0,
+        1
+      ],
+      "homework_rows": [
+        2
+      ],
+      "summary_min": 2
+    },
+    {
+      "name": "biology",
+      "partition": "holdout",
+      "rows": [
+        {
+          "id": 0,
+          "start": 0,
+          "end": 3,
+          "text": "Митохондрия является органоидом клетки."
+        },
+        {
+          "id": 1,
+          "start": 4,
+          "end": 7,
+          "text": "Скорость фотосинтеза зависит от освещения."
+        },
+        {
+          "id": 2,
+          "start": 8,
+          "end": 11,
+          "text": "К следующему занятию прочитайте параграф семь."
+        }
+      ],
+      "academic_rows": [
+        0,
+        1
+      ],
+      "homework_rows": [
+        2
+      ],
+      "summary_min": 2
+    },
+    {
+      "name": "arithmetic",
+      "partition": "holdout",
+      "rows": [
+        {
+          "id": 0,
+          "start": 0,
+          "end": 3,
+          "text": "Квадрат суммы равен сумме квадратов и удвоенного произведения."
+        },
+        {
+          "id": 1,
+          "start": 4,
+          "end": 7,
+          "text": "Число девять не равно семи."
+        }
+      ],
+      "academic_rows": [
+        0,
+        1
+      ],
+      "homework_rows": [],
+      "summary_min": 2
+    },
+    {
+      "name": "empty",
+      "partition": "holdout",
+      "rows": [],
+      "academic_rows": [],
+      "homework_rows": [],
+      "summary_min": 0
+    },
+    {
+      "name": "room_request",
+      "partition": "holdout",
+      "rows": [
+        {
+          "id": 0,
+          "start": 0,
+          "end": 3,
+          "text": "Передайте воду, пожалуйста."
+        },
+        {
+          "id": 1,
+          "start": 4,
+          "end": 7,
+          "text": "Вы готовы начинать?"
+        }
+      ],
+      "academic_rows": [],
+      "homework_rows": [],
+      "summary_min": 0
+    },
+    {
+      "name": "doubtful",
+      "partition": "holdout",
+      "rows": [
+        {
+          "id": 0,
+          "start": 0,
+          "end": 3,
+          "text": "Скорость равна сорока метрам в секунду.",
+          "needs_review": true
+        },
+        {
+          "id": 1,
+          "start": 4,
+          "end": 7,
+          "text": "Домашнего задания не будет."
+        }
+      ],
+      "academic_rows": [],
+      "homework_rows": [],
+      "summary_min": 0
+    },
+    {
+      "name": "audience",
+      "partition": "holdout",
+      "rows": [
+        {
+          "id": 0,
+          "start": 0,
+          "end": 3,
+          "text": "Нам надо дома решать задачи.",
+          "speaker_role": "student"
+        },
+        {
+          "id": 1,
+          "start": 4,
+          "end": 7,
+          "text": "Я правильно понял, на дом решите задачу девять?",
+          "speaker_role": "student"
+        },
+        {
+          "id": 2,
+          "start": 8,
+          "end": 11,
+          "text": "Например, дома решите задачу девять.",
+          "speaker_role": "student"
+        }
+      ],
+      "academic_rows": [],
+      "homework_rows": [],
+      "summary_min": 0
+    },
+    {
+      "name": "condition",
+      "partition": "holdout",
+      "rows": [
+        {
+          "id": 0,
+          "start": 0,
+          "end": 3,
+          "text": "Если давление равно нулю"
+        }
+      ],
+      "academic_rows": [],
+      "homework_rows": [],
+      "summary_min": 0
+    },
+    {
+      "name": "cancelled",
+      "partition": "holdout",
+      "rows": [
+        {
+          "id": 0,
+          "start": 0,
+          "end": 3,
+          "text": "На дом решите задачу двадцать."
+        },
+        {
+          "id": 1,
+          "start": 4,
+          "end": 7,
+          "text": "Задание отменяется."
+        }
+      ],
+      "academic_rows": [],
+      "homework_rows": [],
+      "summary_min": 0
+    }
+  ]
+}

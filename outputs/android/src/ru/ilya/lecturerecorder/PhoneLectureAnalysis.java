@@ -64,14 +64,35 @@ final class PhoneLectureAnalysis {
             }
         }
 
+        PhoneSummarySelection.prepare(document,TranscriptEdits.read(TranscriptEdits.file(context,name)));
         JSONObject report = document.getJSONObject("report");
-        if (!report.optBoolean(LectureNotes.SUMMARY_PENDING)) return;
+        if (!report.optBoolean(LectureNotes.SUMMARY_PENDING)) {
+            PhoneSummaryProgress.clear(context,name);
+            return;
+        }
         job.check();
-        File text = PhoneModels.text(context, job);
-        summarize(context, job, text, report, preserveReady);
+        JSONArray segments=report.getJSONArray("segments");
+        String emptyMessage = preserveReady ? "Не удалось завершить повтор. Прежний разбор сохранён"
+                : "Не нашёл уверенных пунктов. Расшифровка сохранена";
+        if(!PhoneSummarySelection.hasContent(segments)) {
+            PhoneSummaryProgress.clear(context,name);
+            throw new IOException(emptyMessage);
+        }
+        PhoneSummaryProgress progress=PhoneSummaryProgress.open(context,name,segments);
+        if(progress.next<segments.length()) {
+            File text=PhoneModels.text(context,job);
+            summarize(context,job,text,report,progress);
+        }
+        if(progress.summary.length()==0&&progress.homework.length()==0) {
+            PhoneSummaryProgress.clear(context,name);
+            throw new IOException(emptyMessage);
+        }
+        report.put("summary",progress.summary).put("summary_evidence",progress.sources)
+                .put("homework",progress.homework).put("homework_review",progress.review);
         if (preserveReady) job.beginFinalSave();
         else job.check();
         LectureNotes.saveSummary(context, document, preserveReady);
+        PhoneSummaryProgress.clear(context,name);
     }
 
     static JSONArray transcribeVosk(Context context, PhoneAnalysisService.Job job, String name, File speech)
@@ -102,15 +123,9 @@ final class PhoneLectureAnalysis {
         return phrases.finish();
     }
 
-    private static void summarize(Context context, PhoneAnalysisService.Job job, File model, JSONObject report,
-                                  boolean preserveReady) throws Exception {
+    private static void summarize(Context context, PhoneAnalysisService.Job job, File model, JSONObject report, PhoneSummaryProgress progress)
+            throws Exception {
         JSONArray segments = report.getJSONArray("segments");
-        JSONArray summary = new JSONArray();
-        JSONArray sources = new JSONArray();
-        JSONArray homework = new JSONArray();
-        JSONArray homeworkReview = new JSONArray();
-        Set<String> points = new HashSet<>();
-        Set<String> tasks = new HashSet<>();
         job.update("Загружаю модель конспекта");
         EngineConfig config = new EngineConfig(model.getPath(), new Backend.CPU(4, null),
                 null, null, 4096, null, context.getCacheDir().getPath());
@@ -119,7 +134,7 @@ final class PhoneLectureAnalysis {
         ConversationConfig conversationConfig = new ConversationConfig(null,
                 Collections.emptyList(), Collections.emptyList(), new SamplerConfig(1, 1.0, 1.0, 42));
         try (Engine initialized = engine) {
-            for (int first = 0; first < segments.length(); ) {
+            for (int first = progress.next; first < segments.length(); ) {
                 job.check();
                 job.update("Составляю конспект · " + (100 * first / segments.length()) + "%");
                 StringBuilder input = new StringBuilder(
@@ -147,7 +162,8 @@ final class PhoneLectureAnalysis {
                         for (Content item : answer.getContents().getContents()) {
                             if (item instanceof Content.Text) response.append(((Content.Text) item).getText());
                         }
-                        PhoneSummaryEvidence.add(response.toString(), first, next, segments, summary, sources, homework, homeworkReview, points, tasks);
+                        PhoneSummarySelection.add(response.toString(),first,next,segments,progress.summary,progress.sources,progress.homework,progress.review,progress.points,progress.tasks);
+                        progress.checkpoint(next);
                     } finally {
                         job.conversation = null;
                     }
@@ -155,11 +171,7 @@ final class PhoneLectureAnalysis {
                 first = next;
             }
         }
-        if (summary.length() == 0 && homework.length() == 0 && homeworkReview.length() == 0) {
-            throw new IOException(preserveReady ? "Не удалось завершить повтор. Прежний разбор сохранён"
-                    : "Не нашёл уверенных пунктов. Расшифровка сохранена");
-        }
-        report.put("summary", summary).put("summary_evidence", sources).put("homework", homework).put("homework_review",homeworkReview);
+
     }
 
     private PhoneLectureAnalysis() {}

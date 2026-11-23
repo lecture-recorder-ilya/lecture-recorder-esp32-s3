@@ -1,0 +1,61 @@
+{
+  "origin": "Сообщённые формы ошибок ASR без вопросительного знака; время задано искусственно, аудио не проверено.",
+  "cases": [
+    {
+      "name": "speech_act_0",
+      "partition": "reported_asr_regression",
+      "rows": [
+        {
+          "text": "Чему равен ток",
+          "start": 0,
+          "end": 4
+        }
+      ],
+      "academic_rows": [],
+      "homework_rows": [],
+      "summary_min": 0
+    },
+    {
+      "name": "speech_act_1",
+      "partition": "reported_asr_regression",
+      "rows": [
+        {
+          "text": "Правда ли что ток зависит от напряжения",
+          "start": 0,
+          "end": 4
+        }
+      ],
+      "academic_rows": [],
+      "homework_rows": [],
+      "summary_min": 0
+    },
+    {
+      "name": "speech_act_2",
+      "partition": "reported_asr_regression",
+      "rows": [
+        {
+          "text": "Сосед сказал, что ток равен пяти амперам",
+          "start": 0,
+          "end": 4
+        }
+      ],
+      "academic_rows": [],
+      "homework_rows": [],
+      "summary_min": 0
+    },
+    {
+      "name": "speech_act_long_question",
+      "partition": "reported_asr_regression",
+      "rows": [
+        {
+          "text": "Чему равен ток в проводнике",
+          "start": 0,
+          "end": 4
+        }
+      ],
+      "academic_rows": [],
+      "homework_rows": [],
+      "summary_min": 0
+    }
+  ]
+}
