@@ -1,6 +1,7 @@
 package ru.ilya.lecturerecorder;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
@@ -59,6 +60,10 @@ public class LectureReaderActivity extends Activity {
     private ForegroundAudio focus;
     private int pendingSeek, contentScroll;
     private boolean ready, foreground;
+    private AlertDialog replayDialog;
+    private PhraseReplay replay;
+    private int replayAudioEnd = -1;
+    private boolean replaySeeking;
 
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
@@ -205,6 +210,7 @@ public class LectureReaderActivity extends Activity {
         if (document == null) return;
         JSONObject report = document.optJSONObject("report");
         if (report == null) return;
+        if (replayDialog != null) replayDialog.dismiss();
         int offset = Math.max(scroll.getScrollY(), contentScroll);
         contentScroll = 0;
         body.removeAllViews();
@@ -378,6 +384,10 @@ public class LectureReaderActivity extends Activity {
                 block.addView(listen, spaced(-1, -2, 6));
                 block.addView(text(reason, 12, MUTED), spaced(-1, -2, 2));
             }
+            if (reviewOnly && timed && Double.isFinite(row.optDouble("start")) && Double.isFinite(row.optDouble("end"))
+                    && row.optDouble("end") > row.optDouble("start") && Store.audio(this, recording).isFile()) {
+                block.addView(button("Разобрать фрагмент ещё раз", () -> repeatFragment(row, candidates)), spaced(-1, -2, 6));
+            }
             if (row.optBoolean("needs_review")) {
                 boolean checked = reviewed(row);
                 block.addView(text(checked ? "Проверено по записи" : "Нужно проверить", 13, MUTED),
@@ -400,6 +410,66 @@ public class LectureReaderActivity extends Activity {
             body.addView(text(reviewOnly ? (reviewKind.equals("all") ? "Непроверенных отметок нет"
                     : "Непроверенных отметок этой категории нет") : "Текст пока недоступен", 16, MUTED),
                     spaced(-1, -2, 12));
+        }
+    }
+
+    private void repeatFragment(JSONObject row, List<TranscriptReview.Item> candidates) {
+        if (replayDialog != null) return;
+        double from = row.optDouble("start"), to = row.optDouble("end"), anchor = Double.NaN;
+        for (TranscriptReview.Item word : candidates) {
+            if (word.timedWord && word.millis >= 0 && (reviewKind.equals("all") || word.kind.equals(reviewKind))) {
+                anchor = word.millis / 1000.0;
+                break;
+            }
+        }
+        PhraseReplayAudio.Window expected;
+        try { expected = PhraseReplayAudio.window(Store.audio(this, recording).length() / 2, from, to, anchor); }
+        catch (java.io.IOException invalid) { showStatus(invalid.getMessage()); return; }
+        String revision = stamp;
+        String original = row.optString("text");
+        int[] range = {(int)(expected.start / 16), (int)((expected.end + 15) / 16)};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle("Повтор по исходному звуку")
+                .setMessage(original + "\n\nРазбираю фрагмент…")
+                .setNegativeButton("Закрыть", null)
+                .setNeutralButton("Слушать оригинал", null);
+        String key = row.optString("review_key");
+        if (!key.isEmpty()) builder.setPositiveButton("Проверено", (dialog, button) -> {
+            if (!revision.equals(TranscriptEdits.stamp(note) + "/" + TranscriptEdits.stamp(edits))) return;
+            getSharedPreferences("transcript-review", 0).edit().putBoolean(key, true).apply();
+            render();
+        });
+        AlertDialog dialog = builder.create();
+        replayDialog = dialog;
+        dialog.setOnDismissListener(ignored -> {
+            if (replayDialog != dialog) return;
+            replayDialog = null;
+            if (replay != null) { replay.cancel(); replay = null; }
+            if (replayAudioEnd >= 0) {
+                replayAudioEnd = -1; replaySeeking = false;
+                if (player != null && !ready) releasePlayer();
+                else pausePlayback();
+            }
+        });
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(ignored -> {
+            replayAudioEnd = range[1];
+            replaySeeking = true;
+            playAt(range[0]);
+        });
+        try {
+            replay = PhraseReplay.start(this, recording, from, to, anchor, result -> {
+                if (replayDialog != dialog || !foreground) return;
+                replay = null;
+                if (!revision.equals(TranscriptEdits.stamp(note) + "/" + TranscriptEdits.stamp(edits))) {
+                    dialog.dismiss();
+                    return;
+                }
+                if (result.startMillis >= 0) { range[0] = result.startMillis; range[1] = result.endMillis; }
+                dialog.setMessage("В тексте\n" + original + "\n\nПовтор · " + clock(range[0] / 1000.0)
+                        + "–" + clock(range[1] / 1000.0) + "\n" + result.message);
+            });
+        } catch (java.io.IOException unavailable) {
+            dialog.setMessage(original + "\n\n" + unavailable.getMessage());
         }
     }
 
@@ -426,6 +496,9 @@ public class LectureReaderActivity extends Activity {
             player = new MediaPlayer();
             player.setAudioAttributes(ForegroundAudio.SPEECH);
             player.setDataSource(audio.getPath());
+            player.setOnSeekCompleteListener(seekingPlayer -> {
+                if (player == seekingPlayer) replaySeeking = false;
+            });
             player.setOnPreparedListener(prepared -> {
                 if (prepared != player || isFinishing()) return;
                 ready = true;
@@ -467,6 +540,10 @@ public class LectureReaderActivity extends Activity {
             }
             updatePendingSummary();
             if (ready && player != null) {
+                if (replayAudioEnd >= 0 && !replaySeeking && player.isPlaying() && player.getCurrentPosition() >= replayAudioEnd) {
+                    replayAudioEnd = -1;
+                    pausePlayback();
+                }
                 position.setProgress(player.getCurrentPosition());
                 elapsed.setText(clock(player.getCurrentPosition() / 1000.0)
                         + " / " + clock(player.getDuration() / 1000.0));
@@ -527,6 +604,7 @@ public class LectureReaderActivity extends Activity {
 
     @Override public void onPause() {
         foreground = false;
+        if (replayDialog != null) replayDialog.dismiss();
         timer.removeCallbacksAndMessages(null);
         pausePlayback();
         super.onPause();

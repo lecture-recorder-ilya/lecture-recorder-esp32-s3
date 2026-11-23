@@ -110,18 +110,24 @@ final class PhoneGigaAm {
     private static JSONArray recognize(OrtEnvironment environment, OrtSession frontend, OrtSession acoustic,
                                        float[] wave, String[] tokens, double left, double start, double end, boolean beam)
             throws Exception {
+        return recognize(environment, frontend, acoustic, wave, tokens, left, start, end, beam, null);
+    }
+
+    static JSONArray recognize(OrtEnvironment environment, OrtSession frontend, OrtSession acoustic,
+                               float[] wave, String[] tokens, double left, double start, double end, boolean beam,
+                               OrtSession.RunOptions run) throws Exception {
         Map<String, OnnxTensor> inputs = new HashMap<>();
         try (OnnxTensor samples = OnnxTensor.createTensor(environment, new float[][]{wave});
              OnnxTensor lengths = OnnxTensor.createTensor(environment, new long[]{wave.length})) {
             inputs.put("waveforms", samples);
             inputs.put("waveforms_lens", lengths);
-            try (OrtSession.Result prepared = frontend.run(inputs)) {
+            try (OrtSession.Result prepared = frontend.run(inputs, run)) {
                 inputs.clear();
                 inputs.put("features", (OnnxTensor) prepared.get("features").get());
                 OnnxTensor frames = (OnnxTensor) prepared.get("features_lens").get();
                 inputs.put("feature_lengths", frames);
                 int steps = (int) ((((long[]) frames.getValue())[0] + 3) / 4);
-                try (OrtSession.Result result = acoustic.run(inputs)) {
+                try (OrtSession.Result result = acoustic.run(inputs, run)) {
                     float[][] logits = ((float[][][]) result.get("log_probs").get().getValue())[0];
                     steps = Math.min(steps, logits.length);
                     int[] alignment = beam ? PhoneCtc.alignment(logits, steps, BLANK) : null;
@@ -216,7 +222,7 @@ final class PhoneGigaAm {
         }
     }
 
-    private static float[] readWindow(RandomAccessFile input, long offset, int count) throws Exception {
+    static float[] readWindow(RandomAccessFile input, long offset, int count) throws Exception {
         byte[] pcm = new byte[count * 2];
         input.seek(offset);
         input.readFully(pcm);
@@ -275,7 +281,7 @@ final class PhoneGigaAm {
         }
     }
 
-    private static byte[] readFrontend(Context context) throws Exception {
+    static byte[] readFrontend(Context context) throws Exception {
         try (InputStream input = context.getResources().openRawResource(R.raw.gigaam_frontend);
              ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[8192];
@@ -284,7 +290,7 @@ final class PhoneGigaAm {
         }
     }
 
-    private static String[] readTokens(Context context) throws Exception {
+    static String[] readTokens(Context context) throws Exception {
         String[] tokens = new String[BLANK + 1];
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 context.getResources().openRawResource(R.raw.gigaam_tokens), StandardCharsets.UTF_8))) {

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public final class PhoneAnalysisService extends Service {
+    static final Object MODEL_WORK = new Object();
     private static final String CHANNEL = "phone-analysis";
     private static final int NOTIFICATION = 36;
     private static volatile Job active;
@@ -100,6 +101,7 @@ public final class PhoneAnalysisService extends Service {
         recording = name;
         current = job;
         active = job;
+        PhraseReplay.cancelActive();
         NotificationManager manager = getSystemService(NotificationManager.class);
         manager.createNotificationChannel(new NotificationChannel(CHANNEL, "Разбор лекций", NotificationManager.IMPORTANCE_LOW));
         status = "Подготавливаю разбор";
@@ -116,7 +118,10 @@ public final class PhoneAnalysisService extends Service {
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "lectures:phone-analysis");
         wakeLock.acquire(2 * 60 * 60 * 1000L);
         try {
-            PhoneLectureAnalysis.run(getApplicationContext(), job, name, title, retranscribe, summaryOnly);
+            synchronized (MODEL_WORK) {
+                job.check();
+                PhoneLectureAnalysis.run(getApplicationContext(), job, name, title, retranscribe, summaryOnly);
+            }
             status = retranscribe ? "Расшифровка и конспект готовы" : "Конспект готов";
         } catch (Exception | LinkageError error) {
             if (job.cancelled) {

@@ -72,6 +72,7 @@ public class CaptureService extends Service {
    }
    linkSource = source; inputLabel = ""; link = Link.CONNECTING;
    recording = true; stop = false; current = ""; samples = 0; peak = 0;
+   PhraseReplay.cancelActive();
    lastStatusSecond = -1; lastStatusInput = "";
    status = phoneMicrophone ? "Включаю микрофон…" : "Подключаюсь к ClipMic…";
    try { notifyState(); } catch (RuntimeException error) {
