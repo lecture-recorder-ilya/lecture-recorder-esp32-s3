@@ -12,21 +12,26 @@ public class Context {
  public File files; public final PackageManager pm=new PackageManager();
  public PackageManager getPackageManager(){return pm;} public String getPackageName(){return pm.current.packageName;}
  public File getFilesDir(){return files;} public void startForegroundService(Intent i){}
- public SharedPreferences getSharedPreferences(String n,int m){return new SharedPreferences();}
+ private final java.util.Map<String,SharedPreferences> prefs=new java.util.HashMap<>();
+ public SharedPreferences getSharedPreferences(String n,int m){return prefs.computeIfAbsent(n,k->new SharedPreferences());}
 }''',
    'android/content/SharedPreferences.java':'''package android.content;
 public class SharedPreferences {
- public String getString(String k,String d){return k.equals("sync_token")?"fixture-key":d;}
- public int getInt(String k,int d){return d;} public boolean contains(String k){return false;}
- public Editor edit(){return new Editor();} public static class Editor {
-  public Editor putString(String k,String v){return this;} public Editor putInt(String k,int v){return this;}
-  public Editor remove(String k){return this;} public void apply(){} public boolean commit(){return true;}
+ private final java.util.Map<String,Object> values=new java.util.HashMap<>();
+ public String getString(String k,String d){return (String)values.getOrDefault(k,k.equals("sync_token")?"fixture-key":d);}
+ public int getInt(String k,int d){return (Integer)values.getOrDefault(k,d);}
+ public boolean contains(String k){return values.containsKey(k);}
+ public Editor edit(){return new Editor();} public class Editor {
+  private final java.util.Map<String,Object> writes=new java.util.HashMap<>();
+  public Editor putString(String k,String v){writes.put(k,v);return this;}public Editor putInt(String k,int v){writes.put(k,v);return this;}
+  public Editor remove(String k){writes.put(k,null);return this;}public void apply(){commit();}
+  public boolean commit(){writes.forEach((k,v)->{if(v==null)values.remove(k);else values.put(k,v);});return true;}
  }
 }''',
    'android/content/Intent.java':'''package android.content; import android.net.Uri;
 public class Intent {public static final String ACTION_VIEW="view";public static final int FLAG_GRANT_READ_URI_PERMISSION=1;
  public Intent(String s){} public Intent(String s,Uri u){} public void setDataAndType(Uri u,String t){} public void addFlags(int f){} }''',
-   'android/app/Activity.java':'''package android.app; import android.content.*; public class Activity extends Context {public void startActivity(Intent i){} }''',
+   'android/app/Activity.java':'''package android.app; import android.content.*; public class Activity extends Context {public void startActivity(Intent i){} public boolean isFinishing(){return false;} public boolean isDestroyed(){return false;} public void runOnUiThread(Runnable r){r.run();} }''',
    'android/net/Uri.java':'''package android.net; public class Uri {public static Uri parse(String s){return new Uri();}}''',
    'android/os/Build.java':'''package android.os; public class Build {public static class VERSION {public static int SDK_INT=33;}}''',
    'android/provider/Settings.java':'''package android.provider; public class Settings {public static final String ACTION_MANAGE_UNKNOWN_APP_SOURCES="settings";}''',
@@ -54,6 +59,7 @@ public class JSONObject {private final Map<String,Object> fields=new HashMap<>()
 }''',
    'org/json/JSONArray.java':'''package org.json; public class JSONArray {public int length(){return 0;}public String toString(){return "[]";}}''',
    'ru/ilya/lecturerecorder/CaptureService.java':'''package ru.ilya.lecturerecorder; import android.content.*; class CaptureService {static boolean recording=false;static boolean paired(Context c){return !c.getSharedPreferences("settings",0).getString("sync_token","").isEmpty();}}''',
+   'ru/ilya/lecturerecorder/PhoneAnalysisService.java':'package ru.ilya.lecturerecorder; class PhoneAnalysisService {static boolean analyzing; static boolean busy(){return analyzing;}}',
    'ru/ilya/lecturerecorder/Store.java':'''package ru.ilya.lecturerecorder;import java.io.*;import android.content.Context;import org.json.*;class Store{static String hash(File f){return "";}static JSONArray list(Context c){return new JSONArray();}static File transferFile(Context c,String n){return new File(n);}static void acknowledge(Context c,String n,String sha){}}''',
    'ru/ilya/lecturerecorder/LectureNotes.java':'''package ru.ilya.lecturerecorder;import android.content.Context;import org.json.*;class LectureNotes{static class RevisionConflict extends java.io.IOException{} static JSONObject index(Context c){return new JSONObject();}static String save(Context c,byte[] b)throws RevisionConflict{return "";}}''',
    'ru/ilya/lecturerecorder/Harness.java':r'''package ru.ilya.lecturerecorder;
@@ -101,7 +107,32 @@ public class Harness{
   CaptureService.recording=true;require(request(server,"e".repeat(32),body,body.length,sha,"fixture-key").startsWith("HTTP/1.1 409"));require(c.pm.inspected==1);
   require(request(server,"f".repeat(32),body,80*1024*1024+1,sha,"fixture-key").startsWith("HTTP/1.1 413"));
   File saved=AppUpdates.apk(c);require(saved.getParentFile().list().length==1&&Arrays.equals(Files.readAllBytes(saved.toPath()),body));
-  System.out.println("7 проверок реального SyncServer пройдены");
+  CaptureService.recording=false;
+  byte[] newer="github-newer-apk".getBytes(StandardCharsets.UTF_8);
+  String newerSha=SyncServer.hash(newer);
+  File incoming=new File(c.files,"github.part");Files.write(incoming.toPath(),newer);
+  c.pm.next=build(c.getPackageName(),14,1);AppUpdates.stage(c,incoming,newerSha,"github");
+  require(AppUpdates.info(c).getString("pending_code").equals("14"));
+  require(AppUpdates.info(c).getString("sha256").equals(newerSha));
+  c.pm.next=build(c.getPackageName(),13,1);
+  require(request(server,"1".repeat(32),body,body.length,sha,"fixture-key").startsWith("HTTP/1.1 422"));
+  c.pm.next=build(c.getPackageName(),14,1);
+  require(request(server,"2".repeat(32),body,body.length,sha,"fixture-key").startsWith("HTTP/1.1 422"));
+  require(Arrays.equals(Files.readAllBytes(AppUpdates.apk(c).toPath()),newer));
+  c.pm.next=build(c.getPackageName(),15,1);
+  PhoneAnalysisService.analyzing=true;
+  require(request(server,"3".repeat(32),body,body.length,sha,"fixture-key").startsWith("HTTP/1.1 409"));
+  require(AppUpdates.info(c).getString("analyzing").equals("true"));
+  PhoneAnalysisService.analyzing=false;
+  require(request(server,"4".repeat(32),body,body.length,sha,"fixture-key").startsWith("HTTP/1.1 200"));
+  require(AppUpdates.info(c).getString("pending_code").equals("15"));
+  require(Arrays.equals(Files.readAllBytes(AppUpdates.apk(c).toPath()),body));
+  require(AppUpdates.apk(c).getParentFile().list().length==1);
+  c.pm.current=build(c.getPackageName(),15,1);require(!AppUpdates.ready(c));
+  File legacy=new File(c.files,"updates/update.apk");Files.write(legacy.toPath(),newer);
+  c.getSharedPreferences("updates",0).edit().putInt("code",16).putString("sha256",newerSha).commit();
+  require(AppUpdates.ready(c)&&legacy.equals(AppUpdates.apk(c)));
+  System.out.println("Проверены SyncServer, конкурирующие каналы APK и прежний кэш");
  }
 }'''}
   with tempfile.TemporaryDirectory() as d:
@@ -113,6 +144,6 @@ public class Harness{
    subprocess.run([str(jdk/'bin/javac'),'-encoding','UTF-8','-d',d,*sources],check=True,capture_output=True)
    data=temp/'data';data.mkdir()
    result=subprocess.run([str(jdk/'bin/java'),'-cp',d,'ru.ilya.lecturerecorder.Harness',str(data)],check=True,capture_output=True,text=True,timeout=15)
-   self.assertIn('7 проверок',result.stdout)
+   self.assertIn('конкурирующие каналы',result.stdout)
 
 if __name__=='__main__':unittest.main()

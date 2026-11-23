@@ -181,6 +181,15 @@ class AndroidChannels(unittest.TestCase):
         self.assertEqual(installed_package(dict(installed_tag='v0.5.3-ai.1', installed_code=10)), STABLE)
         self.assertEqual(installed_package(dict(installed_package=STABLE, installed_tag='v0.5.4', installed_code=22)), STABLE)
 
+    def test_newer_pending_release_and_running_analysis(self):
+        self.refresh(self.assets)
+        code = apk_identity(io.BytesIO(self.stable))[1]
+        for pending in (code, code + 1):
+            with self.subTest(pending=pending):
+                self.assertEqual(self.transfer(dict(installed_package=STABLE, pending_code=pending)), [])
+        self.assertEqual(self.transfer(dict(installed_package=STABLE, analyzing=True)), [])
+        self.assertEqual(self.transfer(dict(installed_package=STABLE, pending_code=code - 1)), [self.stable])
+
     def test_unknown_explicit_package_never_falls_back(self):
         self.refresh(self.assets)
         for package in ('', None, [], STABLE + '.other', '../preview', STABLE.upper()):

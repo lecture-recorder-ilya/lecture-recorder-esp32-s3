@@ -49,7 +49,7 @@ final class SyncServer {
    int length=Integer.parseInt(h.getOrDefault("content-length","0"));String expected=h.getOrDefault("x-lecture-body-sha256","");
    if(length<=0||length>80*1024*1024||!expected.matches("[a-f0-9]{64}")){reply(out,413,"{}".getBytes());return;}
    if(!authorizeDigest(first[0],first[1],h,expected,false)){reply(out,403,"{}".getBytes());return;}
-   if(CaptureService.recording||!updateTransfer.tryAcquire()){reply(out,409,"{}".getBytes());return;}
+   if(AppUpdates.active()||!updateTransfer.tryAcquire()){reply(out,409,"{}".getBytes());return;}
    File temp=null;
    try{
     File folder=AppUpdates.apk(context).getParentFile();folder.mkdirs();temp=File.createTempFile("incoming-",".apk",folder);

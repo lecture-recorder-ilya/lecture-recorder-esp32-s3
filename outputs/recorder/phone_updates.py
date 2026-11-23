@@ -70,6 +70,13 @@ def check_phone(base, token, work):
     if status.get('sha256') == expected or current:
         state['update_message'] = MESSAGES['current' if current else 'staged']
         return
+    pending_code = status.get('pending_code')
+    if type(pending_code) is int and pending_code >= code:
+        state['update_message'] = MESSAGES['staged']
+        return
+    if status.get('analyzing'):
+        state['update_message'] = 'Обновление телефона передам после разбора записи'
+        return
     if status.get('recording'):
         state['update_message'] = MESSAGES['recording']
         return

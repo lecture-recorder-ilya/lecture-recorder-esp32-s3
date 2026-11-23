@@ -271,6 +271,10 @@ public class MainActivity extends Activity {
   installUpdate=button("Установить обновление",()->AppUpdates.install(this),true);
   installUpdate.setVisibility(View.GONE);
   updates.addView(installUpdate);
+  githubCheck=button("Получать обновления без Mac",()->GitHubUpdates.start(this,true));
+  updates.addView(githubCheck);
+  githubDisconnect=button("Отключить GitHub на телефоне",()->GitHubUpdates.disconnect(this));
+  updates.addView(githubDisconnect);
   LinearLayout connection=card(settingsPage);
   connection.addView(heading("Микрофон ESP",18));
   firmwareButton=button("Проверить версию прошивки",this::checkFirmware);
@@ -343,7 +347,7 @@ public class MainActivity extends Activity {
   }
  }
  private TextView firmwareStatus,macStatus,updateStatus;
- private Button firmwareButton,connectMac,installUpdate,profileAction;
+ private Button firmwareButton,connectMac,installUpdate,profileAction,githubCheck,githubDisconnect;
  private Thread firmwareQuery;
  private String pendingPhoto;
  private String exportFile;
@@ -873,6 +877,7 @@ public class MainActivity extends Activity {
   }else recordAction.setEnabled(active||startPendingUntil==0&&firmwareQuery==null);
   transport.setEnabled(!active&&startPendingUntil==0);
   meter.setRecording(active);
+  GitHubUpdates.whenOpen(this);
   if(selectedPage==SETTINGS_PAGE)refreshSyncSettings(active);
   String profile=lessonFlow.profileLabel();
   if(!profile.contentEquals(mireaProfileStatus.getText()))mireaProfileStatus.setText(profile);
@@ -895,10 +900,20 @@ public class MainActivity extends Activity {
   if(!action.contentEquals(connectMac.getText()))connectMac.setText(action);
   connectMac.setEnabled(!recording);
   boolean available=AppUpdates.ready(this);
-  String message=AppUpdates.message(this,available);
+  boolean signedIn=GitHubUpdates.signedIn(this);
+  boolean authorizing=GitHubUpdates.authorizing();
+  String label=authorizing?"Показать код GitHub":signedIn?"Проверить GitHub":"Получать обновления без Mac";
+  if(!label.contentEquals(githubCheck.getText()))githubCheck.setText(label);
+  boolean idle=!recording&&!PhoneAnalysisService.busy();
+  githubCheck.setEnabled(idle&&(!GitHubUpdates.busy()||authorizing));
+  githubDisconnect.setVisibility(signedIn?View.VISIBLE:View.GONE);
+  githubDisconnect.setEnabled(idle&&!GitHubUpdates.busy());
+  String direct=GitHubUpdates.status();
+  String message=available||direct.isEmpty()?AppUpdates.message(this,available):direct;
+  if(available&&GitHubUpdates.busy()&&!direct.isEmpty())message+=" "+direct;
   if(!message.contentEquals(updateStatus.getText()))updateStatus.setText(message);
   installUpdate.setVisibility(available?View.VISIBLE:View.GONE);
-  installUpdate.setEnabled(!recording);
+  installUpdate.setEnabled(idle);
  }
  @Override protected void onStart(){super.onStart();CaptureService.screenStarted();}
  @Override public void onResume(){super.onResume();resumed=true;lessonFlow.onResume();audioPage.setActive(selectedPage==AUDIO_PAGE);timer.removeCallbacksAndMessages(null);CaptureService.resumeSync(this);refresh();}

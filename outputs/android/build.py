@@ -116,10 +116,14 @@ def main():
         generated = build / "generated"
         generated.mkdir()
         manifest = manifest_for_preview(build) if args.preview else ROOT / "AndroidManifest.xml"
+        assets = build / "assets"
+        shutil.copytree(ROOT / "assets", assets)
+        config = {"repository": version["repository"], "client_id": version["updates"]["client_id"]}
+        (assets / "update-config.json").write_text(json.dumps(config))
         version_code = version["android_preview"]["code"] if args.preview else version["code"]
         apk = build / "base.apk"
         run(tools / "aapt2", "link", "-o", apk, "-I", platform, "--manifest", manifest,
-            "--java", generated, "-A", ROOT / "assets", "--custom-package", PACKAGE, "--version-code", version_code,
+            "--java", generated, "-A", assets, "--custom-package", PACKAGE, "--version-code", version_code,
             "--version-name", version["version"], build / "res.zip")
 
         classes = build / "classes"
