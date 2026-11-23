@@ -25,10 +25,31 @@ def merge_moments(items):
         if key not in seen:seen.add(key);result.append(item)
     return result
 
+def trusted_segments(segments):
+    from transcript_quality import assess
+    return [row for row in segments if row.get('reviewed') or not assess(row)['needs_review']]
+
+def supported_moments(items,segments,fresh=False):
+    from summary_sources import bind
+    from transcript_quality import assess
+    rows=[dict(row,needs_review=assess(row)['needs_review']) for row in segments]
+    result=[]
+    for item in items:
+        anchor=bind(item,rows,fresh)
+        if anchor['source_status']!='confirmed':continue
+        if anchor.get('kind')=='date' and not date_supported(anchor.get('date'),anchor['quote']):continue
+        query=safe_image_query(anchor.get('image_query'),anchor['quote'])
+        anchor['image_query']=query
+        fallback='Дата из объяснения' if anchor.get('kind')=='date' else 'Понятие из объяснения'
+        anchor['title']=safe_image_query(anchor.get('title'),anchor['quote']) or query or fallback
+        anchor['description']=anchor['quote']
+        result.append(anchor)
+    return result
+
 def dated_segments(segments,subject):
     if not subject or not re.search('истори|государственност',subject,re.I):return []
     result=[]
-    for segment in segments:
+    for segment in trusted_segments(segments):
         text=segment.get('text','')
         # Require a year/century marker, not arbitrary counts or audio timestamps.
         for match in re.finditer(r'(?<!\d)([3-9]\d{2}|[12]\d{3})(?:\s*[-–]\s*([12]\d{3}))?\s*(?:году|год[аыов]*|гг?\.?)(?![а-я])',text,re.I):
@@ -46,13 +67,14 @@ def public_topic(text):
     return None
 
 def moments_for_report(report,subject):
-    items=list(report.get('moments') or [])
+    segments=trusted_segments(report.get('segments',[]))
+    items=supported_moments(report.get('moments') or [],report.get('segments',[]))
     date_keys={(v.get('segment_id'),v.get('date')) for v in items}
-    for item in dated_segments(report.get('segments',[]),subject):
+    for item in dated_segments(segments,subject):
         if (item['segment_id'],item['date']) not in date_keys:items.append(item)
     # Only known full public identities in historical context, not roll-call names.
     if re.search(r'истори|государственност',subject or '',re.I):
-        seen_people=set();segments=report.get('segments',[])
+        seen_people=set()
         for index,segment in enumerate(segments):
             neighbors=[v for v in segments[max(0,index-1):index+2] if abs(v['start']-segment['start'])<15]
             context=' '.join(v['text'] for v in neighbors)
@@ -61,7 +83,7 @@ def moments_for_report(report,subject):
                 seen_people.add(query)
                 items.append({'kind':'person','date':None,'title':query,'description':'Историческая личность, упомянутая в объяснении.','quote':segment['text'],'context':context,'segment_id':segment['id'],'start':segment['start'],'end':segment['end'],'image_query':query})
     # Existing reports can gain a few grounded illustrations without rerunning the LLM.
-    for segment in report.get('segments',[]):
+    for segment in segments:
         query=public_topic(segment.get('text',''))
         if not query:continue
         related=next((v for v in items if v['segment_id']==segment['id']),None)

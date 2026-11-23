@@ -293,12 +293,13 @@ def validate_part(part, segments):
                 review_reason=code,review_note='Формулу нужно сверить: '+FORMULA_REASONS.get(code,FORMULA_REASONS['syntax'])+'.'))
     for item in part.get('moments',[]) if isinstance(part.get('moments'),list) else []:
         if not isinstance(item,dict) or item.get('kind') not in ('date','concept') or not isinstance(item.get('title'),str):continue
-        anchor=highlight_anchor(item,texts)
-        if not anchor:continue
+        anchor=summary_anchor(item,texts)
+        if not anchor or any(uncertain_quote_rows(anchor,texts)):continue
         if item['kind']=='date' and not date_supported(item.get('date'),anchor['quote']):continue
         query=safe_image_query(item.get('image_query'),anchor['quote'])
         if item['kind']=='concept' and not query:continue
-        result['moments'].append(dict(anchor,kind=item['kind'],date=item.get('date') if item['kind']=='date' else None,title=item['title'][:160],description=str(item.get('description',''))[:600],image_query=query))
+        title=safe_image_query(item['title'],anchor['quote']) or query or ('Дата из объяснения' if item['kind']=='date' else 'Понятие из объяснения')
+        result['moments'].append(dict(anchor,kind=item['kind'],date=item.get('date') if item['kind']=='date' else None,title=title,description=anchor['quote'],image_query=query))
     return result
 
 
@@ -461,7 +462,6 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
              'original_transcript':transcript_path.name})
         talks=presentations(segments,duration)
         role_map=roles(segments,talks)
-        segments=[dict(s,speaker_role=role_map[str(s['id'])]['role']) if str(s['id']) in role_map else s for s in segments]
         segments=[dict(s,speaker_role=role_map[str(s['id'])]['role']) if str(s['id']) in role_map else s for s in segments]
         remark_ids={v['segment_id'] for v in remarks(segments,role_map)}
         segments=[dict(s,teacher_remark=True) if s['id'] in remark_ids else s for s in segments]

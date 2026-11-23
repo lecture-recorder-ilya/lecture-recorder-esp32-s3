@@ -87,6 +87,9 @@ def reconcile(report,fresh=False):
                     anchor['task']=original+'\n'+NOTICE;anchor.pop('deadline',None)
             elif field=='homework' and 'source_point' in anchor:anchor['task']=anchor.pop('source_point')
             result[field][index]=anchor
+    if 'moments' in result:
+        from learning_moments import supported_moments
+        result['moments']=supported_moments(result['moments'],rows,fresh)
     warnings=[x for x in result.get('warnings',[]) if not str(x).startswith(WARNING)]
     if pending:warnings.append(f'{WARNING} нужно сверить — {pending}.')
     if warnings or 'warnings' in result:result['warnings']=warnings

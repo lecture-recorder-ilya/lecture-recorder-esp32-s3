@@ -1,0 +1,117 @@
+[
+  {
+    "name": "normal",
+    "origin": "фиксированная искусственная фраза; аудио и генерация модели не использовались",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "В 1380 году была Куликовская битва."
+      }
+    ],
+    "proposal": {
+      "summary": [
+        {
+          "quote": "В 1380 году была Куликовская битва.",
+          "segment_id": 0
+        }
+      ],
+      "moments": [
+        {
+          "kind": "date",
+          "date": "1380",
+          "title": "Куликовская битва",
+          "description": "Выдуманное объяснение.",
+          "quote": "В 1380 году была Куликовская битва.",
+          "segment_id": 0,
+          "image_query": "Куликовская битва"
+        }
+      ]
+    },
+    "expected_mac": {
+      "summary_count": 1,
+      "moments_count": 1
+    },
+    "expected_android": {
+      "summary_count": 1
+    }
+  },
+  {
+    "name": "doubtful",
+    "origin": "фиксированная искусственная фраза; аудио и генерация модели не использовались",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "В 1380 году была Куликовская битва.",
+        "needs_review": true
+      }
+    ],
+    "proposal": {
+      "summary": [
+        {
+          "quote": "В 1380 году была Куликовская битва.",
+          "segment_id": 0
+        }
+      ],
+      "moments": [
+        {
+          "kind": "date",
+          "date": "1380",
+          "title": "Куликовская битва",
+          "description": "Выдуманное объяснение.",
+          "quote": "В 1380 году была Куликовская битва.",
+          "segment_id": 0,
+          "image_query": "Куликовская битва"
+        }
+      ]
+    },
+    "expected_mac": {
+      "summary_count": 0,
+      "moments_count": 0
+    },
+    "expected_android": {
+      "summary_count": 0
+    }
+  },
+  {
+    "name": "incomplete",
+    "origin": "фиксированная искусственная фраза; аудио и генерация модели не использовались",
+    "rows": [
+      {
+        "id": 0,
+        "start": 1,
+        "end": 4,
+        "text": "Если в 1380 году была Куликовская битва,"
+      }
+    ],
+    "proposal": {
+      "summary": [
+        {
+          "quote": "Если в 1380 году была Куликовская битва,",
+          "segment_id": 0
+        }
+      ],
+      "moments": [
+        {
+          "kind": "date",
+          "date": "1380",
+          "title": "Куликовская битва",
+          "description": "Выдуманное объяснение.",
+          "quote": "Если в 1380 году была Куликовская битва,",
+          "segment_id": 0,
+          "image_query": "Куликовская битва"
+        }
+      ]
+    },
+    "expected_mac": {
+      "summary_count": 0,
+      "moments_count": 0
+    },
+    "expected_android": {
+      "summary_count": 0
+    }
+  }
+]

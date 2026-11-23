@@ -129,7 +129,7 @@ def main():
                 validator_sha256=hashlib.sha256(Path(ai_worker.__file__).read_bytes()).hexdigest(),
                 revisions={ref:subprocess.check_output(['git','rev-parse',ref+'^{}'],cwd=ROOT,text=True).strip() for ref in args.baseline},cases=[])
     report['filter_files_sha256']={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()
-        for p in [ROOT/'outputs/recorder'/name for name in ('ai_worker.py','formula_evidence.py','homework_evidence.py','summary_sources.py')]
+        for p in [ROOT/'outputs/recorder'/name for name in ('ai_worker.py','formula_evidence.py','homework_evidence.py','summary_sources.py','learning_moments.py')]
         +[ROOT/'outputs/android/src/ru/ilya/lecturerecorder'/name for name in ('PhoneSummaryEvidence.java','HomeworkEvidence.java')] if p.exists()}
     desktop={ref:mac(None if ref=='рабочая_копия' else ref,items) for ref in versions}
     phone={ref:android(None if ref=='рабочая_копия' else ref,items,args.java_home,args.android_json_jar) for ref in versions}
