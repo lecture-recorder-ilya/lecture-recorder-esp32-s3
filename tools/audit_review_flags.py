@@ -121,7 +121,6 @@ def run(args):
                   control_sha256=audio_sha256(args.control), script_sha256=audio_sha256(Path(__file__)),
                   labels='Levenshtein по эталону; пропуск относится к следующему слову, в конце к последнему. Полностью пустая речь — виртуальная фраза без флага.')
     (args.output/'frozen.json').write_text(json.dumps(frozen, ensure_ascii=False, indent=2)+'\n')
-    # Контрольные флаги и ошибки вычисляются только после записи заморозки.
     control = json.loads(args.control.read_text())
     checks = [row for case in control['cases'] for row in extract(case)]
     cb, ca = measure(checks, baseline), measure(checks, best['rule'])

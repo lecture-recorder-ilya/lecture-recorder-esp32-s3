@@ -29,10 +29,10 @@ class QuietHoldoutTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            docs = root/'docs'
-            docs.mkdir()
-            report = docs/'asr-checks-2026-11-23.json'
-            report.write_text(json.dumps({'mac_final': {'quiet_holdout': lock}}))
+            fixtures = root/'tests/fixtures/asr'
+            fixtures.mkdir(parents=True)
+            report = fixtures/'quiet-holdout.json'
+            report.write_text(json.dumps(lock))
 
             def run(output, downloaded, transcript):
                 fixture = {1: {'audio': [{'src': url}], 'transcription': transcript}}
@@ -58,7 +58,7 @@ class QuietHoldoutTests(unittest.TestCase):
 
             invalid = b'not WAV'
             case['source_audio_sha256'] = case['audio_sha256'] = hashlib.sha256(invalid).hexdigest()
-            report.write_text(json.dumps({'mac_final': {'quiet_holdout': lock}}))
+            report.write_text(json.dumps(lock))
             output = root/'invalid'
             with self.assertRaisesRegex(ValueError, 'Некорректный WAV.*golos-0001'):
                 run(output, invalid, reference)

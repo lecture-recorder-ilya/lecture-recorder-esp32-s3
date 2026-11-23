@@ -1,4 +1,3 @@
-"""Обычный путь разбора на фиксированных ответах; ASR и модель не запускаются."""
 import copy
 import json
 from pathlib import Path
@@ -8,7 +7,7 @@ import types
 import unittest
 from unittest.mock import patch
 import wave
-import numpy  # Загружается до patch.dict: расширение нельзя повторно выгружать из sys.modules.
+import numpy
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'outputs/recorder'))
@@ -84,7 +83,7 @@ class PipelineTests(unittest.TestCase):
             root=Path(folder);target,old,_=self.run_saved_transcript(root,[self.row()],self.proposal())
             original=target.read_bytes()
             target,new,calls=self.run_saved_transcript(root,[self.row(needs_review=True)],self.proposal())
-            self.assertEqual(calls,2)  # Новый разбор фрагмента и итоговый выбор, старый .parts не принят.
+            self.assertEqual(calls,2)
             self.assertEqual(new['summary'],[]);self.assertEqual(new['moments'],[])
             archived=[target.parent/'history'/target.stem/(revision+'.json') for revision in versions(target)]
             self.assertIn(original,[path.read_bytes() for path in archived])

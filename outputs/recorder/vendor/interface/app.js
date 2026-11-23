@@ -1,4 +1,3 @@
-/* Organize existing controls without changing recording or analysis state. */
 (() => {
  const main=document.querySelector('main');
  const recording=document.querySelector('#timer').closest('section');

@@ -1,4 +1,3 @@
-"""Профиль студента и публичное расписание РТУ МИРЭА."""
 
 import json
 import re
@@ -78,7 +77,7 @@ def _download(path):
                                  '--max-time', '5', '--max-filesize', str(MAX_PAYLOAD), SITE + path],
                                 capture_output=True, timeout=6)
         if result.returncode:
-            raise OSError('Расписание МИРЭА сейчас недоступно.')
+            raise OSError('Расписание сейчас недоступно.')
         content = result.stdout
     else:
         with urlopen(SITE + path, timeout=5) as response:
@@ -97,7 +96,7 @@ def _schedule(group):
     gid = next((row['id'] for row in rows if isinstance(row, dict) and row.get('scheduleTarget') == 1
                 and group_code(row.get('targetTitle')) == group and type(row.get('id')) is int and row['id'] > 0), None)
     if gid is None:
-        raise ValueError('Группа не найдена в расписании МИРЭА.')
+        raise ValueError('Группа не найдена в расписании.')
     return parse_ical(_download(f'/schedule/api/ical/1/{gid}'), group)
 
 
@@ -125,14 +124,14 @@ def load_calendar(legacy):
         if now - fallback.get('updated', 0) < REFRESH_SECONDS:
             return fallback
         if last_error[0] == group and now - last_error[1] < 60:
-            return dict(fallback, offline=True, error='Расписание МИРЭА сейчас недоступно.')
+            return dict(fallback, offline=True, error='Расписание сейчас недоступно.')
         try:
             data = dict(_schedule(group), updated=now)
             save(CACHE, data)
             return data
         except (OSError, ValueError, TypeError, subprocess.TimeoutExpired) as error:
             last_error = (group, now)
-            message = str(error) if isinstance(error, ValueError) else 'Расписание МИРЭА сейчас недоступно.'
+            message = str(error) if isinstance(error, ValueError) else 'Расписание сейчас недоступно.'
             return dict(fallback, offline=True, error=message)
 
 

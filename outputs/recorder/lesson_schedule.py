@@ -1,4 +1,3 @@
-"""Schedule metadata is separate from AI conclusions; times use Moscow."""
 import json
 import os
 import re

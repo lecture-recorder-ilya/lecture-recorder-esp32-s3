@@ -57,7 +57,6 @@ def measure(cases, manifest, texts):
                     baseline_retained=sum(r['before'] for r in rows),
                     added_losses=sum(r['added_losses'] for r in rows))
     summary=summarize_scores(results)
-    # Пересчёт сохранённых слов не измеряет скорость нового ASR-фильтра.
     summary.pop('elapsed_seconds',None);summary.pop('real_time_factor',None)
     return dict(summary=summary, targets={t:group([r for r in labels if r['target']==t]) for t in ('не','три','да')},
                 subsets={s:group([r for r in labels if r['subset']==s]) for s in sorted({r['subset'] for r in labels})}, rows=labels)

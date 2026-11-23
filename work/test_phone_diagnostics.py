@@ -88,7 +88,6 @@ class OfflineDiagnostics(unittest.TestCase):
             self.assertNotIn(self.fixture,sync.STATUS.read_text())
             with patch.object(sync,'request',side_effect=URLError(self.fixture)):
                 sync.poll(retries)
-            # Отдельный UI-процесс перечитывает журнал с диска.
             _, offline=self.http('GET','/phone-sync')
             self.assertFalse(offline['connected'])
             self.assertEqual(offline['pending'],1)

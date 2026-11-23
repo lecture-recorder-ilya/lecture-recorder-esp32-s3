@@ -834,7 +834,6 @@ final class AudioTranscriptPage extends LinearLayout {
             }
             if (local && !rows.isEmpty()) localSummaryPending = report.optBoolean(LectureNotes.SUMMARY_PENDING);
         } catch (Exception ignored) {
-            // The other transcript may still be available.
         }
         return rows;
     }

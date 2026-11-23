@@ -8,77 +8,67 @@
 		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
 	}
 })((typeof self !== 'undefined' ? self : this), function(__WEBPACK_EXTERNAL_MODULE__757__) {
-return /******/ (function() { // webpackBootstrap
-/******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ({
+return  (function() {
+	"use strict";
+	var __webpack_modules__ = ({
 
-/***/ 757:
-/***/ (function(module) {
+ 757:
+ (function(module) {
 
 module.exports = __WEBPACK_EXTERNAL_MODULE__757__;
 
-/***/ })
+ })
 
-/******/ 	});
-/************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/ 	
-/************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	!function() {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__webpack_require__.n = function(module) {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				function() { return module['default']; } :
-/******/ 				function() { return module; };
-/******/ 			__webpack_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	}();
-/******/ 	
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	!function() {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = function(exports, definition) {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
-/******/ 			}
-/******/ 		};
-/******/ 	}();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	!function() {
-/******/ 		__webpack_require__.o = function(obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); }
-/******/ 	}();
-/******/ 	
-/************************************************************************/
+	});
+
+	var __webpack_module_cache__ = {};
+
+	function __webpack_require__(moduleId) {
+
+		var cachedModule = __webpack_module_cache__[moduleId];
+		if (cachedModule !== undefined) {
+			return cachedModule.exports;
+		}
+
+		var module = __webpack_module_cache__[moduleId] = {
+
+
+			exports: {}
+		};
+
+		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+
+		return module.exports;
+	}
+
+	!function() {
+
+		__webpack_require__.n = function(module) {
+			var getter = module && module.__esModule ?
+				function() { return module['default']; } :
+				function() { return module; };
+			__webpack_require__.d(getter, { a: getter });
+			return getter;
+		};
+	}();
+
+	!function() {
+
+		__webpack_require__.d = function(exports, definition) {
+			for(var key in definition) {
+				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+				}
+			}
+		};
+	}();
+
+	!function() {
+		__webpack_require__.o = function(obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); }
+	}();
 var __webpack_exports__ = {};
-/* harmony import */ var katex__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(757);
-/* harmony import */ var katex__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(katex__WEBPACK_IMPORTED_MODULE_0__);
+ var katex__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(757);
+ var katex__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(katex__WEBPACK_IMPORTED_MODULE_0__);
 
 let scripts = document.body.getElementsByTagName("script");
 scripts = Array.prototype.slice.call(scripts);
@@ -94,14 +84,13 @@ scripts.forEach(function (script) {
       displayMode: display
     });
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error(err);
     katexElement.textContent = script.text;
   }
   script.parentNode.replaceChild(katexElement, script);
 });
 __webpack_exports__ = __webpack_exports__["default"];
-/******/ 	return __webpack_exports__;
-/******/ })()
+	return __webpack_exports__;
+ })()
 ;
 });

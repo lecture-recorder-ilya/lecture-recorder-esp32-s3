@@ -1,4 +1,3 @@
-/* Date arithmetic is independent of the browser's local timezone. */
 function calendarShift(day, amount){const value=new Date(day+'T12:00:00Z');value.setUTCDate(value.getUTCDate()+amount);return value.toISOString().slice(0,10)}
 function calendarMonday(day){const value=new Date(day+'T12:00:00Z');return calendarShift(day,-((value.getUTCDay()+6)%7))}
 function calendarFolder(entry){return entry.folder||`${entry.date} ${entry.start.replace(':','-')} — ${entry.subject} — ${entry.type}`.replace(/[/\\\0]/g,'-')}

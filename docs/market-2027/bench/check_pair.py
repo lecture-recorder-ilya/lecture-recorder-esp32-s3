@@ -1,6 +1,7 @@
-"""Локальная репетиция импорта и прерванного чтения 90-минутного WAV."""
 import hashlib
 import json
+import math
+import struct
 import sys
 import tempfile
 import threading
@@ -19,9 +20,8 @@ from media_stream import serve_audio
 def run(directory):
     source = directory / "pair.wav"
     target = directory / "normalized.wav"
-    clip = Path(__file__).with_name("fleurs-41-room-6db.wav")
-    with wave.open(str(clip)) as audio:
-        chunk = audio.readframes(audio.getnframes())
+    tones = (round(8000 * math.sin(2 * math.pi * 440 * frame / 16000)) for frame in range(16000))
+    chunk = struct.pack("<16000h", *tones)
     with wave.open(str(source), "wb") as audio:
         audio.setparams((1, 2, 16000, 0, "NONE", ""))
         whole, tail = divmod(5400 * 32000, len(chunk))

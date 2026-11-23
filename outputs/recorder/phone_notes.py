@@ -76,7 +76,6 @@ def documents(root, errors=None, *, revisioned=False):
         try:
             if revisioned:
                 state_path.parent.mkdir(parents=True, exist_ok=True)
-            # Читаем текущую редакцию и присваиваем ей номер до сетевой отправки.
             with ledger_lock(state_path) if revisioned else nullcontext():
                 packet = read_document(root, name, paths, errors)
                 if packet is None:

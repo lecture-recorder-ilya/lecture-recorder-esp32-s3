@@ -1,4 +1,3 @@
-"""Independent local semantic search, speaker timeline and live transcription."""
 import contextlib
 import copy
 import base64
@@ -75,7 +74,6 @@ def recorder_status():
     with urlopen('http://127.0.0.1:8765/status',timeout=4) as response:return json.load(response)
 
 def read_pcm(path, start, end):
-    """Read growing RIFF even when the data chunk length has not been finalized."""
     with path.open('rb') as audio:
         if audio.read(4)!=b'RIFF':raise ValueError('Ожидается WAV')
         audio.read(4)
@@ -192,7 +190,6 @@ def diarize(name, segments):
         if len(pcm)<16000*2:continue
         with VOICE_LOCK:vector=voice_vector(pcm)
         speaker,similarity=assign_voice(vector,centroids)
-        # Do not adapt centroids to uncertain/noisy samples.
         if speaker is not None and similarity>.85:
             updated=centroids[speaker]*.9+vector*.1
             centroids[speaker]=updated/np.linalg.norm(updated)
@@ -367,8 +364,6 @@ def live_loop():
         try:
             status=recorder_status()
             if not STATE['live'] or not status.get('recording'):
-                # Publish the final short tail once when capture stops. Waiting
-                # for whole phrases must not lose the end of the live draft.
                 if STATE['live'] and not status.get('recording') and status.get('file')==QUALITY_CURSOR['file'] and int(status.get('samples',0))>QUALITY_CURSOR['end'] and selected_model(store.read(PROJECT/'work/ai-settings.json').get('speech','auto'),quality_ready())=='qwen':
                     name=status['file'];total=int(status.get('samples',0))
                     value=monitor_quality(name,total,flush=True)
@@ -441,7 +436,6 @@ def passive_teacher_loop():
                 time.sleep(1);continue
             last_attempt={name:total}
             with PREVIEW_LOCK:segments=[dict(v) for v in PREVIEW.get('segments',[])] if PREVIEW.get('file')==name else []
-            # Only actual recognized sustained speech; no silence/short answers.
             window=sustained_window(segments,total/16000)
             if not window:continue
             start,end=window
@@ -515,7 +509,7 @@ class Handler(BaseHTTPRequestHandler):
                 if status.get('recording') or not status.get('busy'):
                     return self.reply({'error':'Сначала подготовь службу записи к обновлению'},409)
             except OSError:
-                pass  # The updater has already stopped the recording service.
+                pass
             self.reply({'ok':True})
             CONTEXT_REVIEWER.close()
             threading.Thread(target=self.server.shutdown,daemon=True).start()

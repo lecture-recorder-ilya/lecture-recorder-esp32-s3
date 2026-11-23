@@ -1,4 +1,3 @@
-"""Download the selected local models; no microphone/audio files are accessed."""
 import hashlib,json,os
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent.parent

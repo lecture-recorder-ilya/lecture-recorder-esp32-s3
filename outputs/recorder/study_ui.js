@@ -56,7 +56,6 @@ function renderLiveFormulas(items){
  liveFormulas.append(el('h3','Формулы по ходу решения'));
  for(const item of items){const box=el('article',undefined,'formula-row');box.append(el('small',timeLabel(item.start),'muted'));const expression=el('div');expression.style='overflow-x:auto';try{if(!window.katex)throw Error();katex.render(item.latex,expression,{displayMode:true,throwOnError:false,trust:false,strict:'ignore'})}catch{expression.textContent=item.latex}box.append(expression);if(item.explanation)box.append(el('p',item.explanation));const evidence=el('details');evidence.append(el('summary','Слова из записи'),el('blockquote',item.quote));box.append(evidence);liveFormulas.append(box)}
 }
-// Fixed viewport; a five-minute RAM history can be scrolled without interrupting follow mode.
 liveText.id='live-text';liveText.className='live-stream';liveText.setAttribute('role','log');liveText.setAttribute('aria-label','Расшифровка за последние пять минут');liveText.setAttribute('aria-live','off');
 const liveTrack=el('div',undefined,'live-stream-track');liveText.append(liveTrack);
 let liveStreamFile='',liveStreamRows=new Map();

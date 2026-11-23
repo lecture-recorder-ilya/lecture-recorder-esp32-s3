@@ -6,7 +6,6 @@ import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 import java.io.*;
 
-/** Only explicitly granted, single pending camera images can be opened. */
 public class BoardPhotoProvider extends ContentProvider {
  public boolean onCreate(){return true;}
  private File file(Uri uri)throws FileNotFoundException{String name=uri.getLastPathSegment();if(uri.getPathSegments().size()!=1||name==null||!name.matches("[a-f0-9]{32}\\.jpg"))throw new FileNotFoundException();return new File(new File(getContext().getFilesDir(),"camera"),name);}

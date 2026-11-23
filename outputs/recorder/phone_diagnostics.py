@@ -1,4 +1,3 @@
-"""Сведения об обмене, которые можно показать в окне Mac и сохранить в журнале."""
 import errno
 import re
 from http.client import IncompleteRead
@@ -38,8 +37,6 @@ def reason(error):
         return 'format'
     if isinstance(error, (URLError, ConnectionError, TimeoutError, IncompleteRead)):
         return 'offline'
-    # Исключение может содержать URL, заголовки или системный путь.
-    # Используем только код причины. В журнал уходит собственный текст приложения.
     detail = str(error)
     if getattr(error, 'errno', None) == errno.ENOSPC or 'достаточно места' in detail:
         return 'space'

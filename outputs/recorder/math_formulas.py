@@ -1,4 +1,3 @@
-"""Whole spoken expressions across adjacent excerpts, with source anchors."""
 import copy
 import hashlib
 import re
@@ -48,12 +47,10 @@ def supported_latex(latex,quote):
     if '+' in latex and not re.search(r'плюс|слож|прибав|сумм',text):return False
     if '-' in latex and not re.search(r'минус|выч|отня',text):return False
     if '^' in latex and not re.search(r'степен|квадрат|куб|возвод',text):return False
-    # A model cannot add a numerical answer absent from the spoken quotation.
     numbers=set(re.findall(r'\d+(?:[.,]\d+)?',text))
     numbers.update(str(n) for n,p in NUMBER_WORDS.items() if re.search(r'\b(?:'+p+r')\b',text))
     if any(n.replace(',','.') not in {v.replace(',','.') for v in numbers}
            for n in re.findall(r'\d+(?:[.,]\d+)?',latex)):return False
-    # Variables must also occur in the quotation, literally or by spoken name.
     body=re.sub(r'\\(?:begin|end)\{[^{}]+\}','',latex)
     body=re.sub(r'\\[A-Za-z]+','',body)
     body=re.sub(r'\{(?:aligned|gathered|cases)\}','',body)
@@ -77,8 +74,6 @@ def collect(value,answer):
         selected=[rows[i] for i in ids];source=normalized(' '.join(r['text'] for r in selected))
         if normalized(quote) not in source:continue
         if not supported_latex(latex,quote):
-            # The model may quote only the expression/result and omit the preceding
-            # spoken condition. Expand source anchors, never the expression itself.
             expanded=None
             for count in range(len(ids)+1,len(rows)+1):
                 for left in range(max(0,ids[-1]-count+1),min(ids[0],len(rows)-count)+1):
@@ -89,7 +84,6 @@ def collect(value,answer):
                 if expanded:break
             if not expanded:continue
             ids,selected,quote=expanded;source=normalized(quote)
-        # A quoted span must include each claimed row; avoid misleading timestamps.
         position=source.find(normalized(quote));stop=position+len(normalized(quote))
         left=0;used=0
         for row in selected:

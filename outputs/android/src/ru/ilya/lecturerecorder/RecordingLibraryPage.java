@@ -287,7 +287,6 @@ final class RecordingLibraryPage extends LinearLayout {
                     records.put(name, new Entry(name, draft.isEmpty() ? "Запись пары" : draft,
                             Store.recordingTitle(name) + " · Выбрать пару", true, false));
                 } catch (Exception ignored) {
-                    // A transfer or a completed choice may have removed it during refresh.
                 }
             }
         }

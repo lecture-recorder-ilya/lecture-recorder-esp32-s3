@@ -1,4 +1,3 @@
-"""Фиксированные ловушки конспекта; не выдаются за ответы живой модели."""
 import json
 from pathlib import Path
 import sys

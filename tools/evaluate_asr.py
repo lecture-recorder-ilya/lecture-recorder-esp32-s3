@@ -27,7 +27,6 @@ EDIT_OPERATIONS = ('substitutions', 'deletions', 'insertions')
 
 
 def word_edits(expected, actual):
-    """Return one minimal alignment, preferring substitution, deletion, insertion on ties."""
     row = list(range(len(actual) + 1))
     trace = [bytearray([0] + [3] * len(actual))]
     for i, value in enumerate(expected, 1):

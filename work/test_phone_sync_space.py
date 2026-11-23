@@ -1,4 +1,3 @@
-"""Перезапуск до ACK. CLIPMIC_SPACE_TEST_VOLUME позволяет повторить на малом тестовом томе."""
 from contextlib import nullcontext
 from types import SimpleNamespace
 import hashlib

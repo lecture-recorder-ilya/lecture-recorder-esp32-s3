@@ -1,4 +1,3 @@
-"""Точка не маскирует слабые речевые токены; старые сомнения и текст сохраняются."""
 import os
 from pathlib import Path
 import subprocess

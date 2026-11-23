@@ -62,7 +62,7 @@ def main():
     args = parser.parse_args()
     if args.output.exists():
         parser.error('Выбери новую папку.')
-    lock = json.loads((ROOT/'docs/asr-brief-fixtures.json').read_text())
+    lock = json.loads((ROOT/'tests/fixtures/asr/brief-checks.json').read_text())
     cases = lock['public_cases']
     speech = talks(args.parquet, {case['source_id'] for case in cases if case['corpus'] == 'mTEDx'})
     args.output.parent.mkdir(parents=True, exist_ok=True)

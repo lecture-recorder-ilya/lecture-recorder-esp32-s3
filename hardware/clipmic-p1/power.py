@@ -1,4 +1,3 @@
-"""Battery-side budgets. See README for duty cycles, sources and missing measurements."""
 
 import json
 from pathlib import Path
@@ -6,7 +5,7 @@ from pathlib import Path
 capacity_min_mah = 400
 usable_mah = capacity_min_mah * 0.80
 bat_v, efficiency = 3.8, 0.90
-led_ma = (3.3 - 2.0) / 1.0  # 1 kOhm, assumed red LED Vf
+led_ma = (3.3 - 2.0) / 1.0
 led_at_bat = led_ma * 3.3 / (bat_v * efficiency)
 modes = {
     "awake_reference": 43.2,
@@ -25,7 +24,7 @@ mixed = sum(
         ("sync_wifi_sd_read_led", 0.05),
     ]
 )
-resistance = 0.30  # scenario for total battery + PCM + connector and wires in ohms
+resistance = 0.30
 result = {
     "capacity_min_mAh": capacity_min_mah,
     "usable_assumption_mAh": usable_mah,
@@ -35,7 +34,6 @@ result = {
     "sd_record_peak_from_seeed_plus_led_mA": 109.3 + led_at_bat,
     "tx_sensitivity": [],
 }
-# Loaded-terminal operating point solves Vbat = Voc - I*R, I = Pout/(eta*Vbat).
 out_w = 3.3 * (0.340 + 0.025 + led_ma / 1000)
 for ocv in (4.2, 3.8, 3.3, 3.0):
     vload = (ocv + (ocv**2 - 4 * resistance * out_w / 0.85) ** 0.5) / 2
@@ -54,7 +52,6 @@ result["dropout_sag_scenario_V"] = (
     resistance * result["dropout_current_load_scenario_A"]
 )
 result["charge_setpoint_nominal_mA"] = 24000 / 220
-# Sensitivity cases, not statistical bounds or measured component limits.
 cases = {
     "short": (0.65, 1.20),
     "central": (0.80, 1.00),

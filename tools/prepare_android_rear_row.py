@@ -57,7 +57,6 @@ def prepare(args):
                                         synthetic_transform=True))
     for split, rows in sets.items():
         rng = np.random.default_rng(174 if split == 'tune' else 175)
-        # Independent fixed negatives: silence, stationary noise, hum, clicks.
         n = 8*16000
         t = np.arange(n)/16000
         white = rng.normal(0, .01, n)
@@ -71,8 +70,6 @@ def prepare(args):
             rows.append(dict(id=split+'-'+label, audio=path.name, reference='',
                              subset='no-speech', synthetic=True, audio_sha256=audio_sha256(path)))
         (args.output/(split+'.json')).write_text(json.dumps(rows, ensure_ascii=False, indent=2)+'\n')
-    # Stress an amplitude-only gain gate with the same backgrounds at several
-    # levels. These probes are tuning diagnostics, never held-out speech.
     rng = np.random.default_rng(901)
     white = rng.normal(size=8*16000)
     frequency = np.fft.rfftfreq(len(white), 1/16000)

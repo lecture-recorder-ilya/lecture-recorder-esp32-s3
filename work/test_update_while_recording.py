@@ -1,4 +1,3 @@
-"""Проверка штатных /start, /status и запрета остановки при локальном обновлении."""
 import hashlib
 import json
 import shutil
@@ -21,7 +20,6 @@ SOURCE = Path(__file__).resolve().parents[1]
 
 def record(directory):
     sys.path.insert(0, str(directory / 'outputs/recorder'))
-    # Стенд подаёт кадры через объект USB-потока. Реальные порты не нужны.
     serial = ModuleType('serial')
     tools = ModuleType('serial.tools')
     tools.list_ports = ModuleType('serial.tools.list_ports')

@@ -1,4 +1,3 @@
-"""Reject decoder repetition and low-confidence noise; keep source audio intact."""
 import re
 from collections import Counter
 

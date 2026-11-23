@@ -1,4 +1,3 @@
-"""Own compact networks. No pretrained weights or model downloads."""
 import re
 import torch
 from torch import nn
@@ -23,7 +22,6 @@ def decode(ids):
     return ''.join(output).strip()
 
 def features(audio):
-    """Fixed log-mel features, 16 kHz; no learned external audio encoder."""
     audio = torch.as_tensor(audio, dtype=torch.float32)
     spectrum = torch.stft(audio, 400, 160, window=torch.hann_window(400),
                           return_complex=True, center=True).abs().square()
@@ -47,7 +45,6 @@ class SpeechModel(nn.Module):
         return self.head(x).log_softmax(-1).transpose(0,1)
 
 class NotesModel(nn.Module):
-    """Label whole passages for extractive notes; retain exact source text."""
     def __init__(self):
         super().__init__()
         self.embedding = nn.Embedding(257, 48)

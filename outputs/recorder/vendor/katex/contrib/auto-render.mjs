@@ -1,6 +1,5 @@
 import katex from '../katex.mjs';
 
-/* eslint no-constant-condition:0 */
 var findEndOfMath = function findEndOfMath(delimiter, text, startIndex) {
   // Adapted from
   // https://github.com/Khan/perseus/blob/master/src/perseus-markdown.jsx
@@ -40,9 +39,8 @@ var splitAtDelimiters = function splitAtDelimiters(text, delimiters) {
         type: "text",
         data: text.slice(0, index)
       });
-      text = text.slice(index); // now text starts with delimiter
+      text = text.slice(index);
     }
-    // ... so this always succeeds:
     var i = delimiters.findIndex(delim => text.startsWith(delim.left));
     index = findEndOfMath(delimiters[i].right, text, delimiters[i].left.length);
     if (index === -1) {
@@ -67,16 +65,9 @@ var splitAtDelimiters = function splitAtDelimiters(text, delimiters) {
   return data;
 };
 
-/* eslint no-console:0 */
-/* Note: optionsCopy is mutated by this method. If it is ever exposed in the
- * API, we should copy it before mutating.
- */
 var renderMathInText = function renderMathInText(text, optionsCopy) {
   var data = splitAtDelimiters(text, optionsCopy.delimiters);
   if (data.length === 1 && data[0].type === 'text') {
-    // There is no formula in the text.
-    // Let's return null which means there is no need to replace
-    // the current text node with a new one.
     return null;
   }
   var fragment = document.createDocumentFragment();
@@ -86,8 +77,6 @@ var renderMathInText = function renderMathInText(text, optionsCopy) {
     } else {
       var span = document.createElement("span");
       var math = data[i].data;
-      // Override any display mode defined in the settings with that
-      // defined by the text itself
       optionsCopy.displayMode = data[i].display;
       try {
         if (optionsCopy.preProcess) {
@@ -112,10 +101,6 @@ var _renderElem = function renderElem(elem, optionsCopy) {
     var childNode = elem.childNodes[_i];
     if (childNode.nodeType === 3) {
       var _childNode$textConten;
-      // Text node
-      // Concatenate all sibling text nodes.
-      // Webkit browsers split very large text nodes into smaller ones,
-      // so the delimiters may be split across different nodes.
       var textContentConcat = (_childNode$textConten = childNode.textContent) != null ? _childNode$textConten : "";
       var sibling = childNode.nextSibling;
       var nSiblings = 0;
@@ -127,26 +112,21 @@ var _renderElem = function renderElem(elem, optionsCopy) {
       }
       var frag = renderMathInText(textContentConcat, optionsCopy);
       if (frag) {
-        // Remove extra text nodes
         for (var j = 0; j < nSiblings; j++) {
           childNode.nextSibling.remove();
         }
         _i += frag.childNodes.length - 1;
         elem.replaceChild(frag, childNode);
       } else {
-        // If the concatenated text does not contain math
-        // the siblings will not either
         _i += nSiblings;
       }
     } else if (childNode.nodeType === 1) {
-      // Element node
       var className = ' ' + childNode.className + ' ';
       var shouldRender = !optionsCopy.ignoredTags.has(childNode.nodeName.toLowerCase()) && optionsCopy.ignoredClasses.every(x => !className.includes(' ' + x + ' '));
       if (shouldRender) {
         _renderElem(childNode, optionsCopy);
       }
     }
-    // Otherwise, it's something else, and ignore it.
     i = _i;
   };
   for (var i = 0; i < elem.childNodes.length; i++) {
@@ -159,7 +139,6 @@ var renderMathInElement = function renderMathInElement(elem, options) {
   }
   var optionsCopy = {};
   Object.assign(optionsCopy, options);
-  // default options
   optionsCopy.delimiters = optionsCopy.delimiters || [{
     left: "$$",
     right: "$$",
@@ -169,10 +148,6 @@ var renderMathInElement = function renderMathInElement(elem, options) {
     right: "\\)",
     display: false
   },
-  // LaTeX uses $…$, but it ruins the display of normal `$` in text:
-  // {left: "$", right: "$", display: false},
-  // $ must come after $$
-  // Render AMS environments even if outside $$…$$ delimiters.
   {
     left: "\\begin{equation}",
     right: "\\end{equation}",
@@ -201,8 +176,6 @@ var renderMathInElement = function renderMathInElement(elem, options) {
   optionsCopy.ignoredTags = new Set((options == null ? void 0 : options.ignoredTags) || ["script", "noscript", "style", "textarea", "pre", "code", "option"]);
   optionsCopy.ignoredClasses = optionsCopy.ignoredClasses || [];
   optionsCopy.errorCallback = optionsCopy.errorCallback || console.error;
-  // Enable sharing of global macros defined via `\gdef` between different
-  // math elements within a single call to `renderMathInElement`.
   optionsCopy.macros = optionsCopy.macros || {};
   _renderElem(elem, optionsCopy);
 };

@@ -1,4 +1,3 @@
-"""Проверка имени пакета и кода версии Android."""
 import struct
 import zipfile
 import zlib
@@ -9,7 +8,6 @@ ASSETS = {STABLE: 'lecture-recorder.apk', PREVIEW: 'lecture-recorder-android.apk
 
 
 def cache_folder(work, package):
-    # Обычный APK сохраняется в каталоге прежних версий Mac.
     return work / 'updates/android' / {STABLE: '', PREVIEW: 'preview'}[package]
 
 
@@ -19,7 +17,6 @@ def installed_package(status):
     if 'installed_package' in status:
         package = status['installed_package']
         return package if isinstance(package, str) and package in ASSETS else None
-    # Старые APK не сообщают имя пакета. У двух каналов совпадают отдельные номера версий и коды.
     tag, code = status.get('installed_tag'), status.get('installed_code')
     if type(code) is int:
         if (tag, code) == ('v0.5.4', 22):
@@ -29,7 +26,6 @@ def installed_package(status):
     return STABLE
 
 
-# Формат бинарного XML описан в androidfw/ResourceTypes.h.
 _INVALID = 'Некорректный манифест APK'
 _NO_INDEX = 0xffffffff
 _ANDROID = 'http://schemas.android.com/apk/res/android'
@@ -55,7 +51,7 @@ def _string(pool, index):
     width = 1 if flags & 0x100 else 2
     length, offset = _length(pool, start + relative, width)
     if width == 1:
-        length, offset = _length(pool, offset, width)  # В UTF-8 отдельно хранится длина в байтах.
+        length, offset = _length(pool, offset, width)
     stop = offset + width * length
     if stop + width > end or any(pool[stop:stop + width]):
         raise ValueError(_INVALID)
@@ -73,11 +69,11 @@ def _manifest_identity(data):
             raise ValueError(_INVALID)
         chunk = memoryview(data)[pos:pos + length]
         pos += length
-        if kind == 1:  # RES_STRING_POOL_TYPE
+        if kind == 1:
             if pool is not None or header < 28:
                 raise ValueError(_INVALID)
             pool = chunk
-        if kind != 0x102:  # RES_XML_START_ELEMENT_TYPE
+        if kind != 0x102:
             continue
         ns, name, start, stride, count = struct.unpack_from('<IIHHH', chunk, header)
         if (pool is None or ns != _NO_INDEX or _string(pool, name) != 'manifest'

@@ -1,4 +1,3 @@
-"""Pilot training from random weights. Never promotes a checkpoint to production."""
 import argparse
 import fcntl
 import hashlib
@@ -55,7 +54,6 @@ def _train(task, corpus, epochs):
             optimizer.zero_grad()
             if task=='speech':
                 x=cached[row['id']]
-                # Small loudness shifts; do not replace speech with silence while keeping a speech label.
                 scores=model(x+random.uniform(-.03,.03))
                 target=encode(row['text'])
                 needed=len(target)+int((target[1:]==target[:-1]).sum())

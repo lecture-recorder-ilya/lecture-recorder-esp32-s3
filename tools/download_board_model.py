@@ -1,4 +1,3 @@
-"""Install and verify the local board-photo model; no user photos are accessed."""
 import hashlib,json,os
 from pathlib import Path
 os.environ['HF_HUB_DISABLE_TELEMETRY']='1'

@@ -1,9 +1,7 @@
-"""Acoustic evidence for ASR words. Never edit source audio or invent replacements."""
 import math,re
 SPACE=re.compile(r'\A\s|\s\B|(\s)\b')
 
 def speech_windows(core,duration,padding=.32,merge_gap=1.0,max_seconds=22):
- """Cut on real pauses; a brief voiced event cannot authorize a long quiet tail."""
  groups=[]
  if max_seconds<=0:raise ValueError('Длина фрагмента должна быть положительной.')
  for start,end in sorted(core):
@@ -22,7 +20,6 @@ def supported_words(result,core,emit_start=0,emit_end=float('inf')):
  tokens=result.tokens or [];times=result.timestamps or [];logprobs=result.logprobs or []
  if not core or not tokens or len(tokens)!=len(times) or len(tokens)!=len(logprobs):return []
  words=[];current=[]
- # Vocabulary tokens may contain a leading blank (CTC) or SentencePiece marker (RNN-T).
  for token,t,lp in zip(tokens,times,logprobs):
   token=token.replace('▁',' ')
   parts=re.findall(r'\s+|\S+',token)
@@ -35,7 +32,6 @@ def supported_words(result,core,emit_start=0,emit_end=float('inf')):
  for word in words:
   lexical=[v for v in word if re.search(r'[^\W_]',v[0])]
   if not lexical:continue
-  # Ignore punctuation timestamps: a final dot can be emitted in a long silence.
   midpoint=(lexical[0][1]+lexical[-1][1])/2
   if not emit_start<=midpoint<emit_end:continue
   support=sum(any(a-.32<=t<=b+.32 for a,b in core) for _,t,_ in lexical)/len(lexical)
@@ -55,7 +51,6 @@ def supported_text(result,core,emit_start=0,emit_end=float('inf')):
 MIN_UNRECOGNIZED_VOICE=.9
 
 def unrecognized_voice(core,words,start,end):
- """Найти возможную речь вне таймкодов слов внутри текущего фрагмента."""
  if not core or end<=start:return []
  coverage=sorted((w['start']-.13,w['end']+.13) for w in words)
  gaps=[]
@@ -73,13 +68,10 @@ def unrecognized_voice(core,words,start,end):
  return gaps
 
 def choose_candidate(ctc,rnnt):
- # Scores are not calibrated across different models. Use the CTC score only
- # to distinguish clear audio from the difficult audio where RNNT lost words.
  if not ctc:return rnnt
  if not rnnt:return ctc
  ctc_confidence=sum(w['confidence'] for w in ctc)/len(ctc)
  if ctc_confidence<.85:return ctc
- # Never replace a longer acoustic transcript by an obvious short omission.
  if len(rnnt)<len(ctc)*.65:return ctc
  if any(w['confidence']>=.65 and min(abs(w['start']-v['start']) for v in rnnt)>1.2 for w in ctc):return ctc
  return rnnt
@@ -88,12 +80,6 @@ def lexical(value):
  return ''.join(re.findall(r'[^\W_]',value.casefold().replace('ё','е')))
 
 def refine_words(primary,secondary,character=()):
- """Acoustically aligned refinements; keep an audit and uncertain words.
-
- Different model scores are not comparable accuracy probabilities. A character
- proposal must have strong acoustic evidence and identical neighbours; a short
- prefix also needs the completed word independently repeated in this excerpt.
- """
  from context_review import protected
  output=[dict(w) for w in primary];changes=[]
  def near(words,word):
@@ -119,7 +105,6 @@ def refine_words(primary,secondary,character=()):
    output[i]['review_reason']='protected_word_mismatch'
    continue
   if proposal:
-   # Retain punctuation from the original; never insert an unaligned phrase.
    value=re.sub(r'[\W_]+$','',proposal['text']);suffix=re.search(r'[\W_]+$',original['text'])
    if original['text'][:1].isupper() and re.search(r'[а-яa-z]',original['text']):value=value[:1].upper()+value[1:]
    value+=suffix.group() if suffix else ''

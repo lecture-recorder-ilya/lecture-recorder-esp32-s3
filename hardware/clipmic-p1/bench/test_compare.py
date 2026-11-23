@@ -1,4 +1,3 @@
-"""Проверки синхронизации на синтетическом сигнале."""
 import tempfile
 import unittest
 import wave
@@ -6,13 +5,21 @@ from pathlib import Path
 
 import numpy as np
 
-from compare import measure, read_pcm
+from compare import measure
+from long_take import RATE, marker
 
 
 class CompareTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.master, cls.fs = read_pcm(Path(__file__).with_name("reference.wav"), 1)
+        cls.fs = RATE
+        cls.master = np.zeros(27 * RATE)
+        for index, second in ((0, 1), (5, 25)):
+            chirp = marker(index, RATE)
+            cls.master[second * RATE:second * RATE + len(chirp)] = chirp
+        duration = round(15.25 * RATE)
+        time = np.arange(duration) / RATE
+        cls.master[7 * RATE:7 * RATE + duration] = 0.4 * np.sin(2 * np.pi * 440 * time)
 
     def test_phone_stereo_with_offset_drift_gain_and_noise(self):
         rate = 48000

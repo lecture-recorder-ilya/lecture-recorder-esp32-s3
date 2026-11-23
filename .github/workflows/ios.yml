@@ -25,12 +25,8 @@ jobs:
           xcrun simctl bootstatus "$DEVICE_ID" -b
           xcrun simctl install "$DEVICE_ID" build/ios/Build/Products/Release-iphonesimulator/LectureRecorder.app
           xcrun simctl launch "$DEVICE_ID" ru.ilya.lecturerecorder.ios
-          sleep 3
-          xcrun simctl io "$DEVICE_ID" screenshot build/ios-preview.png
       - uses: actions/upload-artifact@v4
         with:
           name: ios-simulator
-          path: |
-            build/ios/Build/Products/Release-iphonesimulator/LectureRecorder.app
-            build/ios-preview.png
+          path: build/ios/Build/Products/Release-iphonesimulator/LectureRecorder.app
           retention-days: 7

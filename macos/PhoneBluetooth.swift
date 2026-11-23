@@ -2,7 +2,6 @@ import Cocoa
 import CoreBluetooth
 import Darwin
 
-// Local HTTP bridge: authentication and durable file verification stay in phone_sync.py.
 final class Bridge: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     let service = CBUUID(string:"b8a20001-51e9-4a0b-8e27-047c45f78210")
     let rxID = CBUUID(string:"b8a20002-51e9-4a0b-8e27-047c45f78210")

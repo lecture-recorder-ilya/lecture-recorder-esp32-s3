@@ -1,4 +1,3 @@
-"""Auditable final cleanup. Never changes source audio or ASR checkpoints."""
 import re
 from speech_quality import clean_asr_text, usable
 from transcript_corrector import proofread
@@ -9,7 +8,6 @@ def review(segments, subject, fetch=None):
     for segment in segments:
         original = segment.get('text', '')
         text = clean_asr_text(original)
-        # Only long, immediately repeated phrases: retain the first occurrence.
         pattern = r'\b((?:\w+[ ,]+){2,11}\w+)(?:[ ,]+\1){3,}\b'
         text = re.sub(pattern, r'\1', text, flags=re.I)
         candidate = dict(segment, text=text)
@@ -24,7 +22,6 @@ def review(segments, subject, fetch=None):
             edits.append({'segment_id':segment['id'], 'original':original, 'text':text, 'kind':'cleanup'})
         cleaned.append(candidate)
     checked = {'corrections':[], 'status':'unsupported'}
-    # Review every segment; reference() caches public-topic lookups across the lecture.
     for segment in cleaned:
         item = proofread({'segments':[segment]}, subject, **({'fetch':fetch} if fetch else {}))
         checked['corrections'].extend(item['corrections'])

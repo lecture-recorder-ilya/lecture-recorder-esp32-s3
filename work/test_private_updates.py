@@ -18,7 +18,6 @@ from android_packages import ASSETS, PREVIEW, STABLE, apk_identity, cache_folder
 
 
 def apk_fixture(package=STABLE, code=12, utf8=False):
-    """Build a ZIP containing a binary Android manifest with two root attributes."""
     strings = ('manifest', 'package', package, 'versionCode', 'http://schemas.android.com/apk/res/android')
     offsets, data = [], bytearray()
     for value in strings:

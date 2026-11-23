@@ -1,4 +1,3 @@
-"""Reviewed local examples, immutable audio extracts and recording-level splits."""
 import contextlib
 import fcntl
 import hashlib
@@ -60,7 +59,6 @@ class Corpus:
             target.setparams((1,2,16000,0,'NONE','not compressed'));target.writeframes(raw)
         return output.getvalue()
     def groups(self):
-        """Merged lectures and their original parts must stay in the same split."""
         parent = {}
         def find(name):
             parent.setdefault(name,name)
@@ -92,7 +90,6 @@ class Corpus:
             raise ValueError('Для тишины оставь текст пустым; для речи введи правильный текст')
         name=body.get('file');start,end=body.get('start'),body.get('end')
         clip=self.clip(name,start,end)
-        # Neither an automatic transcript nor model output is accepted as a reviewed label implicitly.
         key=hashlib.sha256(f'{name}:{round(float(start)*16000)}:{round(float(end)*16000)}'.encode()).hexdigest()
         path=self.root/(key+'.wav')
         with self.transaction():

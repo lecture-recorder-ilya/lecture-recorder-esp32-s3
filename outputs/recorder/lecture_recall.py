@@ -1,4 +1,3 @@
-"""Retrieve past lesson excerpts; never invent answers or send speech online."""
 import re
 from pathlib import Path
 from speech_context import context_for_recording
@@ -31,7 +30,6 @@ def passages(root,current,read):
  return items
 
 def shortlist(query,items,limit=120):
- # Cheap lexical shortlist bounds embedding work; semantic rank follows.
  words=set(re.findall(r'[а-яё]{4,}',query.casefold()))
  score=lambda item:sum(any(word[:5] in token for token in re.findall(r'[а-яё]+',item['text'].casefold())) for word in words)
  return sorted(items,key=score,reverse=True)[:limit]

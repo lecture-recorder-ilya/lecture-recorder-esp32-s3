@@ -1,4 +1,3 @@
-"""Build native launchers in the expected checkout layout."""
 import argparse,plistlib,shutil,subprocess,json
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent.parent

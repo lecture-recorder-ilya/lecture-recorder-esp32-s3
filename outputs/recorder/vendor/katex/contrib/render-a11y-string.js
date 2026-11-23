@@ -8,87 +8,71 @@
 		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
 	}
 })((typeof self !== 'undefined' ? self : this), function(__WEBPACK_EXTERNAL_MODULE__757__) {
-return /******/ (function() { // webpackBootstrap
-/******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ({
+return  (function() {
+	"use strict";
+	var __webpack_modules__ = ({
 
-/***/ 757:
-/***/ (function(module) {
+ 757:
+ (function(module) {
 
 module.exports = __WEBPACK_EXTERNAL_MODULE__757__;
 
-/***/ })
+ })
 
-/******/ 	});
-/************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/ 	
-/************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	!function() {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__webpack_require__.n = function(module) {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				function() { return module['default']; } :
-/******/ 				function() { return module; };
-/******/ 			__webpack_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	}();
-/******/ 	
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	!function() {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = function(exports, definition) {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
-/******/ 			}
-/******/ 		};
-/******/ 	}();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	!function() {
-/******/ 		__webpack_require__.o = function(obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); }
-/******/ 	}();
-/******/ 	
-/************************************************************************/
+	});
+
+	var __webpack_module_cache__ = {};
+
+	function __webpack_require__(moduleId) {
+
+		var cachedModule = __webpack_module_cache__[moduleId];
+		if (cachedModule !== undefined) {
+			return cachedModule.exports;
+		}
+
+		var module = __webpack_module_cache__[moduleId] = {
+
+
+			exports: {}
+		};
+
+		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+
+		return module.exports;
+	}
+
+	!function() {
+
+		__webpack_require__.n = function(module) {
+			var getter = module && module.__esModule ?
+				function() { return module['default']; } :
+				function() { return module; };
+			__webpack_require__.d(getter, { a: getter });
+			return getter;
+		};
+	}();
+
+	!function() {
+
+		__webpack_require__.d = function(exports, definition) {
+			for(var key in definition) {
+				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+				}
+			}
+		};
+	}();
+
+	!function() {
+		__webpack_require__.o = function(obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); }
+	}();
 var __webpack_exports__ = {};
 
-// EXPORTS
 __webpack_require__.d(__webpack_exports__, {
-  "default": function() { return /* binding */ render_a11y_string; }
+  "default": function() { return  render_a11y_string; }
 });
 
-;// ./src/atoms.ts
-/**
- * Small module for atom-group constants and type guard.  Kept separate from
- * `symbols.ts` so that consumers (notably `contrib/render-a11y-string`) can
- * pull in `isAtom` without dragging in the ~870-line symbol tables.
- */
+;
 
 const atomList = ["bin", "close", "inner", "open", "punct", "rel"];
 const nonAtomList = ["accent-token", "mathord", "op-token", "spacing", "textord"];
@@ -97,25 +81,9 @@ const NonAtoms = new Set(nonAtomList);
 function isAtom(value) {
   return Atoms.has(value);
 }
-// EXTERNAL MODULE: external "katex"
 var external_katex_ = __webpack_require__(757);
 var external_katex_default = /*#__PURE__*/__webpack_require__.n(external_katex_);
-;// ./contrib/render-a11y-string/render-a11y-string.ts
-/**
- * renderA11yString returns a readable string.
- *
- * In some cases the string will have the proper semantic math
- * meaning,:
- *   renderA11yString("\\frac{1}{2}"")
- *   -> "start fraction, 1, divided by, 2, end fraction"
- *
- * However, other cases do not:
- *   renderA11yString("f(x) = x^2")
- *   -> "f, left parenthesis, x, right parenthesis, equals, x, squared"
- *
- * The commas in the string aim to increase ease of understanding
- * when read by a screenreader.
- */
+;
 
 
 
@@ -188,7 +156,6 @@ const stringMap = {
   "\\nabla": "del",
   "\\ell": "ell",
   "\\ldots": "dots",
-  // TODO: add entries for all accents
   "\\hat": "hat",
   "\\acute": "acute"
 };
@@ -260,9 +227,6 @@ const buildString = (str, type, a11yStrings) => {
     ret = stringMap[str] || str;
   }
 
-  // If the text to add is a number and there is already a string
-  // in the list and the last string is a number then we should
-  // combine them into a single number
   const last = a11yStrings[a11yStrings.length - 1];
   if (/^\d+$/.test(ret) && a11yStrings.length > 0 && typeof last === "string" && /^\d+$/.test(last)) {
     a11yStrings[a11yStrings.length - 1] += ret;
@@ -276,7 +240,6 @@ const buildRegion = (a11yStrings, callback) => {
   callback(regionStrings);
 };
 const handleObject = (tree, a11yStrings, atomType) => {
-  // Everything else is assumed to be an object...
   switch (tree.type) {
     case "accent":
       {
@@ -300,7 +263,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "accent-token":
       {
-        // Used internally by accent symbols.
         break;
       }
     case "atom":
@@ -317,7 +279,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
               buildString(text, "close", a11yStrings);
               break;
             }
-          // TODO(kevinb): figure out what should be done for inner
           case "inner":
             {
               buildString(tree.text, "inner", a11yStrings);
@@ -358,8 +319,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "color-token":
       {
-        // Used by \color, \colorbox, and \fcolorbox but not directly rendered.
-        // It's a leaf node and has no children so just break.
         break;
       }
     case "delimsizing":
@@ -372,12 +331,9 @@ const handleObject = (tree, a11yStrings, atomType) => {
     case "genfrac":
       {
         buildRegion(a11yStrings, regionStrings => {
-          // genfrac can have unbalanced delimiters
           const leftDelim = tree.leftDelim,
             rightDelim = tree.rightDelim;
 
-          // NOTE: Not sure if this is a safe assumption
-          // hasBarLine true -> fraction, false -> binomial
           if (tree.hasBarLine) {
             regionStrings.push("start fraction");
             leftDelim && buildString(leftDelim, "open", regionStrings);
@@ -405,8 +361,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "kern":
       {
-        // No op: we don't attempt to present kerning information
-        // to the screen reader.
         break;
       }
     case "leftright":
@@ -420,7 +374,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "leftright-right":
       {
-        // TODO: double check that this is a no-op
         break;
       }
     case "lap":
@@ -446,7 +399,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "op-token":
       {
-        // Used internally by operator symbols.
         buildString(tree.text, atomType, a11yStrings);
         break;
       }
@@ -496,7 +448,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "styling":
       {
-        // We ignore the styling and just pass through the contents
         buildA11yStrings(tree.body, a11yStrings, atomType);
         break;
       }
@@ -559,7 +510,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "text":
       {
-        // TODO: handle other fonts
         if (tree.font === "\\textbf") {
           buildRegion(a11yStrings, function (regionStrings) {
             regionStrings.push("start bold text");
@@ -587,9 +537,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "enclose":
       {
-        // TODO: create a map for these.
-        // TODO: differentiate between a body with a single atom, e.g.
-        // "cancel a" instead of "start cancel, a, end cancel"
         if (/cancel/.test(tree.label)) {
           buildRegion(a11yStrings, function (regionStrings) {
             regionStrings.push("start cancel");
@@ -645,8 +592,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "size":
       {
-        // Although there are nodes of type "size" in the parse tree, they have
-        // no semantic meaning and should be ignored.
         break;
       }
     case "url":
@@ -677,7 +622,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "infix":
       {
-        // All infix nodes are replace with other nodes.
         break;
       }
     case "includegraphics":
@@ -686,8 +630,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "font":
       {
-        // TODO: callout the start/end of specific fonts
-        // TODO: map \BBb{N} to "the naturals" or something like that
         buildA11yStrings(tree.body, a11yStrings, atomType);
         break;
       }
@@ -697,7 +639,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "cr":
       {
-        // This is used by environments.
         throw new Error("KaTeX-a11y: cr not implemented yet");
       }
     case "underline":
@@ -723,9 +664,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "mclass":
       {
-        // \neq and \ne are macros so we let "htmlmathml" render the mathmal
-        // side of things and extract the text from that.
-        // mclass values are prefixed with "m" (e.g. "mrel" -> "rel")
         const atomType = tree.mclass.slice(1);
         if (atomType === "normal" || isAtom(atomType)) {
           buildA11yStrings(tree.body, a11yStrings, atomType);
@@ -736,8 +674,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "mathchoice":
       {
-        // TODO: track which style we're using, e.g. display, text, etc.
-        // default to text style if even that may not be the correct style
         buildA11yStrings(tree.text, a11yStrings, atomType);
         break;
       }
@@ -753,7 +689,6 @@ const handleObject = (tree, a11yStrings, atomType) => {
       }
     case "internal":
       {
-        // internal nodes are never included in the parse tree
         break;
       }
     case "html":
@@ -794,9 +729,9 @@ const renderA11yString = function (text, settings) {
   const a11yStrings = buildA11yStrings(tree, [], "normal");
   return flatten(a11yStrings).join(", ");
 };
-/* harmony default export */ var render_a11y_string = (renderA11yString);
+ var render_a11y_string = (renderA11yString);
 __webpack_exports__ = __webpack_exports__["default"];
-/******/ 	return __webpack_exports__;
-/******/ })()
+	return __webpack_exports__;
+ })()
 ;
 });

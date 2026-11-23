@@ -1,4 +1,3 @@
-"""Manual inference for our experimental checkpoints; no production selection."""
 import argparse
 import hashlib
 import json

@@ -7,7 +7,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-/** Bluetooth carries the same authenticated HTTP protocol as Wi-Fi. */
 final class BleSync {
  static final UUID SERVICE=UUID.fromString("b8a20001-51e9-4a0b-8e27-047c45f78210"),RX=UUID.fromString("b8a20002-51e9-4a0b-8e27-047c45f78210"),TX=UUID.fromString("b8a20003-51e9-4a0b-8e27-047c45f78210"),CCC=UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
  private BluetoothGattServer gatt;private BluetoothLeAdvertiser advertiser;private BluetoothGattCharacteristic output;

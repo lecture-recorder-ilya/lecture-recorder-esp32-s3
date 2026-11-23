@@ -1,4 +1,3 @@
-"""Coalesced background self-review; never blocks microphone or ASR threads."""
 import atexit
 import json
 import queue

@@ -77,7 +77,6 @@ def sources(args):
 
 
 def crop_bounds(case, target, duration):
-    # Акустические таймкоды служат разметкой среза, не выбором удачных ответов Android.
     matches = []
     for kind in ('ctc', 'rnnt'):
         found = []
@@ -90,7 +89,6 @@ def crop_bounds(case, target, duration):
             matches.append(dict(kind=kind, start=found[0][0], end=found[0][1]))
     if not matches:
         return None
-    # Захватываем границы обоих проходов и по 60 мс запаса. Не объединяем разные вхождения.
     nearest = [m for m in matches if abs(m['start']-matches[0]['start']) <= .25]
     left = max(0, min(m['start'] for m in nearest)-.06)
     right = min(duration, max(m['end'] for m in nearest)+.06)

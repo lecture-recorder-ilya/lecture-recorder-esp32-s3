@@ -1,4 +1,3 @@
-"""Five minutes of draft text in RAM, independent of the saved audio."""
 import re
 
 class PreviewHistory:
@@ -14,8 +13,6 @@ class PreviewHistory:
             text=segment.get('text','').strip();start=float(segment['start']);end=float(segment['end'])
             if not text or end<=cutoff:continue
             words=self.words(text);match=None
-            # Adjacent identical short decoder outputs form one display interval.
-            # Keep later genuine repetitions and never discard source audio.
             if self.rows:
                 previous=self.rows[-1]
                 normalized=lambda value:re.findall(r'\w+',value.casefold())

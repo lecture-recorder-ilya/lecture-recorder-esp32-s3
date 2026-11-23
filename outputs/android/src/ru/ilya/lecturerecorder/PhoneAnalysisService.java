@@ -214,7 +214,6 @@ public final class PhoneAnalysisService extends Service {
                     try {
                         current.cancelProcess();
                     } catch (RuntimeException ignored) {
-                        // The generation may have already ended.
                     }
                 }, "Cancel lecture analysis").start();
             }

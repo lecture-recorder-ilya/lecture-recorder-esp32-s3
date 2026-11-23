@@ -1,0 +1,101 @@
+{
+  "source_revision": "c93949f7140beef4adc404e7b54841e957f81c54",
+  "cases": [
+    {
+      "id": "golos-1872",
+      "source_id": 1872,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "bf84fb71befc52ceb1d0a80a1ee84eac9a3a37e67f7eaa01c36c700d8dbbc545",
+      "audio_sha256": "bf84fb71befc52ceb1d0a80a1ee84eac9a3a37e67f7eaa01c36c700d8dbbc545",
+      "reference_sha256": "84949b0cc6d3522a7ca5c72c787500ac1c339778535a4b4fe8c4995f7aa479dd"
+    },
+    {
+      "id": "golos-1755",
+      "source_id": 1755,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "dca95271595ecdc9ad3d514a5d333011879c2318a6d4da66eda4de0378ceddee",
+      "audio_sha256": "dca95271595ecdc9ad3d514a5d333011879c2318a6d4da66eda4de0378ceddee",
+      "reference_sha256": "7d7a12c33b168a85b59aa8981c4bf69e2dceae019b168f4ffd42f705651ddd55"
+    },
+    {
+      "id": "golos-0705",
+      "source_id": 705,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "079315dcb3aa94230e1f94c8c5f26556e586591c8e1f1b054a6112eb2a2926bd",
+      "audio_sha256": "079315dcb3aa94230e1f94c8c5f26556e586591c8e1f1b054a6112eb2a2926bd",
+      "reference_sha256": "7c2eabd8393bc586f9757cfc71d81d99dab1acd110df76b4d383d147b162f437"
+    },
+    {
+      "id": "golos-1404",
+      "source_id": 1404,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "93022f21155084fa703f04aa2c3a3dfb526f6f6c677303df4600bca09363584d",
+      "audio_sha256": "93022f21155084fa703f04aa2c3a3dfb526f6f6c677303df4600bca09363584d",
+      "reference_sha256": "b68f4a79aa7b9c028410e22a9cb85f63f43b0d66bf1418406866cb148e3c9c54"
+    },
+    {
+      "id": "golos-0815",
+      "source_id": 815,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "de4c14b74d4cfe0a662acc6a447cdc4fbf8a4a8215c69226046a119d11db7fb5",
+      "audio_sha256": "de4c14b74d4cfe0a662acc6a447cdc4fbf8a4a8215c69226046a119d11db7fb5",
+      "reference_sha256": "34825cf65261347a98f505b78cf76c24b08c55205b5270c0f6be61f700f95e70"
+    },
+    {
+      "id": "golos-0750",
+      "source_id": 750,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "ab4375be76f6b1b141748a7029b18f12c18510694b4c962d8eb3008e6d7124c3",
+      "audio_sha256": "ab4375be76f6b1b141748a7029b18f12c18510694b4c962d8eb3008e6d7124c3",
+      "reference_sha256": "24d6baefc3ecb3b1a2b6e5fd97f98ef4157ba1e601812317d165c496e290e02d"
+    },
+    {
+      "id": "golos-0567",
+      "source_id": 567,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "98e111aed43e7daab01ef580a42b30229e29c6cfb763a84f98625e02d993f85c",
+      "audio_sha256": "98e111aed43e7daab01ef580a42b30229e29c6cfb763a84f98625e02d993f85c",
+      "reference_sha256": "5074d9fadd53125c649fd40ced2d7186ad5cc0a32acda7bf0ed5a35cdc80305a"
+    },
+    {
+      "id": "golos-0094",
+      "source_id": 94,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "998475eaff054d203ee0a33e6e70585b3b8c5b3df9ca22d5a6009c9d559263e5",
+      "audio_sha256": "998475eaff054d203ee0a33e6e70585b3b8c5b3df9ca22d5a6009c9d559263e5",
+      "reference_sha256": "5cc4994c54b8ce6ef65a3a20c2aa0f86c9503d3b3efa69f2863b0aef10cab98e"
+    },
+    {
+      "id": "golos-0223",
+      "source_id": 223,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "49ca4bf182dc1a8fd63bb0bc6e316e698ae7c001ec3fd4fbec165dc35ae4ddd9",
+      "audio_sha256": "49ca4bf182dc1a8fd63bb0bc6e316e698ae7c001ec3fd4fbec165dc35ae4ddd9",
+      "reference_sha256": "0eeaed8125d6ce383a323abe9d8331ff9b266824fe97caffdb1e305e7d597bdc"
+    },
+    {
+      "id": "golos-0403",
+      "source_id": 403,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "c149531151134000572f9d9711b074d0e5894cbd2996b532741f25ab316d7f36",
+      "audio_sha256": "c149531151134000572f9d9711b074d0e5894cbd2996b532741f25ab316d7f36",
+      "reference_sha256": "896d13aa9bb2c5b29221ee107e93354f98765aaf4c83ed1ff16a7a06aa00a615"
+    },
+    {
+      "id": "golos-0045",
+      "source_id": 45,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "4f3ede52c5c7724053c1a1df9fdbddbb193f46203a2c7dec46ba961ee4da911a",
+      "audio_sha256": "4f3ede52c5c7724053c1a1df9fdbddbb193f46203a2c7dec46ba961ee4da911a",
+      "reference_sha256": "62511c100bb178af2cd21e830be5da3c74d76d0f34906f80aeae6a3e5bb30a05"
+    },
+    {
+      "id": "golos-1050",
+      "source_id": 1050,
+      "subset": "golos_natural_quiet_holdout",
+      "source_audio_sha256": "3c4ebc5d32e75fdd24abc27f9287b5177f680e8bb97f38f1b58c8dbfda1ba765",
+      "audio_sha256": "3c4ebc5d32e75fdd24abc27f9287b5177f680e8bb97f38f1b58c8dbfda1ba765",
+      "reference_sha256": "274e9728dc1e050078d57523ef6008a204a9eec7e68b41a41296e0c8a07e1c52"
+    }
+  ]
+}

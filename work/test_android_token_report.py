@@ -1,4 +1,3 @@
-"""Отчёт замечает потерю слова даже при том же WER и отвергает подменённый вход."""
 from copy import deepcopy
 from pathlib import Path
 import sys

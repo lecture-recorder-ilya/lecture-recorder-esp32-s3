@@ -1,4 +1,3 @@
-# coding: utf-8
 import sys,unittest
 from pathlib import Path
 sys.path.insert(0,str(Path('outputs/recorder').resolve()))

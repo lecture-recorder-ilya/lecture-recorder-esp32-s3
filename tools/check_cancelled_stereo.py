@@ -50,8 +50,6 @@ def prepare(repo, output):
             values = array.array('h', frames)
             if sys.byteorder != 'little':
                 values.byteswap()
-            # The inverse of -32768 is not representable in signed PCM16.
-            # Scale both fixture channels by 1/2 in this case, before inversion.
             scaled = -32768 in values
             if scaled:
                 values = array.array('h', (int(x/2) for x in values))

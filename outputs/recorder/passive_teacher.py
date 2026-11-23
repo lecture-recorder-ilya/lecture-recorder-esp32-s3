@@ -1,4 +1,3 @@
-"""Conservative per-recording dominant-voice estimate; never removes audio/text."""
 import math
 
 def unit(vector):
@@ -20,14 +19,12 @@ def observe(state,vector,start,end):
    state['last_end']=end;return state
   best=len(groups);groups.append({'references':[vector],'seconds':0,'samples':0});similarity=1
  group=groups[best];group['samples']+=1;group['seconds']+=min(8,end-start)
- # Keep several strong exemplars rather than a drifting average of noisy clips.
  if similarity>=.8 and len(group['references'])<4:group['references'].append(vector)
  ranges=state.setdefault('ranges',[]);ranges.append({'start':start,'end':end,'group':best,'similarity':round(similarity,3)})
  state['ranges']=[r for r in ranges if r['end']>end-300];state['last_end']=end
  ranking=sorted(range(len(groups)),key=lambda i:groups[i]['seconds'],reverse=True)
  leader=ranking[0];runner=groups[ranking[1]]['seconds'] if len(ranking)>1 else 0
  g=groups[leader]
- # A single short shout or one clean sample cannot elect the lecturer.
  state['teacher']=leader if g['seconds']>=60 and g['samples']>=8 and g['seconds']>=runner*1.8 else None
  return state
 
@@ -39,7 +36,6 @@ def public(state):
          'sample_seconds':round(sum(g['seconds'] for g in state.get('groups',[])),1)}
 
 def sustained_window(segments,now):
- # ASR often splits one continuous explanation into several short sentences.
  chain=[]
  for segment in sorted(segments,key=lambda s:s['start']):
   if now-segment['end']>35:continue

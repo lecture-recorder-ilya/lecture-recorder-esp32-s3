@@ -1,4 +1,3 @@
-// Стенд P1. REC на D0 или буква r в USB CDC запускают один дубль.
 #include "capture_stats.h"
 #include <algorithm>
 #include <Arduino.h>
@@ -31,14 +30,13 @@ bool capture() {
   i2s_pin_config_t pins{};
   pins.mck_io_num = I2S_PIN_NO_CHANGE;
   pins.bck_io_num = I2S_PIN_NO_CHANGE;
-  pins.ws_io_num = 42;  // PDM CLK в старом API ESP-IDF
+  pins.ws_io_num = 42;
   pins.data_in_num = 41;
   pins.data_out_num = I2S_PIN_NO_CHANGE;
   bool ok = i2s_set_pin(port, &pins) == ESP_OK &&
             i2s_set_pdm_rx_down_sample(port, I2S_PDM_DSR_16S) == ESP_OK;
   CaptureStats stats;
   size_t used = 0;
-  // Сначала пропустить запуск тактирования и заполнение первых DMA-буферов.
   uint8_t warmup[512];
   for (int i = 0; ok && i < 8; ++i) {
     size_t got = 0;
@@ -61,7 +59,6 @@ bool capture() {
   }
   uint32_t elapsed = millis() - start;
   i2s_driver_uninstall(port);
-  // Уровни и вывод считаются после отключения I2S, чтобы USB CDC не задерживал DMA.
   stats.addPcm(reinterpret_cast<const int16_t *>(pcm), used / sizeof(int16_t));
   Serial.printf("PCM samples=%u target=%u missing_from_target=%u elapsed_ms=%u "
                 "rms_dbfs=%.2f peak_pcm=%d rail_samples=%u rx_overflows=%u "

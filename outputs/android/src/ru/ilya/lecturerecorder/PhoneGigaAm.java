@@ -167,7 +167,6 @@ final class PhoneGigaAm {
             textEnd = Math.min(audioEnd, left + (frame + 1) * FRAME_SECONDS);
             if (result.length() == 0) openingTextEnd = textEnd;
             double probability = Math.exp(scores[best]);
-            // Пунктуация остаётся в тексте и уверенности, но не растягивает речь.
             if (CONTENT.matcher(token).find()) {
                 if (speechPieces++ == 0) wordStart = left + frame * FRAME_SECONDS;
                 wordEnd = textEnd;
@@ -183,7 +182,6 @@ final class PhoneGigaAm {
         if (steps > 0 && alignment != null && result.length() == 1) {
             JSONObject only = result.getJSONObject(0);
             int onset = alignment[0];
-            // Короткая речевая граница не отменяет проверку старого длинного следа.
             if (onset != BLANK && onset != 0 && only.getDouble("start") == left
                     && PhoneCtc.weakOpeningLetter(only.getString("word"), tokens[onset], logits[0][onset],
                                                   openingTextEnd - left)) {
@@ -206,13 +204,9 @@ final class PhoneGigaAm {
                                    double textStart, double textEnd,
                                    double confidence, int pieces, double speechConfidence, int speechPieces, double start, double end) throws Exception {
         if (pieces == 0 || word.length() == 0) return;
-        // Первая буква бывает в нулевом кадре. Окно выбирает последний речевой кадр,
-        // а не середина между этой буквой и концом слова.
         double speechFrame = Math.max(wordStart, wordEnd - FRAME_SECONDS / 2);
         double textMidpoint = (textStart + textEnd) / 2;
         boolean legacyCore = textMidpoint >= start && textMidpoint < end;
-        // Старый проход может лучше разобрать слово из перекрытия. Сверяем его
-        // с соседом до выдачи фраз, вместо потери при новой привязке к кадру.
         if (wordStart < wordEnd && (legacyCore || speechFrame >= start && speechFrame < end)) {
             result.put(new JSONObject().put("word", word.toString())
                     .put("start", wordStart).put("end", wordEnd)
@@ -235,8 +229,6 @@ final class PhoneGigaAm {
     }
 
     static boolean shouldRefine(float level, JSONArray words) throws Exception {
-        // С одним словом нет соседнего якоря: reconcile не может ни заменить,
-        // ни пометить его. Пустой проход также не получает слов из alternate.
         return words.length() >= 2 && (level < .05f || weak(words));
     }
 

@@ -23,8 +23,6 @@ SOURCE = Path(__file__).resolve().parents[1] / 'outputs/recorder'
 
 
 def build_wav(path, sources, minutes, continuous=False, pause_seconds=.25):
-    # Alternate supplied excerpts without changing the samples. Each minute
-    # contains up to 30 seconds of source audio, then digital silence.
     blocks = []
     for audio in sources:
         with wave.open(str(audio)) as stream:
@@ -86,7 +84,6 @@ def worker(folder, phase, interrupt_frame):
 
     def after_checkpoint(*, force=False):
         nonlocal first, windows
-        # qwen_transcribe calls Budget only after committing its checkpoint.
         windows += 1
         if first is None or interrupt_frame:
             frames = read_checkpoint(cache)['completed_frames']

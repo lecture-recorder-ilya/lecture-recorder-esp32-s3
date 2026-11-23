@@ -1,31 +1,11 @@
 import katex from '../katex.mjs';
 
-/**
- * Small module for atom-group constants and type guard.  Kept separate from
- * `symbols.ts` so that consumers (notably `contrib/render-a11y-string`) can
- * pull in `isAtom` without dragging in the ~870-line symbol tables.
- */
 var atomList = ["bin", "close", "inner", "open", "punct", "rel"];
 var Atoms = new Set(atomList);
 function isAtom(value) {
   return Atoms.has(value);
 }
 
-/**
- * renderA11yString returns a readable string.
- *
- * In some cases the string will have the proper semantic math
- * meaning,:
- *   renderA11yString("\\frac{1}{2}"")
- *   -> "start fraction, 1, divided by, 2, end fraction"
- *
- * However, other cases do not:
- *   renderA11yString("f(x) = x^2")
- *   -> "f, left parenthesis, x, right parenthesis, equals, x, squared"
- *
- * The commas in the string aim to increase ease of understanding
- * when read by a screenreader.
- */
 var stringMap = {
   "(": "left parenthesis",
   ")": "right parenthesis",
@@ -95,7 +75,6 @@ var stringMap = {
   "\\nabla": "del",
   "\\ell": "ell",
   "\\ldots": "dots",
-  // TODO: add entries for all accents
   "\\hat": "hat",
   "\\acute": "acute"
 };
@@ -166,9 +145,6 @@ var buildString = (str, type, a11yStrings) => {
   } else {
     ret = stringMap[str] || str;
   }
-  // If the text to add is a number and there is already a string
-  // in the list and the last string is a number then we should
-  // combine them into a single number
   var last = a11yStrings[a11yStrings.length - 1];
   if (/^\d+$/.test(ret) && a11yStrings.length > 0 && typeof last === "string" && /^\d+$/.test(last)) {
     a11yStrings[a11yStrings.length - 1] += ret;
@@ -182,7 +158,6 @@ var buildRegion = (a11yStrings, callback) => {
   callback(regionStrings);
 };
 var handleObject = (tree, a11yStrings, atomType) => {
-  // Everything else is assumed to be an object...
   switch (tree.type) {
     case "accent":
       {
@@ -206,7 +181,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "accent-token":
       {
-        // Used internally by accent symbols.
         break;
       }
     case "atom":
@@ -223,7 +197,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
               buildString(text, "close", a11yStrings);
               break;
             }
-          // TODO(kevinb): figure out what should be done for inner
           case "inner":
             {
               buildString(tree.text, "inner", a11yStrings);
@@ -264,8 +237,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "color-token":
       {
-        // Used by \color, \colorbox, and \fcolorbox but not directly rendered.
-        // It's a leaf node and has no children so just break.
         break;
       }
     case "delimsizing":
@@ -278,11 +249,8 @@ var handleObject = (tree, a11yStrings, atomType) => {
     case "genfrac":
       {
         buildRegion(a11yStrings, regionStrings => {
-          // genfrac can have unbalanced delimiters
           var leftDelim = tree.leftDelim,
             rightDelim = tree.rightDelim;
-          // NOTE: Not sure if this is a safe assumption
-          // hasBarLine true -> fraction, false -> binomial
           if (tree.hasBarLine) {
             regionStrings.push("start fraction");
             leftDelim && buildString(leftDelim, "open", regionStrings);
@@ -310,8 +278,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "kern":
       {
-        // No op: we don't attempt to present kerning information
-        // to the screen reader.
         break;
       }
     case "leftright":
@@ -325,7 +291,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "leftright-right":
       {
-        // TODO: double check that this is a no-op
         break;
       }
     case "lap":
@@ -351,7 +316,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "op-token":
       {
-        // Used internally by operator symbols.
         buildString(tree.text, atomType, a11yStrings);
         break;
       }
@@ -401,7 +365,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "styling":
       {
-        // We ignore the styling and just pass through the contents
         _buildA11yStrings(tree.body, a11yStrings, atomType);
         break;
       }
@@ -464,7 +427,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "text":
       {
-        // TODO: handle other fonts
         if (tree.font === "\\textbf") {
           buildRegion(a11yStrings, function (regionStrings) {
             regionStrings.push("start bold text");
@@ -492,9 +454,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "enclose":
       {
-        // TODO: create a map for these.
-        // TODO: differentiate between a body with a single atom, e.g.
-        // "cancel a" instead of "start cancel, a, end cancel"
         if (/cancel/.test(tree.label)) {
           buildRegion(a11yStrings, function (regionStrings) {
             regionStrings.push("start cancel");
@@ -550,8 +509,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "size":
       {
-        // Although there are nodes of type "size" in the parse tree, they have
-        // no semantic meaning and should be ignored.
         break;
       }
     case "url":
@@ -582,7 +539,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "infix":
       {
-        // All infix nodes are replace with other nodes.
         break;
       }
     case "includegraphics":
@@ -591,8 +547,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "font":
       {
-        // TODO: callout the start/end of specific fonts
-        // TODO: map \BBb{N} to "the naturals" or something like that
         _buildA11yStrings(tree.body, a11yStrings, atomType);
         break;
       }
@@ -602,7 +556,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "cr":
       {
-        // This is used by environments.
         throw new Error("KaTeX-a11y: cr not implemented yet");
       }
     case "underline":
@@ -628,9 +581,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "mclass":
       {
-        // \neq and \ne are macros so we let "htmlmathml" render the mathmal
-        // side of things and extract the text from that.
-        // mclass values are prefixed with "m" (e.g. "mrel" -> "rel")
         var _atomType = tree.mclass.slice(1);
         if (_atomType === "normal" || isAtom(_atomType)) {
           _buildA11yStrings(tree.body, a11yStrings, _atomType);
@@ -641,8 +591,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "mathchoice":
       {
-        // TODO: track which style we're using, e.g. display, text, etc.
-        // default to text style if even that may not be the correct style
         _buildA11yStrings(tree.text, a11yStrings, atomType);
         break;
       }
@@ -658,7 +606,6 @@ var handleObject = (tree, a11yStrings, atomType) => {
       }
     case "internal":
       {
-        // internal nodes are never included in the parse tree
         break;
       }
     case "html":

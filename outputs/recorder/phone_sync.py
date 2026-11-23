@@ -48,7 +48,6 @@ def consume_retry(retries):
 def save_status():
  try:atomic(STATUS,state)
  except OSError:
-  # При заполненном диске действующий процесс всё ещё может показать состояние и повторить обмен.
   pass
 def atomic(path,value):
  temp=path.with_suffix(path.suffix+'.tmp')
@@ -75,7 +74,6 @@ def auth_headers(token,method,route,body=b'',extra=None,body_digest=None):
 def encode_body(route, data):
  body = json.dumps(data).encode()
  if route == '/notes' and len(body) > MAX_NOTE_BYTES:
-  # Keep the digest of documents already accepted by earlier phones.
   body = json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
   if len(body) > MAX_NOTE_BYTES:
    raise ValueError('Текст слишком большой для телефона')
@@ -145,7 +143,6 @@ def local_recording_name(remote, sha, size, files, ledger):
   except (OSError,ValueError):partial={}
   occupied=remote in ledger or bool(partial and partial.get('sha256')!=sha)
  if not occupied:return remote
- # Оставляем дату, время и исходные микросекунды доступными старым парсерам.
  return remote[:-4]+'-'+str(int(sha,16))+'.wav'
 
 def import_one(item,base,token,files=FILES,ledger_path=LEDGER,device_id=None):
@@ -194,7 +191,6 @@ def import_audio(item,base,token,files,ledger_path,device):
   os.link(temp,target)
 
  validate(target)
- # A restart can leave the partial linked to the already verified library file.
  if temp.exists() and temp.samefile(target):temp.unlink()
  if not temp.exists():resume_meta.unlink(missing_ok=True)
  with target.open('rb') as local:os.fsync(local.fileno())
@@ -231,7 +227,6 @@ def import_audio(item,base,token,files,ledger_path,device):
   entry.setdefault('devices',[]).append(device)
   entry['source_name']=remote
   atomic(ledger_path,ledger)
- # A failed acknowledgement is retried against the already verified local copy.
  with request(base,token,'/ack',{'name':remote,'sha256':sha}) as r:
   if not json.load(r).get('ok'):raise ValueError('Телефон не подтвердил очистку')
  return name
@@ -277,7 +272,6 @@ def candidates(cfg):
   except ValueError:pass
  base=discover_wifi(token)
  if base and base!='http://'+str(saved)+':8780':yield base,'Wi-Fi'
- # Bluetooth helper is a native accessory app with the macOS Bluetooth usage description.
  bridge=ROOT.parent/'Синхронизация Bluetooth.app'
  if bridge.exists():
   try:
@@ -377,7 +371,6 @@ def loop():
  except BlockingIOError:guard.close();return
  retries=RetryQueue()
  previous=saved_status()
- # Из прежнего журнала переносим только дату и размер известной очереди.
  if previous.get('profile_stamp')==profile_stamp():
   for key in ('pending','last_attempt','profile_stamp'):
    state[key]=diagnostics.count(previous.get(key))

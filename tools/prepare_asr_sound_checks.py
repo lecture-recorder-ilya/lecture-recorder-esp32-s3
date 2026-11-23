@@ -92,13 +92,8 @@ def main():
     args = parser.parse_args()
     if args.output.exists():
         parser.error('Выбери новую папку.')
-    if args.quiet_holdout:
-        report = json.loads((ROOT/'docs/asr-checks-2026-11-23.json').read_text())
-        lock = report.get('mac_final', {}).get('quiet_holdout')
-        if not lock:
-            parser.error('В отчёте пока нет зафиксированной выборки тихих записей Golos.')
-    else:
-        lock = json.loads((ROOT/'docs/asr-speed-checks-2026-11-22.json').read_text())
+    fixture = 'quiet-holdout.json' if args.quiet_holdout else 'sound-checks.json'
+    lock = json.loads((ROOT/'tests/fixtures/asr'/fixture).read_text())
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=args.output.parent) as scratch:
         work = Path(scratch)

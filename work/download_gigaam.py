@@ -18,7 +18,6 @@ for repo,target in [('istupakov/gigaam-v3-onnx','gigaam')]:
     data=old.read_bytes()
     for j in range(8):(parts/str(int(old.name)*8+j)).write_bytes(data[j*1024*1024:(j+1)*1024*1024])
   chunk=1024*1024
-  # Reuse complete blocks from the interrupted normal download.
   for partial in (dest/'.cache/huggingface/download').glob('*.incomplete'):
    with partial.open('rb') as source:
     for i in range(partial.stat().st_size//chunk):

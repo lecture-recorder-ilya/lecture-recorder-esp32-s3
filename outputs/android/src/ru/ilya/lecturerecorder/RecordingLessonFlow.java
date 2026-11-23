@@ -116,7 +116,7 @@ final class RecordingLessonFlow {
     void profile(boolean editing) {
         if (dialog != null || disposed) return;
         LinearLayout content = pane();
-        content.addView(text("Группу и курс можно изменить в настройках. Для выбора пары используем расписание МИРЭА.", 15, StudioStyle.MUTED));
+        content.addView(text("Группу и курс можно изменить в настройках. Для выбора пары используем расписание группы.", 15, StudioStyle.MUTED));
         EditText group = edit("Например, ИКБО-01-26");
         group.setText(profile.getString("group", ""));
         content.addView(group);

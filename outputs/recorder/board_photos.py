@@ -1,4 +1,3 @@
-"""Durable phone photos, local vision jobs, and conservative lecture attachment."""
 import fcntl,json,math,os,re,shutil,struct,subprocess,threading,time,wave
 from pathlib import Path
 from urllib.request import urlopen
@@ -68,7 +67,6 @@ def import_one(item,base,token,root=None):
         uncertainty=item.get('time_uncertainty_seconds',20)
         if type(uncertainty) in (int,float) and math.isfinite(uncertainty):old['time_uncertainty_seconds']=min(600,max(2,uncertainty))
         sync.atomic(path,old)
-    # A confirmed, durable local photo AND capture metadata exist before phone deletion.
     with target.open('rb') as local:os.fsync(local.fileno())
     sync.sync_dir(dest)
     with sync.request(base,token,'/ack',{'name':item['name'],'sha256':sha}) as response:
@@ -78,7 +76,6 @@ def import_one(item,base,token,root=None):
 def lectures(status=None):
     status=status or {};output=[]
     for path in (ROOT/'recordings').glob('lecture-*.wav'):
-        # Prefer original recordings; a merged copy would create an ambiguous clock match.
         if len(store.notes(path.name).get('parts',[]))>1:continue
         try:
             if status.get('recording') and status.get('file')==path.name:duration=float(status['seconds'])
@@ -134,7 +131,6 @@ def process(job,status=None):
         python=PROJECT/'work/vision-env/bin/python'
         if not python.exists() or not (PROJECT/'work/models/board-vision-manifest.json').exists():return
         if time.time()-job.get('last_attempt',0)<300:return
-        # Do not start another model while the full-lecture model holds its lock.
         with (PROJECT/'work/lecture-inference.lock').open('a') as guard:
             try:fcntl.flock(guard,fcntl.LOCK_EX|fcntl.LOCK_NB)
             except BlockingIOError:return
@@ -167,7 +163,6 @@ def loop():
                 for path in sorted(folder().glob('*.json')):
                     job=store.read(path)
                     if not job or job.get('analysis') and job.get('state')=='linked' and job.get('matching',{}).get('method')=='manual':continue
-                    # Linked content anchors stay fixed; time-only anchors can improve later.
                     if job.get('state')=='linked' and '+content' in job.get('matching',{}).get('method',''):continue
                     process(job,status)
                 STATE.update(message='Фото доски разобраны на Mac')

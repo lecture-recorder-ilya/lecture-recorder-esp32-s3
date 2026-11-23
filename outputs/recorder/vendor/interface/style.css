@@ -46,12 +46,10 @@
 .organized .nav-foot #reload-app{margin:0;padding:10px 14px;font-size:13px;white-space:nowrap;width:100%;text-align:left}#reload-message:empty{display:none}
 @media(max-width:850px){.nav-foot{display:block;position:fixed;bottom:14px;left:14px;margin:0;padding:0;z-index:20}.organized main{padding-bottom:95px}}
 
-/* Fixed preview viewport, with movement only when a new phrase arrives. */
 .live-stream{position:relative;height:200px;min-height:200px;max-height:200px;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#141719;margin:12px 0;contain:layout paint}
 .live-stream-track{position:absolute;bottom:0;left:0;right:0;padding:12px 16px}
 .organized .live-stream-row{margin:0;padding:7px 0;font-size:14px;line-height:1.6;overflow-wrap:anywhere}
 
-/* Summary-first library; audio is a supporting source. */
 .record-copy{flex:1;min-width:0;display:block}.record-copy .record-topic{display:block;font-weight:650}.summary-preview{display:block;font-size:12px;font-weight:400;line-height:1.6;margin-top:7px;color:#dde4e3}.organized #files>li>details>ul>li>details>summary{align-items:flex-start}.organized .ai-result{margin:0;background:var(--panel);border-color:var(--line)}.lesson-overview{font-size:16px;line-height:1.8}.organized .key-topics{padding-left:20px;margin:12px 0}.organized .key-topics>li{padding:8px 0;border:0;line-height:1.7}.record-body .audio-tools,.full-transcript,.lesson-info{border-top:1px solid var(--line);padding-top:12px;margin-top:20px!important;font-size:13px}.point-evidence{font-size:12px;color:var(--muted)}.organized .emphasis{padding:12px 15px;background:#29221f;border-left:3px solid var(--mint);border-radius:8px;margin:12px 0}.organized .emphasis>p{margin:0 0 8px}.audio-tools>a{display:block;font-size:12px}.record-body>.ai-button{font-size:12px;margin-top:16px}.chapter-list{background:var(--panel)}.live-stream{overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;overflow-anchor:none}.live-stream-track{position:static;min-height:100%;display:flex;flex-direction:column;justify-content:flex-end}.live-stream-row{flex-shrink:0}
 
 .learning-moment{display:grid;grid-template-columns:minmax(0,1fr) minmax(140px,230px);gap:20px;padding:18px;margin:14px 0;background:#1b1d22;border:1px solid var(--line);border-radius:12px}.learning-moment:not(:has(figure)){grid-template-columns:1fr}.event-date{display:inline-block;padding:4px 12px;border-radius:8px;background:var(--accent);color:#302815;font-size:22px}.learning-moment h5{font-size:16px;margin:10px 0}.learning-moment p{font-size:13px;line-height:1.7}.topic-illustration{margin:0}.topic-illustration img{max-width:100%;width:100%;max-height:230px;object-fit:contain;border-radius:8px}.topic-illustration figcaption{font-size:10px;line-height:1.5;margin-top:8px}.topic-illustration small{display:block;color:var(--muted)}@media(max-width:600px){.learning-moment{grid-template-columns:1fr}}
@@ -81,7 +79,6 @@
 
 .board-photo>small{display:block;margin-top:6px}
 
-/* Product layout: quiet surfaces, one clear primary action, accessible controls. */
 body.organized{-webkit-font-smoothing:antialiased} .organized main{max-width:1220px;padding:32px 40px 56px;margin-left:236px}
 .app-nav{width:236px;padding:30px 16px;background:var(--nav);border-color:var(--line)}.brand{font-size:30px;padding:0 14px 30px;letter-spacing:-1.2px}.brand::before{content:'';display:inline-block;width:10px;height:23px;border-radius:5px;background:var(--accent);margin-right:11px;vertical-align:-1px}.brand small{margin-top:8px;font-size:12px;letter-spacing:0}
 .organized .nav-button{padding:14px;border:1px solid transparent;transition:background .15s,color .15s}.organized .nav-button span{font-size:15px}.nav-button small{font-size:11px;line-height:1.6;font-weight:400}.organized .nav-button[aria-current=page]{background:var(--active);border-color:var(--accent-wash);color:var(--accent)}.organized .nav-button:hover{background:var(--control)}.organized .nav-button[aria-current=page]:hover{background:var(--active)}

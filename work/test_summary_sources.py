@@ -1,4 +1,3 @@
-"""Привязка к новым сегментам либо явный отказ от старого таймкода."""
 from pathlib import Path
 import json
 import sys

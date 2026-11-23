@@ -1,4 +1,3 @@
-"""Регрессии опытных правил: запрет выдуманных слов и критических подмен."""
 from copy import deepcopy
 from pathlib import Path
 import sys

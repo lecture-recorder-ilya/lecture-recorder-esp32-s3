@@ -1,4 +1,3 @@
-"""Ограниченная проверка произнесённой формулы; непонятное оставляем для сверки."""
 import copy
 import re
 from math_formulas import NUMBER_WORDS,FUNCTIONS,SAFE
@@ -75,7 +74,6 @@ def units(text,latex):
         if not parts or value[offset:].strip():invalid=True
         observed.extend(parts);return ''
     body=re.sub(r'\\(?:mathrm|text)\{((?:[^{}]|\{[^{}]*\})*)\}',read_unit,latex.replace(r'\Omega',r'\mathrm{Ω}'))
-    # Обычная запись «5 м/с» без LaTeX-команды.
     if expected and not observed:
         plain=re.search(r'(?<=\d)\s*([A-Za-zА-Яа-яΩ]+(?:\^-?\d+)?(?:/[A-Za-zА-Яа-яΩ]+(?:\^-?\d+)?)*)\s*$',body)
         if plain:body=body[:plain.start()]+read_unit(plain)
@@ -144,7 +142,6 @@ def review(item,code):
 
 
 def finalize(report):
-    """Перепроверить также формулы, пришедшие из контекстного сборщика."""
     from summary_sources import matches
     result=copy.deepcopy(report);accepted=[];pending=result.get('formula_review',[])
     for item in result.get('formulas',[]):

@@ -1,4 +1,3 @@
-"""Подсказка не меняет отрицание и не заменяет акустические доказательства."""
 from copy import deepcopy
 from pathlib import Path
 import sys

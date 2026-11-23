@@ -14,7 +14,6 @@ scripts.forEach(function (script) {
       displayMode: display
     });
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error(err);
     katexElement.textContent = script.text;
   }

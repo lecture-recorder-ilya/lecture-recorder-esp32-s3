@@ -1,7 +1,3 @@
-"""Local four-fragment self-review. A language model only selects supported words.
-
-Audio, raw ASR and timing remain immutable. Free-form LLM rewrites are rejected.
-"""
 import copy
 import json
 import re
@@ -73,7 +69,7 @@ def known(word):
     try:
         return morphology().word_is_known(word)
     except ImportError:
-        return False  # Without dictionary, permit only independently repeated terms.
+        return False
 
 
 def accepts_alternatives(word):
@@ -82,7 +78,6 @@ def accepts_alternatives(word):
 
 
 def acoustic_evidence(primary, alternatives):
-    """Keep small, aligned alternatives, including confident context anchors."""
     evidence = []
     for i, word in enumerate(primary):
         options = []
@@ -92,7 +87,6 @@ def acoustic_evidence(primary, alternatives):
             if not nearby:
                 continue
             j, other = min(nearby, key=lambda item: abs(item[1]['start'] - word['start']))
-            # At least one neighbouring word must match, also in time.
             anchored = any(0 <= i+d < len(primary) and 0 <= j+d < len(words)
                            and lexical(primary[i+d]['text']) == lexical(words[j+d]['text'])
                            and abs(primary[i+d]['start'] - words[j+d]['start']) <= .35
@@ -126,7 +120,6 @@ class WordSpan:
 def mapped(row):
     text = baseline(row)
     evidence = row.get('recognition', {}).get('word_evidence', [])
-    # If a cleanup/source check changed token structure, do not guess alignment.
     if not evidence or lexical(text) != ''.join(lexical(w['text']) for w in evidence):
         return [], []
     positions = [i for i,c in enumerate(text) if re.match(r'[^\W_]',c)]
@@ -142,7 +135,6 @@ def mapped(row):
 
 def request(rows, subject=None):
     rows = copy.deepcopy(rows[-4:])
-    # A long pause starts a fresh context instead of reviving an old discussion.
     for i in range(len(rows)-1, 0, -1):
         if rows[i]['start'] - rows[i-1]['end'] > 45:
             rows = rows[i:]
@@ -172,7 +164,6 @@ def request(rows, subject=None):
                 value = lexical(option['text'])
                 if not value or value in seen or protected(value):
                     continue
-                # Defense in depth for malformed/legacy recognition metadata.
                 delta = distance(key, value)
                 if value != key and (delta > 3 or delta/max(len(key), len(value)) > .5):
                     continue
@@ -182,7 +173,6 @@ def request(rows, subject=None):
             if len(unique) > 1:
                 slots.append({'slot': f'{r}:{i}', 'row': r, 'word': i,
                               'original': original, 'options': unique[:4]})
-    # Bound prompt/output cost; subsequent windows reconsider deferred words.
     slots = slots[-16:]
     from math_formulas import wanted
     return {'version': VERSION, 'rows': rows, 'slots': slots, 'subject': subject,
@@ -202,7 +192,6 @@ def messages(value):
 
 
 def apply(value, answer):
-    """Return audited replacements; no LLM-generated text can enter a transcript."""
     if not isinstance(answer, dict) or not isinstance(answer.get('choices'), list):
         return []
     slots = {slot['slot']: slot for slot in value['slots']}; chosen = {}; seen = set()
@@ -221,7 +210,6 @@ def apply(value, answer):
         original_row = value['rows'][r]; spans, words = mapped(original_row)
         if not spans:
             continue
-        # Small local corrections; never let one pass rewrite a whole sentence.
         if len(edits) > max(1, min(3, len(words)//5)):
             continue
         raw = baseline(original_row)
@@ -250,7 +238,6 @@ def apply(value, answer):
 
 
 def replace_rows(rows, updates):
-    """Optimistic exact timing/text match avoids changing newer or unrelated data."""
     count = 0
     for update in updates:
         replacement = update['row']
@@ -265,7 +252,6 @@ def replace_rows(rows, updates):
 
 
 def review_transcript(segments, infer, subject=None):
-    """Overlapping four-row windows, reusing the final analysis language model."""
     rows = copy.deepcopy(segments); checked = 0; changed = 0; errors = []; formulas=[]
     from math_formulas import collect,merge
     ends = list(range(4, len(rows)+1, 3))
@@ -301,7 +287,6 @@ class LocalModel:
 
 
 if __name__ == '__main__':
-    # One persistent child, only local model files; EOF releases model memory.
     import os
     import sys
     import contextlib

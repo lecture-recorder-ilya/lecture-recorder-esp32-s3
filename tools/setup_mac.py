@@ -1,4 +1,3 @@
-"""Set up a checkout without modifying running services or recording data."""
 import subprocess,sys,venv
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent.parent

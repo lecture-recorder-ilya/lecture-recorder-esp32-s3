@@ -1,4 +1,3 @@
-/* One frame per pointer move, with no continuous render loop. */
 (() => {
  const reduced=matchMedia('(prefers-reduced-motion: reduce)'), bound=new WeakSet();
  const selector='.pair-button,.calendar-date,.card:not(.calendar-card),#files ul>li>details>summary';

@@ -1,4 +1,3 @@
-"""Loopback-only annotation workspace. Does not alter the production recorder."""
 import argparse
 import json
 import subprocess

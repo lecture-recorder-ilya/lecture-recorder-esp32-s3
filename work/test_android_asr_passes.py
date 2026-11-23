@@ -1,4 +1,3 @@
-"""Пустой/одиночный проход нельзя уточнить через соседний якорь."""
 from pathlib import Path
 import os
 import subprocess

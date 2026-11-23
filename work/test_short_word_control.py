@@ -1,4 +1,3 @@
-"""Потеря настоящего слова не скрывается уже ошибочными ответами или формой числа."""
 from pathlib import Path
 import sys
 import unittest

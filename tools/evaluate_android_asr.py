@@ -16,8 +16,6 @@ import wave
 from evaluate_asr import audio_sha256, score, summarize_scores, summarize_subsets
 
 CLASSES = ('PhoneGigaAm', 'PcmWave', 'PhoneSpeechWindow', 'PhonePhrases', 'PhoneCtc')
-# Experimental transformations apply only to the copied harness sources.
-# The production checkout is never changed by this evaluator.
 VARIANTS = {
     'gain32': 'PhoneSpeechWindow.normalize(wave, level, 32);',
     'gain128': 'PhoneSpeechWindow.normalize(wave, level, 128);',
@@ -95,8 +93,6 @@ def run(args):
             durations.append(stream.getnframes() / stream.getframerate())
         hashes.append(sha)
     runner.mkdir(parents=True)
-    # OpenSTT WAVs may use the extensible PCM header. Android's import step
-    # produces plain PCM WAV; do the same here without changing a single sample.
     inputs_dir = runner / 'inputs'
     inputs_dir.mkdir()
     canonical, pcm_hashes = [], []
@@ -149,7 +145,6 @@ def run(args):
             cases, hashes, durations, canonical, pcm_hashes, raw.read_text().splitlines(), strict=True):
         decoded = json.loads(line)
         text = ' '.join(segment['text'] for segment in decoded['segments'])
-        # Validate emitted phrase/word intervals without assuming acoustic accuracy.
         for segment in decoded['segments']:
             if not 0 <= segment['start'] < segment['end'] <= duration + .001:
                 raise ValueError(f"{case['id']}: invalid phrase interval")

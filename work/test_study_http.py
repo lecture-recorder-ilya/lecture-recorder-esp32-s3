@@ -68,7 +68,6 @@ with tempfile.TemporaryDirectory() as directory:
   assert call('/status')[1]['lessons'][names[0]]['folder']=='Моя пара'
   status['recording']=True
   assert call('/merge',{'files':names})[0]==400
-  # Simulate endpoints without touching the actual microphone service.
   study.recorder_status=lambda:status
   data=study.monitor_frame(0);assert data['to_frame']-data['from_frame']==16000
   store.save(store.ROOT/'study'/(Path(names[1]).stem+'.speakers.json'),{'segments':[{'start':0,'end':1,'speaker':0},{'start':1,'end':2,'speaker':1}]})
@@ -78,6 +77,7 @@ with tempfile.TemporaryDirectory() as directory:
    assert wav.getnframes()==32000;assert wav.readframes(16000)==b'\x7b\x00'*16000;assert wav.readframes(16000)==b'\0\0'*16000
   application.ROOT=store.ROOT
   sample={'moments':[{'kind':'date','date':'1380','title':'Куликовская битва','description':'Событие','quote':'В 1380 году была Куликовская битва.','start':10,'end':15,'segment_id':0,'image_query':'Куликовская битва'}]}
+  sample['segments']=[{'id':0,'start':10,'end':15,'text':sample['moments'][0]['quote'],'reviewed':True}]
   store.save(store.ROOT/'analysis'/(Path(names[1]).stem+'.json'),sample)
   code,value=call('/learning-moments?file='+names[1]);assert code==200 and value['moments'][0]['date']=='1380'
   from unittest.mock import patch

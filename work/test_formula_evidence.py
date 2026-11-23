@@ -1,4 +1,3 @@
-"""Произнесённые знаки и единицы; это фиксированные примеры, не прогон модели."""
 from pathlib import Path
 import sys
 import unittest

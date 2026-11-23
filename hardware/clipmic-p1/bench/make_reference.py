@@ -13,7 +13,7 @@ CLEAN_SHA256 = "fd9ae27c10c25e9d7814321bfaffbe5400ad46106510ad8b8f6421b6d60dc891
 
 def make(source, output):
     if hashlib.sha256(source.read_bytes()).hexdigest() != CLEAN_SHA256:
-        raise ValueError("Нужна чистая дорожка fleurs-37-clean.wav с указанным в README хешем")
+        raise ValueError("Контрольная сумма источника не совпала с fleurs-37-clean.wav")
     with wave.open(str(source), "rb") as audio:
         if audio.getparams()[:3] != (1, 2, RATE):
             raise ValueError("Ожидается моно PCM16 16 кГц")

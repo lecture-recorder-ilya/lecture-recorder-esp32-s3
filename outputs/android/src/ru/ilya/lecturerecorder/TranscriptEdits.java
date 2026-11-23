@@ -102,7 +102,6 @@ final class TranscriptEdits {
             if (!quote.equals(revised)) {
                 task.put("quote", revised);
                 if (quote.equals(task.optString("task"))) task.put("task", revised);
-                // После правки текста прежний срок больше не подтверждён.
                 task.remove("deadline");
             }
         }
@@ -115,13 +114,11 @@ final class TranscriptEdits {
                 String quote = formula.optString("quote");
                 if (quote.equals(revisedQuote(quote, formula, originals, rows))) supported.put(formula);
             }
-            // Цитату можно спроецировать, но пересчитывать LaTeX без модели нельзя.
             report.put("formulas", supported);
         }
         SummarySources.reconcile(report,local,false);
     }
 
-    // The Mac writer derives its overview from the first three points, capped at 1500 Unicode characters.
     static String summaryOverview(JSONArray points) {
         StringBuilder text = new StringBuilder();
         for (int i = 0; i < Math.min(points.length(), 3); i++) {
@@ -133,8 +130,6 @@ final class TranscriptEdits {
         return length <= 1500 ? text.toString() : text.substring(0, text.offsetByCodePoints(0, 1500));
     }
 
-    // Project only verbatim evidence. An older note can lack anchors; in that case
-    // match one unique whole segment so a repeated phrase cannot change the wrong point.
     private static String revisedQuote(String quote, JSONObject anchor, String[] originals, JSONArray rows)
             throws JSONException {
         if (quote.isEmpty()) return quote;

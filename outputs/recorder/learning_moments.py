@@ -1,4 +1,3 @@
-"""Grounded dates and illustration topics, anchored to the recorded words."""
 import re
 from historical_people import identified_people
 
@@ -51,7 +50,6 @@ def dated_segments(segments,subject):
     result=[]
     for segment in trusted_segments(segments):
         text=segment.get('text','')
-        # Require a year/century marker, not arbitrary counts or audio timestamps.
         for match in re.finditer(r'(?<!\d)([3-9]\d{2}|[12]\d{3})(?:\s*[-–]\s*([12]\d{3}))?\s*(?:году|год[аыов]*|гг?\.?)(?![а-я])',text,re.I):
             date=match.group(1)+(('–'+match.group(2)) if match.group(2) else '')
             sentence=next((v.strip() for v in re.split(r'(?<=[.!?])\s+',text) if match.group(0) in v),text)
@@ -72,7 +70,6 @@ def moments_for_report(report,subject):
     date_keys={(v.get('segment_id'),v.get('date')) for v in items}
     for item in dated_segments(segments,subject):
         if (item['segment_id'],item['date']) not in date_keys:items.append(item)
-    # Only known full public identities in historical context, not roll-call names.
     if re.search(r'истори|государственност',subject or '',re.I):
         seen_people=set()
         for index,segment in enumerate(segments):
@@ -82,7 +79,6 @@ def moments_for_report(report,subject):
                 if query in seen_people or len(seen_people)>=12:continue
                 seen_people.add(query)
                 items.append({'kind':'person','date':None,'title':query,'description':'Историческая личность, упомянутая в объяснении.','quote':segment['text'],'context':context,'segment_id':segment['id'],'start':segment['start'],'end':segment['end'],'image_query':query})
-    # Existing reports can gain a few grounded illustrations without rerunning the LLM.
     for segment in segments:
         query=public_topic(segment.get('text',''))
         if not query:continue

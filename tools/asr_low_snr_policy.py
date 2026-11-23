@@ -1,4 +1,3 @@
-"""Два опытных правила ASR; в приложение без контрольного прогона не входят."""
 from collections import Counter
 from copy import deepcopy
 from difflib import SequenceMatcher
@@ -26,7 +25,6 @@ def protected_counts(words):
 
 
 def gap_windows(words, core, duration):
-    """Не более двух коротких пробелов, внутри которых VAD уже нашёл речь."""
     if len(words) < 3:
         return []
     candidates = []
@@ -43,7 +41,6 @@ def gap_windows(words, core, duration):
 
 
 def choose_audio(clean, raw, *, margin=CONFIDENCE_MARGIN):
-    """Сравниваем уверенность одного CTC, а не оценки CTC с RNN-T."""
     first, second = clean.get('word_evidence', []), raw.get('word_evidence', [])
     if len(first) < 3 or len(second) < max(3, .9 * len(first)):
         return deepcopy(clean), 'clean'
@@ -68,7 +65,6 @@ def choose_audio(clean, raw, *, margin=CONFIDENCE_MARGIN):
 
 
 def proposals(primary, other, *, word_confidence=.75, mean_confidence=.85):
-    """Только внутренние вставки с двумя совпадающими акустическими якорями."""
     a, b = [lexical(w['text']) for w in primary], [lexical(w['text']) for w in other]
     found = {}
     for kind, i, end, j, until in SequenceMatcher(None, a, b, autojunk=False).get_opcodes():
@@ -99,8 +95,6 @@ def recover_gaps(clean, raw_trace, *, word_confidence=.75, mean_confidence=.85):
     if len(primary) < 3:
         return deepcopy(clean), []
     insertions = {}
-    # Quiet-edge retries must not become additional model votes. Dedicated raw
-    # gap crops are explicitly stored as group 1 with both decoder results.
     for trace in raw_trace:
         if trace['group'] != 1:
             continue
@@ -110,7 +104,7 @@ def recover_gaps(clean, raw_trace, *, word_confidence=.75, mean_confidence=.85):
             a, b = ctc[key], rnnt[key]
             if any(abs(x['start']-y['start']) > .24 or abs(x['end']-y['end']) > .24 for x, y in zip(a, b)):
                 continue
-            if key[0] in insertions:  # Two different proposals at the same boundary are ambiguous.
+            if key[0] in insertions:
                 insertions[key[0]] = None
             else:
                 insertions[key[0]] = a

@@ -1,4 +1,3 @@
-"""Reloadable application server. recorder.py owns the persistent audio stream."""
 import argparse
 import fcntl
 import json
@@ -43,8 +42,6 @@ def ensure_recording_service(service_url):
         except (OSError, ValueError, URLError):
             return False
 
-    # Reuse the running service, including a recording started by the old app.
-    # A lock prevents two application windows from starting two microphone owners.
     work = PROJECT / 'work'
     work.mkdir(exist_ok=True)
     with (work / 'recording-service.lock').open('a') as guard:
@@ -79,7 +76,6 @@ def ensure_study_service():
 
 
 class ApplicationServer(ThreadingHTTPServer):
-    # Finish in-flight commands/downloads before replacing the application code.
     daemon_threads = False
 
     def __init__(self, address, service_url):
@@ -167,7 +163,6 @@ class Handler(BaseHTTPRequestHandler):
             if not response_started:
                 self.reply({'error': 'Служба записи не отвечает. Проверь её журнал.'}, 503)
         except (BrokenPipeError, ConnectionResetError):
-            # Closing or reloading the UI never sends Stop to the audio service.
             pass
 
     def do_HEAD(self):

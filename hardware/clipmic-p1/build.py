@@ -1,4 +1,3 @@
-"""Build ClipMic P1 in FreeCAD's Python. Argument: extracted Seeed Sense STEP."""
 
 from pathlib import Path
 import hashlib
@@ -18,7 +17,7 @@ SEAM = H - FACE
 LID_SCREWS = [(4, 4.5), (26, 4.5), (47, 36.9), (4, 60), (64, 60)]
 CLIP_SCREWS = [(17, 31), (24, 31)]
 REC = (56.5, 45)
-MIC = (16.2, 11.1)  # Provisional registration of expansion DXF to older STEP.
+MIC = (16.2, 11.1)
 
 
 def box(x, y, z, length, width, height):
@@ -52,7 +51,6 @@ def read_step(path):
             "Different vendor STEP revision. Recheck orientation and body indices."
         )
     original = Part.read(str(path))
-    # x = 15.6-X, y = 24+Z, z = 2.75+Y, right-handed rotation.
     rot = App.Rotation(V(0, 1, 1), 180)
     solid = original.Solids
     placed = []
@@ -83,11 +81,9 @@ def build():
     )
     adds = [tray]
     cuts = [box(-1, 10.5, 2.0, 4, 14.8, 6.1), box(-1, 10.5, 8.1, 4, 14.8, 3.5)]
-    # Four edge supports leave the battery solder pads and harness free below the PCB.
     for x in (4.8, 22.2):
         for y in (9.08, 25.95):
             adds.append(box(x, y, FLOOR, 1.9, 0.76, 0.90))
-    # Rear entry slots. Front anti-lift pads are carried by the lid.
     for y in (9.15, 25.92):
         adds += [
             box(24.58, y, FLOOR, 1.20, 0.78, 3.7),
@@ -95,10 +91,8 @@ def build():
         ]
     for y in (7.8, 27.13):
         adds.append(box(9, y, FLOOR, 7, 1, 2.3))
-    # Stop USB insertion force at the rear. Two front stops support cable removal.
     for y in (9.5, 25.0):
         adds.append(box(2.17, y, FLOOR, 0.86, 0.95, 2.5))
-    # Max pack 36 x 30.5, pocket 37.2 x 31.7, with side exit for leads.
     adds += [
         box(28.5, 2.0, FLOOR, 37.2, 1, 2),
         box(28.5, 34.7, FLOOR, 37.2, 1, 2),
@@ -114,7 +108,6 @@ def build():
         cuts.append(cylinder(x, y, -0.1, 0.85, 4.1))
     base = cut(fuse(adds), cuts)
     lid = rounded(0, 0, SEAM, L, W, FACE, 3.6)
-    # Local alignment tabs leave the connector side and the antenna off the seam.
     adds = [
         lid,
         box(10, 1.9, 10.2, 10, 0.9, 1.4),
@@ -139,7 +132,6 @@ def build():
             Part.makeCone(1.15, 2.25, 1.10, V(x, y, H - 1.10)),
         ]
     lid = cut(fuse(adds), cuts)
-    # Constant-width side profile, XY plane of each filament follows the bending arm on export.
     profile = [
         (27.3, 0),
         (34, 0),
@@ -160,7 +152,6 @@ def build():
     points = [V(14, y, z) for y, z in profile]
     clip = Part.Face(Part.makePolygon(points + [points[0]])).extrude(V(13, 0, 0))
     clip = cut(clip, [cylinder(x, y, -3, 1.15, 4) for x, y in CLIP_SCREWS])
-    # The clip has a 0.25 mm unloaded tip gap for a light fabric coupon test.
     return base, lid, clip
 
 
@@ -193,7 +184,6 @@ def main():
     bore = doc.addObject("Part::Cylinder", "AcousticBore")
     bore.Label = "Sound aperture - adjust XY and radius after sample fit"
     bore.Radius, bore.Height = 2.5, 4
-    # Assign the complete placement so changes persist with FreeCAD property copies.
     bore.Placement = App.Placement(V(*MIC, 10), App.Rotation())
     lid_feature = doc.addObject("Part::Cut", "Lid")
     lid_feature.Base, lid_feature.Tool = blank, bore
@@ -216,7 +206,6 @@ def main():
                 shape,
             )
     micref = box(MIC[0] - 1.325, MIC[1] - 0.8, 7.93, 2.65, 3.5, 0.94)
-    # Locating references are stored separately; vendor B-rep is used for validation only.
     pack = box(29.1, 3.6, 1.85, 36, 30.5, 4.3)
     antenna = box(8, 42, 1.75, 37.4, 17.5, 0.2)
     drills = [cylinder(x, 45, 6.7, 1.15, 2) for x in (50.5, 62.5)]
@@ -252,7 +241,6 @@ def main():
             if n != m:
                 overlap = s.common(t).Volume
                 assert overlap < 0.001, (n, m, overlap)
-        # Last four indexed solids belong to the detachable camera subassembly.
         collisions = [
             (i, round(s.common(t).Volume, 5))
             for i, t in enumerate(board[:99])

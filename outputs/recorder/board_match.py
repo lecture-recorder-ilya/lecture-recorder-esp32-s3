@@ -1,4 +1,3 @@
-"""Align board photographs using recording identity, capture time, then visible terms."""
 import math,re,wave
 from datetime import datetime
 from pathlib import Path
@@ -24,7 +23,6 @@ def start_ms(name,phone_meta=None):
     return datetime.fromisoformat(f'{date}T{h}:{m}:{s}').replace(tzinfo=ZoneInfo('Europe/Moscow')).timestamp()*1000+min(int(micro)/1000,999)
 
 def locate(photo,lectures):
-    """No cross-lecture content guess when a time/session anchor is unavailable."""
     anchor=None
     for lecture in lectures:
         duration=lecture['duration'];name=lecture['file']
@@ -43,7 +41,6 @@ def locate(photo,lectures):
     query=words(photo.get('analysis',{}).get('visible_text',''))
     scored=[];rows=lecture.get('segments',[])
     for i,row in enumerate(rows):
-        # The board may have been written several minutes before the photograph.
         if not offset-600<=row['start']<=offset+60:continue
         window=rows[i:i+4];text=' '.join(s['text'] for s in window);shared=query&words(text)
         score=len(shared)/max(1,len(query))

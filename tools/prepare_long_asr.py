@@ -54,7 +54,6 @@ def caption_coverage(cues, start):
 
 
 def continuous_window(cues):
-    """Pick a 120–150 s window by cue boundaries before seeing hypotheses."""
     for i, first in enumerate(cues[:-1]):
         start = first['start']
         if start < 15 or not first['text'] or (i and cues[i-1]['end'] > start):

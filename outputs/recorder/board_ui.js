@@ -1,4 +1,3 @@
-/* Phone snapshots stay visible even when no confident lecture match is available. */
 function boardPhotoFigure(photo,source){
  const figure=el('figure',undefined,'board-photo'),analysis=photo.analysis||{},image=el('img');image.src=source||'/photos/'+photo.id;image.alt=analysis.title||'Фото доски';image.loading='lazy';figure.append(image);
  figure.append(el('figcaption',analysis.title||'Фото доски'));if(photo.start!==undefined)figure.append(el('small','Момент лекции · '+timeLabel(photo.start),'muted'));

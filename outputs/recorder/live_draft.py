@@ -1,4 +1,3 @@
-"""Durable draft transcript; separate from final analysis and the five-minute preview."""
 import time
 from pathlib import Path
 from preview_history import PreviewHistory

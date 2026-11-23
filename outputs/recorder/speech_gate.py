@@ -105,7 +105,6 @@ def clips(ranges):return [v for pair in ranges for v in pair]
 
 
 def supported_words(segment, ranges, strict_ranges=None):
- """Short stock decoder responses need confident words and unpadded speech."""
  import re
  words=segment.get('words',[])
  if words and sum(float(w.get('probability',0)) for w in words)/len(words)<.35:return False

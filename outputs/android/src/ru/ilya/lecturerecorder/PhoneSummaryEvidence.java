@@ -87,8 +87,6 @@ final class PhoneSummaryEvidence {
                 end = following.getDouble("end");
                 uncertain |= following.optBoolean("needs_review");
             }
-            // Ignore only the rejected date before an explicit replacement;
-            // keep every word, including the negation, in the stored task.
             String taskContext = REPLACED_DEADLINE.matcher(quote).replaceAll("$1");
             if (uncertain || CANCELLED.matcher(quote).find())continue;
             String kind=HomeworkEvidence.kind(quote,row);
@@ -143,7 +141,6 @@ final class PhoneSummaryEvidence {
     }
 
     private static boolean openCondition(String text) {
-        // ASR often omits the comma; that does not turn "Если ..." into a fact.
         Matcher start = CONDITION_START.matcher(text);
         return start.find() && !text.endsWith("?")
                 && (text.matches("(?s).*[,;:…]$") || text.endsWith("...")

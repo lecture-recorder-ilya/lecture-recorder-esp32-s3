@@ -25,7 +25,6 @@ class BriefSpeechTests(unittest.TestCase):
     def setUp(self):
         self.audio = np.ones(16000, dtype=np.float32) * .02
         self.profile = SpeechProfile([], [(.10, .90)], [], ((.40, .60),))
-        # These mocks provide the full character model, regardless of local weights.
         self.decoder = Decoder(allow_fast_character=False)
 
     def decode(self, models, start=0, end=1):

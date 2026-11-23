@@ -1,4 +1,3 @@
-"""Local-only lecture processing. No inference APIs or audio uploads."""
 import argparse
 import hashlib
 import gc
@@ -106,7 +105,6 @@ def summary_anchor(item, texts):
 
 
 def highlight_anchor(item, texts):
-    """Locate a verbatim quote within at most three adjacent transcript segments."""
     segment_id, quote = item.get('segment_id'), item.get('quote')
     if type(segment_id) is not int or not isinstance(quote, str) or not quote.strip():
         return None
@@ -198,7 +196,6 @@ def uncertain_quote_rows(anchor, texts):
 
 
 def validate_part(part, segments):
-    """Reject names, assignments and highlights without transcript evidence."""
     texts = {s['id']: s for s in segments}
     excluded=[]
     for item in part.get('excluded_asides',[]) if isinstance(part.get('excluded_asides'),list) else []:
@@ -326,8 +323,6 @@ def parse_json(text):
     if start < 0:
         raise ValueError('Модель не вернула JSON.')
     payload = text[start:]
-    # In formula fields, \frac and \beta must not become JSON control
-    # characters (\f and \b). Already escaped commands remain unchanged.
     def escape_formula(match):
         formula = re.sub(r'(?<!\\)\\(?!\\)(?=[A-Za-z]{2,})',
                          lambda _: '\\\\', match.group(2))
@@ -336,9 +331,6 @@ def parse_json(text):
     try:
         value, _ = json.JSONDecoder().raw_decode(payload)
     except json.JSONDecodeError as error:
-        # Models sometimes emit LaTeX commands with a single backslash.
-        # Repair only the invalid escape identified by the JSON parser;
-        # preserve valid escapes and reject other malformed output.
         while error.msg == 'Invalid \\escape':
             payload = payload[:error.pos] + '\\' + payload[error.pos:]
             try:
@@ -447,7 +439,6 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
             try:
                 return parse_json(generated)
             except (ValueError, json.JSONDecodeError):
-                # Retry generation once. Do not persist a malformed result as success.
                 messages = messages + [{'role':'assistant','content':generated},
                                        {'role':'user','content':'Верни результат ещё раз только как валидный JSON указанной схемы.'}]
                 prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
@@ -471,7 +462,6 @@ def run(audio_path, result_path, progress_path, transcribe_only=False, transcrip
             size = len(segment['text']) + 80
             if current and length + size > 6500:
                 chunks.append(current)
-                # Keep advice split across a chunk boundary in the same context.
                 current = current[-2:]
                 length = sum(len(s['text']) + 80 for s in current)
             current.append(segment); length += size

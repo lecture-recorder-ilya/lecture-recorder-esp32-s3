@@ -1,4 +1,3 @@
-"""Сгенерировать и проверить STL купона в Python FreeCAD. Единицы — мм."""
 from pathlib import Path
 
 import FreeCAD as App
@@ -8,7 +7,6 @@ import Part
 
 ROOT = Path(__file__).resolve().parent
 V = App.Vector
-# ID, диаметр окна, зазор под носиком одной штатной клипсы
 VARIANTS = [(1, 4.8, 0.25), (2, 5.0, 0.45), (3, 5.2, 0.65)]
 SEGMENTS = {
     "a": (0, 3.4, 2.5, .8), "b": (1.7, 1.7, .8, 2.1),
@@ -47,7 +45,6 @@ def build():
         base = base.cut(Part.makeCylinder(diameter / 2, 2, V(x + 3, 51, 0)))
         for text, y in [(str(number), 49), (f"{diameter:.1f}", 43), (f"{gap:.2f}", 36.5)]:
             base = base.multiFuse(legend(text, x - 8, y))
-        # Пробное окно защёлки крышки, отдельно от штатной клипсы одежды.
         clearance = (.15, .25, .35)[number - 1]
         width, depth = 8 + 2 * clearance, 3 + 2 * clearance
         base = base.cut(Part.makeBox(width, depth, 2, V(x - width / 2, 65 - depth / 2, 0)))
@@ -68,7 +65,6 @@ def build():
 
 
 def snap_key():
-    # Две гибкие лапки лежат в плоскости стола. Y — направление вставки.
     handle = Part.makeBox(16, 4, 3, V(-8, -4, 0))
     for sign in (-1, 1):
         outline = [(2.8, 0), (4, 0), (4, 11), (4.85, 11), (4.85, 11.4),

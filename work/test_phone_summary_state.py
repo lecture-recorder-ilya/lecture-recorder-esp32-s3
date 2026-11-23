@@ -1,8 +1,3 @@
-"""Run with a JDK on PATH (or JAVA_HOME) and the Android JSON implementation.
-
-Set ANDROID_JSON_JAR to com.vaadin.external.google:android-json:0.0.20131108.vaadin1
-or let the test fetch that small JAR from Maven Central.
-"""
 
 import hashlib
 import os
@@ -135,8 +130,6 @@ public final class SummaryStateTest {
             require(!OLD_KEY.equals(line.getString("review_key")), "Review mark leaked from the old transcript");
             require(prior.equals(Store.read(mac)) && prior.equals(archive(history)), "Mac note or archive changed");
 
-            // Generating a summary changes the in-memory document. Ending the process here
-            // simulates interruption before the summary checkpoint.
             report.put("summary", new JSONArray().put(NEW_TEXT)).put("homework", new JSONArray());
             System.out.println("PASS: replacement guards, pending transcript, lesson metadata, archive and Mac copy");
         } else {
@@ -551,7 +544,6 @@ public final class SummaryStateTest {
                 "Сдвиг сегментов оставил старый переход к звуку");
         require(anchor.getJSONObject("original_source").getInt("start")==1,"Потерян исходный таймкод");
         report.getJSONArray("segments").put(new JSONObject().put("id",31).put("start",20).put("end",24).put("text",quote));
-        // Убираем точное совпадение старого отпечатка, сохранив два новых варианта.
         report.getJSONArray("segments").getJSONObject(0).put("start",13).put("end",17);
         SummarySources.reconcile(report,false,false);anchor=report.getJSONArray("summary_evidence").getJSONObject(0);
         require(!anchor.has("start")&&anchor.getString("source_status").equals("needs_review")
@@ -626,7 +618,6 @@ public final class SummaryStateTest {
             LectureNotes.saveTranscript(context, NAME, "Title", read(target), segments(NEW_TEXT), "gigaam-v3");
             throw new AssertionError("Replacement should have failed");
         } catch (IOException expected) {
-            // A blocked archive or write must leave the active note in place.
         }
     }
 

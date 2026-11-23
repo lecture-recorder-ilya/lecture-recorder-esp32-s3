@@ -75,7 +75,6 @@ def lock_control(manifest):
             raise ValueError(f"{row['id']}: WAV не совпадает с манифестом.")
         if row['subset'] not in SOURCES:
             raise ValueError(f"{row['id']}: неизвестное условие записи.")
-        # The public lock contains only provenance and hashes. Both texts stay local.
         metadata = {key: row[key] for key in ('source_id', 'source_item', 'reference_item', 'source_revision',
                     'source_audio_sha256', 'parent_audio_sha256', 'source_video', 'source_start',
                     'source_end', 'selection', 'seed', 'lecture_id', 'speaker_id', 'source_split',

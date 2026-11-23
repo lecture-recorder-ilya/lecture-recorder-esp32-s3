@@ -8,7 +8,6 @@ class PresentationTest(unittest.TestCase):
  def test_announced_presentation_and_teacher_close(self):
   rows=[self.segment(0,0,'Сейчас выступает одногруппник.'),self.segment(1,20,'Тема моего доклада: Иван Калита.'),self.segment(2,40,'Князь правил Москвой.'),self.segment(3,60,'Спасибо за доклад.')]
   sections=presentations(rows,80);self.assertEqual(len(sections),1);self.assertEqual(sections[0]['title'],'Иван Калита')
-  # A teacher announcement and student introduction are one presentation.
   result=roles(rows,sections);self.assertEqual(result['0']['role'],'teacher');self.assertEqual(result['2']['role'],'student');self.assertEqual(result['3']['role'],'teacher')
  def test_student_introduction_following_announcement(self):
   rows=[self.segment(0,0,'Передаю слово.'),self.segment(1,5,'Тема моего доклада: князь Даниил.'),self.segment(2,30,'Спасибо за внимание.')]

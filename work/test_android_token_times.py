@@ -1,4 +1,3 @@
-"""Настоящая сборка CTC-слов: пунктуация, стык и защита слабой начальной буквы."""
 import os
 from pathlib import Path
 import subprocess
@@ -69,17 +68,14 @@ public class TokenTimeTests {
     }
     break;
    case "seam":
-    // Одна и та же речь до стыка, точка после стыка. Только первое окно владеет словом.
     PhonePhrases phrases=new PhonePhrases();PhoneWordTimeline timeline=new PhoneWordTimeline(phrases,2);
     result=words(525,new int[]{440,520},new int[]{1,2},0,0,18,.8);assert result.length()==1;
     assert !result.getJSONObject(0).getBoolean("_legacy_core");timeline.accept(result,18);
     result=words(225,new int[]{40,200},new int[]{1,2},16,18,25,.8);assert result.length()==1;
     assert result.getJSONObject(0).getBoolean("_legacy_core");timeline.accept(result,25);timeline.finish();
     result=phrases.finish();assert result.length()==1;assert result.getJSONObject(0).getString("text").equals("Три.");
-    // Речь после стыка принадлежит только второму окну.
     result=words(525,new int[]{450,520},new int[]{1,2},0,0,18,.8);assert result.length()==0;
     result=words(225,new int[]{50,200},new int[]{1,2},16,18,25,.8);assert result.length()==1;
-    // Слово пересекает стык: последний речевой кадр принадлежит второму окну.
     result=words(525,new int[]{448,451,520},new int[]{10,11,2},0,0,18,.8);assert result.length()==0;
     result=words(225,new int[]{48,51,200},new int[]{10,11,2},16,18,25,.8);assert result.length()==1;
     same(result.getJSONObject(0).getDouble("start"),17.92);same(result.getJSONObject(0).getDouble("end"),18.08);
@@ -91,7 +87,6 @@ public class TokenTimeTests {
     joined.accept(first,18);joined.accept(second,25);joined.finish();result=repeated.finish();
     assert result.getJSONObject(0).getString("text").equals("не не");
     assert !result.getJSONObject(0).getBoolean("needs_review");
-    // Ровно два кадра между настоящими словами; ранний первый токен второго окна.
     repeated=new PhonePhrases();joined=new PhoneWordTimeline(repeated,2);
     joined.accept(new JSONArray().put(w("не",17.60,17.64,true)),18);
     joined.accept(new JSONArray().put(w("не",16.5,17.72,true)),25);joined.finish();
@@ -107,7 +102,6 @@ public class TokenTimeTests {
     tail.accept(new JSONArray().put(w("не",17.7,17.9,true)),25);tail.finish();
     result=alternate.finish();assert result.getJSONObject(0).getString("text").equals("не");
     assert result.getJSONObject(0).getBoolean("needs_review");
-    // Кандидат и исходный ответ того же слова расходятся ровно на два кадра.
     PhonePhrases duplicated=new PhonePhrases();tail=new PhoneWordTimeline(duplicated,2);
     tail.accept(new JSONArray().put(w("место.",52.32,52.56,false)),54);
     tail.accept(new JSONArray().put(w("Место.",52,52.64,true)),70);tail.finish();

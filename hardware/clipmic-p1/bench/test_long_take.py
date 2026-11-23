@@ -12,7 +12,13 @@ class LongTakeTest(unittest.TestCase):
     def test_faults(self):
         with tempfile.TemporaryDirectory() as folder:
             source = Path(folder) / "master.wav"
-            make(source, None)
+            signal = Path(folder) / "signal.wav"
+            with wave.open(str(signal), "wb") as wav:
+                wav.setparams((1, 2, RATE, 0, "NONE", ""))
+                second = np.rint(8000 * np.sin(2 * np.pi * 440 * np.arange(RATE) / RATE)).astype("<i2")
+                for _ in range(156):
+                    wav.writeframesraw(second.tobytes())
+            make(source, signal)
             clean = inspect(source, 1)
             self.assertEqual(clean["markers_s"], [1, 31, 61, 91, 121, 151, 181])
             self.assertTrue(all(b["relative_timing_jump_ms"] == 0 for b in clean["blocks"]))

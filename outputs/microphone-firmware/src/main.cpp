@@ -78,7 +78,6 @@ bool allowBond(NimBLEConnInfo& info, bool enroll = false) {
   ble_store_value_sec bond = {};
   if (ble_store_read_our_sec(&lookup, &bond) != 0 || !bond.ltk_present || !bond.sc) return false;
 
-  // Re-pairing can replace NimBLE's saved bond for a peer address. Trust the enrolled key.
   if (hasTrustedBond && memcmp(trustedBondKey, bond.ltk, sizeof(trustedBondKey)) == 0) return true;
   if (!enroll || !pairingOpen() || bleActive || otherStream) return false;
   Preferences prefs;
@@ -259,7 +258,6 @@ void setup() {
   WiFi.persistent(false);
   WiFi.mode(WIFI_AP_STA);
   bool wifiOK = WiFi.softAP(apName.c_str(), apPassword.c_str(), 1, 0, 1);
-  // ESP-IDF 4.4 coexistence requires modem sleep when the BLE controller starts.
   WiFi.setSleep(true);
   WiFi.setAutoReconnect(true);
   if (!stationName.isEmpty()) WiFi.begin(stationName.c_str(), stationPassword.c_str());

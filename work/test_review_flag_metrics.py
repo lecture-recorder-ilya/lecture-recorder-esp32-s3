@@ -1,4 +1,3 @@
-"""Метрики флага учитывают пропуски и не прячут полностью потерянную речь."""
 from pathlib import Path
 import sys
 import unittest

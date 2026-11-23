@@ -1,4 +1,3 @@
-"""Wikimedia educational images, with title, attribution, license and source."""
 import hashlib,html,json,re,time
 from pathlib import Path
 from urllib.parse import urlencode,quote,urlsplit
@@ -16,7 +15,6 @@ def wiki(params,commons=False):
 def plain(value):return html.unescape(re.sub(r'<[^>]*>','',value or ''))[:400]
 
 def lookup(query):
-    # Callers supply only an anchored public topic, never arbitrary URLs or transcript text.
     if not isinstance(query,str) or not 3<=len(query)<=70 or not re.fullmatch(r'[\w\s()«»—–-]+',query) or re.search(r'[\d@]',query):return {'status':'unavailable'}
     key=hashlib.sha256(query.casefold().encode()).hexdigest();path=CACHE/(key+'.json')
     try:

@@ -1,4 +1,3 @@
-"""Выдача ДЗ, вопрос, пример, переспрос и чужая реплика."""
 import json
 from pathlib import Path
 import sys

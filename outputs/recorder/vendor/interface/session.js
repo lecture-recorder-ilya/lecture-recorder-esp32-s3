@@ -18,7 +18,7 @@
  const settings=$('#view-settings');
  const record=$('#view-record');
  const card=el('section',undefined,'card settings-card session-profile-card');
- const title=el('h2','Профиль МИРЭА');
+ const title=el('h2','Группа и курс');
  const details=el('p','Проверяю профиль…','muted');
  const edit=el('button','Изменить профиль','secondary');
  edit.type='button';

@@ -1,4 +1,3 @@
-"""Public historical identities, never arbitrary names from attendance checks."""
 import re
 PEOPLE=[
  ('Александр Невский',r'Александр\w*\s+Невск\w*'),('Дмитрий Донской',r'Дмитри\w*\s+Донск\w*'),
@@ -27,5 +26,4 @@ def person_query(item):
 
 def private_name_query(query,context):
  if PRIVATE.search(context):return True
- # Common personal-name queries must resolve to the explicit historical registry.
  return bool(re.match(r'^(?:Даниил|Данил|Даня|Илья|Александр|Алексей|Андрей|Михаил|Иван|Николай|П[её]тр|Екатерина|Мария|Анна|Сергей|Дмитрий)(?:\s|$)',query or '',re.I)) and not identified_people(query,context)

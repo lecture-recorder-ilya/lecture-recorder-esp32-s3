@@ -1,4 +1,3 @@
-"""Контракт выбора каналов: моно неизменно, повреждения не усиливаются."""
 from pathlib import Path
 import sys
 import unittest

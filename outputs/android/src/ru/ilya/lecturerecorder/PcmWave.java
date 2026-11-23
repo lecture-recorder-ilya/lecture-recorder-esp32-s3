@@ -37,7 +37,7 @@ final class PcmWave {
             long size = Integer.toUnsignedLong(Integer.reverseBytes(audio.readInt()));
             long end = audio.getFilePointer() + size;
             if (end > length) throw new IOException("Аудио повреждено");
-            if (chunk == 0x666d7420) { // fmt
+            if (chunk == 0x666d7420) {
                 if (size < 16) throw new IOException("Аудио повреждено");
                 int tag = unsignedShortLE(audio);
                 if (unsignedShortLE(audio) != 1 || Integer.reverseBytes(audio.readInt()) != SAMPLE_RATE) {
@@ -49,7 +49,7 @@ final class PcmWave {
                 }
                 pcm = true;
             }
-            if (chunk == 0x64617461 && pcm && size % 2 == 0) return size; // data
+            if (chunk == 0x64617461 && pcm && size % 2 == 0) return size;
             audio.seek(end + (size % 2));
         }
         throw new IOException("Аудиоданные WAV недоступны");

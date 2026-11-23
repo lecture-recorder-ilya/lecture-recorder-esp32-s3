@@ -1,4 +1,3 @@
-"""Плотная 90-минутная проба не подменяется файлом с длинной тишиной."""
 from pathlib import Path
 import sys
 import tempfile

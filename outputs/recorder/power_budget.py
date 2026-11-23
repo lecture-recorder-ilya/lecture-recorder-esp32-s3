@@ -1,4 +1,3 @@
-"""Cooperative inference budget; never throttles the audio capture process."""
 import json
 import os
 import platform
@@ -39,7 +38,6 @@ class Budget:
         elapsed = self.clock() - self.started
         self.active_seconds += elapsed
         delay = elapsed * (1 / self.duty - 1)
-        # Short sleeps allow process shutdown and configuration changes.
         remaining = delay
         while remaining > 0 and self.enabled():
             step = min(remaining, .5)

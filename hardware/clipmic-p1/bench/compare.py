@@ -28,7 +28,6 @@ def read_pcm(path, channel):
 
 
 def locate(signal, marker, rate):
-    # Нормированная корреляция на всех положениях. abs допускает инверсию полярности.
     size = len(marker)
     if len(signal) < size:
         raise ValueError("Слишком короткая запись")
@@ -90,11 +89,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('clip', type=Path)
     parser.add_argument('phone', type=Path)
+    parser.add_argument('--reference', type=Path, default=Path(__file__).with_name('reference.wav'),
+                        help='Локальный эталон с двумя синхрометками')
     parser.add_argument('--distance', type=int, choices=[1, 3, 5], required=True)
     parser.add_argument('--phone-channel', type=int, default=1)
     args = parser.parse_args()
     try:
-        master, fs = read_pcm(Path(__file__).with_name("reference.wav"), 1)
+        master, fs = read_pcm(args.reference, 1)
         clip = measure(args.clip, 1, master, fs)
         phone = measure(args.phone, args.phone_channel, master, fs)
     except (ValueError, wave.Error, OSError, EOFError) as error:

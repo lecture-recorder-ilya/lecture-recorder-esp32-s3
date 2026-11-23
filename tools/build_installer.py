@@ -56,7 +56,6 @@ def main():
         subprocess.run([str(uv), '--no-config', 'python', 'install', '--no-bin', '--managed-python', distribution['python_version']], env=env, check=True)
         runtime = tools / 'python' / ('cpython-' + distribution['python_version'] + '-macos-aarch64-none')
     subprocess.run([sys.executable, str(ROOT / 'tools/build_mac.py')], check=True)
-    # File Provider can re-add FinderInfo while a bundle is being signed.
     staging = tempfile.TemporaryDirectory(prefix='lecture-installer-') if not args.skip_dmg else None
     build_root = Path(staging.name) if staging else work
     app = build_root / 'Установить Запись лекций.app'

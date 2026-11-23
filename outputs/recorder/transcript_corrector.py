@@ -1,11 +1,9 @@
-"""Source-backed historical spellings and single-event years; keep originals."""
 import hashlib,json,re,time
 from pathlib import Path
 from urllib.parse import quote
 import illustrations
 from learning_moments import safe_image_query
 CACHE=Path(__file__).resolve().parent/'study/fact-checks'
-# These are public topics, never private names or entire microphone transcripts.
 EVENTS=[('Куликовская битва',r'куликовск\w*\s+битв\w*'),('Невская битва',r'невск\w*\s+битв\w*'),('Ледовое побоище',r'ледов\w*\s+побоищ\w*'),('Стояние на Угре',r'стояни\w*\s+на\s+угр\w*'),('Крещение Руси',r'крещени\w*\s+руси'),('Тверское восстание',r'тверск\w*\s+восстани\w*')]
 NAMES=[('Иван Калита',r'\bИван\s+Калитто\b','Калита'),('Андрей Рублёв',r'\bАндрей\s+Рудл[её]в\b','Рубл'),('Феофан Грек',r'\b(?:Феотан|Феотан|Диафан|Пиатан)\s+Грек\b','Феофан')]
 
@@ -21,7 +19,6 @@ def reference(topic):
  path.write_text(json.dumps(result,ensure_ascii=False));return result
 
 def event_year(ref):
- # Only the opening definition, not dates from the rest of the article.
  opening=re.split(r'\n',ref.get('extract',''))[0]
  years=set(re.findall(r'(?<!\d)([12]\d{3}|[3-9]\d{2})(?=\s*(?:году|года|год|г\.|гг\.))',opening))
  return next(iter(years)) if len(years)==1 else None
@@ -59,7 +56,6 @@ def proofread(report,subject,fetch=reference):
   except Exception:errors+=1;continue
   if not ref.get('extract') or (anchor and anchor.casefold() not in (ref['title']+' '+ref['extract']).casefold()):continue
   for segment in matches:
-   # Apply compatible changes to a copy; retain exactly what ASR originally wrote.
    prior=corrections.get(segment['id']);copy=dict(segment,text=prior['text'] if prior else segment['text'])
    change=correct_segment(copy,topic,pattern,ref,kind)
    if change:

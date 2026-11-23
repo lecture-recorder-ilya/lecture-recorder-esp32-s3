@@ -1,4 +1,3 @@
-"""Цитаты и исходные времена после правки, нового разбора и восстановления."""
 import copy
 import json
 from pathlib import Path

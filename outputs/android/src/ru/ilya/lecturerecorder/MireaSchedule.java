@@ -70,7 +70,7 @@ final class MireaSchedule {
         request.setConnectTimeout(4500);
         request.setReadTimeout(5000);
         try {
-            if (request.getResponseCode() != 200) throw new IOException("Расписание МИРЭА временно недоступно");
+            if (request.getResponseCode() != 200) throw new IOException("Расписание временно недоступно");
             try (InputStream in = request.getInputStream(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                 byte[] buffer = new byte[8192];
                 for (int count; (count = in.read(buffer)) != -1; ) {
@@ -105,10 +105,10 @@ final class MireaSchedule {
                     break;
                 }
             }
-            if (id <= 0) throw new IOException("Группа не найдена в расписании МИРЭА");
+            if (id <= 0) throw new IOException("Группа не найдена в расписании");
             String calendar = fetch("/schedule/api/ical/1/" + id);
             if (!calendar.startsWith("BEGIN:VCALENDAR") || !calendar.trim().endsWith("END:VCALENDAR")) {
-                throw new IOException("Не удалось прочитать расписание МИРЭА");
+                throw new IOException("Не удалось прочитать расписание");
             }
             try {
                 Store.write(cache, new JSONObject().put("group", group).put("ics", calendar)

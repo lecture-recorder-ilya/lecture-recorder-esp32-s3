@@ -1,4 +1,3 @@
-"""Persistent study metadata. Original microphone WAVs are never rewritten."""
 import contextlib
 import fcntl
 import json
@@ -148,7 +147,6 @@ def enrich(status):
         base=lessons.get(name) or {};meta=dict(changed.get(name) or base)
         result=read(ROOT/'analysis'/(Path(name).stem+'.json'))
         key=meta.get('folder',name)
-        # An explicitly named teacher is persisted once; schedule/manual names win.
         if not meta.get('teacher') and result.get('teacher') and result.get('evidence',{}).get('teacher'):
             with transaction():
                 teachers=read(ROOT/'study/teachers.json')
@@ -178,7 +176,6 @@ def enrich(status):
                 meta['label']=f"{meta['date']} · {meta['start']}–{meta['end']} · {meta['subject']} · {meta['type']}"
         if name in changed:
             report_aliases(name,meta['folder'])
-            # The old recorder may still create its original schedule hardlink.
             old=base.get('folder')
             if old and old!=meta.get('folder'):
                 oldpath=ROOT/'lessons'/folder_name(old)/name

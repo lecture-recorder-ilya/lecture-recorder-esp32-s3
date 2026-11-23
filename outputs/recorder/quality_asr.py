@@ -1,4 +1,3 @@
-"""Local adaptive Russian ASR with voiced-word evidence; originals remain untouched."""
 import threading,math,re
 from pathlib import Path
 import character_weights

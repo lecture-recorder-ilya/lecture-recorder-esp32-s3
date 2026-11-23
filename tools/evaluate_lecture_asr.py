@@ -19,7 +19,6 @@ def evaluate(manifest, source, output):
     directory = output.with_name(output.stem + '-checkpoints')
     directory.mkdir(parents=True, exist_ok=False)
     rows = []
-    # Keep the test local and measure ASR without the app's power-saving pauses.
     with patch('power_budget.Budget.checkpoint', return_value=None):
         for index, (ident, case) in enumerate(cases.items()):
             path = manifest.parent / case['audio']

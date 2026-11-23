@@ -33,7 +33,6 @@ final class LectureNotes {
   }
   JSONObject report=document.getJSONObject("report");
   for(String field:new String[]{"summary","summary_evidence","homework","homework_review","formulas","formula_review","overview","warnings","draft"})report.remove(field);
-  // Отметки проверки относятся к конкретной расшифровке.
   String reviewPrefix="phone:"+name+":"+UUID.randomUUID()+":";
   for(int i=0;i<segments.length();i++)segments.getJSONObject(i).put("review_key",reviewPrefix+i).put("edit_generation",reviewPrefix);
   document.put("file",name);

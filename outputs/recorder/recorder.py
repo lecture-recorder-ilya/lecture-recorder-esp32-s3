@@ -65,7 +65,6 @@ class NetworkStream:
 
 
 def usb_ports():
-    # A Samsung connected for import also exposes a modem serial port.
     return sorted(p.device for p in list_ports.comports()
                   if p.vid in (0x303A, 0x1A86, 0x10C4, 0x0403, 0x067B)
                   and p.device.startswith('/dev/cu.'))
@@ -158,7 +157,6 @@ def exact(s, length):
 
 
 def open_recording_stream(transport):
-    # DNS resolution may outlast socket timeouts; keep Stop responsive.
     result = queue.Queue()
     cancelled = threading.Event()
     def connect():
@@ -301,7 +299,6 @@ def capture(transport, choose_lesson=False):
                     gap_start = last_audio or time.monotonic()
                 with lock:
                     state.update(reconnecting=True, level=0)
-                # Interruptible backoff; retries continue until the user stops recording.
                 if stop_recording.wait(2):
                     break
     except Exception as exc:

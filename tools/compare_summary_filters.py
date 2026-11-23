@@ -47,7 +47,6 @@ def source(ref,path):
 
 def mac(ref,items):
     if ref is None:return [ai_worker.validate_part(copy.deepcopy(c['proposal']),copy.deepcopy(c['rows'])) for c in items]
-    # Старый модуль получает и старые зависимости, а не новые функции из sys.modules.
     with tempfile.TemporaryDirectory(prefix='summary-version-') as temp:
         root=Path(temp);payload=subprocess.check_output(['git','archive',ref,'outputs/recorder'],cwd=ROOT)
         with tarfile.open(fileobj=io.BytesIO(payload)) as archive:
