@@ -64,35 +64,35 @@ final class PhoneLectureAnalysis {
             }
         }
 
-        PhoneSummarySelection.prepare(document,TranscriptEdits.read(TranscriptEdits.file(context,name)));
+        PhoneSummarySelection.prepare(document, TranscriptEdits.read(TranscriptEdits.file(context, name)));
         JSONObject report = document.getJSONObject("report");
         if (!report.optBoolean(LectureNotes.SUMMARY_PENDING)) {
-            PhoneSummaryProgress.clear(context,name);
+            PhoneSummaryProgress.clear(context, name);
             return;
         }
         job.check();
-        JSONArray segments=report.getJSONArray("segments");
+        JSONArray segments = report.getJSONArray("segments");
         String emptyMessage = preserveReady ? "Не удалось завершить повтор. Прежний разбор сохранён"
                 : "Не нашёл уверенных пунктов. Расшифровка сохранена";
-        if(!PhoneSummarySelection.hasContent(segments)) {
-            PhoneSummaryProgress.clear(context,name);
+        if (!PhoneSummarySelection.hasContent(segments)) {
+            PhoneSummaryProgress.clear(context, name);
             throw new IOException(emptyMessage);
         }
-        PhoneSummaryProgress progress=PhoneSummaryProgress.open(context,name,segments);
-        if(progress.next<segments.length()) {
-            File text=PhoneModels.text(context,job);
-            summarize(context,job,text,report,progress);
+        PhoneSummaryProgress progress = PhoneSummaryProgress.open(context, name, segments);
+        if (progress.next < segments.length()) {
+            File text = PhoneModels.text(context, job);
+            summarize(context, job, text, report, progress);
         }
-        if(progress.summary.length()==0&&progress.homework.length()==0) {
-            PhoneSummaryProgress.clear(context,name);
+        if (progress.summary.length() == 0 && progress.homework.length() == 0) {
+            PhoneSummaryProgress.clear(context, name);
             throw new IOException(emptyMessage);
         }
-        report.put("summary",progress.summary).put("summary_evidence",progress.sources)
-                .put("homework",progress.homework).put("homework_review",progress.review);
+        report.put("summary", progress.summary).put("summary_evidence", progress.sources)
+                .put("homework", progress.homework).put("homework_review", progress.review);
         if (preserveReady) job.beginFinalSave();
         else job.check();
         LectureNotes.saveSummary(context, document, preserveReady);
-        PhoneSummaryProgress.clear(context,name);
+        PhoneSummaryProgress.clear(context, name);
     }
 
     static JSONArray transcribeVosk(Context context, PhoneAnalysisService.Job job, String name, File speech)
@@ -162,7 +162,8 @@ final class PhoneLectureAnalysis {
                         for (Content item : answer.getContents().getContents()) {
                             if (item instanceof Content.Text) response.append(((Content.Text) item).getText());
                         }
-                        PhoneSummarySelection.add(response.toString(),first,next,segments,progress.summary,progress.sources,progress.homework,progress.review,progress.points,progress.tasks);
+                        PhoneSummarySelection.add(response.toString(), first, next, segments, progress.summary,
+                                progress.sources, progress.homework, progress.review, progress.points, progress.tasks);
                         progress.checkpoint(next);
                     } finally {
                         job.conversation = null;
@@ -171,7 +172,6 @@ final class PhoneLectureAnalysis {
                 first = next;
             }
         }
-
     }
 
     private PhoneLectureAnalysis() {}

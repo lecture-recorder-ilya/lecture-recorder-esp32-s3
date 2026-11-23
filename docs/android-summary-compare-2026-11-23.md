@@ -34,13 +34,11 @@
 Из рабочей копии с настроенными `JAVA_HOME` и `ANDROID_JSON_JAR`:
 
 ```sh
-PY=/Users/vm/Documents/ChatGPT/esp/lecture-recorder-esp32-s3-main/work/ai-env/bin/python
+PY="${PYTHON:-python3}"
 "$PY" work/test_android_summary_path.py
 "$PY" work/test_phone_summary_state.py
 "$PY" work/test_summary_path_scoring.py
 "$PY" work/score_android_summary_live.py tests/fixtures/summary/android-path.json tests/results/android-summary-compare --output /tmp/clipmic-summary-score.json
 ```
 
-`work/check_android_summary_live.py` повторяет штатный запуск только в отдельном Motion0510; требует `--disposable-emulator`, явные APK/adb и Android build tools. Он переустанавливает тестовое приложение, сохраняя локальные веса. Motion0510 (`emulator-5590`) оставлен работающим для проверки итоговой интеграционной сборки.
-
-Версии, релиз, main, ASR и интерфейс не менялись. При переносе в ветку с живыми фразами следует сохранить её барьер финального сохранения `beginFinalSave`.
+`work/check_android_summary_live.py` повторяет штатный запуск только в отдельном Motion0510; требует `--disposable-emulator`, явные APK/adb и Android build tools. Он переустанавливает тестовое приложение, сохраняя локальные веса.
