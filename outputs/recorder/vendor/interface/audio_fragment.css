@@ -5,7 +5,8 @@
 .clip-fragment-fields > div { display: flex; flex: 1 1 11rem; gap: .45rem; align-items: flex-end; }
 .clip-fragment-fields label { flex: 1; display: block; font-size: .82rem; font-weight: 600; }
 .clip-fragment-fields input { width: 100%; box-sizing: border-box; display: block; margin: .25rem 0 0; font: inherit; font-variant-numeric: tabular-nums; }
-.clip-fragment-fields button, .clip-fragment-actions button { min-height: 2.25rem; margin: 0; white-space: nowrap; }
+.clip-fragment-fields button, .clip-fragment-actions button { min-height: 44px; margin: 0; white-space: nowrap; }
+.clip-fragment-fields input[aria-invalid=true] { border-color: var(--warning, #edb985); }
 .clip-fragment-actions { margin-top: .7rem; align-items: center; }
 .clip-fragment-actions a { text-underline-offset: .2em; }
 .clip-fragment-actions a[aria-disabled=true] { opacity: .55; }

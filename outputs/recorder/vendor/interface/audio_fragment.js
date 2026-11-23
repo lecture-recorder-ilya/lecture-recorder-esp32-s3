@@ -29,6 +29,7 @@
     const download = el('a', 'Сохранить WAV');
     const notice = el('p', '', 'clip-fragment-status');
     notice.setAttribute('role', 'status');
+    notice.id = 'fragment-status-' + encodeURIComponent(name);
 
     function field(label) {
       const column = el('div');
@@ -37,6 +38,7 @@
       input.type = 'text';
       input.autocomplete = 'off';
       input.placeholder = '0:00';
+      input.setAttribute('aria-describedby', notice.id);
       const here = el('button', 'Из плеера', 'secondary');
       here.type = 'button';
       here.setAttribute('aria-label', label + ' на текущей позиции');
@@ -71,6 +73,10 @@
     }
     function paint() {
       const value = bounds();
+      const durationKnown = Number.isFinite(audio.duration);
+      const start = parseTime(left.input.value);
+      left.input.setAttribute('aria-invalid', String(durationKnown && !(start >= 0 && start < audio.duration)));
+      right.input.setAttribute('aria-invalid', String(durationKnown && !value));
       repeat.disabled = !value;
       repeat.textContent = looping ? 'Остановить повтор' : 'Повторять фрагмент';
       repeat.setAttribute('aria-pressed', String(looping));
@@ -97,7 +103,7 @@
       paint();
     }
     function edited() {
-      stop(false);
+      stop(true);
       const value = bounds();
       if (value) {
         try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
