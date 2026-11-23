@@ -116,7 +116,7 @@ public class Harness {
   public String getHeaderField(String name) {
    if (name.equals("Location")) return location;
    if (name.equals("Link") && !getURL().getQuery().contains("page=2")) {
-    return "<" + BASE + "?per_page=30&page=2>; rel=\"next\"";
+    return "<https://api.github.com/repositories/42/releases?per_page=30&page=2>; rel=\"next\"";
    }
    return null;
   }

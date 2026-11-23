@@ -95,6 +95,7 @@ final class GitHubUpdateClient {
         boolean stable = "lecture-recorder.apk".equals(assetName);
         String endpoint = stable ? releases + "/latest" : releases + "?per_page=30";
         Asset best = null;
+        int pageNumber = 1;
         while (endpoint != null) {
             HttpURLConnection http = connect(endpoint, "application/vnd.github+json", token);
             try {
@@ -106,8 +107,9 @@ final class GitHubUpdateClient {
                     Asset asset = compatible(page.getJSONObject(i), best == null ? installed : best.version, assetName, false);
                     if (asset != null) best = asset;
                 }
-                String next = nextPage(http.getHeaderField("Link"));
-                endpoint = endpoint.equals(next) ? null : next;
+                String links = http.getHeaderField("Link");
+                endpoint = page.length() > 0 && links != null && links.contains("rel=\"next\"")
+                        ? releases + "?per_page=30&page=" + (++pageNumber) : null;
             } finally {
                 http.disconnect();
             }
@@ -126,18 +128,6 @@ final class GitHubUpdateClient {
             JSONObject asset = assets.getJSONObject(i);
             if (assetName.equals(asset.optString("name")) && "uploaded".equals(asset.optString("state"))) {
                 return new Asset(version, asset);
-            }
-        }
-        return null;
-    }
-
-    private String nextPage(String header) {
-        if (header == null) return null;
-        for (String link : header.split(",")) {
-            int end = link.indexOf('>'), start = link.indexOf('<');
-            if (start >= 0 && end > start && link.substring(end).contains("rel=\"next\"")) {
-                String url = link.substring(start + 1, end);
-                if (url.startsWith(releases + "?") && url.matches(".*[?&]page=[0-9]+(?:&[^#]*)?")) return url;
             }
         }
         return null;

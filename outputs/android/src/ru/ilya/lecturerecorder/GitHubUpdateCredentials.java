@@ -40,7 +40,7 @@ final class GitHubUpdateCredentials {
     void save(JSONObject response) throws Exception {
         long now = System.currentTimeMillis();
         JSONObject data = new JSONObject().put("access_token", response.getString("access_token"))
-                .put("expires_at", now + 1000L * response.optLong("expires_in", 86400L * 365));
+                .put("expires_at", response.has("expires_in") ? now + 1000L * response.getLong("expires_in") : Long.MAX_VALUE);
         if (response.has("refresh_token")) {
             data.put("refresh_token", response.getString("refresh_token"));
             data.put("refresh_expires_at", now + 1000L * response.optLong("refresh_token_expires_in", 15552000));
