@@ -1,0 +1,334 @@
+{
+  "kind": "Живой штатный путь по готовому тексту, без аудио и ASR",
+  "variant": "candidate",
+  "apk_sha256": "e818dc7cd4c7f662d665bbe9d6c5c4c4145f184a34cec634873b2ee6b4728e40",
+  "input_sha256": "7b794ba84dc3742253b532ab152f2cf1a0563176b927d8d46a90b043a3f3c05e",
+  "model_sha256": "bf1aba9ce8d963124407353c6aa4cbf72eba78db21ae133de983eac672ce83e0",
+  "results": [
+    {
+      "name": "regression_derivative",
+      "status": "refused",
+      "error": "Syntax error in regexp pattern near index 3\n(?U)\\s+\n   ^",
+      "elapsed_ms": 11359,
+      "stages": [
+        "Загружаю модель конспекта",
+        "Составляю конспект · 0%"
+      ],
+      "report": {
+        "segments": [
+          {
+            "text": "Производная функции в точке равна пределу отношения приращения функции к приращению аргумента.",
+            "start": 0,
+            "end": 7,
+            "review_key": "stable-derivative",
+            "needs_review": false
+          },
+          {
+            "text": "Дома решите задачи номер три и четыре.",
+            "start": 7,
+            "end": 15,
+            "review_key": "stable-homework",
+            "needs_review": false
+          }
+        ],
+        "subject": "Контроль учебных цитат",
+        "local_summary_pending": true
+      }
+    },
+    {
+      "name": "regression_ohm",
+      "status": "refused",
+      "error": "Syntax error in regexp pattern near index 3\n(?U)\\s+\n   ^",
+      "elapsed_ms": 8456,
+      "stages": [
+        "Загружаю модель конспекта",
+        "Составляю конспект · 0%"
+      ],
+      "report": {
+        "segments": [
+          {
+            "text": "Электрический ток — это упорядоченное движение электрических зарядов.",
+            "start": 0,
+            "end": 4.8,
+            "needs_review": false
+          },
+          {
+            "text": "Сила тока измеряется в амперах.",
+            "start": 5,
+            "end": 9.8,
+            "needs_review": false
+          },
+          {
+            "text": "Напряжение измеряется в вольтах.",
+            "start": 10,
+            "end": 14.8,
+            "needs_review": false
+          },
+          {
+            "text": "Сопротивление измеряется в омах.",
+            "start": 15,
+            "end": 19.8,
+            "needs_review": false
+          },
+          {
+            "text": "Закон Ома связывает силу тока, напряжение и сопротивление.",
+            "start": 20,
+            "end": 24.8,
+            "needs_review": false
+          },
+          {
+            "text": "К следующему занятию решите задачу номер три.",
+            "start": 25,
+            "end": 29.8,
+            "needs_review": false
+          }
+        ],
+        "subject": "Контроль учебных цитат",
+        "local_summary_pending": true
+      }
+    },
+    {
+      "name": "mechanics",
+      "status": "refused",
+      "error": "Syntax error in regexp pattern near index 3\n(?U)\\s+\n   ^",
+      "elapsed_ms": 7052,
+      "stages": [
+        "Загружаю модель конспекта",
+        "Составляю конспект · 0%"
+      ],
+      "report": {
+        "segments": [
+          {
+            "id": 0,
+            "start": 0,
+            "end": 3,
+            "text": "Ускорение равно отношению изменения скорости ко времени."
+          },
+          {
+            "id": 1,
+            "start": 4,
+            "end": 7,
+            "text": "Импульс замкнутой системы сохраняется."
+          },
+          {
+            "id": 2,
+            "start": 8,
+            "end": 11,
+            "text": "К следующему занятию решите упражнение двенадцать."
+          }
+        ],
+        "subject": "Контроль учебных цитат",
+        "local_summary_pending": true
+      }
+    },
+    {
+      "name": "biology",
+      "status": "refused",
+      "error": "Syntax error in regexp pattern near index 3\n(?U)\\s+\n   ^",
+      "elapsed_ms": 6566,
+      "stages": [
+        "Загружаю модель конспекта",
+        "Составляю конспект · 0%"
+      ],
+      "report": {
+        "segments": [
+          {
+            "id": 0,
+            "start": 0,
+            "end": 3,
+            "text": "Митохондрия является органоидом клетки."
+          },
+          {
+            "id": 1,
+            "start": 4,
+            "end": 7,
+            "text": "Скорость фотосинтеза зависит от освещения."
+          },
+          {
+            "id": 2,
+            "start": 8,
+            "end": 11,
+            "text": "К следующему занятию прочитайте параграф семь."
+          }
+        ],
+        "subject": "Контроль учебных цитат",
+        "local_summary_pending": true
+      }
+    },
+    {
+      "name": "arithmetic",
+      "status": "refused",
+      "error": "Syntax error in regexp pattern near index 3\n(?U)\\s+\n   ^",
+      "elapsed_ms": 8713,
+      "stages": [
+        "Загружаю модель конспекта",
+        "Составляю конспект · 0%"
+      ],
+      "report": {
+        "segments": [
+          {
+            "id": 0,
+            "start": 0,
+            "end": 3,
+            "text": "Квадрат суммы равен сумме квадратов и удвоенного произведения."
+          },
+          {
+            "id": 1,
+            "start": 4,
+            "end": 7,
+            "text": "Число девять не равно семи."
+          }
+        ],
+        "subject": "Контроль учебных цитат",
+        "local_summary_pending": true
+      }
+    },
+    {
+      "name": "empty",
+      "status": "refused",
+      "error": "Не нашёл уверенных пунктов. Расшифровка сохранена",
+      "elapsed_ms": 0,
+      "stages": [],
+      "report": {
+        "segments": [],
+        "subject": "Контроль учебных цитат",
+        "local_summary_pending": true
+      }
+    },
+    {
+      "name": "room_request",
+      "status": "refused",
+      "error": "Не нашёл уверенных пунктов. Расшифровка сохранена",
+      "elapsed_ms": 0,
+      "stages": [],
+      "report": {
+        "segments": [
+          {
+            "id": 0,
+            "start": 0,
+            "end": 3,
+            "text": "Передайте воду, пожалуйста."
+          },
+          {
+            "id": 1,
+            "start": 4,
+            "end": 7,
+            "text": "Вы готовы начинать?"
+          }
+        ],
+        "subject": "Контроль учебных цитат",
+        "local_summary_pending": true
+      }
+    },
+    {
+      "name": "doubtful",
+      "status": "refused",
+      "error": "Не нашёл уверенных пунктов. Расшифровка сохранена",
+      "elapsed_ms": 0,
+      "stages": [],
+      "report": {
+        "segments": [
+          {
+            "id": 0,
+            "start": 0,
+            "end": 3,
+            "text": "Скорость равна сорока метрам в секунду.",
+            "needs_review": true
+          },
+          {
+            "id": 1,
+            "start": 4,
+            "end": 7,
+            "text": "Домашнего задания не будет."
+          }
+        ],
+        "subject": "Контроль учебных цитат",
+        "local_summary_pending": true
+      }
+    },
+    {
+      "name": "audience",
+      "status": "refused",
+      "error": "Не нашёл уверенных пунктов. Расшифровка сохранена",
+      "elapsed_ms": 1,
+      "stages": [],
+      "report": {
+        "segments": [
+          {
+            "id": 0,
+            "start": 0,
+            "end": 3,
+            "text": "Нам надо дома решать задачи.",
+            "speaker_role": "student"
+          },
+          {
+            "id": 1,
+            "start": 4,
+            "end": 7,
+            "text": "Я правильно понял, на дом решите задачу девять?",
+            "speaker_role": "student"
+          },
+          {
+            "id": 2,
+            "start": 8,
+            "end": 11,
+            "text": "Например, дома решите задачу девять.",
+            "speaker_role": "student"
+          }
+        ],
+        "subject": "Контроль учебных цитат",
+        "local_summary_pending": true
+      }
+    },
+    {
+      "name": "condition",
+      "status": "refused",
+      "error": "Не нашёл уверенных пунктов. Расшифровка сохранена",
+      "elapsed_ms": 5224,
+      "stages": [
+        "Загружаю модель конспекта",
+        "Составляю конспект · 0%"
+      ],
+      "report": {
+        "segments": [
+          {
+            "id": 0,
+            "start": 0,
+            "end": 3,
+            "text": "Если давление равно нулю"
+          }
+        ],
+        "subject": "Контроль учебных цитат",
+        "local_summary_pending": true
+      }
+    },
+    {
+      "name": "cancelled",
+      "status": "refused",
+      "error": "Не нашёл уверенных пунктов. Расшифровка сохранена",
+      "elapsed_ms": 6929,
+      "stages": [
+        "Загружаю модель конспекта",
+        "Составляю конспект · 0%"
+      ],
+      "report": {
+        "segments": [
+          {
+            "id": 0,
+            "start": 0,
+            "end": 3,
+            "text": "На дом решите задачу двадцать."
+          },
+          {
+            "id": 1,
+            "start": 4,
+            "end": 7,
+            "text": "Задание отменяется."
+          }
+        ],
+        "subject": "Контроль учебных цитат",
+        "local_summary_pending": true
+      }
+    }
+  ]
+}
