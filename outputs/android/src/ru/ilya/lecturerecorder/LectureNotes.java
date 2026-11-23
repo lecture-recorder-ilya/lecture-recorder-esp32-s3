@@ -17,6 +17,13 @@ final class LectureNotes {
 
  static JSONObject saveTranscript(Context c,String name,String title,JSONObject document,
                                   JSONArray segments,String recognizer)throws Exception{
+  document=prepareTranscript(c,name,title,document,segments,recognizer);
+  saveLocal(c,document,true);
+  return document;
+ }
+
+ static JSONObject prepareTranscript(Context c,String name,String title,JSONObject document,
+                                     JSONArray segments,String recognizer)throws Exception{
   if(segments.length()==0)throw new IOException("В записи не удалось распознать русскую речь");
   JSONObject lesson=Store.lesson(c,name);
   String subject=lesson.optString("subject",title);
@@ -32,14 +39,17 @@ final class LectureNotes {
   document.put("file",name);
   if(lesson.length()>0)document.put("lesson",lesson);
   report.put("segments",segments).put("asr_engine",recognizer).put(SUMMARY_PENDING,true);
-  saveLocal(c,document,true);
   return document;
  }
 
  static void saveSummary(Context c,JSONObject document)throws Exception{
+  saveSummary(c,document,false);
+ }
+
+ static void saveSummary(Context c,JSONObject document,boolean archivePrevious)throws Exception{
   SummarySources.reconcile(document.getJSONObject("report"),true,true);
   document.getJSONObject("report").remove(SUMMARY_PENDING);
-  saveLocal(c,document,false);
+  saveLocal(c,document,archivePrevious);
  }
 
  private static synchronized void saveLocal(Context c,JSONObject document,boolean archivePrevious)throws Exception{

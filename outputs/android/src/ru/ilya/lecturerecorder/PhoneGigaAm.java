@@ -42,7 +42,7 @@ final class PhoneGigaAm {
                                 RandomAccessFile input) throws Exception {
         long total = PcmWave.seekData(input) / 2;
         long data = input.getFilePointer();
-        PhonePhrases phrases = new PhonePhrases();
+        PhonePhrases phrases = new PhonePhrases(job::publishPhrase);
         PhoneWordTimeline timeline = new PhoneWordTimeline(phrases, EDGE / (double) RATE);
         String[] tokens = readTokens(context);
         OrtEnvironment environment = OrtEnvironment.getEnvironment();

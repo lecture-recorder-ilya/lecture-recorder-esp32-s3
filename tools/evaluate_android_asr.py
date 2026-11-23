@@ -58,7 +58,7 @@ class R { static class raw { static final int gigaam_frontend=1,gigaam_tokens=2;
 class Store {
     static RandomAccessFile openAudio(Context c,String name)throws IOException { return new RandomAccessFile(name,"r"); }
 }
-class PhoneAnalysisService { static class Job { void check() {} void update(String s) {} } }
+class PhoneAnalysisService { static class Job { void check() {} void update(String s) {} void publishPhrase(JSONObject phrase) {} } }
 public final class Harness {
     public static void main(String[] args)throws Exception {
         Context context = new Context(new File(args[0]));

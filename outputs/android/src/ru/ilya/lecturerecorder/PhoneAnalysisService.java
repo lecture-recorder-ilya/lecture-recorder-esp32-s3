@@ -9,9 +9,13 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.util.Log;
 import com.google.ai.edge.litertlm.Conversation;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 
 public final class PhoneAnalysisService extends Service {
@@ -28,6 +32,11 @@ public final class PhoneAnalysisService extends Service {
 
     static boolean busyFor(String name) {
         return name.equals(recording) && busy();
+    }
+
+    static List<Phrase> previewFor(String name) {
+        Job job = active;
+        return job != null && name.equals(recording) ? job.preview : Collections.emptyList();
     }
 
     static String statusFor(String name) {
@@ -120,6 +129,7 @@ public final class PhoneAnalysisService extends Service {
                 Log.e("LectureAnalysis", "Local analysis failed", error);
             }
         } finally {
+            job.clearPreview();
             if (wakeLock.isHeld()) wakeLock.release();
             new Handler(Looper.getMainLooper()).post(() -> {
                 if (active != job) return;
@@ -145,9 +155,21 @@ public final class PhoneAnalysisService extends Service {
         super.onDestroy();
     }
 
+    static final class Phrase {
+        final double start;
+        final String text;
+
+        Phrase(JSONObject phrase) {
+            start = phrase.optDouble("start");
+            text = phrase.optString("text");
+        }
+    }
+
     static final class Job {
         private final Consumer<String> report;
+        private volatile List<Phrase> preview = Collections.emptyList();
         private volatile boolean cancelled;
+        private boolean finalSaveStarted;
         volatile Conversation conversation;
 
         Job(Consumer<String> report) {
@@ -162,8 +184,29 @@ public final class PhoneAnalysisService extends Service {
             if (!cancelled) report.accept(value);
         }
 
+        synchronized void publishPhrase(JSONObject phrase) {
+            if (cancelled) return;
+            List<Phrase> recent = new ArrayList<>(2);
+            if (!preview.isEmpty()) recent.add(preview.get(preview.size() - 1));
+            recent.add(new Phrase(phrase));
+            preview = Collections.unmodifiableList(recent);
+        }
+
+        synchronized void clearPreview() {
+            preview = Collections.emptyList();
+        }
+
+        synchronized void beginFinalSave() throws InterruptedIOException {
+            check();
+            finalSaveStarted = true;
+        }
+
         void cancel() {
-            cancelled = true;
+            synchronized (this) {
+                if (finalSaveStarted) return;
+                cancelled = true;
+                clearPreview();
+            }
             report.accept("Останавливаю разбор");
             Conversation current = conversation;
             if (current != null) {

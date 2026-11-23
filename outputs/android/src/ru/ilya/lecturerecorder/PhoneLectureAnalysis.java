@@ -35,6 +35,9 @@ final class PhoneLectureAnalysis {
             }
         }
         if (summaryOnly && document == null) throw new IOException("Расшифровка для конспекта не найдена");
+        boolean preserveReady = !summaryOnly && retranscribe && ((document != null
+                && !document.getJSONObject("report").optBoolean(LectureNotes.SUMMARY_PENDING))
+                || LectureNotes.file(context, name, false).isFile());
         if (!summaryOnly && (document == null || retranscribe)) {
             JSONArray segments;
             String recognizer;
@@ -46,27 +49,34 @@ final class PhoneLectureAnalysis {
             } catch (IOException | ai.onnxruntime.OrtException | LinkageError error) {
                 job.check();
                 Log.w("LectureAnalysis", "Using the fallback speech model", error);
+                job.clearPreview();
                 File speech = PhoneModels.speech(context, job);
                 job.update("Распознаю речь · 0%");
                 segments = transcribeVosk(context, job, name, speech);
                 recognizer = "vosk-small-ru";
             }
             job.check();
-            document = LectureNotes.saveTranscript(context, name, title, document, segments, recognizer);
+            if (preserveReady) {
+                document = LectureNotes.prepareTranscript(context, name, title, document, segments, recognizer);
+            } else {
+                document = LectureNotes.saveTranscript(context, name, title, document, segments, recognizer);
+                job.clearPreview();
+            }
         }
 
         JSONObject report = document.getJSONObject("report");
         if (!report.optBoolean(LectureNotes.SUMMARY_PENDING)) return;
         job.check();
         File text = PhoneModels.text(context, job);
-        summarize(context, job, text, report);
-        job.check();
-        LectureNotes.saveSummary(context, document);
+        summarize(context, job, text, report, preserveReady);
+        if (preserveReady) job.beginFinalSave();
+        else job.check();
+        LectureNotes.saveSummary(context, document, preserveReady);
     }
 
     static JSONArray transcribeVosk(Context context, PhoneAnalysisService.Job job, String name, File speech)
             throws Exception {
-        PhonePhrases phrases = new PhonePhrases();
+        PhonePhrases phrases = new PhonePhrases(job::publishPhrase);
         try (RandomAccessFile input = Store.openAudio(context, name);
              Model model = new Model(speech.getPath());
              Recognizer recognizer = new Recognizer(model, PcmWave.SAMPLE_RATE)) {
@@ -92,8 +102,8 @@ final class PhoneLectureAnalysis {
         return phrases.finish();
     }
 
-    private static void summarize(Context context, PhoneAnalysisService.Job job, File model, JSONObject report)
-            throws Exception {
+    private static void summarize(Context context, PhoneAnalysisService.Job job, File model, JSONObject report,
+                                  boolean preserveReady) throws Exception {
         JSONArray segments = report.getJSONArray("segments");
         JSONArray summary = new JSONArray();
         JSONArray sources = new JSONArray();
@@ -145,7 +155,10 @@ final class PhoneLectureAnalysis {
                 first = next;
             }
         }
-        if (summary.length() == 0 && homework.length() == 0 && homeworkReview.length() == 0) throw new IOException("Не нашёл уверенных пунктов. Расшифровка сохранена");
+        if (summary.length() == 0 && homework.length() == 0 && homeworkReview.length() == 0) {
+            throw new IOException(preserveReady ? "Не удалось завершить повтор. Прежний разбор сохранён"
+                    : "Не нашёл уверенных пунктов. Расшифровка сохранена");
+        }
         report.put("summary", summary).put("summary_evidence", sources).put("homework", homework).put("homework_review",homeworkReview);
     }
 

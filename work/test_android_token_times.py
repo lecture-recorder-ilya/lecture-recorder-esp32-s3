@@ -32,6 +32,20 @@ public class TokenTimeTests {
  public static void main(String[] args)throws Exception {
   JSONArray result;
   switch(args[0]) {
+   case "live_phrases":
+    List<JSONObject> published=new ArrayList<>();
+    PhonePhrases live=new PhonePhrases(published::add);
+    live.accept(new JSONArray().put(w("Первая.",1.25,2,true)));
+    assert published.isEmpty();
+    live.accept(new JSONArray().put(w("Вторая.",3,4,true)));
+    assert published.size()==1;
+    same(published.get(0).getDouble("start"),1.25);
+    assert published.get(0).getString("text").equals("Первая.");
+    JSONArray complete=live.finish();
+    assert published.size()==2 && complete.length()==2;
+    assert published.get(0).toString().equals(complete.getJSONObject(0).toString());
+    assert live.finish().length()==2 && published.size()==2;
+    break;
    case "silence_trim":
     float[] pcm=new float[32000];
     pcm[24000]=1f/32768;
@@ -152,6 +166,7 @@ class Tests(unittest.TestCase):
     def run_case(self,name):
         subprocess.run([self.jdk/'bin/java','-ea','-cp',self.cp,'ru.ilya.lecturerecorder.TokenTimeTests',name],check=True)
 
+    def test_live_callback_emits_each_completed_phrase_once(self):self.run_case('live_phrases')
     def test_punctuation_cannot_move_speech(self):self.run_case('punctuation')
     def test_only_digital_silence_can_move_start(self):self.run_case('silence_trim')
     def test_number_and_mixed_token_keep_speech_boundary(self):self.run_case('numbers')

@@ -26,14 +26,15 @@ import java.io.*;
 import org.json.*;
 class R { static class raw { static final int gigaam_frontend=1,gigaam_tokens=2; } }
 class Store { static RandomAccessFile openAudio(Context c,String n)throws IOException { return new RandomAccessFile(n,"r"); } }
-class PhoneAnalysisService { static class Job { void check() {} void update(String s) {} } }
+class PhoneAnalysisService { static class Job { void check() {} void update(String s) {}
+ void publishPhrase(JSONObject phrase) { if(Probe.firstPublished<0)Probe.firstPublished=Probe.seconds(); } } }
 class Probe {
  static long started,primary,clean,onset; static int primaryCalls,cleanCalls,onsetCalls;
- static double loaded,firstPrimary,firstPhrase;
+ static double loaded,firstPrimary,firstPhrase,firstPublished;
  static JSONArray windows,before,alternate,check;
  static double seconds() { return (System.nanoTime()-started)/1e9; }
  static void reset() { started=System.nanoTime();primary=clean=onset=0;primaryCalls=cleanCalls=onsetCalls=0;
-  loaded=firstPrimary=firstPhrase=-1;windows=new JSONArray();before=alternate=null; }
+  loaded=firstPrimary=firstPhrase=firstPublished=-1;windows=new JSONArray();before=alternate=null; }
  static void primary(JSONArray words) throws Exception { primaryCalls++;
   before=new JSONArray(words.toString());alternate=check=null;
   if(words.length()>0 && firstPrimary<0)firstPrimary=seconds(); }
@@ -49,7 +50,8 @@ public final class Harness {
    Probe.reset();JSONArray segments=PhoneGigaAm.transcribe(context,new PhoneAnalysisService.Job(),args[i],model);
    double elapsed=Probe.seconds();System.out.println(new JSONObject().put("repeat",r).put("elapsed_seconds",elapsed)
     .put("load_seconds",Probe.loaded).put("first_primary_seconds",Probe.firstPrimary)
-    .put("first_phrase_built_seconds",Probe.firstPhrase).put("available_at_return_seconds",elapsed)
+    .put("first_phrase_built_seconds",Probe.firstPhrase).put("first_phrase_published_seconds",Probe.firstPublished)
+    .put("available_at_return_seconds",elapsed)
     .put("primary_seconds",Probe.primary/1e9).put("clean_seconds",Probe.clean/1e9)
     .put("primary_calls",Probe.primaryCalls).put("clean_calls",Probe.cleanCalls)
     .put("onset_calls",Probe.onsetCalls).put("onset_seconds",Probe.onset/1e9)

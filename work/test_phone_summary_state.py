@@ -92,6 +92,10 @@ public final class SummaryStateTest {
             Store.write(target, original);
             Store.write(mac, original);
             String prior = Store.read(target);
+            JSONObject staged = LectureNotes.prepareTranscript(context, NAME, "Повтор", read(target),
+                    segments(NEW_TEXT), "gigaam-v3");
+            require(staged.getJSONObject("report").optBoolean("local_summary_pending"), "Staged transcript is not ready for summary");
+            require(prior.equals(Store.read(target)) && !history.exists(), "Staging replaced the previous ready result");
 
             try {
                 LectureNotes.saveTranscript(context, NAME, "Другой заголовок",

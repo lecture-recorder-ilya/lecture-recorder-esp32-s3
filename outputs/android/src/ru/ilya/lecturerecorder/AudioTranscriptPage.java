@@ -112,6 +112,8 @@ final class AudioTranscriptPage extends LinearLayout {
     private TextView times;
     private TextView waveStatus;
     private TextView transcriptStatus;
+    private TextView phrasePreview;
+    private List<PhoneAnalysisService.Phrase> previewRows = Collections.emptyList();
     private Dialog wordEditor;
     private final LinearLayout audioPanel;
     private final LinearLayout transcriptPanel;
@@ -283,6 +285,7 @@ final class AudioTranscriptPage extends LinearLayout {
             if (selected != null && PhoneAnalysisService.busyFor(selected)) {
                 if (!modelRequestStopping) {
                     modelRequestStopping = true;
+                    refreshPhrasePreview();
                     transcribe.setEnabled(false);
                     activity.startService(PhoneAnalysisService.cancel(activity));
                 }
@@ -323,6 +326,11 @@ final class AudioTranscriptPage extends LinearLayout {
         if (landscape || largeText) addSummaryButton(header);
         addTranscriptStatus(box);
         if (!landscape && !largeText) addTranscribeButton(box, spaced(-1, dp(48), 8));
+        phrasePreview = text("", 14, TEXT);
+        phrasePreview.setLines(5);
+        phrasePreview.setEllipsize(TextUtils.TruncateAt.END);
+        phrasePreview.setVisibility(View.GONE);
+        box.addView(phrasePreview, spaced(-1, -2, 6));
 
         reviewFilter = new CheckBox(activity);
         reviewFilter.setTextColor(TEXT);
@@ -702,6 +710,7 @@ final class AudioTranscriptPage extends LinearLayout {
         String message = PhoneAnalysisService.statusFor(selected);
         boolean readyOffline = supported && (localSummaryPending ? PhoneModels.summaryReady(activity) : PhoneModels.ready(activity));
         if (!loading) modelRequestStopping = false;
+        refreshPhrasePreview();
         boolean retry = message.startsWith("Не удалось") || message.contains("место")
                 || message.contains("недоступен") || message.equals("Разбор отменён");
         if (modelRequestStopping) {
@@ -741,6 +750,22 @@ final class AudioTranscriptPage extends LinearLayout {
                 : retry ? "Повторить разбор" : "Разобрать запись";
         if (!TextUtils.equals(transcribe.getText(), label)) transcribe.setText(label);
         if (!TextUtils.equals(transcribe.getContentDescription(), label)) transcribe.setContentDescription(label);
+    }
+
+    private void refreshPhrasePreview() {
+        List<PhoneAnalysisService.Phrase> rows = modelRequestStopping ? Collections.emptyList()
+                : PhoneAnalysisService.previewFor(selected);
+        if (rows == previewRows) return;
+        previewRows = rows;
+        StringBuilder value = new StringBuilder();
+        if (!rows.isEmpty()) {
+            value.append("Последние готовые фразы");
+            for (PhoneAnalysisService.Phrase row : rows) {
+                value.append('\n').append(LectureReaderActivity.clock(row.start)).append("  ").append(row.text);
+            }
+        }
+        phrasePreview.setText(value);
+        phrasePreview.setVisibility(rows.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     private void setTranscriptRows(List<TranscriptEdits.Line> rows) {
