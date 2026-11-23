@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
  private static final String MICROPHONE_PERMISSION=android.Manifest.permission.RECORD_AUDIO;
  private static final String MICROPHONE_ASKED="microphone_permission_asked";
  private boolean showingMicrophoneHelp;
- private Button recordAction;
+ private Button recordAction, recordImport;
  private boolean stoppingRecording;
  private long startPendingUntil, captureTapUntil;
  private Button recentRecording;
@@ -223,6 +223,12 @@ public class MainActivity extends Activity {
   recentRecording=button("Последняя запись",this::openSavedRecording);
   recentRecording.setVisibility(View.GONE);
   hero.addView(recentRecording);
+  recordImport=button("Импорт аудио",()->{
+   if(!CaptureService.recording&&startPendingUntil==0&&!AudioImport.busy)chooseAudio();
+  });
+  LinearLayout.LayoutParams importSize=new LinearLayout.LayoutParams(-1,-2);
+  importSize.topMargin=dp(8);
+  hero.addView(recordImport,importSize);
 
   LinearLayout microphone=card(record);
   microphone.addView(heading("Источник звука",16));
@@ -875,6 +881,7 @@ public class MainActivity extends Activity {
   if(stoppingRecording){
    if(recordAction.isEnabled())showStoppingRecording();
   }else recordAction.setEnabled(active||startPendingUntil==0&&firmwareQuery==null);
+  recordImport.setEnabled(!active&&startPendingUntil==0&&!AudioImport.busy);
   transport.setEnabled(!active&&startPendingUntil==0);
   meter.setRecording(active);
   GitHubUpdates.whenOpen(this);
