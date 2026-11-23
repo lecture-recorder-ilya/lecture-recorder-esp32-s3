@@ -77,6 +77,7 @@ def ensure_study_service():
 
 class ApplicationServer(ThreadingHTTPServer):
     daemon_threads = False
+    request_queue_size = 64
 
     def __init__(self, address, service_url):
         super().__init__(address, Handler)
