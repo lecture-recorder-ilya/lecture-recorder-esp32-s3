@@ -67,7 +67,7 @@ if(typeof document!=='undefined')(() => {
  function filterRecords(){
   const entry=(schedule.entries||[]).find(e=>calendarFolder(e)===selected);
   const names=selected==='all'?(showOriginals?status?.files||[]:calendarTopFiles(status||{})):selected==='other'?othersOn(day,showOriginals):entry?calendarFiles(status||{},entry,showOriginals):[];
-  const finished=names, allowedFolders=new Set(finished.map(name=>status.lessons?.[name]?.folder));
+  const finished=names, allowedFolders=new Set(finished.map(name=>status.lessons?.[name]?.folder||'Без даты'));
   for(const [key,value] of lessonGroups){value.li.hidden=!allowedFolders.has(key);if(selected!=='all'&&!value.li.hidden)value.li.firstElementChild.open=true}
   for(const [name,card] of cards)card.li.hidden=!finished.includes(name);
   const autoKey=selected+'|'+finished.join(',');if(autoOpenedSelection!==autoKey){autoOpenedSelection=autoKey;if(selected!=='all'&&finished.length===1)cards.get(finished[0]).details.open=true}
@@ -87,7 +87,13 @@ if(typeof document!=='undefined')(() => {
   if(!day)chooseDay(today());else render();
  };
  window.revealCalendarFile=name=>{
-  const meta=status?.lessons?.[name];if(!meta)return;if(!calendarTopFiles(status).includes(name))showOriginals=true;day=meta.date;selected=meta.folder;const matching=(schedule?.entries||[]).some(e=>calendarFolder(e)===selected);if(!matching)selected='other';render();
+  if(!status)return;
+  const meta=status.lessons?.[name];
+  if(!calendarTopFiles(status).includes(name))showOriginals=true;
+  if(!meta?.date){selected='all';render();return}
+  day=meta.date;selected=meta.folder;
+  if(!(schedule?.entries||[]).some(e=>calendarFolder(e)===selected))selected='other';
+  render();
  };
  let requestNumber=0;
  window.refreshScheduleData=async()=>{

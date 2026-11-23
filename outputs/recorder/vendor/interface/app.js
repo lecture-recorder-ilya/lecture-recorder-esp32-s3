@@ -106,7 +106,7 @@
  schedule.classList.remove('card');scheduleDetails.append(schedule);utilities.append(scheduleDetails);views.record.append(utilities);
  footnote.textContent='Можно закрыть приложение — запись продолжится. Перед отключением микрофона нажми «Завершить запись».';
  views.record.append(footnote);
- heading(views.library,'Конспекты занятий','Выбери пару: главные темы, выводы и то, что важно запомнить.');
+ heading(views.library,'Библиотека записей');
  studyPanel.classList.add('search-card');studyPanel.querySelector('h2').textContent='Найти тему';
  searchInput.placeholder='Например: как найти объём по трём векторам';searchInput.setAttribute('aria-label','Поиск по содержанию лекций');searchButton.textContent='Найти';
  const searchRow=create('div','search-row');searchRow.append(searchInput,searchButton);studyPanel.querySelector('h2').after(searchRow);

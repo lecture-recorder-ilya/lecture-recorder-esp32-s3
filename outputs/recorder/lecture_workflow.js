@@ -12,12 +12,15 @@
   audio.play().then(()=>{if(card.readerNotice)card.readerNotice.textContent=''}).catch(()=>{if(card.readerNotice)card.readerNotice.textContent='Не удалось включить звук. Нажми воспроизведение в плеере или проверь аудиофайл.'});
  }
  function rememberPosition(card){
-  const time=card.audio.currentTime;
+  const time=card.audio.ended?0:card.audio.currentTime;
   if(!card.name||!card.audio.readyState||card.pendingSeek!=null||!Number.isFinite(time))return;
   const seconds=Math.round(time*10)/10;
   if(seconds===card.lastPlaybackPosition)return;
   card.lastPlaybackPosition=seconds;
-  try{localStorage.setItem('lecture-playback:'+card.name,String(seconds));}catch{}
+  try{
+   if(seconds>0)localStorage.setItem('lecture-playback:'+card.name,String(seconds));
+   else localStorage.removeItem('lecture-playback:'+card.name);
+  }catch{}
  }
  function pauseLibrary(){
   for(const card of cards.values())if(card.workflowAudioBound){
@@ -29,18 +32,43 @@
  function bindAudio(card){
   if(card.workflowAudioBound)return;card.workflowAudioBound=true;
   const audio=card.audio;
+  const rates=[.5,.75,1,1.25,1.5,1.75,2];
+  const speed=node('select',undefined,'record-playback-rate');
+  speed.setAttribute('aria-label','Скорость воспроизведения');
+  for(const rate of rates){
+   const option=node('option',rate.toLocaleString('ru')+'×');option.value=String(rate);speed.append(option);
+  }
+  const label=node('label','Скорость','record-rate');label.append(speed);
+  card.rateLabel=label;card.rateSelect=speed;
+  if(card.playerDock)card.playerDock.append(label);
   try{
    const seconds=Number(localStorage.getItem('lecture-playback:'+card.name));
    if(Number.isFinite(seconds)&&seconds>0){card.pendingSeek=seconds;card.lastPlaybackPosition=seconds;}
+   const rate=Number(localStorage.getItem('lecture-rate:'+card.name));
+   if(rates.includes(rate))audio.defaultPlaybackRate=audio.playbackRate=rate;
   }catch{}
+  speed.value=String(audio.playbackRate||1);
+  speed.onchange=()=>{audio.defaultPlaybackRate=audio.playbackRate=Number(speed.value)};
+  audio.addEventListener('ratechange',()=>{
+   const rate=audio.playbackRate;
+   if(!rates.includes(rate))return;
+   speed.value=String(rate);
+   if(audio.defaultPlaybackRate!==rate)audio.defaultPlaybackRate=rate;
+   try{localStorage.setItem('lecture-rate:'+card.name,String(rate))}catch{}
+  });
   const restore=()=>{
    if(card.pendingSeek==null)return;
    const seconds=card.pendingSeek;
    card.pendingSeek=null;
-   audio.currentTime=Number.isFinite(audio.duration)?Math.min(seconds,audio.duration):seconds;
+   const expired=seconds===card.lastPlaybackPosition&&Number.isFinite(audio.duration)&&seconds>=audio.duration;
+   audio.currentTime=expired?0:Number.isFinite(audio.duration)?Math.min(seconds,audio.duration):seconds;
+   if(expired)rememberPosition(card);
   };
   audio.addEventListener('loadedmetadata',restore);
   for(const event of ['pause','seeked','ended'])audio.addEventListener(event,()=>rememberPosition(card));
+  audio.addEventListener('timeupdate',()=>{
+   if(!audio.paused&&Math.abs(audio.currentTime-(card.lastPlaybackPosition||0))>=4)rememberPosition(card);
+  });
   audio.addEventListener('play',()=>{for(const other of document.querySelectorAll('audio'))if(other!==audio)other.pause()});
   if(audio.readyState)restore();
   if(audio.preload==='none')audio.preload='metadata';
@@ -115,15 +143,15 @@
   seekRange.oninput=()=>{if(!seekRange.disabled)card.audio.currentTime=Number(seekRange.value)};
   for(const event of ['play','pause','ended','loadedmetadata','durationchange','timeupdate','seeked'])card.audio.addEventListener(event,updatePlayback,{signal});
   updatePlayback();
-  playback.append(steps,seekRange,timecode);
+  playback.append(steps,seekRange,timecode,card.rateLabel);
   top.append(tabs,badge);root.append(top,playback,notice,panel);parent.append(root);
   card.readerRoot=root;card.workflowBadge=badge;
   const caption=node('p','Нажми на фразу, чтобы услышать её в записи.','reader-caption');
   const toolbar=node('div',undefined,'reader-toolbar');
   const search=node('input');search.type='search';search.placeholder='Найти в расшифровке';search.setAttribute('aria-label','Поиск в тексте этой пары');search.value=state.query;
   const follow=node('input');follow.type='checkbox';follow.checked=state.follow;const followLabel=node('label','Следовать за аудио');followLabel.prepend(follow);follow.onchange=()=>{state.follow=follow.checked};
-  const speed=node('select');speed.setAttribute('aria-label','Скорость воспроизведения');for(const value of [.75,1,1.25,1.5,2]){const option=node('option',value+'×');option.value=value;speed.append(option)}speed.value=String(card.audio.playbackRate||1);speed.onchange=()=>card.audio.playbackRate=Number(speed.value);
-  toolbar.append(search,followLabel,speed);
+  const speed=card.rateSelect;
+  toolbar.append(search,followLabel);
   const timeline=node('div',undefined,'reader-timeline full-lecture');timeline.tabIndex=0;timeline.setAttribute('aria-label','Текст с таймкодами');card.readerTimeline=timeline;
   const empty=node('p','','reader-empty');
   const footer=node('div',undefined,'reader-footer');
@@ -370,38 +398,7 @@
    choose.focus({preventScroll:true});
    importPanel.scrollIntoView({block:'start',behavior:motion()});
   };
-  const recent=node('section',undefined,'card library-recent');
-  recent.hidden=true;
-  const recentList=node('ul');
-  recent.append(node('h3','Последние записи'),recentList);
-  importPanel.before(recent);
-  let recentStamp;
-  refreshLibrary=status=>{
-   const names=(status.files||[]).filter(name=>name!==status.file||!status.recording&&!status.busy).slice(0,3);
-   const entries=names.map(name=>[name,status.lessons?.[name]?.title||status.lessons?.[name]?.subject||status.lessons?.[name]?.label||name]);
-   const stamp=JSON.stringify(entries);
-   if(stamp===recentStamp)return;
-   recentStamp=stamp;
-   recent.hidden=false;
-   recentList.replaceChildren(...entries.map(([name,title])=>{
-    const item=node('li');
-    const label=node('span',title);
-    const open=node('button','Открыть','secondary');
-    open.type='button';
-    open.setAttribute('aria-label','Открыть запись · '+title);
-    open.onclick=()=>openRecording(name);
-    item.append(label,open);
-    return item;
-   }));
-   if(!entries.length){
-    const empty=node('li');
-    const importAudio=node('button','Импортировать аудио','secondary');
-    importAudio.type='button';
-    importAudio.onclick=openImport;
-    empty.append(node('span','Записей пока нет. Запиши пару или импортируй аудиофайл.'),importAudio);
-    recentList.append(empty);
-   }
-  };
+  refreshLibrary=window.mountRecordingLibrary(importPanel,openRecording,openImport);
   const shortcuts=document.querySelector('#view-record .record-shortcuts');
   if(shortcuts){
    const shortcut=node('button','Импорт аудио','secondary');
