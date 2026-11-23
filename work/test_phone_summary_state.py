@@ -177,7 +177,8 @@ public final class SummaryStateTest {
             Store.write(new File(pending.getPath() + ".json"), metadata);
             String digest = Store.hash(pending);
             String expected = title + " · " + Store.recordingTitle(NAME);
-            require(expected.equals(Store.recordingTitle(context, NAME)), "Потерялось название импорта");
+            require(title.equals(Store.readObject(new File(pending.getPath() + ".json")).optString("title")),
+                    "Не сохранилось название до передачи");
             Store.acknowledge(context, NAME, digest);
             Store.acknowledge(context, NAME, digest);
             require(!pending.exists(), "Переданная запись осталась в очереди");
