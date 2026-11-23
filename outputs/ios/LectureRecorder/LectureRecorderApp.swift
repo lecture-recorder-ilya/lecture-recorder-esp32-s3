@@ -1,8 +1,8 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 @main struct LectureRecorderApp: App {
     @StateObject private var model = PhoneModel()
+    @Environment(\.scenePhase) private var phase
     var body: some Scene {
         WindowGroup {
             TabView {
@@ -10,25 +10,26 @@ import UniformTypeIdentifiers
                 LibraryScreen(model: model).tabItem { Label("Библиотека", systemImage: "books.vertical") }
                 SettingsScreen(model: model).tabItem { Label("Настройки", systemImage: "gearshape") }
             }
+            .onChange(of: phase) { value in if value != .active { model.playback.checkpoint() } }
             .tint(Studio.accent)
             .preferredColorScheme(.dark)
         }
     }
 }
 
-private enum Studio {
-    static let background = Color(red: 14 / 255, green: 18 / 255, blue: 23 / 255)
-    static let panel = Color(red: 23 / 255, green: 30 / 255, blue: 39 / 255)
-    static let hero = Color(red: 32 / 255, green: 46 / 255, blue: 64 / 255)
-    static let line = Color(red: 51 / 255, green: 66 / 255, blue: 82 / 255)
-    static let ink = Color(red: 16 / 255, green: 33 / 255, blue: 53 / 255)
+enum Studio {
+    static let background = Color(red: 18 / 255, green: 22 / 255, blue: 24 / 255)
+    static let panel = Color(red: 29 / 255, green: 35 / 255, blue: 37 / 255)
+    static let hero = Color(red: 32 / 255, green: 59 / 255, blue: 57 / 255)
+    static let line = Color(red: 59 / 255, green: 73 / 255, blue: 73 / 255)
+    static let ink = Color(red: 13 / 255, green: 37 / 255, blue: 34 / 255)
     static let muted = Color(red: 165 / 255, green: 180 / 255, blue: 195 / 255)
-    static let accent = Color(red: 168 / 255, green: 215 / 255, blue: 250 / 255)
+    static let accent = Color(red: 124 / 255, green: 218 / 255, blue: 196 / 255)
     static let recording = Color(red: 1, green: 192 / 255, blue: 177 / 255)
     static let warning = Color(red: 243 / 255, green: 194 / 255, blue: 135 / 255)
 }
 
-private struct ScreenEntry: ViewModifier {
+struct ScreenEntry: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var entered = false
 
@@ -63,7 +64,7 @@ private struct RecordButtonStyle: ButtonStyle {
     }
 }
 
-private extension View {
+extension View {
     func studioScreen() -> some View {
         self
             .background(Studio.background.ignoresSafeArea())
@@ -73,7 +74,8 @@ private extension View {
 }
 
 func clock(_ value: Double) -> String {
-    let seconds = max(0, Int(value))
+    guard value.isFinite, value < Double(Int.max) else { return "—" }
+    let seconds = Int(max(0, value))
     return String(format: "%02d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
 }
 
@@ -135,139 +137,6 @@ struct RecordScreen: View {
             .navigationTitle("Новая запись")
             .studioScreen()
         }
-    }
-}
-
-struct LibraryScreen: View {
-    @ObservedObject var model: PhoneModel
-    @State private var importing = false
-    var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Button { importing = true } label: { Label("Загрузить аудио или видео", systemImage: "square.and.arrow.down") }.disabled(model.busy || model.recording)
-                    Text(model.message).font(.footnote).foregroundStyle(.secondary)
-                        .listRowBackground(Studio.panel)
-                }
-                if !model.drafts.isEmpty {
-                    Section("Незавершённые записи") {
-                        ForEach(model.drafts, id: \.path) { file in
-                            Button("Восстановить запись") { model.importAudio(file, removeDraft: true) }
-                                .disabled(model.busy || model.recording)
-                                .listRowBackground(Studio.panel)
-                        }
-                    }
-                }
-                Section("Расшифровки и конспекты") {
-                    if model.notes.isEmpty {
-                        Text("Открой аудиозапись для расшифровки на iPhone или перенеси её на Mac").foregroundStyle(Studio.muted)
-                            .listRowBackground(Studio.panel)
-                    }
-                    ForEach(model.notes) { note in
-                        NavigationLink(note.report.topic ?? note.report.subject ?? "Занятие") {
-                            ReaderScreen(model: model, note: note)
-                        }.listRowBackground(Studio.panel)
-                    }
-                }
-                Section("Аудиозаписи") {
-                    if !OnDeviceTranscript.supported && !model.recordings.isEmpty {
-                        Text("Локальное распознавание русского сейчас недоступно на этом устройстве.")
-                            .font(.footnote).foregroundStyle(Studio.muted).listRowBackground(Studio.panel)
-                    }
-                    if model.recordings.isEmpty {
-                        Text("Пока нет записей").foregroundStyle(Studio.muted).listRowBackground(Studio.panel)
-                    }
-                    ForEach(model.recordings, id: \.path) { file in
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text(file.lastPathComponent.replacingOccurrences(of: "lecture-", with: "").replacingOccurrences(of: ".wav", with: "")).font(.subheadline)
-                            if let note = model.notes.first(where: { $0.file == file.lastPathComponent }) {
-                                NavigationLink("Открыть расшифровку") { ReaderScreen(model: model, note: note) }
-                            } else if model.transcribingFile == file.lastPathComponent {
-                                ProgressView(value: Double(model.transcriptionProgress), total: 100) {
-                                    Text("Распознаю на iPhone · " + String(model.transcriptionProgress) + "%")
-                                }
-                                Button("Отменить расшифровку") { model.cancelTranscription() }.buttonStyle(.bordered)
-                            } else if OnDeviceTranscript.supported {
-                                Button("Расшифровать на iPhone") { model.transcribe(file) }
-                                    .buttonStyle(.bordered).disabled(model.recording || model.busy || model.transcribingFile != nil)
-                            }
-                            HStack { Button { model.play(file) } label: { Label("Слушать", systemImage: "play.fill") }.buttonStyle(.bordered); ShareLink(item: file) { Image(systemName: "square.and.arrow.up").accessibilityLabel("Поделиться записью") }.buttonStyle(.bordered) }
-                        }.padding(.vertical, 6).listRowBackground(Studio.panel)
-                    }
-                    Button("Остановить воспроизведение") { model.stopPlayback() }.listRowBackground(Studio.panel)
-                }
-            }
-            .scrollContentBackground(.hidden)
-            .modifier(ScreenEntry())
-            .navigationTitle("Библиотека")
-            .studioScreen()
-            .fileImporter(isPresented: $importing, allowedContentTypes: [.audio, .movie], allowsMultipleSelection: false) { result in
-                switch result { case .success(let files): if let file = files.first { model.importAudio(file) }; case .failure(let error): model.message = error.localizedDescription }
-            }
-        }
-    }
-}
-
-struct ReaderScreen: View {
-    @ObservedObject var model: PhoneModel
-    let note: LectureNote
-    @State private var selected = 0
-    var current: LectureNote { model.notes.first { $0.id == note.id } ?? note }
-    var body: some View {
-        List {
-            Picker("Материалы", selection: $selected) { Text("Текст").tag(0); Text("Конспект").tag(1) }.pickerStyle(.segmented)
-            if selected == 0 {
-                if model.files.localAudio(note.file) == nil { Text("Аудиокопии на этом телефоне нет. Полная запись доступна на Mac.").font(.footnote).foregroundStyle(.secondary) }
-                ForEach(Array((current.report.segments ?? []).enumerated()), id: \.offset) { _, segment in
-                    Button {
-                        if let file = model.files.localAudio(note.file) { model.play(file, at: segment.start ?? 0) }
-                    } label: {
-                        VStack(alignment: .leading, spacing: 8) {
-                            if let start = segment.start { Text(clock(start)).font(.caption.monospacedDigit()).foregroundStyle(.secondary) }
-                            Text(segment.text).foregroundStyle(.primary).multilineTextAlignment(.leading)
-                            if segment.needs_review == true { Label("Проверь по записи", systemImage: "ear.badge.exclamationmark").font(.caption).foregroundStyle(Studio.warning) }
-                        }.padding(.vertical, 6)
-                    }.buttonStyle(.plain).disabled(model.files.localAudio(note.file) == nil || model.recording)
-                        .listRowBackground(Studio.panel)
-                }
-            } else {
-                if let overview = current.report.overview, !overview.isEmpty { Text(overview).listRowBackground(Studio.panel) }
-                ForEach(Array((current.report.summary ?? []).enumerated()), id: \.offset) { index, point in
-                    let citations = current.report.summary_evidence ?? []
-                    quotation(point, source: citations.indices.contains(index) ? citations[index] : nil)
-                }
-                if let tasks = current.report.homework, !tasks.isEmpty {
-                    Section("Домашнее задание") {
-                        ForEach(Array(tasks.enumerated()), id: \.offset) { _, item in
-                            if let text = item.task ?? item.quote { quotation(text, source: item) }
-                        }
-                    }
-                }
-                if current.report.summary_method == "ios_extractive", current.report.summary?.isEmpty != false,
-                   current.report.homework?.isEmpty != false {
-                    Text("В уверенно распознанных фразах не нашлось явных определений или заданий.")
-                        .font(.footnote).foregroundStyle(Studio.muted).listRowBackground(Studio.panel)
-                }
-            }
-            Button("Остановить звук") { model.stopPlayback() }
-        }
-        .scrollContentBackground(.hidden)
-        .modifier(ScreenEntry())
-        .navigationTitle(current.report.topic ?? current.report.subject ?? "Занятие")
-        .navigationBarTitleDisplayMode(.inline)
-        .studioScreen()
-    }
-
-    @ViewBuilder private func quotation(_ text: String, source: LectureNote.Citation?) -> some View {
-        if let start = current.report.sourceTime(source), let file = model.files.localAudio(note.file) {
-            Button { model.play(file, at: start) } label: {
-                VStack(alignment: .leading, spacing: 5) {
-                    Label(clock(start), systemImage: "play.circle").font(.caption.monospacedDigit())
-                    Text(text).foregroundStyle(.primary).multilineTextAlignment(.leading)
-                }
-            }
-            .buttonStyle(.plain).disabled(model.recording || model.busy).listRowBackground(Studio.panel)
-        } else { Text(text).listRowBackground(Studio.panel) }
     }
 }
 

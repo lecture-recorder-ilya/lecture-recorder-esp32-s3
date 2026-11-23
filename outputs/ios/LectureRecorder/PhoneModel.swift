@@ -4,64 +4,12 @@ import Combine
 import CoreMedia
 import CoreBluetooth
 
-struct LectureNote: Decodable, Identifiable {
-    let file: String
-    let report: Report
-    var id: String { file }
-    struct Report: Decodable {
-        var subject: String?
-        var topic: String?
-        var overview: String?
-        var summary: [String]?
-        var segments: [Segment]?
-        var summary_evidence: [Citation]?
-        var homework: [Citation]?
-        var summary_method: String?
-
-        enum CodingKeys: String, CodingKey {
-            case subject, topic, overview, summary, segments, summary_evidence, homework, summary_method
-        }
-
-        init(from decoder: Decoder) throws {
-            let fields = try decoder.container(keyedBy: CodingKeys.self)
-            subject = try fields.decodeIfPresent(String.self, forKey: .subject)
-            topic = try fields.decodeIfPresent(String.self, forKey: .topic)
-            overview = try fields.decodeIfPresent(String.self, forKey: .overview)
-            summary = try fields.decodeIfPresent([String].self, forKey: .summary)
-            segments = try fields.decodeIfPresent([Segment].self, forKey: .segments)
-            summary_evidence = try? fields.decode([Citation].self, forKey: .summary_evidence)
-            homework = try? fields.decode([Citation].self, forKey: .homework)
-            summary_method = try? fields.decode(String.self, forKey: .summary_method)
-        }
-
-        func sourceTime(_ citation: Citation?) -> Double? {
-            guard let citation, citation.source_status == "confirmed", let quote = citation.quote,
-                  let id = citation.segment_id, let segments, segments.indices.contains(id) else { return nil }
-            let source = segments[id]
-            guard source.start == citation.start, source.end == citation.end, source.text == quote,
-                  source.needs_review != true else { return nil }
-            return citation.start
-        }
-    }
-    struct Citation: Decodable {
-        var quote: String?
-        var task: String?
-        var source_status: String?
-        var segment_id: Int?
-        var start: Double?
-        var end: Double?
-    }
-    struct Segment: Decodable {
-        var start: Double?
-        var end: Double?
-        var text: String
-        var needs_review: Bool?
-    }
-}
-
 @MainActor final class PhoneModel: NSObject, ObservableObject, AVAudioRecorderDelegate {
     @Published var recordings: [URL] = []
     @Published var notes: [LectureNote] = []
+    @Published private(set) var libraryItems: [LibraryItem] = []
+    let listening = ListeningLibrary()
+    private(set) lazy var playback = LecturePlayback(library: listening)
     @Published var drafts: [URL] = []
     @Published var recording = false
     @Published var busy = false
@@ -89,11 +37,11 @@ struct LectureNote: Decodable, Identifiable {
     let files: PhoneFiles
     private var recorder: AVAudioRecorder?
     private var draft: URL?
-    private var player: AVAudioPlayer?
     private var sync: PhoneSyncServer?
     private var timer: Timer?
     private var pairingTask: Task<Void, Never>?
-    private var notesRevision = ""
+    private var noteVersions: [URL: String] = [:]
+    private var documents: [URL: LectureNote] = [:]
 
     override init() {
         let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Lectures", isDirectory: true)
@@ -105,17 +53,50 @@ struct LectureNote: Decodable, Identifiable {
             guard let self = self else { return }
             if let tape = self.tape { self.seconds = Double(tape.frames) / 16000 }
             else if let recorder = self.recorder { self.seconds = recorder.currentTime; self.updateInput() }
+            self.playback.tick()
             self.refresh()
         } }
         NotificationCenter.default.addObserver(self, selector: #selector(routeChanged), name: AVAudioSession.routeChangeNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(interrupted), name: AVAudioSession.interruptionNotification, object: nil)
     }
     func refresh() {
-        let current = files.recordings(); if current != recordings { recordings = current }
-        let noteFiles = (try? FileManager.default.contentsOfDirectory(at: files.folder("notes"), includingPropertiesForKeys: nil)) ?? []
-        let revision = noteFiles.sorted { $0.path < $1.path }.map { url -> String in let value = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]); return url.lastPathComponent + String(value?.contentModificationDate?.timeIntervalSince1970 ?? 0) + String(value?.fileSize ?? 0) }.joined(separator: "|")
-        if revision != notesRevision { notesRevision = revision; notes = noteFiles.sorted { $0.lastPathComponent > $1.lastPathComponent }.compactMap { url in (try? Data(contentsOf: url)).flatMap { try? JSONDecoder().decode(LectureNote.self, from: $0) } } }
-        drafts = ((try? FileManager.default.contentsOfDirectory(at: files.folder("drafts"), includingPropertiesForKeys: nil)) ?? []).filter { $0.pathExtension == "caf" && $0.lastPathComponent != draft?.lastPathComponent }
+        let current = files.recordings()
+        let audioChanged = current != recordings
+        if audioChanged { recordings = current }
+        var changedNotes = Set<String>()
+        let keys: Set<URLResourceKey> = [.contentModificationDateKey, .fileSizeKey]
+        if let noteFiles = try? FileManager.default.contentsOfDirectory(at: files.folder("notes"), includingPropertiesForKeys: Array(keys)) {
+            let present = Set(noteFiles)
+            for path in Set(noteVersions.keys).subtracting(present) {
+                if let removed = documents.removeValue(forKey: path) { changedNotes.insert(removed.file) }
+                noteVersions.removeValue(forKey: path)
+            }
+            for path in noteFiles where path.pathExtension == "json" {
+                guard let values = try? path.resourceValues(forKeys: keys) else { continue }
+                let stamp = String(values.contentModificationDate?.timeIntervalSince1970 ?? 0) + "|" + String(values.fileSize ?? 0)
+                guard noteVersions[path] != stamp, let data = try? Data(contentsOf: path) else { continue }
+                noteVersions[path] = stamp
+                if let previous = documents[path] { changedNotes.insert(previous.file) }
+                documents[path] = try? JSONDecoder().decode(LectureNote.self, from: data)
+                if let updated = documents[path] { changedNotes.insert(updated.file) }
+            }
+        }
+        if !changedNotes.isEmpty { notes = documents.values.sorted { $0.file > $1.file } }
+        if audioChanged || !changedNotes.isEmpty {
+            libraryItems = LibraryItem.list(current, notes: notes, previous: libraryItems, changedNotes: changedNotes) { [files] name in
+                for directory in ["library", "recordings"] {
+                    let meta = files.folder(directory).appendingPathComponent(name + ".json")
+                    if let data = try? Data(contentsOf: meta),
+                       let values = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       values["imported"] as? Bool != false, let original = values["original_name"] as? String {
+                        return original
+                    }
+                }
+                return nil
+            }
+        }
+        let nextDrafts = ((try? FileManager.default.contentsOfDirectory(at: files.folder("drafts"), includingPropertiesForKeys: nil)) ?? []).filter { $0.pathExtension == "caf" && $0.lastPathComponent != draft?.lastPathComponent }
+        if drafts != nextDrafts { drafts = nextDrafts }
     }
     func findBoard() {
         guard !findingBoard, !recording, !busy else { return }
@@ -332,8 +313,10 @@ struct LectureNote: Decodable, Identifiable {
     }
 
     @objc private func interrupted(_ notification: Notification) {
-        if recorder != nil, let type = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
-           type == AVAudioSession.InterruptionType.began.rawValue { stopRecording() }
+        guard let type = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+              type == AVAudioSession.InterruptionType.began.rawValue else { return }
+        if recorder != nil { stopRecording() }
+        playback.pause()
     }
     nonisolated func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         Task { @MainActor in if self.recorder === recorder { self.stopRecording() } }
@@ -404,14 +387,13 @@ struct LectureNote: Decodable, Identifiable {
             busy = false; refresh()
         }
     }
-    func play(_ url: URL, at seconds: Double = 0) {
+    func play(_ url: URL, at seconds: Double? = nil) {
         guard !recording, !busy else { return }
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback); try AVAudioSession.sharedInstance().setActive(true)
-            player = try AVAudioPlayer(contentsOf: url); player?.currentTime = max(0, seconds); player?.play()
-        } catch { message = "Не удалось воспроизвести запись" }
+        let source = files.localAudio(url.lastPathComponent) ?? url
+        do { try playback.play(source, at: seconds) }
+        catch { message = "Не удалось воспроизвести запись" }
     }
-    func stopPlayback() { player?.stop(); player = nil }
+    func stopPlayback() { playback.stop() }
     func startSync() {
         guard let mac = SavedMac.load() else { return }; sync?.stop(); sync = PhoneSyncServer(files: files, key: mac.token)
         do { try sync?.start(); macName = mac.name } catch { message = "Не удалось включить перенос. Закрой и открой приложение." }
