@@ -55,7 +55,7 @@ final class PhoneGigaAm {
                 int progress = -1;
                 for (long start = 0; start < total; ) {
                     job.check();
-                    long end = Math.min(total, start + CORE);
+                    long end = coreEnd(start, total);
                     int percent = (int) (100 * start / total);
                     if (progress != percent) {
                         progress = percent;
@@ -105,6 +105,11 @@ final class PhoneGigaAm {
         }
         timeline.finish();
         return phrases.finish();
+    }
+
+    static long coreEnd(long start, long total) {
+        long end = Math.min(total, start + CORE);
+        return total - end <= EDGE ? total : end;
     }
 
     private static JSONArray recognize(OrtEnvironment environment, OrtSession frontend, OrtSession acoustic,

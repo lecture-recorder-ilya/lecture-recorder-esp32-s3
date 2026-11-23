@@ -24,6 +24,20 @@ import org.json.*;
 public class PassTests {
  static JSONObject w(String s,double c)throws Exception{return new JSONObject().put("word",s).put("start",0).put("end",.2).put("conf",c);}
  public static void main(String[] args)throws Exception {
+  for(long total:new long[]{1,399,16000,287999,288000,288001,297760,320000,320001,576000,960000}) {
+   long start=0;
+   while(start<total) {
+    long oldEnd=Math.min(total,start+288000),end=PhoneGigaAm.coreEnd(start,total);
+    assert end>start && end<=total;
+    assert Math.min(total,oldEnd+32000)==Math.min(total,end+32000);
+    if(total-oldEnd<=32000)assert end==total;
+    else assert end==oldEnd;
+    start=end;
+   }
+   assert start==total;
+  }
+  assert PhoneGigaAm.coreEnd(0,297760)==297760;
+  assert PhoneGigaAm.coreEnd(0,320001)==288000;
   float[] lookahead={0,0,1};
   assert PhoneSpeechWindow.constant(lookahead,2);
   assert !PhoneSpeechWindow.constant(lookahead,3);
