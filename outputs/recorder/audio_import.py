@@ -1,10 +1,12 @@
 import hashlib
+from array import array
 import json
 import os
 import queue
 import re
 import shutil
 import subprocess
+import sys
 import threading
 import time
 import uuid
@@ -31,6 +33,35 @@ def atomic(path, value):
         temporary.unlink(missing_ok=True)
 
 
+def _restore_cancelled_stereo(audio, target):
+    if (audio.getnchannels(), audio.getsampwidth(), audio.getframerate(), audio.getcomptype()) != (2, 2, 16000, 'NONE'):
+        return False
+    expected = audio.getnframes() * 4
+    if not 0 < expected <= MAX_SECONDS * 64000:
+        raise ValueError('Выбери запись длительностью от одного отсчёта до 8 часов.')
+    copied, signal = 0, False
+    while block := audio.readframes(16000 * 30):
+        copied += len(block)
+        if len(block) % 4:
+            raise ValueError('WAV обрывается посреди стереоотсчёта.')
+        values = array('h', block)
+        if sys.byteorder != 'little':
+            values.byteswap()
+        if any(left + right for left, right in zip(values[::2], values[1::2])):
+            return False
+        signal = signal or any(values)
+    if copied != expected:
+        raise ValueError('WAV обрывается раньше указанной длительности.')
+    if not signal:
+        return False
+    audio.rewind()
+    with wave.open(str(target), 'wb') as output:
+        output.setparams((1, 2, 16000, 0, 'NONE', 'not compressed'))
+        while block := audio.readframes(16000 * 30):
+            output.writeframesraw(array('h', block)[::2].tobytes())
+    return True
+
+
 def normalize(source, target, project, run=subprocess.run):
     try:
         with wave.open(str(source)) as audio:
@@ -47,6 +78,8 @@ def normalize(source, target, project, run=subprocess.run):
                         copied += len(block)
                 if copied != expected:
                     raise ValueError('WAV обрывается раньше указанной длительности.')
+                return validate(target)
+            if _restore_cancelled_stereo(audio, target):
                 return validate(target)
     except (wave.Error, EOFError):
         pass
