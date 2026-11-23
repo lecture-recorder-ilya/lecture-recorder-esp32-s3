@@ -1,0 +1,17 @@
+.clip-fragment { border-block-end: 1px solid var(--line, #374646); margin: .45rem 0 .75rem; }
+.clip-fragment > summary { cursor: pointer; font-weight: 650; padding: .65rem .1rem; }
+.clip-fragment-body { padding: .2rem .1rem .8rem; }
+.clip-fragment-fields, .clip-fragment-actions { display: flex; align-items: flex-end; flex-wrap: wrap; gap: .5rem .85rem; }
+.clip-fragment-fields > div { display: flex; flex: 1 1 11rem; gap: .45rem; align-items: flex-end; }
+.clip-fragment-fields label { flex: 1; display: block; font-size: .82rem; font-weight: 600; }
+.clip-fragment-fields input { width: 100%; box-sizing: border-box; display: block; margin: .25rem 0 0; font: inherit; font-variant-numeric: tabular-nums; }
+.clip-fragment-fields button, .clip-fragment-actions button { min-height: 2.25rem; margin: 0; white-space: nowrap; }
+.clip-fragment-actions { margin-top: .7rem; align-items: center; }
+.clip-fragment-actions a { text-underline-offset: .2em; }
+.clip-fragment-actions a[aria-disabled=true] { opacity: .55; }
+.clip-fragment-actions button[aria-pressed=true] { box-shadow: inset 0 0 0 2px currentColor; }
+.clip-fragment-status { margin: .5rem 0 0; font-size: .84rem; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: no-preference) {
+  .clip-fragment[open] .clip-fragment-body { animation: fragment-in .18s ease-out; }
+  @keyframes fragment-in { from { opacity: .45; transform: translateY(-3px); } }
+}
