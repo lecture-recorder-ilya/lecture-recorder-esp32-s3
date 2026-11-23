@@ -15,9 +15,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.5.11</string>
+	<string>0.5.12</string>
 	<key>CFBundleVersion</key>
-	<string>18</string>
+	<string>19</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -25,13 +25,18 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Подключение к диктофону ClipMic для записи по Bluetooth.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Подключение к твоему Mac для переноса записей, расшифровок и конспектов.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Запись лекций микрофоном телефона. Аудио сохраняется на устройстве.</string>
+	<string>Запись с микрофона телефона или подключённой гарнитуры.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Распознавание речи в сохранённых записях на этом устройстве.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
+		<string>bluetooth-central</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>

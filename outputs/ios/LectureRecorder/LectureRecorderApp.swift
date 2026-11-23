@@ -86,7 +86,7 @@ struct RecordScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 16) {
-                        Label(model.recording ? "Идёт запись" : "Микрофон телефона",
+                        Label(model.inputLabel,
                               systemImage: model.recording ? "record.circle.fill" : "mic.fill")
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(model.recording ? Studio.recording : Studio.accent)
@@ -99,12 +99,14 @@ struct RecordScreen: View {
                                 .accessibilityLabel("Длительность записи")
                                 .accessibilityValue(clock(model.seconds))
                         }
-                        Button(model.recording ? "Завершить и сохранить" : "Начать запись") {
-                            if model.recording { model.stopRecording() } else { model.startRecording() }
+                        Button(model.recording ? "Завершить и сохранить" : (model.starting ? "Отменить" : "Начать запись")) {
+                            if model.recording { model.stopRecording() }
+                            else if model.starting { model.cancelStart() }
+                            else { model.startRecording() }
                         }
                         .buttonStyle(RecordButtonStyle(color: model.recording ? Studio.recording : Studio.accent))
-                        .disabled(model.busy)
-                        Text("Запись сохраняется на телефоне.").font(.footnote).foregroundStyle(Studio.muted)
+                        .disabled(model.busy && !model.starting)
+                        Text("Запись сохраняется на телефоне. Wi-Fi и кабель не нужны.").font(.footnote).foregroundStyle(Studio.muted)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(24)
@@ -119,10 +121,10 @@ struct RecordScreen: View {
                     }
                     Text(model.message).font(.callout).accessibilityAddTraits(.updatesFrequently)
                     if model.recording {
-                        Text("Экран можно заблокировать. Звонок или системное прерывание завершит запись и сохранит доступный звук.")
+                        Text("Экран можно заблокировать.")
                             .font(.footnote).foregroundStyle(Studio.muted)
                     }
-                    Text("Очистка, расшифровка с таймкодами и конспект готовятся на Mac после переноса.")
+                    Text("Выбор микрофона автоматический. Свой ClipMic можно подключить в настройках приложения.")
                         .font(.footnote).foregroundStyle(Studio.muted)
                 }
                 .frame(maxWidth: 620)
@@ -158,7 +160,7 @@ struct LibraryScreen: View {
                 }
                 Section("Расшифровки и конспекты") {
                     if model.notes.isEmpty {
-                        Text("Появятся после обработки на Mac").foregroundStyle(Studio.muted)
+                        Text("Открой аудиозапись для расшифровки на iPhone или перенеси её на Mac").foregroundStyle(Studio.muted)
                             .listRowBackground(Studio.panel)
                     }
                     ForEach(model.notes) { note in
@@ -168,12 +170,27 @@ struct LibraryScreen: View {
                     }
                 }
                 Section("Аудиозаписи") {
+                    if !OnDeviceTranscript.supported && !model.recordings.isEmpty {
+                        Text("Локальное распознавание русского сейчас недоступно на этом устройстве.")
+                            .font(.footnote).foregroundStyle(Studio.muted).listRowBackground(Studio.panel)
+                    }
                     if model.recordings.isEmpty {
                         Text("Пока нет записей").foregroundStyle(Studio.muted).listRowBackground(Studio.panel)
                     }
                     ForEach(model.recordings, id: \.path) { file in
                         VStack(alignment: .leading, spacing: 10) {
                             Text(file.lastPathComponent.replacingOccurrences(of: "lecture-", with: "").replacingOccurrences(of: ".wav", with: "")).font(.subheadline)
+                            if let note = model.notes.first(where: { $0.file == file.lastPathComponent }) {
+                                NavigationLink("Открыть расшифровку") { ReaderScreen(model: model, note: note) }
+                            } else if model.transcribingFile == file.lastPathComponent {
+                                ProgressView(value: Double(model.transcriptionProgress), total: 100) {
+                                    Text("Распознаю на iPhone · " + String(model.transcriptionProgress) + "%")
+                                }
+                                Button("Отменить расшифровку") { model.cancelTranscription() }.buttonStyle(.bordered)
+                            } else if OnDeviceTranscript.supported {
+                                Button("Расшифровать на iPhone") { model.transcribe(file) }
+                                    .buttonStyle(.bordered).disabled(model.recording || model.busy || model.transcribingFile != nil)
+                            }
                             HStack { Button { model.play(file) } label: { Label("Слушать", systemImage: "play.fill") }.buttonStyle(.bordered); ShareLink(item: file) { Image(systemName: "square.and.arrow.up").accessibilityLabel("Поделиться записью") }.buttonStyle(.bordered) }
                         }.padding(.vertical, 6).listRowBackground(Studio.panel)
                     }
@@ -215,8 +232,21 @@ struct ReaderScreen: View {
                 }
             } else {
                 if let overview = current.report.overview, !overview.isEmpty { Text(overview).listRowBackground(Studio.panel) }
-                ForEach(Array((current.report.summary ?? []).enumerated()), id: \.offset) { _, point in
-                    Text(point).listRowBackground(Studio.panel)
+                ForEach(Array((current.report.summary ?? []).enumerated()), id: \.offset) { index, point in
+                    let citations = current.report.summary_evidence ?? []
+                    quotation(point, source: citations.indices.contains(index) ? citations[index] : nil)
+                }
+                if let tasks = current.report.homework, !tasks.isEmpty {
+                    Section("Домашнее задание") {
+                        ForEach(Array(tasks.enumerated()), id: \.offset) { _, item in
+                            if let text = item.task ?? item.quote { quotation(text, source: item) }
+                        }
+                    }
+                }
+                if current.report.summary_method == "ios_extractive", current.report.summary?.isEmpty != false,
+                   current.report.homework?.isEmpty != false {
+                    Text("В уверенно распознанных фразах не нашлось явных определений или заданий.")
+                        .font(.footnote).foregroundStyle(Studio.muted).listRowBackground(Studio.panel)
                 }
             }
             Button("Остановить звук") { model.stopPlayback() }
@@ -226,6 +256,18 @@ struct ReaderScreen: View {
         .navigationTitle(current.report.topic ?? current.report.subject ?? "Занятие")
         .navigationBarTitleDisplayMode(.inline)
         .studioScreen()
+    }
+
+    @ViewBuilder private func quotation(_ text: String, source: LectureNote.Citation?) -> some View {
+        if let start = current.report.sourceTime(source), let file = model.files.localAudio(note.file) {
+            Button { model.play(file, at: start) } label: {
+                VStack(alignment: .leading, spacing: 5) {
+                    Label(clock(start), systemImage: "play.circle").font(.caption.monospacedDigit())
+                    Text(text).foregroundStyle(.primary).multilineTextAlignment(.leading)
+                }
+            }
+            .buttonStyle(.plain).disabled(model.recording || model.busy).listRowBackground(Studio.panel)
+        } else { Text(text).listRowBackground(Studio.panel) }
     }
 }
 
@@ -237,6 +279,26 @@ struct SettingsScreen: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("Диктофон ClipMic") {
+                    if let id = model.boardID {
+                        Label("Сохранённый ClipMic · " + String(id.uuidString.suffix(4)), systemImage: "checkmark.circle")
+                        Button("Забыть диктофон", role: .destructive) { model.forgetBoard() }
+                            .disabled(model.recording || model.busy || model.findingBoard)
+                    } else {
+                        Text("Удержи REC на ClipMic P1 или BOOT на плате около секунды, затем выбери его здесь. В следующий раз достаточно нажать «Начать запись».")
+                            .font(.footnote)
+                        if model.findingBoard {
+                            ForEach(model.boards) { board in
+                                Button(board.label) { model.chooseBoard(board.id) }
+                            }
+                            Button("Отменить поиск") { model.cancelBoardSearch() }
+                        } else {
+                            Button("Найти ClipMic по Bluetooth") { model.findBoard() }
+                                .disabled(model.recording || model.busy)
+                        }
+                    }
+                    if !model.boardStatus.isEmpty { Text(model.boardStatus).font(.footnote).foregroundStyle(.secondary) }
+                }
                 Section("Телефон и Mac") {
                     Text(model.macName)
                     Text("Открой на Mac «Настройки → Телефон и Mac → Подключить телефон». Оба устройства должны быть в одной Wi-Fi сети.").font(.footnote)

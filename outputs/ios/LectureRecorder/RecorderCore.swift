@@ -136,12 +136,26 @@ final class WaveWriter {
         guard data.count % 2 == 0, UInt64(count) + UInt64(data.count) <= 8 * 3600 * 32000 else { throw RecorderFailure.message("Поддерживаются записи до 8 часов") }
         try handle.write(contentsOf: data); count += UInt32(data.count)
     }
-    func finish() throws {
+    private static func header(_ count: UInt32) -> Data {
         var header = Data("RIFF".utf8)
         func number(_ value: UInt32, _ bytes: Int) { for i in 0..<bytes { header.append(UInt8((value >> (i * 8)) & 255)) } }
         number(count + 36, 4); header.append(Data("WAVEfmt ".utf8)); number(16, 4); number(1, 2); number(1, 2)
         number(16000, 4); number(32000, 4); number(2, 2); number(16, 2); header.append(Data("data".utf8)); number(count, 4)
-        try handle.seek(toOffset: 0); try handle.write(contentsOf: header); try handle.synchronize(); try handle.close()
+        return header
+    }
+    static func repair(_ url: URL) throws {
+        let file = try FileHandle(forUpdating: url)
+        defer { try? file.close() }
+        let size = try file.seekToEnd()
+        guard size >= 44, size - 44 <= 8 * 3600 * 32000 else { throw RecorderFailure.message("Некорректный размер записи ClipMic") }
+        let count = UInt32(size - 44) & ~1
+        try file.truncate(atOffset: UInt64(count) + 44)
+        try file.seek(toOffset: 0)
+        try file.write(contentsOf: header(count))
+        try file.synchronize()
+    }
+    func finish() throws {
+        try handle.seek(toOffset: 0); try handle.write(contentsOf: Self.header(count)); try handle.synchronize(); try handle.close()
     }
     deinit { try? handle.close() }
 }
