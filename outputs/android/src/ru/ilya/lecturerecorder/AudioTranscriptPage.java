@@ -279,7 +279,7 @@ final class AudioTranscriptPage extends LinearLayout {
     }
 
     private void addTranscribeButton(LinearLayout host, LinearLayout.LayoutParams layout) {
-        transcribe = button("Расшифровать", () -> {
+        transcribe = button("Разобрать запись", () -> {
             if (selected != null && PhoneAnalysisService.busyFor(selected)) {
                 if (!modelRequestStopping) {
                     modelRequestStopping = true;
@@ -320,14 +320,9 @@ final class AudioTranscriptPage extends LinearLayout {
         header.addView(transcriptSpinner, new LinearLayout.LayoutParams(dp(22), dp(22)));
         box.addView(header);
 
-        if (!landscape && !largeText) {
-            LinearLayout.LayoutParams action = new LinearLayout.LayoutParams(-2, dp(48));
-            action.setMarginStart(dp(8));
-            addTranscribeButton(header, action);
-        } else {
-            addSummaryButton(header);
-        }
+        if (landscape || largeText) addSummaryButton(header);
         addTranscriptStatus(box);
+        if (!landscape && !largeText) addTranscribeButton(box, spaced(-1, dp(48), 8));
 
         reviewFilter = new CheckBox(activity);
         reviewFilter.setTextColor(TEXT);
@@ -724,24 +719,26 @@ final class AudioTranscriptPage extends LinearLayout {
             message = "Недостаточно места для моделей. Освободи память и повтори.";
         } else if (message.isEmpty() && transcriptRows.isEmpty()) {
             if (!supported) message = "Расшифровка появится после обработки на Mac.";
-            else if (readyOffline) message = "Модели готовы. Можно расшифровать без сети.";
-            else message = "Для первого разбора скачай модели.";
+            else if (readyOffline) message = "Модели готовы. Разбор работает без сети.";
+            else message = "До 570 МБ при первом запуске. После загрузки разбор работает офлайн.";
         }
         if (!TextUtils.equals(transcriptStatus.getText(), message)) transcriptStatus.setText(message);
         transcriptStatus.setTextColor(retry ? StudioStyle.WARNING : MUTED);
         transcriptStatus.setVisibility(message.isEmpty() ? View.GONE : View.VISIBLE);
-        transcribe.setVisibility(supported && (hasAudio || localSummaryPending || loading) ? View.VISIBLE : View.GONE);
-        transcribe.setEnabled((!busy || loading) && !modelRequestStopping);
-        boolean primary = transcriptRows.isEmpty() && !loading;
+        boolean showAnalysisAction = supported && (hasAudio || localSummaryPending || loading);
+        transcribe.setVisibility(showAnalysisAction ? View.VISIBLE : View.GONE);
+        boolean analysisEnabled = (!busy || loading) && !modelRequestStopping;
+        transcribe.setEnabled(analysisEnabled);
+        boolean primary = showAnalysisAction && analysisEnabled && transcriptRows.isEmpty() && !loading;
         if (primaryTranscribe == null || primaryTranscribe != primary) {
             primaryTranscribe = primary;
             StudioStyle.actionTone(transcribe, primary ? ACCENT : StudioStyle.CONTROL, primary ? StudioStyle.INK : TEXT);
+            StudioStyle.actionTone(play, primary ? StudioStyle.CONTROL : ACCENT, primary ? TEXT : StudioStyle.INK);
         }
-        String label = loading ? "Остановить" : localSummaryPending ? "Завершить конспект" : retry ? "Повторить"
-                : transcriptRows.isEmpty() ? (readyOffline ? "Расшифровать" : "Скачать модели") : "Заново";
+        String label = loading ? "Остановить" : localSummaryPending ? "Завершить конспект" : retry ? "Повторить разбор"
+                : transcriptRows.isEmpty() ? "Разобрать запись" : "Расшифровать заново";
         if (!TextUtils.equals(transcribe.getText(), label)) transcribe.setText(label);
-        String action = label.equals("Заново") ? "Расшифровать заново" : label;
-        if (!TextUtils.equals(transcribe.getContentDescription(), action)) transcribe.setContentDescription(action);
+        if (!TextUtils.equals(transcribe.getContentDescription(), label)) transcribe.setContentDescription(label);
     }
 
     private void setTranscriptRows(List<TranscriptEdits.Line> rows) {
