@@ -4,13 +4,16 @@ import json
 import re
 import sys
 import time
+import unicodedata
 import wave
 from collections import Counter
 from pathlib import Path
 
 
 def tokens(text):
-    return re.findall(r'[^\W_]+', text.casefold().replace('ё', 'е'))
+    text = unicodedata.normalize('NFC', text).casefold().replace('ё', 'е')
+    text = re.sub(r'(?<=[аеёиоуыэюя])\u0301', '', text)
+    return re.findall(r'[^\W_]+', text)
 
 
 def distance(left, right):

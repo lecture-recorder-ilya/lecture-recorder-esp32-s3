@@ -8,6 +8,12 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 from evaluate_asr import audio_sha256, compare_transcripts, score
 
 class EvaluationTests(unittest.TestCase):
+ def test_russian_stress_keeps_the_word_whole(self):
+  result = score('Не бо́льшая, йод, ёлка', 'не большая и\u0306од е\u0308лка')
+  self.assertEqual((result['reference_words'], result['word_errors']), (4, 0))
+  self.assertEqual(score('не бо́льшая', 'большая')['word_error_breakdown']['deletions'], 1)
+  self.assertEqual(score('résumé', 'resume')['word_errors'], 1)
+
  def test_fixed_talk_selection_requires_identifiers_and_checksums(self):
   from prepare_mtedx_asr import PARQUET_SHA256, clip_selection
   row = {'id': 'abcdef01234_0001', 'audio_sha256': 'a' * 64}

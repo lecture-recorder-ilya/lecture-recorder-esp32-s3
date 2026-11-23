@@ -1,13 +1,15 @@
+import hashlib
 import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+import wave
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools'))
-from compare_android_asr import build
+from compare_android_asr import build, checked_results, input_files, sha
 
 HARNESS='''package ru.ilya.lecturerecorder;
 import java.util.function.Consumer;
@@ -33,6 +35,47 @@ public final class CallbackContractTest {
 
 
 class AndroidComparisonHarnessTests(unittest.TestCase):
+    def test_failed_repetition_cannot_score_as_silence(self):
+        cases = [{'id': 'noise'}]
+        quiet = {'index': 0, 'repeat': 0, 'segments': []}
+        checked_results(cases, [quiet], 1)
+        failed = dict(quiet, repeat=1, error='IOException')
+        with self.assertRaisesRegex(ValueError, 'noise, повтор 2'):
+            checked_results(cases, [quiet, failed], 2)
+        with self.assertRaises(ValueError):
+            checked_results(cases, [quiet], 2)
+        with self.assertRaises(ValueError):
+            checked_results(cases, [dict(quiet, index=1)], 1)
+        with self.assertRaises(ValueError):
+            checked_results(cases, [], 0)
+
+    def test_header_probe_verifies_the_actual_input(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            original = root / 'original.wav'
+            original.write_bytes(b'RIFF')
+            case = {'id': 'header', 'original_audio': original.name, 'original_audio_sha256': sha(original)}
+            self.assertEqual(input_files([case], root / 'manifest.json', True), [original.resolve()])
+            original.write_bytes(b'changed')
+            with self.assertRaisesRegex(ValueError, 'header'):
+                input_files([case], root / 'manifest.json', True)
+
+    def test_quality_run_checks_pcm_and_duration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / 'frames.wav'
+            frames = bytes(320)
+            with wave.open(str(path), 'wb') as audio:
+                audio.setparams((1, 2, 16000, 0, 'NONE', 'not compressed'))
+                audio.writeframes(frames)
+            case = dict(id='frames', audio=path.name, duration=.01, audio_sha256=sha(path),
+                        pcm_sha256=hashlib.sha256(frames).hexdigest())
+            manifest = root / 'list.json'
+            self.assertEqual(input_files([case], manifest, False), [path.resolve()])
+            for changes in ({'pcm_sha256': '0' * 64}, {'duration': 5}, {'duration': float('nan')}):
+                with self.subTest(changes=changes), self.assertRaisesRegex(ValueError, 'PCM'):
+                    input_files([dict(case, **changes)], manifest, False)
+
     def test_legacy_and_current_phrase_callbacks_share_the_probe(self):
         jdk_path=os.environ.get('JAVA_HOME')
         deps_path=os.environ.get('CLIPMIC_ASR_DEPS')

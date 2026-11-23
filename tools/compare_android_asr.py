@@ -1,6 +1,7 @@
 import argparse
 import hashlib
 import json
+import math
 import os
 import platform
 import shutil
@@ -146,16 +147,61 @@ def build(source, directory, deps, jdk):
     return cp,sources
 
 
+def input_files(cases, manifest, native):
+    paths = []
+    seen = set()
+    for case in cases:
+        key = case['id']
+        if not key or key in seen:
+            raise ValueError(f'Пустой или повторный идентификатор записи: {key!r}')
+        seen.add(key)
+        path = (manifest.parent / case['original_audio' if native else 'audio']).resolve()
+        expected = case['original_audio_sha256' if native else 'audio_sha256']
+        if sha(path) != expected:
+            raise ValueError(f'{key}: SHA-256 входной записи отличается от манифеста')
+        if not native:
+            with wave.open(str(path)) as audio:
+                if (audio.getnchannels(), audio.getsampwidth(), audio.getframerate()) != (1, 2, 16000):
+                    raise ValueError(f'{key}: ожидается моно PCM16, 16 кГц')
+                pcm = hashlib.sha256()
+                size = 0
+                while chunk := audio.readframes(32768):
+                    pcm.update(chunk)
+                    size += len(chunk)
+                if (not size or size != audio.getnframes() * 2 or pcm.hexdigest() != case['pcm_sha256']
+                        or not math.isclose(size / 32000, case['duration'], rel_tol=0, abs_tol=.001)):
+                    raise ValueError(f'{key}: длина или SHA-256 PCM отличается от манифеста')
+        paths.append(path)
+    if not paths:
+        raise ValueError('В манифесте нет записей для проверки')
+    return paths
+
+
+def checked_results(cases, decoded, repeats):
+    if repeats < 1 or len(decoded) != len(cases) * repeats:
+        raise ValueError('Число результатов отличается от числа запланированных запусков')
+    for position, result in enumerate(decoded):
+        index, repeat = divmod(position, repeats)
+        key = cases[index]['id']
+        if (result.get('index'), result.get('repeat')) != (index, repeat):
+            raise ValueError(f'{key}: неверная запись или номер повтора в журнале')
+        if 'error' in result:
+            raise ValueError(f'{key}, повтор {repeat + 1}: сбой декодера — {result["error"]}')
+        if not isinstance(result.get('segments'), list):
+            raise ValueError(f'{key}: декодер не вернул список фраз')
+
+
 def run(args):
     if args.output.exists():raise FileExistsError(args.output)
+    if args.repeats < 1:
+        raise ValueError('Нужен хотя бы один запуск на запись')
     source=args.source.resolve();manifest=args.manifest.resolve();output=args.output.resolve()
     output.parent.mkdir(parents=True,exist_ok=True)
-    cases=json.loads(manifest.read_text());wavs=[(manifest.parent/r['audio']).resolve() for r in cases]
-    for row,path in zip(cases,wavs):assert sha(path)==row['audio_sha256']
+    cases=json.loads(manifest.read_text())
+    wavs=input_files(cases, manifest, args.native)
     cp,sources=build(source,output.parent/(output.stem+'-jvm'),args.deps.resolve(),args.jdk.resolve())
     command=[str(args.jdk.resolve()/'bin/java'),'-Xmx3g','-cp',cp,'ru.ilya.lecturerecorder.Harness']
     if args.native:
-        wavs=[Path(r['original_audio']) for r in cases]
         command+=['--parse',*map(str,wavs)]
     else:
         command+=[str(source/'outputs/android/res/raw'),str(args.model.resolve()),str(args.repeats),*map(str,wavs)]
@@ -164,18 +210,23 @@ def run(args):
         subprocess.run(command,stdout=stream,check=True)
     wall=time.monotonic()-start
     decoded=[json.loads(line) for line in journal.read_text().splitlines()]
+    hash_key = 'original_audio_sha256' if args.native else 'audio_sha256'
+    for path, case in zip(wavs, cases, strict=True):
+        if sha(path) != case[hash_key]:
+            raise ValueError(f'{case["id"]}: входная запись изменилась во время прогона')
     if args.native:
-        assert len(decoded)==len(cases)
+        if [row.get('index') for row in decoded] != list(range(len(cases))):
+            raise ValueError('Журнал проверки заголовков не соответствует манифесту')
         write(output,dict(source_sha256=sources,manifest_sha256=sha(manifest),mode='parser-only',
             errors=sum('error' in r for r in decoded),cases=[dict(id=c['id'],**r) for c,r in zip(cases,decoded)]))
         return
     sys.path.insert(0,str(Path(__file__).resolve().parent))
     from evaluate_asr import score,summarize_scores,summarize_subsets
-    assert len(decoded)==len(cases)*args.repeats
+    checked_results(cases, decoded, args.repeats)
     rows=[]
     for index,case in enumerate(cases):
         for repeat in range(args.repeats):
-            result=decoded[index*args.repeats+repeat];assert result['index']==index and result['repeat']==repeat
+            result=decoded[index*args.repeats+repeat]
             text=' '.join(segment['text'] for segment in result['segments'])
             rows.append(dict(id=case['id'],subset=case['subset'],cohort=case['cohort'],audio_sha256=case['audio_sha256'],
                 pcm_sha256=case['pcm_sha256'],duration=case['duration'],reference=case['reference'],text=text,
@@ -185,12 +236,12 @@ def run(args):
         source_sha256=sources,manifest_sha256=sha(manifest),model_sha256=sha(args.model),
         resources_sha256={n:sha(source/'outputs/android/res/raw'/n) for n in ('gigaam_frontend.onnx','gigaam_tokens.txt')},
         dependencies_sha256={n:sha(args.deps/n) for n in ('ort.jar','android-json.jar')},script_sha256=sha(__file__),
+        scorer_sha256=sha(Path(__file__).with_name('evaluate_asr.py')),
         engine='Android PhoneGigaAm / GigaAM-v3-e2e-CTC-int8 / desktop JVM ONNX Runtime JNI CPU',
         repeats=args.repeats,process_wall_seconds=wall,summary=summarize_scores(first),subsets=summarize_subsets(first),
         cohorts={name:summarize_scores([r for r in first if r['cohort']==name]) for name in sorted({r['cohort'] for r in first})},
-        error_cases=sum('error' in r for r in first),cases=rows,platform=platform.platform(),command=command)
+        error_cases=0,cases=rows,platform=platform.platform(),command=command)
     for name,value in sources.items():assert sha(source/'outputs/android/src/ru/ilya/lecturerecorder'/(name+'.java'))==value
-    assert all(sha(path)==case['audio_sha256'] for path,case in zip(wavs,cases))
     write(output,report)
     print(json.dumps(dict(output=str(output),summary=report['summary']),ensure_ascii=False),flush=True)
 
