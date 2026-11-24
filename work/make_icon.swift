@@ -1,22 +1,56 @@
 import Cocoa
-let dir = CommandLine.arguments[1]
-for size in [16,32,64,128,256,512,1024] {
- let rep=NSBitmapImageRep(bitmapDataPlanes:nil,pixelsWide:size,pixelsHigh:size,bitsPerSample:8,samplesPerPixel:4,hasAlpha:true,isPlanar:false,colorSpaceName:.deviceRGB,bytesPerRow:0,bitsPerPixel:0)!
- NSGraphicsContext.saveGraphicsState()
- NSGraphicsContext.current=NSGraphicsContext(bitmapImageRep:rep)
- let c=NSGraphicsContext.current!.cgContext
- c.scaleBy(x:CGFloat(size)/1024,y:CGFloat(size)/1024)
- NSColor(srgbRed:1,green:0.35,blue:0.23,alpha:1).setFill()
- NSBezierPath(roundedRect:NSRect(x:62,y:62,width:900,height:900),xRadius:210,yRadius:210).fill()
- NSColor(calibratedWhite:1,alpha:0.97).setFill()
- NSBezierPath(roundedRect:NSRect(x:409,y:410,width:206,height:368),xRadius:103,yRadius:103).fill()
- let arc=NSBezierPath();arc.move(to:NSPoint(x:327,y:540));arc.line(to:NSPoint(x:327,y:460));arc.curve(to:NSPoint(x:697,y:460),controlPoint1:NSPoint(x:327,y:213),controlPoint2:NSPoint(x:697,y:213));arc.line(to:NSPoint(x:697,y:540));arc.lineWidth=46;arc.lineCapStyle = .round;NSColor.white.setStroke();arc.stroke()
- let stem=NSBezierPath();stem.move(to:NSPoint(x:512,y:287));stem.line(to:NSPoint(x:512,y:208));stem.move(to:NSPoint(x:427,y:208));stem.line(to:NSPoint(x:597,y:208));stem.lineWidth=46;stem.lineCapStyle = .round;stem.stroke()
- NSGraphicsContext.restoreGraphicsState()
- let data=rep.representation(using:.png,properties:[:])!
- var names:[String]=[]
- if size<=512 { names.append("icon_\(size)x\(size).png") }
- if size>=32 { names.append("icon_\(size/2)x\(size/2)@2x.png") }
- for name in names { try data.write(to:URL(fileURLWithPath:dir).appendingPathComponent(name)) }
- if size==1024 {try data.write(to:URL(fileURLWithPath:"outputs/recorder-icon.png"))}
+
+let iconset = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
+
+let ink = NSColor(srgbRed: 25 / 255, green: 53 / 255, blue: 49 / 255, alpha: 1)
+let paper = NSColor(srgbRed: 247 / 255, green: 245 / 255, blue: 239 / 255, alpha: 1)
+let margin = NSColor(srgbRed: 97 / 255, green: 207 / 255, blue: 178 / 255, alpha: 1)
+
+func drawIcon(size: Int, fullBleed: Bool) -> Data {
+    let alpha: CGImageAlphaInfo = fullBleed ? .noneSkipLast : .premultipliedLast
+    let context = CGContext(data: nil, width: size, height: size, bitsPerComponent: 8,
+                            bytesPerRow: size * 4, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                            bitmapInfo: alpha.rawValue)!
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
+    let scale = CGFloat(size) / 1024
+    NSGraphicsContext.current!.cgContext.scaleBy(x: scale, y: scale)
+    ink.setFill()
+    if fullBleed {
+        NSBezierPath(rect: NSRect(x: 0, y: 0, width: 1024, height: 1024)).fill()
+    } else {
+        NSBezierPath(roundedRect: NSRect(x: 50, y: 50, width: 924, height: 924),
+                     xRadius: 210, yRadius: 210).fill()
+    }
+    let page = NSRect(x: 257, y: 199, width: 510, height: 626)
+    let sheet = NSBezierPath(roundedRect: page, xRadius: 57, yRadius: 57)
+    paper.setFill()
+    sheet.fill()
+    sheet.addClip()
+    margin.setFill()
+    NSBezierPath(rect: NSRect(x: 345, y: page.minY, width: 39, height: page.height)).fill()
+    ink.setFill()
+    for (height, width) in [(614, 230), (502, 155), (390, 210)] {
+        NSBezierPath(roundedRect: NSRect(x: 440, y: height, width: width, height: 33),
+                     xRadius: 16.5, yRadius: 16.5).fill()
+    }
+    NSGraphicsContext.restoreGraphicsState()
+    return NSBitmapImageRep(cgImage: context.makeImage()!).representation(using: .png, properties: [:])!
+}
+
+for size in [16, 32, 64, 128, 256, 512, 1024] {
+    let png = drawIcon(size: size, fullBleed: false)
+    if [16, 32, 128, 256, 512].contains(size) {
+        try png.write(to: iconset.appendingPathComponent("icon_\(size)x\(size).png"))
+    }
+    let half = size / 2
+    if [16, 32, 128, 256, 512].contains(half) {
+        try png.write(to: iconset.appendingPathComponent("icon_\(half)x\(half)@2x.png"))
+    }
+    if size == 1024 {
+        try png.write(to: URL(fileURLWithPath: "outputs/recorder-icon.png"))
+    }
+}
+if CommandLine.arguments.count > 2 {
+    try drawIcon(size: 1024, fullBleed: true).write(to: URL(fileURLWithPath: CommandLine.arguments[2]))
 }

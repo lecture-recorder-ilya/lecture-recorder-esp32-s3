@@ -119,16 +119,53 @@ class InstallerTests(unittest.TestCase):
     def test_shortcut_preserves_foreign_application(self):
         applications = self.root / 'Applications'
         applications.mkdir()
-        foreign = applications / 'Запись лекций.app'
+        foreign = applications / 'На полях.app'
         foreign.mkdir()
         (foreign / 'fixture').write_text('keep')
         target = self.root / 'project/outputs/Запись лекций.app'
         target.mkdir(parents=True)
         result = installer.install_shortcut(self.root / 'project', applications)
         self.assertEqual(result.resolve(), target.resolve())
-        self.assertEqual(result.name, 'Запись лекций — локальная.app')
+        self.assertEqual(result.name, 'На полях — локальная.app')
         self.assertEqual((foreign / 'fixture').read_text(), 'keep')
         self.assertEqual(installer.install_shortcut(self.root / 'project', applications), result)
+
+    def test_existing_shortcut_still_opens_same_library(self):
+        from app_shortcut import refresh_installed_shortcut
+        project = self.root / 'Library/Application Support/Lecture Recorder/project'
+        target = project / 'outputs/Запись лекций.app'
+        target.mkdir(parents=True)
+        applications = self.root / 'Applications'
+        applications.mkdir()
+        old = applications / 'Запись лекций.app'
+        old.symlink_to(target)
+        with patch.object(Path, 'home', return_value=self.root):
+            refresh_installed_shortcut(self.root / 'test-checkout')
+            self.assertEqual(list(applications.iterdir()), [old])
+            refresh_installed_shortcut(project)
+            refresh_installed_shortcut(project)
+        self.assertTrue(old.samefile(applications / 'На полях.app'))
+        self.assertEqual(len(list(applications.iterdir())), 2)
+
+    def test_packaged_installer_starts_in_isolated_python(self):
+        for source in (ROOT / 'installer/install.py', ROOT / 'outputs/recorder/app_shortcut.py'):
+            shutil.copyfile(source, self.root / source.name)
+        result = subprocess.run([sys.executable, '-I', '-B', str(self.root / 'install.py'), '--help'],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_both_shortcut_names_taken_opens_installed_bundle(self):
+        applications = self.root / 'Applications'
+        applications.mkdir()
+        project = self.root / 'project'
+        target = project / 'outputs/Запись лекций.app'
+        target.mkdir(parents=True)
+        foreign = applications / 'На полях.app'
+        foreign.symlink_to(self.root / 'missing.app')
+        (applications / 'На полях — локальная.app').mkdir()
+        self.assertEqual(installer.install_shortcut(project, applications), target)
+        self.assertFalse(foreign.exists())
+        self.assertTrue(foreign.is_symlink())
 
     def test_complete_state_requires_all_verifications_and_retry_preserves_data(self):
         resources = self.resources()
@@ -212,7 +249,7 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(request.call_count, 1)
 
     def test_recorder_verification_does_not_wait_for_installer_lock(self):
-        python = ROOT / 'work/installer/Установить Запись лекций.app/Contents/Resources/Setup/python/bin/python3.12'
+        python = ROOT / 'work/installer/Установить На полях.app/Contents/Resources/Setup/python/bin/python3.12'
         if not python.exists():
             self.skipTest('Bundled Python required')
         root = self.root / 'project'

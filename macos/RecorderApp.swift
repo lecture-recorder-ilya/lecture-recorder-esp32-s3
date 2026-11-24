@@ -33,9 +33,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         shutdownItem.target = self; appMenu.addItem(shutdownItem)
         NSApp.mainMenu = menu
         window = NSWindow(contentRect: NSRect(x:0, y:0, width:880, height:840), styleMask:[.titled,.closable,.miniaturizable,.resizable], backing:.buffered, defer:false)
-        window.title = "Запись лекций"
-        window.appearance = NSAppearance(named: .darkAqua)
-        let background = NSColor(srgbRed: 14 / 255, green: 18 / 255, blue: 23 / 255, alpha: 1)
+        window.title = "На полях"
+        window.appearance = NSAppearance(named: .aqua)
+        let background = NSColor(srgbRed: 247 / 255, green: 245 / 255, blue: 239 / 255, alpha: 1)
         window.backgroundColor = background
         window.center(); window.delegate = self
         view = WKWebView(frame: window.contentView!.bounds)
@@ -47,10 +47,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         view.loadHTMLString("""
             <!doctype html><html lang="ru"><meta charset="utf-8">
             <style>
-            html{color-scheme:dark;background:#0e1217;color:#a5b4c3}
+            html{color-scheme:light;background:#f7f5ef;color:#1d302e}
             body{margin:0;min-height:100vh;display:grid;place-items:center;font:15px system-ui}
             </style>
-            <body><p role="status">Открываю приложение…</p></body></html>
+            <body><p role="status">Открываю «На полях»…</p></body></html>
             """, baseURL: nil)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps:true)
@@ -184,7 +184,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         do { try child.run(); process = child }
         catch {
             let alert = NSAlert(); alert.messageText = "Нужно подготовить компоненты приложения"
-            alert.informativeText = "Открой установщик «Запись лекций». Он установит компоненты и сохранит библиотеку."
+            alert.informativeText = "Открой установщик «На полях». Он подготовит компоненты и сохранит библиотеку."
             alert.addButton(withTitle: "Восстановить"); alert.addButton(withTitle: "Закрыть")
             if alert.runModal() == .alertFirstButtonReturn { self.repairInstallation() }
             NSApp.terminate(nil); return
@@ -198,10 +198,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         }
     }
     @objc func repairInstallation() {
-        let installer = root.deletingLastPathComponent().appendingPathComponent("Установить Запись лекций.app")
-        if FileManager.default.fileExists(atPath: installer.path) { NSWorkspace.shared.open(installer) }
+        let installers = ["Установить На полях.app", "Установить Запись лекций.app"].map {
+            root.deletingLastPathComponent().appendingPathComponent($0)
+        }
+        if let installer = installers.first(where: { FileManager.default.fileExists(atPath: $0.path) }) {
+            NSWorkspace.shared.open(installer)
+        }
         else {
-            let alert = NSAlert(); alert.messageText = "Открой установщик «Запись лекций»"
+            let alert = NSAlert(); alert.messageText = "Открой установщик «На полях»"
             alert.informativeText = "Он подготовит компоненты без терминала. Библиотека этой копии останется на месте."; alert.runModal()
         }
     }

@@ -9,7 +9,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>local.esp.recorder</string>
 	<key>CFBundleName</key>
-	<string>Запись лекций</string>
+	<string>На полях</string>
+	<key>CFBundleDisplayName</key>
+	<string>На полях</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>NSAppTransportSecurity</key>

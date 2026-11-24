@@ -36,7 +36,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate
         appMenu.addItem(NSMenuItem(title: "Выйти", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         NSApp.mainMenu = menu
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 700, height: 610), styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-        window.title = "Установка · Запись лекций"
+        window.title = "Установка · На полях"
         window.delegate = self
         window.center()
         let content = window.contentView!
@@ -52,7 +52,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate
         icon.heightAnchor.constraint(equalToConstant: 72).isActive = true
         header.addArrangedSubview(icon)
         let titles = NSStackView(); titles.orientation = .vertical; titles.alignment = .leading; titles.spacing = 7
-        let title = label("Лекции на твоём Mac", size: 27)
+        let title = label("На полях", size: 27)
         title.font = .systemFont(ofSize: 27, weight: .semibold)
         titles.addArrangedSubview(title)
         titles.addArrangedSubview(label("Записи, расшифровки и конспекты в одном месте", size: 14, color: .secondaryLabelColor))
@@ -177,7 +177,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate
     func finished() {
         complete = true; progress.isIndeterminate = false; progress.doubleValue = 100; percent.stringValue = "100 %"
         stage.stringValue = "Всё готово"
-        detail.stringValue = "Открой приложение и подключи телефон. Для следующего запуска найди «Запись лекций» в папке «Приложения» своего профиля."
+        detail.stringValue = "Открой приложение и выбери запись. Для следующего запуска найди «На полях» в папке «Приложения» своего профиля."
         primary.title = "Открыть приложение"; primary.isEnabled = true; repair.isHidden = false
     }
 

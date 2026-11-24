@@ -58,7 +58,7 @@ def main():
     subprocess.run([sys.executable, str(ROOT / 'tools/build_mac.py')], check=True)
     staging = tempfile.TemporaryDirectory(prefix='lecture-installer-') if not args.skip_dmg else None
     build_root = Path(staging.name) if staging else work
-    app = build_root / 'Установить Запись лекций.app'
+    app = build_root / 'Установить На полях.app'
     if app.exists():
         shutil.rmtree(app)
     contents = app / 'Contents'
@@ -74,6 +74,7 @@ def main():
     shutil.copytree(runtime, setup / 'python', symlinks=True)
     for name in ('install.py', 'verify.py', 'models.json', 'distribution.json', 'requirements-ai.lock', 'requirements-recorder.lock', 'requirements-vision.lock'):
         shutil.copyfile(ROOT / 'installer' / name, setup / name)
+    shutil.copyfile(ROOT / 'outputs/recorder/app_shortcut.py', setup / 'app_shortcut.py')
     for name in ('LICENSE-MIT', 'LICENSE-APACHE'):
         fetch('https://raw.githubusercontent.com/astral-sh/uv/' + distribution['uv_version'] + '/' + name, resources / ('uv-' + name))
     sources = [ROOT / 'release.json']
@@ -97,10 +98,10 @@ def main():
             shutil.rmtree(disk)
         disk.mkdir()
         shutil.copytree(app, disk / app.name, symlinks=True)
-        (disk / 'Начни здесь.txt').write_text('Открой «Установить Запись лекций» и нажми «Установить и открыть».\nТерминал, Python и права администратора не нужны.\nНужны Mac с Apple Silicon, macOS 14+, 22 ГБ свободного места и интернет.\nПосле установки приложение находится в папке «Приложения» твоего профиля.\n')
+        (disk / 'Начни здесь.txt').write_text('Открой «Установить На полях» и нажми «Установить и открыть».\nНужны Mac с Apple Silicon, macOS 14+, 22 ГБ свободного места и интернет.\nПриложение появится в папке «Приложения» твоего профиля.\n')
         dmg = work / ('lecture-recorder-' + version['version'] + '-arm64.dmg')
         dmg.unlink(missing_ok=True)
-        subprocess.run(['hdiutil', 'create', '-volname', 'Запись лекций', '-srcfolder', str(disk), '-format', 'UDZO', str(dmg)], check=True)
+        subprocess.run(['hdiutil', 'create', '-volname', 'На полях', '-srcfolder', str(disk), '-format', 'UDZO', str(dmg)], check=True)
         subprocess.run(['hdiutil', 'verify', str(dmg)], check=True)
         print(dmg)
     if args.skip_dmg:

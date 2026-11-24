@@ -26,6 +26,7 @@ from audio_import import Importer, MAX_BYTES
 from audio_enhance import Enhancer
 from transcript_quality import annotate, report_for, plain_text, markdown
 from phone_pairing import Pairing, PairingError
+from app_shortcut import refresh_installed_shortcut
 
 ROOT = Path(__file__).resolve().parent
 PROJECT = ROOT.parent.parent
@@ -550,6 +551,7 @@ def main():
     server = ApplicationServer(('127.0.0.1', options.port), options.service_url)
     try:
         if not options.no_start_service:
+            refresh_installed_shortcut(PROJECT)
             ensure_recording_service(options.service_url)
             ensure_study_service()
             import phone_sync

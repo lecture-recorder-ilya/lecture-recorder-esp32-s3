@@ -23,6 +23,11 @@ import urllib.request
 import zipfile
 from pathlib import Path, PurePosixPath
 
+setup_modules = Path(__file__).resolve().parent
+source_modules = setup_modules.parent / 'outputs/recorder'
+sys.path.insert(0, str(setup_modules if (setup_modules / 'app_shortcut.py').is_file() else source_modules))
+from app_shortcut import install_shortcut
+
 CANCEL = threading.Event()
 OUTPUT = threading.Lock()
 
@@ -271,22 +276,6 @@ def stop_managed_services(root):
             raise InstallError('Сервисы приложения ещё работают. Выбери «Завершить работу» в меню приложения и повтори установку.')
         check_cancel()
         CANCEL.wait(.2)
-
-
-def install_shortcut(root, applications):
-    applications.mkdir(parents=True, exist_ok=True)
-    target = root / 'outputs/Запись лекций.app'
-    link = applications / 'Запись лекций.app'
-    if link.exists() or link.is_symlink():
-        if link.is_symlink() and link.resolve() == target.resolve():
-            return link
-        link = applications / 'Запись лекций — локальная.app'
-        if link.exists() or link.is_symlink():
-            if link.is_symlink() and link.resolve() == target.resolve():
-                return link
-            raise InstallError('В папке приложений уже есть другая установка. Она сохранена; открой новое приложение кнопкой установщика.')
-    link.symlink_to(target, target_is_directory=True)
-    return link
 
 
 def install(resources, support, applications, installer_app=None):
