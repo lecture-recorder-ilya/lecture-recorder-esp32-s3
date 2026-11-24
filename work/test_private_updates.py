@@ -1,7 +1,9 @@
+import contextlib
 import hashlib
 import hmac
 import io
 import json
+import os
 import struct
 import sys
 import tempfile
@@ -10,7 +12,10 @@ import threading
 import unittest
 import zipfile
 from pathlib import Path
+from functools import partial
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from types import SimpleNamespace
+from urllib.error import HTTPError
 from unittest.mock import patch, Mock
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'outputs/recorder'))
 import update_auth, update_manager, phone_sync, phone_updates
@@ -120,9 +125,112 @@ class Transfer(unittest.TestCase):
    phone_updates.LAST.clear()
    with patch.object(phone_sync,'request',return_value=io.BytesIO(b'{}')),patch.object(phone_sync,'request_file',return_value={'sha256':sha}) as send:
     phone_updates.push('http://fixture','fixture',root);phone_updates.push('http://fixture','fixture',root);self.assertEqual(send.call_count,1)
- def test_anonymous_private_check_requests_login(self):
-  with patch.object(update_manager,'headers',return_value={}),patch.object(update_manager,'fetch') as fetch:
-   update_manager.download_release();fetch.assert_not_called();self.assertIn('GitHub',update_manager.STATE['message'])
+
+
+class ReleaseAccess(unittest.TestCase):
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.project = Path(temp.name)
+        self.installed = dict(version='1.0', code=1, runtime=1, repository=update_manager.REPOSITORY)
+        update_manager.atomic(self.project / 'release.json', self.installed)
+        self.vault = Vault()
+        self.auth = update_auth.Authorization(self.project, self.vault)
+        fixtures = contextlib.ExitStack()
+        self.addCleanup(fixtures.close)
+        fixtures.enter_context(patch.object(update_manager, 'AUTH', self.auth))
+        fixtures.enter_context(patch.object(update_manager, 'STATE', {}))
+        fixtures.enter_context(patch.dict(os.environ, {'LECTURE_GITHUB_TOKEN': ''}))
+
+    def release(self, runtime=1):
+        package = io.BytesIO()
+        with zipfile.ZipFile(package, 'w') as archive:
+            archive.writestr('release.json', json.dumps(dict(self.installed, version='2.0', code=2, runtime=runtime)))
+            for name in ('app_server', 'recorder', 'update_manager'):
+                archive.writestr(f'outputs/recorder/{name}.py', 'installed = True\n')
+        files = [(ASSETS[STABLE], apk_fixture()), (ASSETS[PREVIEW], apk_fixture(PREVIEW, 23)),
+                 ('lecture-mac-update.zip', package.getvalue())]
+        rows = [dict(name=name, id=index, size=len(data), digest='sha256:' + hashlib.sha256(data).hexdigest())
+                for index, (name, data) in enumerate(files, 1)]
+        return [json.dumps(dict(tag_name='v2.0', assets=rows)).encode()] + [data for _, data in files]
+
+    def test_public_scheduler_stages_checked_zip_and_both_apks_without_keychain(self):
+        bodies = self.release()
+        fetch = Mock(side_effect=map(io.BytesIO, bodies))
+        stop = threading.Event()
+        intervals = []
+        def tick(seconds):
+            intervals.append(seconds)
+            if len(intervals) == 2:
+                stop.set()
+        server = SimpleNamespace(service_url='', pairing=SimpleNamespace(public=lambda: {'active': True}))
+        self.assertEqual(self.auth.public()['message'], '')
+        with patch.object(self.vault, 'read', side_effect=AssertionError('Public check opened Keychain')) as keychain, \
+             patch.object(update_manager, 'PROJECT', self.project), patch.object(update_manager, 'fetch', fetch), \
+             patch.object(update_manager, 'download_release', partial(update_manager.download_release, self.project)), \
+             patch.object(update_manager, 'CHECK', threading.Event()), patch.object(update_manager, 'STOP', stop), \
+             patch.object(stop, 'wait', side_effect=tick), \
+             patch.object(update_manager.threading, 'Thread', side_effect=lambda target, **_: SimpleNamespace(start=target)):
+            update_manager.start(server)
+        keychain.assert_not_called()
+        self.assertEqual(intervals, [10, 10])
+        requests = [call.args[0] for call in fetch.call_args_list]
+        self.assertEqual([req.full_url.rsplit('/', 1)[1] for req in requests], ['latest', '1', '2', '3'])
+        self.assertTrue(all(req.get_header('Authorization') is None for req in requests))
+        folder = self.project / 'work/updates'
+        candidate = folder / 'candidate.zip'
+        self.assertEqual(candidate.read_bytes(), bodies[-1])
+        self.assertEqual(update_manager.read(folder / 'pending.json')['sha256'], hashlib.sha256(bodies[-1]).hexdigest())
+        self.assertEqual(update_manager.inspect_package(candidate, self.project)[0]['code'], 2)
+        for package, code in [(STABLE, 12), (PREVIEW, 23)]:
+            cached = cache_folder(self.project / 'work', package)
+            self.assertEqual(apk_identity(cached / 'update.apk'), (package, code))
+            self.assertEqual(update_manager.read(cached / 'ready.json')['tag'], 'v2.0')
+        self.assertIn('Обновление скачано', update_manager.STATE['message'])
+
+    def test_private_check_requests_login_only_after_denial(self):
+        for code in (401, 404):
+            with self.subTest(code=code), \
+                 patch.object(update_manager, 'fetch', side_effect=HTTPError('latest', code, 'denied', {}, None)) as fetch:
+                self.assertIsNone(update_manager.download_release(self.project))
+                self.assertEqual(fetch.call_count, 1)
+                self.assertIsNone(fetch.call_args.args[0].get_header('Authorization'))
+                self.assertIn('Войди в GitHub', update_manager.STATE['message'])
+        self.assertFalse((self.project / 'work/updates/pending.json').exists())
+
+    def test_private_check_restores_keychain_for_metadata_and_assets(self):
+        for code in (401, 403, 404, 429):
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as folder:
+                self.auth.credentials = None
+                self.vault.value = {'access_token': 'fixture', 'expires_at': time.time() + 600}
+                project = Path(folder)
+                update_manager.atomic(project / 'release.json', self.installed)
+                denied = HTTPError('latest', code, 'denied', {}, None)
+                replies = [denied, *map(io.BytesIO, self.release())]
+                with patch.object(update_manager, 'fetch', side_effect=replies) as fetch:
+                    update_manager.download_release(project)
+                requests = [call.args[0] for call in fetch.call_args_list]
+                self.assertIsNone(requests[0].get_header('Authorization'))
+                self.assertEqual([req.get_header('Authorization') for req in requests[1:]], ['Bearer fixture'] * 4)
+                self.assertTrue((project / 'work/updates/pending.json').is_file())
+        self.assertTrue(self.auth.public()['authorized'])
+
+    def test_public_check_rejects_incompatible_package_before_staging(self):
+        with patch.object(update_manager, 'fetch', side_effect=map(io.BytesIO, self.release(runtime=2))):
+            with self.assertRaisesRegex(ValueError, 'Несовместимая'):
+                update_manager.download_release(self.project)
+        folder = self.project / 'work/updates'
+        self.assertFalse((folder / 'candidate.zip').exists())
+        self.assertFalse((folder / 'pending.json').exists())
+
+    def test_rate_limit_without_credentials_waits_for_next_check(self):
+        for code in (403, 429):
+            error = HTTPError('latest', code, 'rate limit', {}, None)
+            with self.subTest(code=code), patch.object(update_manager, 'fetch', side_effect=error) as fetch:
+                update_manager.download_release(self.project)
+                self.assertEqual(fetch.call_count, 1)
+                self.assertIn('ограничил', update_manager.STATE['message'])
+                self.assertNotIn('Войди', update_manager.STATE['message'])
 
 class AndroidChannels(unittest.TestCase):
     def setUp(self):
@@ -143,7 +251,7 @@ class AndroidChannels(unittest.TestCase):
             bodies[str(index)] = body
         def fetch(req, **kwargs):
             return io.BytesIO(bodies[req.full_url.rsplit('/', 1)[1]])
-        with patch.object(update_manager, 'headers', return_value={}), patch.object(update_manager, 'fetch', side_effect=fetch) as network:
+        with patch.object(update_manager, 'fetch', side_effect=fetch) as network:
             message = update_manager.cache_android(dict(assets=rows, tag_name=tag), self.project)
             return message, network.call_count
 

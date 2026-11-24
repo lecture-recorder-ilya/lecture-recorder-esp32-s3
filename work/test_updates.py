@@ -32,8 +32,8 @@ class Updates(unittest.TestCase):
   def responses(correct):
    release={'tag_name':'v2.0','assets':[{'name':'lecture-mac-update.zip','id':123,'digest':'sha256:'+correct,'size':len(archive)}]}
    return [io.BytesIO(json.dumps(release).encode()),io.BytesIO(archive)]
-  with patch.object(u,'headers',return_value={'Authorization':'Bearer fixture'}),patch.object(u,'fetch',side_effect=responses('0'*64)),self.assertRaises(ValueError):u.download_release(self.root)
-  with patch.object(u,'headers',return_value={'Authorization':'Bearer fixture'}),patch.object(u,'fetch',side_effect=responses(digest)):u.download_release(self.root)
+  with patch.object(u,'fetch',side_effect=responses('0'*64)),self.assertRaises(ValueError):u.download_release(self.root)
+  with patch.object(u,'fetch',side_effect=responses(digest)):u.download_release(self.root)
   self.assertEqual(u.read(self.root/'work/updates/pending.json')['sha256'],digest)
   u.install(self.root);self.assertEqual(u.read(self.root/'release.json')['code'],2)
  def test_startup_waits_for_active_install(self):
@@ -48,7 +48,7 @@ class Updates(unittest.TestCase):
   assets=[dict(id=i,name=name,size=len(body),digest='sha256:'+hashlib.sha256(body).hexdigest())
           for i,(name,body) in enumerate([('lecture-recorder-android.apk',broken),('lecture-mac-update.zip',archive)],1)]
   release=json.dumps(dict(tag_name='v2.0',assets=assets)).encode()
-  with patch.object(u,'headers',return_value={'Authorization':'Bearer fixture'}),patch.object(u,'fetch',side_effect=map(io.BytesIO,(release,broken,archive))):
+  with patch.object(u,'fetch',side_effect=map(io.BytesIO,(release,broken,archive))):
    u.download_release(self.root)
   self.assertEqual(u.read(folder/'pending.json')['sha256'],hashlib.sha256(archive).hexdigest())
   self.assertFalse((folder/'android/preview/ready.json').exists())

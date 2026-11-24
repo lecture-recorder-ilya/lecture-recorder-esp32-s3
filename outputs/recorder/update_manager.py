@@ -107,9 +107,8 @@ def inspect_package(archive, project=PROJECT):
         return meta, names
 
 
-def headers():
+def headers(token=None):
     value = {'User-Agent': 'LectureRecorder-Updater', 'Accept': 'application/vnd.github+json'}
-    token = os.environ.get('LECTURE_GITHUB_TOKEN') or AUTH.token()
     if token:
         value['Authorization'] = 'Bearer ' + token
     return value
@@ -123,11 +122,11 @@ def asset_digest(asset):
     return digest[7:]
 
 
-def download_asset(asset, target):
+def download_asset(asset, target, token=None):
     expected = asset_digest(asset)
     target.parent.mkdir(parents=True, exist_ok=True)
     temp = target.with_suffix('.part')
-    values = headers()
+    values = headers(token)
     values['Accept'] = 'application/octet-stream'
     try:
         asset_id = int(asset['id'])
@@ -152,14 +151,14 @@ def download_asset(asset, target):
     return digest.hexdigest()
 
 
-def cache_android_asset(asset, tag, package, folder):
+def cache_android_asset(asset, tag, package, folder, token=None):
     expected = asset_digest(asset)
     target = folder / 'update.apk'
     staged = folder / 'candidate.apk'
     cached = target.is_file() and target.stat().st_size == asset['size'] and file_digest(target) == expected
     try:
         if not cached:
-            download_asset(asset, staged)
+            download_asset(asset, staged, token)
         actual, code = apk_identity(target if cached else staged)
         if actual != package:
             raise ValueError('Имя пакета в APK отличается от канала обновления')
@@ -172,7 +171,7 @@ def cache_android_asset(asset, tag, package, folder):
         staged.unlink(missing_ok=True)
 
 
-def cache_android(release, project=PROJECT):
+def cache_android(release, project=PROJECT, token=None):
     assets = {a.get('name'): a for a in release.get('assets', []) if isinstance(a, dict)}
     work = project / 'work'
     root = cache_folder(work, STABLE)
@@ -188,7 +187,7 @@ def cache_android(release, project=PROJECT):
                     (folder / 'ready.json').unlink(missing_ok=True)
                     (folder / 'update.apk').unlink(missing_ok=True)
                     continue
-                cache_android_asset(assets[name], release.get('tag_name'), package, folder)
+                cache_android_asset(assets[name], release.get('tag_name'), package, folder, token)
                 available = True
             except (ValueError, OSError, HTTPException):
                 failed.append(name)
@@ -199,15 +198,30 @@ def cache_android(release, project=PROJECT):
 
 
 def download_release(project=PROJECT):
-    if not headers().get('Authorization'):
-        STATE.update(message='Войди в GitHub на этом Mac для закрытых обновлений')
-        return
     url = 'https://api.github.com/repos/' + REPOSITORY + '/releases/latest'
-    with fetch(Request(url, headers=headers()), timeout=20) as response:
+    token = None
+    try:
+        response = fetch(Request(url, headers=headers()), timeout=20)
+    except HTTPError as error:
+        if error.code not in (401, 403, 404, 429):
+            raise
+        error.close()
+        try:
+            token = os.environ.get('LECTURE_GITHUB_TOKEN') or AUTH.token()
+        except ValueError:
+            token = None
+        if not token:
+            if error.code in (403, 429):
+                STATE.update(message='GitHub временно ограничил число запросов. Проверю обновления позже.')
+            else:
+                STATE.update(message='Войди в GitHub на этом Mac для закрытых обновлений')
+            return
+        response = fetch(Request(url, headers=headers(token)), timeout=20)
+    with response:
         release = json.loads(response.read(2 * 1024 * 1024))
     if release.get('draft') or release.get('prerelease'):
         return
-    apk_status = cache_android(release, project)
+    apk_status = cache_android(release, project, token)
     tag = release.get('tag_name', '')
     if tag == 'v' + read(project / 'release.json').get('version', ''):
         STATE.update(message='На Mac последняя версия · ' + apk_status)
@@ -219,7 +233,7 @@ def download_release(project=PROJECT):
     folder.mkdir(parents=True, exist_ok=True)
     archive = folder / 'candidate.zip'
     downloaded = folder / 'download.zip'
-    digest = download_asset(asset, downloaded)
+    digest = download_asset(asset, downloaded, token)
     meta, _ = inspect_package(downloaded, project)
     if tag != 'v' + meta['version']:
         raise ValueError('Версия пакета отличается от тега релиза')

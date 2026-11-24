@@ -8,22 +8,27 @@
  const verification=document.createElement('a');verification.textContent='Открыть GitHub и ввести код';verification.href='https://github.com/login/device';verification.target='_blank';verification.rel='noopener noreferrer';verification.style.display='block';
  const installation=document.createElement('a');installation.textContent='Разрешить чтение репозитория в GitHub';installation.target='_blank';installation.rel='noopener noreferrer';installation.style.cssText='display:block;margin:10px 0';
  const controls=document.createElement('div');controls.className='actions';
+ const privateChannel=document.createElement('details'),privateTitle=document.createElement('summary');
+ privateTitle.textContent='Доступ к закрытым обновлениям';
  const login=document.createElement('button');login.textContent='Войти в GitHub';
  const cancel=document.createElement('button');cancel.textContent='Отменить вход';
  const logout=document.createElement('button');logout.textContent='Выйти из GitHub';
  const button=document.createElement('button');button.textContent='Проверить новую версию';
- let generation=null;
+ let generation=null,loginPending=false;
  async function action(route){try{await post(route);await poll(false)}catch(error){authMessage.textContent=error.message}}
  login.onclick=()=>action('/update-auth/start');cancel.onclick=()=>action('/update-auth/cancel');logout.onclick=()=>action('/update-auth/disconnect');
  button.onclick=async()=>{button.disabled=true;try{await post('/check-updates');message.textContent='Проверяю…'}catch(error){message.textContent='Не удалось проверить: '+error.message}finally{button.disabled=false}};
- controls.append(login,cancel,logout,button);box.append(title,installed,message,authMessage,code,verification,installation,controls);document.querySelector('#view-settings').append(box);
+ controls.append(login,cancel,logout);privateChannel.append(privateTitle,authMessage,code,verification,installation,controls);
+ box.append(title,installed,message,button,privateChannel);document.querySelector('#view-settings').append(box);
  async function poll(repeat=true){try{
   const r=await fetch('/app-info',{cache:'no-store',signal:AbortSignal.timeout(5000)});if(!r.ok)return;
   const value=await r.json(),auth=value.update_auth||{},status=value.updates?.message||'';
   installed.hidden=!value.version;
   if(value.version)installed.textContent='Установлена версия '+value.version;
   message.textContent=/HTTP|SSL|Errno|urlopen|timed out|Offline|certificate/i.test(status)?'Не удалось проверить обновления. Попробуй позже.':status;
-  authMessage.textContent=auth.message||'Вход в GitHub доступен после установки новой версии Mac.';
+  authMessage.textContent=auth.message||'';
+  if(auth.pending&&!loginPending)privateChannel.open=true;
+  loginPending=!!auth.pending;
   login.hidden=!!auth.pending||!!auth.authorized;login.disabled=!auth.configured;
   cancel.hidden=!auth.pending;logout.hidden=!auth.authorized;
   code.hidden=verification.hidden=!auth.pending;code.textContent=auth.user_code||'';

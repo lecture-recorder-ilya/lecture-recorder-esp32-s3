@@ -217,14 +217,10 @@ class Delivery(unittest.TestCase):
             self.assertEqual(same['model'], first['model'])
             self.assertEqual(second['model'], quality_asr.engine_for(True))
 
-    def test_release_gate_requires_the_current_authenticated_release(self):
+    def test_release_gate_requires_the_current_published_release(self):
         import update_manager as updates
         (self.project / 'release.json').write_text(json.dumps({'version': '1.0.0'}))
-        with patch.object(updates, 'headers', return_value={}), patch.object(updates, 'fetch') as fetch:
-            self.assertFalse(updates.download_release(self.project))
-            fetch.assert_not_called()
-        with patch.object(updates, 'headers', return_value={'Authorization': 'test-only'}), \
-             patch.object(updates, 'cache_android', return_value=''), \
+        with patch.object(updates, 'cache_android', return_value=''), \
              patch.object(updates, 'fetch', side_effect=[Response(b'{"tag_name":"v1.0.0","draft":true}'),
                                                         Response(b'{"tag_name":"v1.0.0"}')]):
             self.assertFalse(updates.download_release(self.project))

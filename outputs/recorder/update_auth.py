@@ -42,7 +42,7 @@ class Authorization:
         self.lock = threading.RLock()
         self.credentials = None
         self.pending = None
-        self.message = 'Войди в GitHub для закрытых обновлений.'
+        self.message = ''
         self.wake = lambda: None
 
     def config(self):
