@@ -92,7 +92,7 @@
   let indicatorMotion,panelMotion;
   const cancelMotion=()=>{indicatorMotion?.cancel();panelMotion?.cancel()};
   reducedMotion.addEventListener('change',cancelMotion,{signal});
-  for(const [key,title] of [['text','Текст'],['summary','Конспект'],['review','Проверить']]){
+  for(const [key,title] of [['text','Расшифровка'],['summary','Конспект'],['review','Проверить']]){
    const b=node('button',title);b.type='button';b.setAttribute('role','tab');b.id='reader-'+encodeURIComponent(name)+'-'+key;b.onclick=()=>show(key);buttons[key]=b;tabs.append(b);
    b.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const keys=Object.keys(buttons),i=keys.indexOf(key);const next=e.key==='Home'?0:e.key==='End'?keys.length-1:(i+(e.key==='ArrowRight'?1:-1)+keys.length)%keys.length;show(keys[next]);buttons[keys[next]].focus()};
   }
@@ -148,11 +148,12 @@
   card.readerRoot=root;card.workflowBadge=badge;
   const caption=node('p','Нажми на фразу, чтобы услышать её в записи.','reader-caption');
   const toolbar=node('div',undefined,'reader-toolbar');
-  const search=node('input');search.type='search';search.placeholder='Найти в расшифровке';search.setAttribute('aria-label','Поиск в тексте этой пары');search.value=state.query;
+  const search=node('input');search.type='search';search.placeholder='Найти фразу в тексте';search.setAttribute('aria-label','Найти фразу в расшифровке');search.setAttribute('aria-keyshortcuts','Meta+F Control+F');search.value=state.query;
   const follow=node('input');follow.type='checkbox';follow.checked=state.follow;const followLabel=node('label','Следовать за аудио');followLabel.prepend(follow);follow.onchange=()=>{state.follow=follow.checked};
   const speed=card.rateSelect;
   toolbar.append(search,followLabel);
   const timeline=node('div',undefined,'reader-timeline full-lecture');timeline.tabIndex=0;timeline.setAttribute('aria-label','Текст с таймкодами');card.readerTimeline=timeline;
+  const matchCount=node('p','','reader-match-count');matchCount.setAttribute('role','status');
   const empty=node('p','','reader-empty');
   const footer=node('div',undefined,'reader-footer');
   const download=node('a','Скачать текст с таймкодами');download.href='/transcript-export/'+encodeURIComponent(name);download.download=name.replace(/\.wav$/,'.txt');footer.append(download);
@@ -211,12 +212,26 @@
    activeItem=null;
    const query=state.query.trim().toLocaleLowerCase('ru');
    const visible=rows.filter(r=>(state.tab!=='review'||r.needs_review&&!r.reviewed)&&(!query||r.text.toLocaleLowerCase('ru').includes(query)));
+   matchCount.hidden=!query||!visible.length;
+   const countLabel=query?'Найдено фрагментов · '+visible.length:'';
+   if(matchCount.textContent!==countLabel)matchCount.textContent=countLabel;
    for(const [index,segment] of visible.entries()){
     const row=node('article',undefined,'segment transcript-row'+(segment.needs_review?' needs-review':'')+(segment.reviewed?' is-reviewed':''));
     row.dataset.start=segment.start;row.dataset.end=segment.end;row.dataset.segment=segment.id;
     const line=node('button',undefined,'transcript-line');line.type='button';const timed=Number.isFinite(segment.start);line.setAttribute('aria-label',(timed?clock(segment.start):'Без таймкода')+'. '+segment.text);if(!timed)line.disabled=true;
     const time=node('span',timed?clock(segment.start):'—','transcript-time');time.title=segment.timing==='audio_excerpt'?'Начало аудиофрагмента; время отдельных слов может отличаться':'Слушать с этого момента';
-    const copy=node('span',segment.text,'transcript-copy');line.append(time,copy);
+    const copy=node('span',undefined,'transcript-copy');
+    if(!query)copy.textContent=segment.text;
+    else {
+     const text=segment.text,lower=text.toLocaleLowerCase('ru');
+     let from=0;
+     for(let index=lower.indexOf(query);index!==-1;index=lower.indexOf(query,from)){
+      copy.append(text.slice(from,index),node('mark',text.slice(index,index+query.length)));
+      from=index+query.length;
+     }
+     copy.append(text.slice(from));
+    }
+    line.append(time,copy);
     line.onfocus=()=>{if(state.tab==='review'){reviewIndex=index;updateReviewNavigation()}};
     line.onclick=()=>{
      const selected=window.getSelection();
@@ -330,11 +345,20 @@
     panelMotion=panel.animate([{opacity:.82,transform:'translateX('+(forward?6:-6)+'px)'},{opacity:1,transform:'none'}],{duration:150,easing});
    }
    if(tab==='summary')panel.append(summary());
-   else{caption.textContent=tab==='review'?'Прослушай отмеченные фразы и подтверди те, что проверил.':'Нажми на фразу, чтобы услышать её в записи.';panel.append(caption,toolbar);if(tab==='review')panel.append(reviewNavigation);panel.append(timeline,footer);renderRows();timeline.scrollTop=state.scroll;
+   else{caption.textContent=tab==='review'?'Прослушай отмеченные фразы и подтверди те, что проверил.':'Нажми на фразу, чтобы услышать её в записи.';panel.append(toolbar,matchCount,caption);if(tab==='review')panel.append(reviewNavigation);panel.append(timeline,footer);renderRows();timeline.scrollTop=state.scroll;
     if(report.quality?.unassessed)panel.append(node('p','Для '+report.quality.unassessed+' фрагм. оценка качества распознавания недоступна.','reader-caption'));
    }
   }
   search.oninput=()=>{state.query=search.value;reviewIndex=-1;renderRows()};
+  search.onkeydown=event=>{
+   if(event.key==='Escape'&&search.value){event.preventDefault();event.stopPropagation();search.value='';search.oninput()}
+  };
+  document.addEventListener('keydown',event=>{
+   if(document.querySelector('dialog[open]')||selectedCard!==card||document.body.dataset.view!=='library')return;
+   if((event.metaKey||event.ctrlKey)&&!event.shiftKey&&!event.altKey&&event.key.toLowerCase()==='f'){
+    event.preventDefault();show('text');search.focus();search.select();
+   }
+  },{signal});
   const controls={...buttons,search,follow,speed,timeline,play,back,ahead,seek:seekRange,reviewPrevious,reviewNext,reviewInText,download};
   for(const [key,control] of Object.entries(controls))control.dataset.readerControl=key;
   show(state.tab);
@@ -356,80 +380,244 @@
   const busy=['queued','processing'].includes(job?.status);
   card.workflowBadge.textContent=busy?(job.message||'Обрабатываю запись'):job?.status==='error'?'Разбор прерван · можно повторить':card.workflowBadge.textContent==='Разбор готов'?'Разбор готов':'Текст готов';
  }
- async function openRecording(name){
-  window.showLectureView?.('library',false);
+ const library=document.querySelector('#view-library');
+ const returnBar=node('header',undefined,'reader-page-heading');
+ const backToLibrary=node('button','← Библиотека','text-button reader-back');
+ backToLibrary.type='button';
+ const readingTitle=node('h1'),readingDetail=node('p','','reader-detail');
+ readingTitle.tabIndex=-1;
+ returnBar.append(backToLibrary,readingTitle,readingDetail);
+ returnBar.hidden=true;
+ library.prepend(returnBar);
+ let selectedCard=null,readerOpener=null,calendarWasOpen=false;
+ const recordTitle=window.RecordingLibrary.title;
+
+ function closeReader(restoreFocus=true){
+  if(!selectedCard)return;
+  const current=selectedCard;
+  selectedCard=null;
+  current.audio.pause();
+  current.li.classList.remove('reading-entry');
+  library.classList.remove('is-reading');
+  returnBar.hidden=true;
+  const disclosure=library.querySelector('.library-calendar');
+  if(disclosure)disclosure.open=calendarWasOpen;
+  if(restoreFocus){
+   const item=library.querySelector('.library-entry[data-file="'+CSS.escape(current.name)+'"] .library-open');
+   const target=readerOpener?.isConnected&&library.contains(readerOpener)&&readerOpener.getClientRects().length?readerOpener:item||library.querySelector('.library-filters input');
+   target?.focus({preventScroll:true});
+   target?.scrollIntoView({block:'nearest',behavior:'instant'});
+  }
+  readerOpener=null;
+ }
+ backToLibrary.onclick=()=>closeReader();
+ document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&!event.defaultPrevented&&!event.isComposing&&selectedCard&&!document.querySelector('dialog[open]')){
+   event.preventDefault();closeReader();
+  }
+ });
+ async function openRecording(name,seconds){
   let card=cards.get(name);
   if(!card){await update();card=cards.get(name)}
-  if(!card)return;
+  if(!card){document.querySelector('#error').textContent='Запись пока недоступна в библиотеке.';return}
+  const source=document.activeElement;
+  if(selectedCard!==card){
+   closeReader(false);
+   readerOpener=source;
+   calendarWasOpen=Boolean(library.querySelector('.library-calendar')?.open);
+  }
+  window.showLectureView?.('library',false);
   window.revealCalendarFile?.(name);
+  selectedCard=card;
   bindAudio(card);
+  card.li.classList.add('reading-entry');card.li.hidden=false;
+  const group=card.li.closest('#files>li');
+  if(group){group.hidden=false;group.firstElementChild.open=true}
   card.details.open=true;
-  card.li.closest('#files>li>details')?.setAttribute('open','');
-  card.details.querySelector('summary')?.focus({preventScroll:true});
-  card.li.scrollIntoView({block:'start',behavior:motion()});
+  readingTitle.textContent=recordTitle(name,card.lesson);
+  readingDetail.textContent=window.RecordingLibrary.detail(name,card.lesson||{});
+  readingDetail.hidden=!readingDetail.textContent;
+  returnBar.hidden=false;library.classList.add('is-reading');
+  readingTitle.focus({preventScroll:true});
+  window.scrollTo({top:0,behavior:'instant'});
+  if(Number.isFinite(seconds))seek(card,seconds);
   update();
  }
+
  function initImport(){
-  const library=document.querySelector('#view-library');if(!library)return;
-  const importPanel=node('details',undefined,'lecture-import-panel card');
-  importPanel.append(node('summary','Импорт аудио'));
+  const host=document.querySelector('#capture-file');
   const form=node('form',undefined,'lecture-import');form.id='lecture-import';
-  const headline=node('div',undefined,'import-heading');headline.append(node('p','Выбери аудиозапись. Расшифровка и конспект готовятся на этом Mac.','muted'));form.append(headline);
-  importPanel.append(form);
-  const picker=node('input');picker.type='file';picker.id='lecture-audio-file';picker.accept='audio/*,.wav,.mp3,.m4a,.aac,.flac,.ogg,.opus,.webm,.mp4,.caf,.aif,.aiff';picker.className='import-file-input';
-  const choose=node('button','Выбрать аудиозапись','import-choose');choose.type='button';choose.onclick=()=>picker.click();
-  const drop=node('div',undefined,'import-drop');const filename=node('span','WAV, MP3, M4A и другие форматы · до 2 ГБ','import-filename');drop.append(choose,filename,picker);form.append(drop);
-  let selected=null,upload=null;
-  function select(file){selected=file||null;filename.textContent=selected?selected.name+' · '+(selected.size/1024/1024).toFixed(1)+' МБ':'WAV, MP3, M4A и другие форматы · до 2 ГБ';submit.disabled=!selected;message.textContent='';if(selected&&!title.value)title.value=selected.name.replace(/\.[^.]+$/,'')}
-  picker.onchange=()=>select(picker.files[0]);
-  drop.ondragover=e=>{if(e.dataTransfer.types.includes('Files')){e.preventDefault();drop.classList.add('drag-over')}};drop.ondragleave=()=>drop.classList.remove('drag-over');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag-over');if(!upload)select(e.dataTransfer.files[0])};
+  const drop=node('div',undefined,'import-drop');
+  const dropCopy=node('div',undefined,'import-drop-copy');
+  const titlePrompt=node('h2','Перетащи сюда аудиофайл');
+  const filename=node('span','M4A, MP3, WAV и другие форматы · до 2 ГБ','import-filename');
+  dropCopy.append(titlePrompt,filename);
+  const picker=node('input');picker.type='file';picker.id='lecture-audio-file';picker.hidden=true;
+  picker.accept='audio/*,.wav,.mp3,.m4a,.aac,.flac,.ogg,.opus,.webm,.mp4,.caf,.aif,.aiff';
+  picker.setAttribute('aria-label','Выбрать аудиозапись');
+  const choose=node('button','Выбрать файл','import-choose');choose.type='button';choose.onclick=()=>picker.click();
+  const uploadIcon=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  uploadIcon.setAttribute('viewBox','0 0 24 24');uploadIcon.setAttribute('class','upload-icon');uploadIcon.setAttribute('aria-hidden','true');
+  uploadIcon.innerHTML='<path d="M12 15V3m-4.5 4.5L12 3l4.5 4.5M4 14v4.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V14"/>';
+  drop.append(uploadIcon,dropCopy,choose,picker);
+  const about=node('p','Расшифровка и конспект сохранятся в библиотеке этого Mac.','import-about');
+  const metadata=node('details',undefined,'import-metadata');
+  metadata.append(node('summary','Название, предмет и дата'));
   const fields=node('div',undefined,'import-fields');
-  const input=(caption,type,id)=>{const label=node('label',caption),i=node('input');i.type=type;i.id=id;i.maxLength=160;label.append(i);fields.append(label);return i};
-  const title=input('Название пары','text','import-title');title.placeholder='Например: Производная и её смысл';
-  const subject=input('Предмет · необязательно','text','import-subject');subject.placeholder='Математический анализ';
-  const date=input('Дата занятия','date','import-date');const now=new Date();date.value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');form.append(fields);
-  const actions=node('div',undefined,'import-actions');const submit=node('button','Загрузить и подготовить конспект');submit.type='submit';submit.disabled=true;
-  const cancel=node('button','Отменить загрузку','secondary');cancel.type='button';cancel.hidden=true;cancel.onclick=()=>upload?.abort();actions.append(submit,cancel);form.append(actions);
-  const progress=node('progress');progress.max=100;progress.hidden=true;progress.setAttribute('aria-label','Загрузка записи');const message=node('p','','import-message');message.setAttribute('role','status');const jobs=node('div',undefined,'import-jobs');form.append(progress,message,jobs);
-  library.querySelector('.view-intro').after(importPanel);
-  const openImport=()=>{
-   window.showLectureView?.('library');
-   importPanel.open=true;
-   choose.focus({preventScroll:true});
-   importPanel.scrollIntoView({block:'start',behavior:motion()});
-  };
-  refreshLibrary=window.mountRecordingLibrary(importPanel,openRecording,openImport);
-  const shortcuts=document.querySelector('#view-record .record-shortcuts');
-  if(shortcuts){
-   const shortcut=node('button','Импорт аудио','secondary');
-   shortcut.type='button';
-   shortcut.onclick=openImport;
-   shortcuts.prepend(shortcut);
+  function field(caption,type,id){
+   const label=node('label',caption),input=node('input');input.type=type;input.id=id;input.maxLength=160;
+   label.append(input);fields.append(label);return input;
   }
-  const pendingOpen=new Set();let stamp='',polling=false;
+  const title=field('Название','text','import-title'),subject=field('Предмет','text','import-subject'),date=field('Дата занятия','date','import-date');
+  subject.placeholder='Необязательно';metadata.append(fields);metadata.hidden=true;
+  const localDate=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
+  date.value=localDate();
+  const actions=node('div',undefined,'import-actions');
+  const submit=node('button','Сохранить и распознать');submit.type='submit';submit.disabled=true;
+  const cancel=node('button','Отменить загрузку','secondary');cancel.type='button';cancel.hidden=true;
+  actions.append(submit,cancel);actions.hidden=true;
+  const progress=node('progress');progress.max=100;progress.hidden=true;progress.setAttribute('aria-label','Загрузка записи');
+  const message=node('p','','import-message');message.setAttribute('role','status');
+  const current=node('section',undefined,'current-import');current.hidden=true;current.tabIndex=-1;current.setAttribute('aria-label','Состояние импорта');
+  const statusText=node('div',undefined,'import-status-copy');statusText.setAttribute('role','status');
+  const saved=node('strong'),stage=node('p');statusText.append(saved,stage);
+  const currentAction=node('button','','secondary');currentAction.type='button';currentAction.hidden=true;
+  current.append(statusText,currentAction);
+  form.append(drop,metadata,actions,progress,message,about,current);host.append(form);
+  const history=node('details',undefined,'card import-history');
+  history.hidden=true;history.append(node('summary','История импорта'));
+  const jobs=node('div',undefined,'import-jobs');history.append(jobs);
+  library.querySelector('.library-calendar').before(history);
+  let selected=null,xhr=null,currentId='',previousTitle='',lastStamp='',historyStamp='',polling=false;
+  try{currentId=sessionStorage.getItem('lecture-current-import')||''}catch{}
+  const setText=(element,value)=>{if(element.textContent!==value)element.textContent=value};
+  function select(file){
+   if(xhr||!file)return;
+   form.classList.remove('import-complete');selected=file;
+   const name=file.name.replace(/\.[^.]+$/,'');
+   if(!title.value||title.value===previousTitle)title.value=name;
+   previousTitle=name;
+   const mb=file.size/1024**2;
+   titlePrompt.textContent=file.name;filename.textContent=mb<1?Math.ceil(file.size/1024)+' КБ':mb.toLocaleString('ru',{maximumFractionDigits:1})+' МБ';
+   choose.textContent='Заменить файл';choose.classList.add('secondary');
+   drop.classList.add('has-file');metadata.hidden=actions.hidden=false;submit.disabled=false;
+   message.textContent='';about.hidden=true;current.hidden=true;
+  }
+  picker.onchange=()=>select(picker.files[0]);
+  drop.ondragover=event=>{if(Array.from(event.dataTransfer.types).includes('Files')){event.preventDefault();drop.classList.add('drag-over')}};
+  drop.ondragleave=event=>{if(!drop.contains(event.relatedTarget))drop.classList.remove('drag-over')};
+  drop.ondrop=event=>{event.preventDefault();drop.classList.remove('drag-over');select(event.dataTransfer.files[0])};
+  cancel.onclick=()=>xhr?.abort();
+  function clearFile(){
+   selected=null;previousTitle='';picker.value='';title.value='';subject.value='';date.value=localDate();
+   titlePrompt.textContent='Перетащи сюда аудиофайл';filename.textContent='M4A, MP3, WAV и другие форматы · до 2 ГБ';
+   choose.textContent='Выбрать файл';choose.classList.remove('secondary');drop.classList.remove('has-file');
+   metadata.open=false;metadata.hidden=actions.hidden=true;
+  }
+  const openImport=(pick=false)=>{
+   window.showLectureView?.('record');window.selectCaptureMode?.('file');
+   choose.focus({preventScroll:true});if(pick===true&&!xhr)picker.click();
+  };
+  refreshLibrary=window.mountRecordingLibrary(library.querySelector('.view-intro'),openRecording,openImport);
+  document.addEventListener('keydown',event=>{
+   if((event.metaKey||event.ctrlKey)&&!event.altKey&&!event.shiftKey&&event.key.toLowerCase()==='o'&&!document.querySelector('dialog[open]')){
+    event.preventDefault();openImport(true);
+   }
+  });
+  function presentation(job){
+   const lesson=studyStatus?.lessons?.[job.file]||{},ai=studyStatus?.ai?.jobs?.[job.file];
+   if(job.status==='error')return ['error',job.message||'Не удалось подготовить запись'];
+   if(job.status==='ready'&&(ai||lesson.has_summary||lesson.has_draft)){
+    const [state,description]=window.RecordingLibrary.status(lesson,ai||{});
+    const percent=ai?.status==='processing'&&Number.isFinite(ai.percent)?' · '+Math.round(Math.max(0,Math.min(100,ai.percent)))+'%':'';
+    return [state,description+percent];
+   }
+   if(job.status==='ready')return ['saved',job.analyze?'В очереди на разбор':'Аудио доступно для прослушивания'];
+   if(job.status==='scheduling')return ['active','Добавляем запись в библиотеку'];
+   return ['active','Готовим звук к распознаванию'];
+  }
+  const retry=async(job,button)=>{
+   button.disabled=true;
+   try{await post('/imports/retry',{id:job.id});lastStamp='';await poll()}
+   catch(error){message.textContent=error.message}
+   finally{button.disabled=false}
+  };
+  function renderCurrent(job){
+   if(selected||!job)return;
+   const [state,description]=presentation(job);
+   form.classList.add('import-complete');
+   choose.textContent='Добавить ещё файл';
+   current.hidden=false;about.hidden=true;current.dataset.state=state;
+   setText(saved,'Файл сохранён на Mac');
+   setText(stage,(job.title||job.name)+' · '+description);
+   const ready=job.status==='ready',failed=job.status==='error';
+   currentAction.hidden=!ready&&!failed;
+   setText(currentAction,failed?'Повторить подготовку':'Открыть в библиотеке');
+   currentAction.onclick=failed?()=>retry(job,currentAction):()=>openRecording(job.file);
+  }
+  function renderHistory(list){
+   history.hidden=!list.length;
+   const focused=jobs.contains(document.activeElement)?document.activeElement.closest('[data-job]')?.dataset.job:null;
+   jobs.replaceChildren();
+   for(const job of list.slice(0,5)){
+    const row=node('article',undefined,'import-job');row.dataset.job=job.id;
+    const copy=node('div');copy.append(node('strong',job.title||job.name),node('p',presentation(job)[1],'muted'));row.append(copy);
+    if(job.status==='error'||job.status==='ready'){
+     const failed=job.status==='error',button=node('button',failed?'Повторить':'Открыть','secondary');button.type='button';
+     button.onclick=failed?()=>retry(job,button):()=>openRecording(job.file);row.append(button);
+    }
+    jobs.append(row);
+   }
+   if(focused)jobs.querySelector('[data-job="'+CSS.escape(focused)+'"] button')?.focus({preventScroll:true});
+  }
   async function poll(){
    if(polling)return;polling=true;
-   try{const response=await fetch('/imports',{cache:'no-store'});if(!response.ok)throw Error();const value=await response.json();const current=JSON.stringify([value.jobs,(typeof studyStatus==='object'?studyStatus?.ai?.jobs:{})]);
-    if(current!==stamp){stamp=current;jobs.replaceChildren();for(const job of (value.jobs||[]).slice(0,5)){
-     const row=node('article',undefined,'import-job');const copy=node('div');copy.append(node('strong',job.title||job.name));const ai=typeof studyStatus==='object'?studyStatus?.ai?.jobs?.[job.file]:null;const status=job.status==='ready'&&ai?.message?ai.message:job.message;copy.append(node('p',status,'muted'));row.append(copy);
-     if(job.status==='error'){const retry=node('button','Повторить','secondary');retry.type='button';retry.onclick=async()=>{retry.disabled=true;try{await post('/imports/retry',{id:job.id});stamp='';await poll()}catch(e){message.textContent=e.message}finally{retry.disabled=false}};row.append(retry)}
-     if(job.status==='ready'){const b=node('button','Открыть пару','secondary');b.type='button';b.onclick=()=>openRecording(job.file);row.append(b)}jobs.append(row);
-    }}
-    for(const job of value.jobs||[])if(job.status==='ready'&&pendingOpen.has(job.id)&&typeof cards!=='undefined'&&cards.has(job.file)){pendingOpen.delete(job.id);if(!library.hidden&&importPanel.open)openRecording(job.file)}
+   try{
+    const response=await fetch('/imports',{cache:'no-store'});if(!response.ok)return;
+    const list=(await response.json()).jobs||[];
+    const relevant=list.find(job=>job.id===currentId);
+    if(relevant&&!selected){
+     if(relevant.status==='ready'&&!cards.has(relevant.file))await update();
+     const key=JSON.stringify([relevant,presentation(relevant)]);
+     if(key!==lastStamp){lastStamp=key;renderCurrent(relevant)}
+    }
+    const historyKey=JSON.stringify(list.slice(0,5).map(job=>[job.id,job.status,presentation(job)]));
+    if(historyKey!==historyStamp){historyStamp=historyKey;renderHistory(list)}
    }catch{}finally{polling=false}
   }
-  form.onsubmit=e=>{e.preventDefault();if(!selected||upload)return;if(selected.size===0||selected.size>2*1024**3){message.textContent='Выбери непустую запись размером до 2 ГБ.';return}
+  form.onsubmit=event=>{
+   event.preventDefault();if(!selected||xhr)return;
+   if(!selected.size||selected.size>2*1024**3){message.textContent='Выбери непустую запись размером до 2 ГБ.';return}
    const params=new URLSearchParams({name:selected.name,title:title.value,subject:subject.value,date:date.value,analyze:'1'});
-   const xhr=new XMLHttpRequest();upload=xhr;submit.disabled=true;choose.disabled=true;cancel.hidden=false;progress.hidden=false;progress.value=0;message.textContent='Загружаю запись…';
-   xhr.open('POST','/import-audio?'+params.toString());xhr.setRequestHeader('Content-Type','application/octet-stream');xhr.timeout=30*60*1000;
-   xhr.upload.onprogress=event=>{if(event.lengthComputable){progress.value=event.loaded/event.total*100;message.textContent='Загружаю запись · '+Math.round(progress.value)+'%'}};
-   xhr.onload=()=>{let value={};try{value=JSON.parse(xhr.responseText)}catch{}if(xhr.status>=200&&xhr.status<300){message.textContent=value.duplicate?'Эта запись уже загружена. Открываю её в библиотеке.':'Аудио сохранено. Подготавливаю текст и конспект…';pendingOpen.add(value.id);picker.value='';selected=null;filename.textContent='Можно загрузить следующую запись';stamp='';update().then(poll)}else message.textContent=value.error||'Не удалось загрузить запись. Исходный файл остался у тебя.'};
-   xhr.onerror=()=>message.textContent='Связь прервалась. Исходная запись осталась у тебя; повтори загрузку.';xhr.ontimeout=xhr.onerror;xhr.onabort=()=>message.textContent='Загрузка отменена. Исходная запись осталась у тебя.';
-   xhr.onloadend=()=>{upload=null;submit.disabled=!selected;choose.disabled=false;cancel.hidden=true;progress.hidden=true};xhr.send(selected);
+   const restoreFocus=form.contains(document.activeElement);
+   const request=new XMLHttpRequest();xhr=request;submit.disabled=choose.disabled=true;
+   for(const input of fields.querySelectorAll('input'))input.disabled=true;
+   cancel.hidden=progress.hidden=false;progress.value=0;message.textContent='Сохраняем файл на Mac…';
+   request.open('POST','/import-audio?'+params);request.setRequestHeader('Content-Type','application/octet-stream');request.timeout=30*60*1000;
+   request.upload.onprogress=e=>{if(e.lengthComputable){progress.value=100*e.loaded/e.total;message.textContent='Сохраняем файл на Mac · '+Math.round(progress.value)+'%'}};
+   request.onload=()=>{
+    let value={};try{value=JSON.parse(request.responseText)}catch{}
+    if(request.status<200||request.status>=300||!value.id){message.textContent=value.error||'Не удалось сохранить запись. Попробуй ещё раз.';return}
+    const chosenTitle=title.value||selected.name,original=selected.name;
+    currentId=value.id;
+    try{sessionStorage.setItem('lecture-current-import',currentId)}catch{}
+    clearFile();message.textContent=value.duplicate?'Эта запись уже есть в библиотеке.':'';
+    lastStamp='';renderCurrent({id:currentId,file:value.file,title:chosenTitle,name:original,status:value.status,analyze:true});
+    update().then(poll);
+   };
+   request.onerror=()=>{message.textContent='Связь прервалась. Повтори загрузку с этим файлом.'};
+   request.ontimeout=request.onerror;
+   request.onabort=()=>{message.textContent='Загрузка отменена. Можно снова сохранить этот файл.'};
+   request.onloadend=()=>{
+    xhr=null;choose.disabled=false;submit.disabled=!selected;cancel.hidden=progress.hidden=true;
+    for(const input of fields.querySelectorAll('input'))input.disabled=false;
+    if(!selected&&restoreFocus&&current.getClientRects().length&&(document.activeElement===document.body||form.contains(document.activeElement)))current.focus({preventScroll:true});
+   };
+   request.send(selected);
   };
   const loop=async()=>{if(!document.hidden)await poll();setTimeout(loop,2000)};loop();
  }
  let refreshLibrary=()=>{};
- window.LectureWorkflow={renderReader,refreshCard,seek,clock,openRecording,bindAudio,pauseLibrary,refreshLibrary:status=>refreshLibrary(status)};
+ window.LectureWorkflow={renderReader,refreshCard,seek,clock,recordTitle,openRecording,closeReader,bindAudio,pauseLibrary,refreshLibrary:status=>{refreshLibrary(status);if(selectedCard&&!cards.has(selectedCard.name))closeReader()}};
  initImport();
 })();

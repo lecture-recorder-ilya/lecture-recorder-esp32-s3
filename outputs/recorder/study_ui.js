@@ -35,7 +35,7 @@ const searchButton=el('button','Найти по смыслу');const searchOutpu
 searchButton.onclick=async()=>{searchButton.disabled=true;searchOutput.textContent='Ищу на этом Mac…';try{
  const response=await fetch('/search?q='+encodeURIComponent(searchInput.value));const data=await response.json();if(!response.ok)throw Error(data.error);
  searchOutput.replaceChildren(el('p',data.message||'','muted'));
- for(const item of data.results||[]){const card=cards.get(item.file);if(!card)continue;const row=el('div');const go=el('button',timeLabel(item.start)+' · '+(card.lesson?.topic||item.file),'secondary');go.onclick=()=>{window.revealCalendarFile?.(item.file);card.details.open=true;card.li.closest('ul').parentElement.open=true;card.li.scrollIntoView({block:'center'});card.audio.currentTime=item.start;card.audio.play().catch(()=>{})};row.append(go,el('p',item.text));searchOutput.append(row)}
+ for(const item of data.results||[]){const card=cards.get(item.file);if(!card)continue;const row=el('div');const go=el('button',timeLabel(item.start)+' · '+(card.lesson?.topic||item.file),'secondary');go.onclick=()=>window.LectureWorkflow?.openRecording(item.file,item.start);row.append(go,el('p',item.text));searchOutput.append(row)}
  if(!data.results?.length)searchOutput.append(el('p','Подходящих фрагментов не найдено.'));
 }catch(e){searchOutput.textContent=e.message}finally{searchButton.disabled=false}};
 searchInput.onkeydown=e=>{if(e.key==='Enter')searchButton.click()};studyPanel.append(searchInput,searchButton,searchOutput);
@@ -92,7 +92,7 @@ function renderRecall(recall,target=recallBox){
  target.append(el('h3','Это было на прошлой лекции'));
  if(recall.status!=='ready'){target.append(el('p',recall.status==='searching'?'Ищу тему в предыдущих записях…':recall.status==='not_found'?'Подходящий отрывок пока не найден в доступных расшифровках.':'Поиск временно недоступен.','muted'));return}
  target.append(el('p','Похожие отрывки из прошлых занятий — проверь соответствие вопросу.','muted'));
- for(const item of recall.results||[]){const row=el('article');row.append(el('small',(item.subject||'Прошлая лекция')+' · '+item.file.slice(8,18),'muted'),el('p',item.text));const go=el('button','Открыть лекцию · '+timeLabel(item.start),'secondary');go.onclick=async()=>{window.showLectureView?.('library');window.revealCalendarFile?.(item.file);const card=cards.get(item.file);if(card){card.details.open=true;card.li.scrollIntoView({block:'center'});card.audio.currentTime=item.start;card.audioTools.open=true}else{const audio=new Audio('/recordings/'+encodeURIComponent(item.file));audio.currentTime=item.start;audio.play().catch(studyError)}};const source=el('a','Исходная запись');source.href='/recordings/'+encodeURIComponent(item.file)+'#t='+item.start;row.append(go,source);target.append(row)}
+ for(const item of recall.results||[]){const row=el('article');row.append(el('small',(item.subject||'Прошлая лекция')+' · '+item.file.slice(8,18),'muted'),el('p',item.text));const go=el('button','Открыть лекцию · '+timeLabel(item.start),'secondary');go.onclick=()=>{if(cards.has(item.file)){window.LectureWorkflow?.openRecording(item.file,item.start)}else{const audio=new Audio('/recordings/'+encodeURIComponent(item.file));audio.currentTime=item.start;audio.play().catch(studyError)}};const source=el('a','Исходная запись');source.href='/recordings/'+encodeURIComponent(item.file)+'#t='+item.start;row.append(go,source);target.append(row)}
 }
 
 function studyError(error){$('#error').textContent=error.message}
@@ -158,8 +158,13 @@ function initStudyCard(card,name){
   else if(reviewRevision!==revision)card.reviewCards.refresh();
   reviewRevision=revision;
  });
+ const tools=el('details',undefined,'record-tools');
+ tools.append(el('summary','Инструменты записи'));
+ for(const panel of [card.boardPhotos?.panel,reviewPanel,audioTools,...body.querySelectorAll(':scope > .clip-fragment, :scope > .audio-enhancement')]){
+  if(panel)tools.append(panel);
+ }
+ body.append(tools);
  details.ontoggle=()=>{if(details.open)update()};
-
 }
 async function renderLearningMoments(box,card,result,name,range=null,paper=false){
  const generation=box.dataset.materialGeneration;const response=await fetch('/learning-moments?file='+encodeURIComponent(name));if(!response.ok)return;const data=await response.json();if(!box.isConnected||box.dataset.materialGeneration!==generation)return;

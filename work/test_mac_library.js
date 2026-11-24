@@ -7,14 +7,55 @@
   throw Error(note);
  };
  try{
+  if(location.search.includes('entry')){
+   const fileTab=document.querySelector('#capture-tab-file'),micTab=document.querySelector('#capture-tab-mic');
+   await until(()=>studyStatus&&document.querySelector('.library-catalog')?.hidden===false,'Первый статус');
+   assert(!document.querySelector('dialog[open]')&&document.title==='На полях','Вход без профиля');
+   const choose=document.querySelector('.import-choose'),form=document.querySelector('#lecture-import');
+   assert(choose.getBoundingClientRect().bottom<innerHeight&&choose.getClientRects().length>0,'Импорт на первом экране без ESP');
+   fileTab.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+   assert(document.activeElement===micTab&&!document.querySelector('#capture-mic').hidden&&document.querySelector('#start').disabled,'Запись без подключённого микрофона');
+   micTab.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true}));
+   assert(document.activeElement===fileTab&&!document.querySelector('#capture-file').hidden,'Клавиатура источника');
+   const drop=name=>{
+    const data=new DataTransfer();data.items.add(new File(['test-audio'],name,{type:'audio/mp4'}));
+    const event=new Event('drop',{bubbles:true,cancelable:true});
+    Object.defineProperty(event,'dataTransfer',{value:data});form.querySelector('.import-drop').dispatchEvent(event);
+   };
+   drop('Первая.m4a');drop('Свет.m4a');
+   assert(form.querySelector('#import-title').value==='Свет','Новое имя при замене файла');
+   const submit=form.querySelector('[type=submit]');submit.focus();submit.click();
+   const current=form.querySelector('.current-import'),open=current.querySelector('button');
+   await until(()=>!current.hidden&&!open.hidden,'Сохранение и открытие в библиотеке');
+   assert(current.textContent.includes('Файл сохранён на Mac'),'Подтверждение сохранения');
+   open.click();
+   const uploaded='lecture-2026-11-24-14-00-00.wav';
+   await until(()=>cards.get(uploaded)?.readerRoot?.isConnected,'Читалка импортированной лекции');
+   const reader=cards.get(uploaded);
+   document.dispatchEvent(new KeyboardEvent('keydown',{key:'f',metaKey:true,bubbles:true,cancelable:true}));
+   const search=reader.readerRoot.querySelector('input[type=search]');
+   assert(document.activeElement===search,'Поиск в открытой лекции');
+   search.value='БАЗИС';search.dispatchEvent(new Event('input'));
+   assert(reader.readerRoot.querySelectorAll('.transcript-line').length===1&&reader.readerRoot.querySelector('mark').textContent==='базис','Выделение найденной фразы');
+   reader.readerRoot.querySelector('.transcript-line').click();
+   await until(()=>!reader.audio.paused&&reader.audio.currentTime>=4&&reader.audio.currentTime<7,'Прослушивание с отметки фразы');
+   search.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+   assert(!search.value&&reader.readerRoot.querySelectorAll('.transcript-line').length===2,'Очистка запроса с клавиатуры');
+   document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+   assert(!document.querySelector('.is-reading')&&reader.audio.paused,'Возврат из читалки и остановка звука');
+   assert(document.documentElement.scrollWidth<=innerWidth,'Ширина окна');
+   result.textContent='ok';return;
+  }
   window.showLectureView('library',false);
   const panel=document.querySelector('.library-catalog');
   const search=panel.querySelector('input'),pinned=panel.querySelector('.library-filter');
   const rows=()=>Array.from(panel.querySelectorAll('.library-entry'));
   const query=text=>{search.value=text;search.dispatchEvent(new Event('input'))};
+  const back=()=>document.querySelector('.reader-back').click();
   const open=async(name)=>{
+   if(document.querySelector('.is-reading'))back();
    query(name);assert(rows().length===1,'Результат открытия '+name);
-   rows()[0].querySelector('.library-open').click();
+   const button=rows()[0].querySelector('.library-open');button.focus();button.click();
    const card=cards.get(name);
    assert(card.details.open&&!card.li.closest('[hidden]'),'Карточка оказалась скрыта');
    await until(()=>card.audio.readyState>0,'Метаданные плеера');
@@ -48,6 +89,7 @@
    pinned.click();assert(rows().length===1&&rows()[0].dataset.file===target,'Избранное после перезапуска');
    const card=await open(target);
    assert(Math.abs(card.audio.currentTime-3.3)<.06&&card.audio.playbackRate===1.5,'Позиция и скорость после перезапуска');
+   back();assert(document.activeElement===rows()[0].querySelector('.library-open'),'Возврат фокуса к записи');
    const star=rows()[0].querySelector('.library-star');star.focus();star.click();
    assert(rows().length===0&&document.activeElement===pinned&&!panel.querySelector('.library-catalog-empty').hidden,'Удаление последнего избранного');
    panel.querySelector('.library-catalog-empty button').click();

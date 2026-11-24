@@ -8,7 +8,7 @@ import unittest
 import wave
 import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 WORK = Path(__file__).resolve().parent
 UI = WORK.parent / 'outputs/recorder'
@@ -39,7 +39,9 @@ class Handler(SimpleHTTPRequestHandler):
             self.send((WORK / 'test_mac_library.js').read_bytes(), 'text/javascript')
         elif route.startswith('/analysis/'):
             self.send(json.dumps({'subject': 'Алгебра', 'overview': 'Линейные отображения.',
-                                  'summary': ['Пример из записи'], 'segments': []}).encode(), 'application/json')
+                                  'summary': ['Пример из записи'], 'segments': [
+                                      {'id': 0, 'start': 0.5, 'end': 2, 'text': 'Длина вектора.'},
+                                      {'id': 1, 'start': 4, 'end': 9, 'text': 'Координаты в базисе.'}]}).encode(), 'application/json')
         elif route.startswith('/recordings/'):
             out = io.BytesIO()
             with wave.open(out, 'wb') as wav:
@@ -51,7 +53,32 @@ class Handler(SimpleHTTPRequestHandler):
         else:
             data = {'/status': STATE, '/calendar': {'entries': [], 'group': ''},
                     '/imports': {'jobs': []}, '/mirea-profile': {'configured': True}}.get(route, {})
+            if 'phase=entry' in self.headers.get('Referer', ''):
+                job = getattr(self.server, 'imported', None)
+                if route == '/mirea-profile':
+                    data = {'configured': False, 'group': ''}
+                elif route == '/imports':
+                    data = {'jobs': [job] if job else []}
+                elif route == '/status':
+                    name = job['file'] if job else ''
+                    data = {'wifi': {}, 'files': [name] if job else [], 'recording': False, 'usb_present': False,
+                            'lessons': {name: {'title': job['title'], 'has_summary': True}} if job else {},
+                            'ai': {'ready': True, 'jobs': {}}}
             self.send(json.dumps(data).encode(), 'application/json')
+
+    def do_POST(self):
+        route = urlsplit(self.path)
+        if route.path != '/import-audio':
+            return self.send_error(404)
+        query = parse_qs(route.query)
+        original = query['name'][0]
+        payload = self.rfile.read(int(self.headers['Content-Length']))
+        if original != 'Свет.m4a' or payload != b'test-audio' or query['analyze'] != ['1']:
+            return self.send_error(400)
+        job = {'id': 'a' * 32, 'file': 'lecture-2026-11-24-14-00-00.wav', 'name': original,
+               'title': query['title'][0], 'status': 'ready', 'analyze': True}
+        self.server.imported = job
+        self.send(json.dumps(job).encode(), 'application/json')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=UI, **kwargs)

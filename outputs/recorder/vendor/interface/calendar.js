@@ -21,6 +21,8 @@ if(typeof document!=='undefined')(() => {
  const selectedInfo=node('div','selected-lesson');library.insertBefore(selectedInfo,title);
  const empty=node('p','card calendar-empty');library.insertBefore(empty,files);
  const archiveActions=node('div','archive-actions');const originalsButton=button('Показать исходные отрывки',()=>{showOriginals=!showOriginals;render()});archiveActions.append(button('Все занятия',()=>{selected='all';render()}),originalsButton);title.after(archiveActions);
+ const disclosure=node('details','card library-calendar'),summary=node('summary','','По расписанию');
+ files.before(disclosure);disclosure.append(summary,calendar,selectedInfo,title,archiveActions,empty);
  let schedule=null,status=null,mode='day',day='',selected=null,stamp='',showOriginals=false,autoOpenedSelection='';
  const format=(iso,options)=>new Intl.DateTimeFormat('ru',{timeZone:'UTC',...options}).format(new Date(iso+'T12:00:00Z'));
  function today(){return new Intl.DateTimeFormat('sv-SE',{timeZone:schedule?.timezone||'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
@@ -87,6 +89,7 @@ if(typeof document!=='undefined')(() => {
   if(!day)chooseDay(today());else render();
  };
  window.revealCalendarFile=name=>{
+  disclosure.open=true;
   if(!status)return;
   const meta=status.lessons?.[name];
   if(!calendarTopFiles(status).includes(name))showOriginals=true;

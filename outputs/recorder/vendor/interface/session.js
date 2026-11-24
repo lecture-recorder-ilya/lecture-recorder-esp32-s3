@@ -115,7 +115,7 @@
   storeProfile({group:groupField.value,course:Number(courseField.value)});
  };
  $('#mirea-skip').onclick=()=>storeProfile({skip:true});
- profileDialog.addEventListener('cancel',event=>{if(!profile?.configured||savingProfile)event.preventDefault()});
+ profileDialog.addEventListener('cancel',event=>{if(savingProfile)event.preventDefault()});
  profileDialog.addEventListener('close',()=>{if(status)reconcile()});
  edit.onclick=openProfile;
  fetch('/mirea-profile',{cache:'no-store'}).then(response=>{
@@ -271,7 +271,6 @@
   for(const button of pendingList.querySelectorAll('button'))button.disabled=Boolean(status?.recording||status?.busy);
   updateSavedRecording();
   if(profileDialog.open||selectionDialog.open||status?.recording||status?.busy)return;
-  if(profile&&!profile.configured){openProfile();return;}
   const unassigned=pending.find(file=>!deferred.has(file));
   if(unassigned)openSelection(unassigned);
  }

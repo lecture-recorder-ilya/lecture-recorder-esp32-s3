@@ -1,10 +1,10 @@
-<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Запись лекций</title>
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>На полях</title><link rel="icon" href="/vendor/interface/fieldnotes.png">
 <link rel="stylesheet" href="/vendor/katex/katex.min.css"><script src="/vendor/katex/katex.min.js"></script><style>
 :root{color-scheme:dark;accent-color:rgb(100% 35% 23%)}input,select{color:#f4eee8;background:#211e1b}button:hover:not(:disabled){background:#ff765c}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #ff9b87;outline-offset:3px}button:disabled{cursor:default}
 
 body{margin:0;background:#121212;color:#f4eee8;font:16px system-ui}main{max-width:780px;margin:35px auto;padding:28px}h1{font-size:36px;margin:0 0 8px}.muted{color:#aaa39b;line-height:1.5}.card{background:#1c1c1c;border-radius:22px;padding:26px;margin:24px 0;box-shadow:0 5px 25px #00000030}#timer{font-size:60px;font-variant-numeric:tabular-nums;margin:14px 0}button{border:0;border-radius:12px;padding:13px 18px;font:inherit;cursor:pointer;background:rgb(100% 35% 23%);color:#241507;margin:4px 6px 4px 0}button:disabled{opacity:.4;cursor:default}.secondary{background:rgb(100% 35% 23%);color:#241507}meter{width:100%;height:22px}.error{color:#ff8686}.good{color:rgb(100% 35% 23%)}li{padding:12px 0;border-bottom:1px solid #35302a;overflow-wrap:anywhere}a{color:rgb(100% 35% 23%)}audio{width:100%;margin-top:10px}ul{list-style:none;padding:0}input{display:block;box-sizing:border-box;width:100%;font:inherit;padding:12px;border:1px solid #494037;border-radius:9px;margin:10px 0 18px}select{font:inherit;border:1px solid #494037;border-radius:9px;padding:9px;background:#1c1c1c}label{margin-right:10px}summary{cursor:pointer;font-weight:600}code{background:#2a241f;border-radius:6px;padding:4px 8px;font-size:15px;overflow-wrap:anywhere}#network div{margin:16px 0}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}@media(max-width:600px){main{margin:8px auto;padding:20px}h1{font-size:30px}#timer{font-size:48px}}
 .ai-result{margin-top:18px;padding:20px;background:#24201c;border-radius:14px}.ai-result h3{margin-top:0}.ai-result h4{margin-bottom:8px}.ai-result ul{list-style:disc;padding-left:20px}.ai-result li{border:0;padding:5px 0}.ai-result blockquote{border-left:3px solid rgb(100% 35% 23%);padding-left:12px;margin-left:0;color:#c5bcb2}.ai-result details{margin:15px 0}.ai-result .segment{display:flex;gap:10px;align-items:flex-start;margin:8px 0}.ai-result .segment button{padding:5px 8px;font-size:13px;white-space:nowrap}.ai-progress{font-size:14px;color:#aaa39b;margin-top:8px}.ai-button{font-size:14px;padding:9px 14px}.tag{display:inline-block;font-size:13px;color:rgb(100% 35% 23%);background:#3d2a16;padding:5px 9px;border-radius:20px}.teacher-voice{border-left:3px solid #ff765c;background:#35241d;padding:8px}.voice-label{color:#aaa;margin-left:8px}figure{margin:16px 0}#files details{margin:10px 0}</style>
-<link rel="stylesheet" href="/vendor/interface/style.css"><main><div class="row"><h1>Запись лекций</h1><button id="reload-app" class="secondary">Обновить приложение</button></div><div class="muted">Микрофон на ESP · записи на этом Mac. Можно закрывать и обновлять приложение во время записи.</div><p id="reload-message" class="muted" role="status"></p>
+<link rel="stylesheet" href="/vendor/interface/style.css"><link rel="stylesheet" href="/vendor/interface/session.css"><link rel="stylesheet" href="/vendor/interface/lecture_workflow.css"><link rel="stylesheet" href="/vendor/interface/review_cards.css"><link rel="stylesheet" href="/vendor/interface/audio_fragment.css"><link rel="stylesheet" href="/vendor/interface/fieldnotes.css"><main><div class="row"><h1>На полях</h1><button id="reload-app" class="secondary">Обновить приложение</button></div><div class="muted">Микрофон на ESP · записи на этом Mac. Можно закрывать и обновлять приложение во время записи.</div><p id="reload-message" class="muted" role="status"></p>
 <section class="card"><div class="row"><div id="status">Проверяю подключение…</div><label>Соединение <select id="transport"><option value="usb">USB</option><option value="wifi">Wi-Fi</option></select></label></div><div id="timer">00:00:00</div><meter id="level" min="0" max="100" value="0"></meter><p class="muted">Уровень микрофона</p><button id="start" disabled>Начать запись</button><button id="stop" class="secondary" disabled>Остановить</button><p id="error" class="error"></p><div id="usbstatus" class="muted"></div></section>
 <section class="card"><details id="wifi-details" open><summary>Wi-Fi телефона Samsung</summary><p class="muted">Включи точку доступа телефона в диапазоне 2,4 ГГц. Подключи к ней Mac. Для первой настройки ESP оставь подключённой через USB.</p><div><label for="hotspot-ssid">Название сети</label><input id="hotspot-ssid" placeholder="Точное название из настроек телефона" autocomplete="off" maxlength="32"></div><div><label for="hotspot-password">Пароль сети</label><input id="hotspot-password" type="password" autocomplete="off" placeholder="Пароль точки доступа"></div><button id="setup" class="secondary">Подключить ESP к телефону</button><div id="network" hidden><div>Сеть ESP: <code id="ssid"></code></div><div id="ap-password-row" hidden>Пароль: <code id="password"></code></div><button id="check" class="secondary">Проверить связь</button><p id="wifi-result"></p></div><p class="muted">ESP запомнит сеть и будет подключаться к ней после включения. Пароль отправляется по USB на ESP и не отображается в списке записей. Для записи Mac и ESP должны находиться в одной сети телефона.</p><details><summary>Резервная сеть ESP</summary><p class="muted">Если потребуется собственная сеть ESP, подготовь её через USB.</p><button id="pair" class="secondary">Подготовить сеть ESP</button><div id="reserve-network" hidden><p>Сеть: <code id="reserve-ssid"></code></p><p>Пароль: <code id="reserve-password"></code></p><button id="reserve-check" class="secondary">Проверить резервную сеть</button></div></details></details></section>
 <section class="card"><h2 style="margin-top:0">Занятие по расписанию</h2><p id="current-lesson">Проверяю расписание…</p><p id="next-lesson" class="muted"></p><p class="muted">После остановки записи можно выбрать пару из расписания, указать название вручную или сохранить аудио вне расписания.</p></section><section class="card"><div class="row"><h2 style="margin:0">Разбор лекций на Mac</h2><label><input id="auto-ai" type="checkbox" style="display:inline;width:auto;margin:0 8px">После каждой записи</label></div><label>Распознавание речи <select id="speech-model"><option value="auto">Автоматически · доступная модель</option><option value="whisper">Whisper · запасной</option><option value="qwen">Русская речь · проверка слов</option></select></label><p id="ai-ready" class="muted">Проверяю локальные модели…</p><p class="muted">Предмет, преподаватель, конспект и ДЗ. Имя преподавателя определяется из речи, если оно названо. Для домашних заданий показываются цитаты и момент записи.</p></section><p class="muted">Останови запись перед выключением ESP. Закрытие приложения и обновление интерфейса запись не прерывают. При потере Wi-Fi приложение переподключится и продолжит тот же файл. Звук во время разрыва заменяется тишиной. Автономность пока не измерена.</p><h2>Сохранённые записи</h2><ul id="files"></ul></main>
@@ -96,7 +96,8 @@ function showResult(card,result,name){
  const openSections=[...card.result.querySelectorAll('.temporal-section[open]')].map(d=>d.dataset.start);
  card.audioTools.querySelectorAll('.voice-details').forEach(node=>node.remove());card.voiceBox=null;card.voiceStamp='';card.chapters.hidden=true;const box=el('div',undefined,'ai-result');
  card.result.replaceChildren(box);
- box.append(el('h3',result.topic||card.lesson?.title||result.subject||card.lesson?.subject||'Содержание занятия'));
+ const topic=el('h3',result.topic||card.lesson?.title||result.subject||card.lesson?.subject||'Содержание занятия');
+ topic.classList.toggle('repeated-topic',topic.textContent===window.LectureWorkflow?.recordTitle(name,card.lesson));box.append(topic);
  if(window.LectureWorkflow)window.LectureWorkflow.renderReader(box,card,result,name,readerFocus);else renderFullLecture(box,card,result,name);
  const extras=el('details',undefined,'lesson-extras');extras.append(el('summary','Фото, метки и другие материалы занятия'));box.append(extras);
  renderTelegramExport(extras,result,card.lesson||{},name);
@@ -111,7 +112,8 @@ function showResult(card,result,name){
 function addCard(name){
  const li=el('li');const link=el('a',name);link.href='/recordings/'+encodeURIComponent(name);link.download=name;
  const audio=el('audio');audio.controls=true;audio.preload='none';audio.src=link.href;link.textContent='Скачать аудио';
- const button=el('button','Разобрать запись','secondary ai-button');const progress=el('div','','ai-progress');const result=el('div');
+ const button=el('button','Разобрать запись','secondary ai-button');const progress=el('div','','ai-progress');const result=el('div',undefined,'record-material');
+ progress.setAttribute('role','status');
  const card={name,li,audio,button,progress,result,lesson:null,loaded:false,loading:false,lastStatus:''};
  button.onclick=async()=>{try{await post('/analyze',{file:name});card.loaded=false;await update()}catch(e){$('#error').textContent=e.message}};
  li.append(link,audio,button,progress,result);cards.set(name,card);initStudyCard(card,name);
@@ -121,8 +123,12 @@ function addCard(name){
  });
  return card;
 }
-let updating=false;
-async function update(){if(updating)return;updating=true;try{
+let statusRequest;
+function update(){
+ if(!statusRequest)statusRequest=loadStatus().finally(()=>statusRequest=null);
+ return statusRequest;
+}
+async function loadStatus(){try{
  const response=await fetch('/status',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Status unavailable');const s=await response.json();studyStatus=s;
  let phoneStatus=$('#phone-sync-status');if(!phoneStatus){phoneStatus=document.createElement('p');phoneStatus.id='phone-sync-status';phoneStatus.className='muted';$('#status').parentNode.append(phoneStatus)}phoneStatus.textContent=s.phone_sync?(s.phone_sync.connected?s.phone_sync.message:'Телефон не подключён'):'';
  if(!s.recording&&!s.busy){stopping=false;stopError='';$('#stop').removeAttribute('aria-disabled');}
@@ -159,9 +165,13 @@ async function update(){if(updating)return;updating=true;try{
   const index=[...group.list.children].indexOf(card.li);const preceding=files.slice(0,i).filter(n=>((s.lessons||{})[n]||{}).folder===groupKey).length;
   if(index!==preceding)group.list.insertBefore(card.li,group.list.children[preceding]||null);
   const job=ai.jobs[name]||{};const recording=s.recording&&s.file===name;const active=recording||['queued','processing'].includes(job.status);card.button.disabled=!ai.ready||active;
-  card.button.hidden=recording;card.progress.hidden=recording;
+  card.button.hidden=active;
   card.button.textContent=job.status==='done'?'Обновить конспект':job.status==='error'?'Повторить создание':'Составить конспект';
-  card.progress.hidden=recording||job.status==='done';card.progress.textContent=job.message?(job.message+(job.status==='processing'?' · '+job.percent+'%':'')):'';
+  const hasText=card.lesson?.has_summary||card.lesson?.has_draft;
+  const progressText=job.message||(hasText?'':ai.ready?'Аудио сохранено. Можно начать разбор.':'Аудио сохранено. Для разбора нужны локальные модели.');
+  const percent=job.status==='processing'&&Number.isFinite(job.percent)?' · '+job.percent+'%':'';
+  card.progress.hidden=recording||job.status==='done'||!progressText;
+  if(card.progress.textContent!==progressText+percent)card.progress.textContent=progressText+percent;
   if(job.status==='error')card.progress.className='ai-progress error';else card.progress.className='ai-progress';
   if(job.status==='done'&&card.lastStatus!=='done')card.loaded=false;card.lastStatus=job.status;window.LectureWorkflow?.refreshCard(card,job);
   const revision=JSON.stringify(card.lesson?.material_revision||[]);if(card.materialRevision!==revision){card.materialRevision=revision;card.loaded=false}
@@ -174,7 +184,7 @@ async function update(){if(updating)return;updating=true;try{
  for(const [key,group] of lessonGroups)if(!group.list.children.length){group.li.remove();lessonGroups.delete(key)}
  window.refreshLectureCalendar?.(s);
  window.LectureWorkflow?.refreshLibrary(s);
- }catch(e){$('#error').textContent='Нет связи с приложением записи.'}finally{updating=false}}
+ }catch(e){$('#error').textContent='Нет связи с приложением записи.'}}
 $('#reload-app').onclick=async()=>{
  const button=$('#reload-app'),message=$('#reload-message');button.disabled=true;
  message.textContent='Обновляю приложение…';
@@ -188,6 +198,6 @@ $('#reload-app').onclick=async()=>{
  }catch(error){message.textContent=error.message;button.disabled=false}
 };
 </script>
-<link rel="stylesheet" href="/vendor/interface/review_cards.css"><script src="/vendor/interface/review_cards.js"></script>
-<link rel="stylesheet" href="/vendor/interface/audio_fragment.css"><script src="/vendor/interface/audio_fragment.js"></script>
-<script src="/telegram_export.js"></script><script src="/audio_enhance_ui.js"></script><script src="/study_ui.js"></script><script src="/vendor/interface/app.js"></script><script src="/board_ui.js"></script><script src="/vendor/interface/calendar.js"></script><link rel="stylesheet" href="/vendor/interface/session.css"><script src="/vendor/interface/session.js"></script><link rel="stylesheet" href="/vendor/interface/lecture_workflow.css"><script src="/vendor/interface/library.js"></script><script src="/lecture_workflow.js"></script><script>async function refreshLoop(first=false){if(first||!document.hidden)await update();setTimeout(refreshLoop,studyStatus?.recording?1000:3000)}document.addEventListener('visibilitychange',()=>{if(!document.hidden){update();pollStudy()}});refreshLoop(true);</script><script src='/phone_pairing_ui.js'></script><script src='/updates_ui.js'></script></html>
+<script src="/vendor/interface/review_cards.js"></script>
+<script src="/vendor/interface/audio_fragment.js"></script>
+<script src="/telegram_export.js"></script><script src="/audio_enhance_ui.js"></script><script src="/study_ui.js"></script><script src="/vendor/interface/app.js"></script><script src="/board_ui.js"></script><script src="/vendor/interface/calendar.js"></script><script src="/vendor/interface/session.js"></script><script src="/vendor/interface/library.js"></script><script src="/lecture_workflow.js"></script><script>async function refreshLoop(first=false){if(first||!document.hidden)await update();setTimeout(refreshLoop,studyStatus?.recording?1000:3000)}document.addEventListener('visibilitychange',()=>{if(!document.hidden){update();pollStudy()}});refreshLoop(true);</script><script src='/phone_pairing_ui.js'></script><script src='/updates_ui.js'></script></html>

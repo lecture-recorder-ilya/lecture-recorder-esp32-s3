@@ -9,7 +9,7 @@ config.mediaTypesRequiringUserActionForPlayback = []
 let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1000, height: 720), styleMask: .borderless, backing: .buffered, defer: false)
 window.alphaValue = 0
 window.orderBack(nil)
-for phase in ["initial", "restore"] {
+for phase in ["entry", "initial", "restore"] {
     window.setContentSize(NSSize(width: phase == "initial" ? 1000 : 420, height: 720))
     let web = WKWebView(frame: window.contentView!.bounds, configuration: config)
     window.contentView = web
