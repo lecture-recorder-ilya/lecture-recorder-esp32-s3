@@ -153,17 +153,17 @@ async function loadStatus(){try{
  if(vocabularyFile!==s.file){vocabularyFile=s.file||null;$('#asr-terms').value='';$('#save-asr-terms').disabled=!vocabularyFile;$('#asr-terms-status').textContent='';if(vocabularyFile){const file=vocabularyFile;fetch('/asr-vocabulary?file='+encodeURIComponent(file)).then(r=>r.json()).then(v=>{if(vocabularyFile===file)$('#asr-terms').value=v.terms||''}).catch(()=>{})}}
  const ai=s.ai||{ready:false,auto:true,jobs:{}};for(const id of ['auto-ai','pause-ai','eco-ai','speech-model'])$('#'+id).disabled=false;$('#eco-ai').checked=ai.economical===true;$('#speech-model').value=ai.speech||'auto';$('#speech-model').querySelector('option[value=auto]').disabled=!ai.selected_speech;$('#speech-model').querySelector('option[value=qwen]').disabled=!ai.qwen_ready;$('#auto-ai').checked=ai.auto;if($('#pause-ai'))$('#pause-ai').checked=!!ai.paused;$('#ai-ready').textContent=ai.ready?'Модели готовы · '+((ai.selected_speech||ai.speech)==='qwen'?'русская речь с проверкой слов':'Whisper')+' · на этом Mac':'Локальные модели пока не готовы';
  let folderOptions=$('#study-folders');if(!folderOptions){folderOptions=el('datalist');folderOptions.id='study-folders';document.body.append(folderOptions)}folderOptions.replaceChildren(...(s.study_folders||[]).map(v=>{const o=el('option');o.value=v;return o}));const orderedGroups=[];
- const files=s.files;
- for(const [name,card] of cards)if(!files.includes(name)){card.li.remove();cards.delete(name)}
- for(let i=0;i<files.length;i++){
-  const name=files[i];let card=cards.get(name);if(!card)card=addCard(name);
+ const files=s.files,present=new Set(files),groupSizes=new Map();
+ for(const [name,card] of cards)if(!present.has(name)){card.li.remove();cards.delete(name)}
+ for(const name of files){
+  let card=cards.get(name);if(!card)card=addCard(name);
   card.lesson=(s.lessons||{})[name]||null;renderSummaryPreview(card);card.topic.textContent=card.lesson?.topic||card.lesson?.subject||'Тема пока не определена';renderChapters(card);card.clock.textContent=card.lesson?.merged_parts?.length?card.lesson.merged_parts.length+' отрывков':name.slice(19,24).replace('-',':');const groupKey=card.lesson?.folder||'Без даты';
   let group=lessonGroups.get(groupKey);if(!group){const li=el('li');const details=el('details');details.open=false;details.append(el('summary',prettyLesson(card.lesson?.label||groupKey)));const list=el('ul');details.append(list);li.append(details);$('#files').append(li);group={li,list};lessonGroups.set(groupKey,group)}
   const groupLabel=prettyLesson(card.lesson?.label||groupKey);if(group.li.querySelector('summary').textContent!==groupLabel)group.li.querySelector('summary').textContent=groupLabel;
-  if(!orderedGroups.includes(group))orderedGroups.push(group);
-  if(card.li.parentNode!==group.list)group.list.append(card.li);
-  const index=[...group.list.children].indexOf(card.li);const preceding=files.slice(0,i).filter(n=>((s.lessons||{})[n]||{}).folder===groupKey).length;
-  if(index!==preceding)group.list.insertBefore(card.li,group.list.children[preceding]||null);
+  const index=groupSizes.get(group)||0;
+  if(index===0)orderedGroups.push(group);
+  if(group.list.children[index]!==card.li)group.list.insertBefore(card.li,group.list.children[index]||null);
+  groupSizes.set(group,index+1);
   const job=ai.jobs[name]||{};const recording=s.recording&&s.file===name;const active=recording||['queued','processing'].includes(job.status);card.button.disabled=!ai.ready||active;
   card.button.hidden=active;
   card.button.textContent=job.status==='done'?'Обновить конспект':job.status==='error'?'Повторить создание':'Составить конспект';

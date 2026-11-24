@@ -389,7 +389,7 @@
  returnBar.append(backToLibrary,readingTitle,readingDetail);
  returnBar.hidden=true;
  library.prepend(returnBar);
- let selectedCard=null,readerOpener=null,calendarWasOpen=false;
+ let selectedCard=null,readerOpener=null,calendarWasOpen=false,recordWasOpen=false;
  const recordTitle=window.RecordingLibrary.title;
 
  function closeReader(restoreFocus=true){
@@ -397,6 +397,7 @@
   const current=selectedCard;
   selectedCard=null;
   current.audio.pause();
+  current.details.open=recordWasOpen;
   current.li.classList.remove('reading-entry');
   library.classList.remove('is-reading');
   returnBar.hidden=true;
@@ -423,7 +424,7 @@
   const source=document.activeElement;
   if(selectedCard!==card){
    closeReader(false);
-   readerOpener=source;
+   readerOpener=source;recordWasOpen=card.details.open;
    calendarWasOpen=Boolean(library.querySelector('.library-calendar')?.open);
   }
   window.showLectureView?.('library',false);

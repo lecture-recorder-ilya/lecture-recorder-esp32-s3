@@ -70,9 +70,9 @@ if(typeof document!=='undefined')(() => {
   const entry=(schedule.entries||[]).find(e=>calendarFolder(e)===selected);
   const names=selected==='all'?(showOriginals?status?.files||[]:calendarTopFiles(status||{})):selected==='other'?othersOn(day,showOriginals):entry?calendarFiles(status||{},entry,showOriginals):[];
   const finished=names, allowedFolders=new Set(finished.map(name=>status.lessons?.[name]?.folder||'Без даты'));
-  for(const [key,value] of lessonGroups){value.li.hidden=!allowedFolders.has(key);if(selected!=='all'&&!value.li.hidden)value.li.firstElementChild.open=true}
+  for(const [key,value] of lessonGroups){value.li.hidden=!allowedFolders.has(key);if(disclosure.open&&selected!=='all'&&!value.li.hidden)value.li.firstElementChild.open=true}
   for(const [name,card] of cards)card.li.hidden=!finished.includes(name);
-  const autoKey=selected+'|'+finished.join(',');if(autoOpenedSelection!==autoKey){autoOpenedSelection=autoKey;if(selected!=='all'&&finished.length===1)cards.get(finished[0]).details.open=true}
+  const autoKey=selected+'|'+finished.join(',');if(disclosure.open&&autoOpenedSelection!==autoKey){autoOpenedSelection=autoKey;if(selected!=='all'&&finished.length===1)cards.get(finished[0]).details.open=true}
   originalsButton.textContent=showOriginals?'Скрыть исходные отрывки':'Показать исходные отрывки';originalsButton.setAttribute('aria-pressed',String(showOriginals));originalsButton.hidden=!(status?.files||[]).some(name=>status.lessons?.[name]?.merged_parts);
   title.textContent=selected==='all'?'Все конспекты':entry?'Содержание пары':'Конспекты за день';
   selectedInfo.replaceChildren();
@@ -83,6 +83,9 @@ if(typeof document!=='undefined')(() => {
    if(!entry&&selected!=='all')empty.textContent='За этот день пока нет записей.';
   }
  }
+ disclosure.addEventListener('toggle',()=>{
+  if(disclosure.open&&status&&schedule&&day){autoOpenedSelection='';filterRecords()}
+ });
  window.refreshLectureCalendar=value=>{
   status=value;if(!schedule)return;
   const next=JSON.stringify([value.files,value.lessons,value.recording,value.file]);if(stamp===next)return;stamp=next;

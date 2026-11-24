@@ -28,8 +28,11 @@
    const current=form.querySelector('.current-import'),open=current.querySelector('button');
    await until(()=>!current.hidden&&!open.hidden,'Сохранение и открытие в библиотеке');
    assert(current.textContent.includes('Файл сохранён на Mac'),'Подтверждение сохранения');
-   open.click();
    const uploaded='lecture-2026-11-24-14-00-00.wav';
+   await until(()=>cards.has(uploaded),'Запись в каталоге');
+   const newCard=cards.get(uploaded);
+   assert(!newCard.details.open&&!newCard.workflowAudioBound&&!newCard.readerRoot,'Свернутый календарь открыл запись в фоне');
+   open.click();
    await until(()=>cards.get(uploaded)?.readerRoot?.isConnected,'Читалка импортированной лекции');
    const reader=cards.get(uploaded);
    document.dispatchEvent(new KeyboardEvent('keydown',{key:'f',metaKey:true,bubbles:true,cancelable:true}));
@@ -42,7 +45,9 @@
    search.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
    assert(!search.value&&reader.readerRoot.querySelectorAll('.transcript-line').length===2,'Очистка запроса с клавиатуры');
    document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
-   assert(!document.querySelector('.is-reading')&&reader.audio.paused,'Возврат из читалки и остановка звука');
+   assert(!document.querySelector('.is-reading')&&!reader.details.open&&reader.audio.paused,'Возврат из читалки и остановка звука');
+   const calendar=document.querySelector('.library-calendar');calendar.open=true;
+   await until(()=>reader.details.open,'Выбор единственной записи в открытом календаре');
    assert(document.documentElement.scrollWidth<=innerWidth,'Ширина окна');
    result.textContent='ok';return;
   }

@@ -7,7 +7,9 @@ import threading
 import unittest
 import wave
 import sys
+from datetime import datetime
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from zoneinfo import ZoneInfo
 from urllib.parse import parse_qs, urlsplit
 
 WORK = Path(__file__).resolve().parent
@@ -62,7 +64,8 @@ class Handler(SimpleHTTPRequestHandler):
                 elif route == '/status':
                     name = job['file'] if job else ''
                     data = {'wifi': {}, 'files': [name] if job else [], 'recording': False, 'usb_present': False,
-                            'lessons': {name: {'title': job['title'], 'has_summary': True}} if job else {},
+                            'lessons': {name: {'title': job['title'], 'has_summary': True,
+                                               'date': datetime.now(ZoneInfo('Europe/Moscow')).date().isoformat()}} if job else {},
                             'ai': {'ready': True, 'jobs': {}}}
             self.send(json.dumps(data).encode(), 'application/json')
 
