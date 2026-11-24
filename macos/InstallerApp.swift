@@ -177,7 +177,16 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate
     func finished() {
         complete = true; progress.isIndeterminate = false; progress.doubleValue = 100; percent.stringValue = "100 %"
         stage.stringValue = "Всё готово"
-        detail.stringValue = "Открой приложение и выбери запись. Для следующего запуска найди «На полях» в папке «Приложения» своего профиля."
+        let applications = fm.homeDirectoryForCurrentUser.appendingPathComponent("Applications")
+        let shortcut = ["На полях.app", "На полях — локальная.app", "Запись лекций.app"]
+            .map { applications.appendingPathComponent($0) }
+            .first { $0.resolvingSymlinksInPath().path == application.resolvingSymlinksInPath().path }
+        if let shortcut {
+            let name = shortcut.deletingPathExtension().lastPathComponent
+            detail.stringValue = "Открой приложение и выбери запись. Для следующего запуска найди «\(name)» в папке «Приложения» своего профиля."
+        } else {
+            detail.stringValue = "Открой приложение кнопкой ниже и выбери запись."
+        }
         primary.title = "Открыть приложение"; primary.isEnabled = true; repair.isHidden = false
     }
 

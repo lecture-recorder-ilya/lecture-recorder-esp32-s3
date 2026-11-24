@@ -13,8 +13,8 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Передача сохранённых лекций с вашего Samsung на Mac без Wi-Fi.</string>
+	<string>Перенос записей с телефона на Mac по Bluetooth.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>Передача сохранённых лекций с вашего Samsung на Mac без Wi-Fi.</string>
+	<string>Перенос записей с телефона на Mac по Bluetooth.</string>
 </dict>
 </plist>
