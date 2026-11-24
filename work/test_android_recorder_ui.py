@@ -85,3 +85,26 @@ class RecorderUiTests(unittest.TestCase):
         self.tap(self.wait_for("Вернуться в библиотеку", description=True))
         self.wait_for("Найти запись", photograph="07-library")
         self.assertTrue(any(duration in node.get("content-desc", "") for node in self.screen()))
+
+
+    def test_rail_grows_with_large_labels_in_landscape(self):
+        settings = [("system", "font_scale"), ("system", "accelerometer_rotation"), ("system", "user_rotation")]
+        previous = {key: self.adb("shell", "settings", "get", *key).decode().strip() for key in settings}
+        try:
+            self.adb("shell", "settings", "put", "system", "accelerometer_rotation", "0")
+            self.adb("shell", "settings", "put", "system", "user_rotation", "1")
+            widths = []
+            for scale in ("1.0", "1.6"):
+                self.adb("shell", "settings", "put", "system", "font_scale", scale)
+                time.sleep(.6)
+                tab = self.wait_for("Библиотека", description=True)
+                left, top, right, bottom = map(int, re.findall(r"\d+", tab.get("bounds")))
+                self.assertLess(left, right - left)
+                widths.append(right - left)
+            self.assertGreater(widths[1], widths[0] * 1.15)
+        finally:
+            for key, value in reversed(list(previous.items())):
+                if value == "null":
+                    self.adb("shell", "settings", "delete", *key)
+                else:
+                    self.adb("shell", "settings", "put", *key, value)

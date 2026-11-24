@@ -269,7 +269,7 @@ public class MainActivity extends Activity {
    tabs[index]=tab;
   }
   navTabs.addOnLayoutChangeListener((view,left,top,right,bottom,oldLeft,oldTop,oldRight,oldBottom)->positionNavSelection(false));
-  LinearLayout.LayoutParams navigation=landscape?new LinearLayout.LayoutParams(dp(82),-1):new LinearLayout.LayoutParams(-1,-2);
+  LinearLayout.LayoutParams navigation=landscape?new LinearLayout.LayoutParams(railWidth(),-1):new LinearLayout.LayoutParams(-1,-2);
   if(landscape){
    navigation.setMargins(dp(8),dp(8),0,dp(8));
    root.addView(nav,0,navigation);
@@ -290,6 +290,13 @@ public class MainActivity extends Activity {
    getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,callback);
    systemBackCallback=callback;
   }
+ }
+ private int railWidth(){
+  android.graphics.Paint paint=new android.graphics.Paint(tabs[LIBRARY_PAGE].getPaint());
+  paint.setTextSize(android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP,14,getResources().getDisplayMetrics()));
+  int width=dp(82);
+  for(Button tab:tabs)if(tab!=null)width=Math.max(width,(int)Math.ceil(paint.measureText(tab.getText().toString()))+dp(20));
+  return width;
  }
  private LinearLayout.LayoutParams spaced(int gap) {
   LinearLayout.LayoutParams size=new LinearLayout.LayoutParams(-1,-2);
