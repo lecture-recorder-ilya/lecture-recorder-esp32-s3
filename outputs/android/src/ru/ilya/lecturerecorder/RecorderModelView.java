@@ -29,7 +29,7 @@ final class RecorderModelView extends View {
         if (android.os.Build.VERSION.SDK_INT < 29) setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         setFocusable(true);
         setClickable(true);
-        setContentDescription("Вращаемая 3D-модель корпуса ClipMic");
+        setContentDescription("Вращаемая 3D-модель корпуса диктофона");
     }
 
     float rotation() {

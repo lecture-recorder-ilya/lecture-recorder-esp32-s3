@@ -8,4 +8,4 @@ for name,requirements in [('ai-env','requirements-ai.txt'),('esp-check-env','req
  subprocess.run([str(target/'bin/python'),'-m','pip','install','-r',str(ROOT/'outputs/recorder'/requirements)],check=True)
 asr=work/'asr-env'
 if not asr.exists():asr.symlink_to('ai-env',target_is_directory=True)
-print('Окружения готовы. Следующий шаг: tools/download_models.py и tools/build_mac.py.')
+print('Окружения приложения «Коса» готовы. Запусти tools/download_models.py и tools/build_mac.py.')

@@ -7,7 +7,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>ru.ilya.lecture-recorder.bluetooth</string>
 	<key>CFBundleName</key>
-	<string>Синхронизация записей</string>
+	<string>Коса — синхронизация</string>
+	<key>CFBundleDisplayName</key>
+	<string>Коса — синхронизация</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>LSUIElement</key>

@@ -56,9 +56,10 @@ def main():
         subprocess.run([str(uv), '--no-config', 'python', 'install', '--no-bin', '--managed-python', distribution['python_version']], env=env, check=True)
         runtime = tools / 'python' / ('cpython-' + distribution['python_version'] + '-macos-aarch64-none')
     subprocess.run([sys.executable, str(ROOT / 'tools/build_mac.py')], check=True)
-    staging = tempfile.TemporaryDirectory(prefix='lecture-installer-') if not args.skip_dmg else None
-    build_root = Path(staging.name) if staging else work
-    app = build_root / 'Установить Диктофон.app'
+    staging = tempfile.TemporaryDirectory(prefix='.kosa-', dir=work) if not args.skip_dmg else None
+    build_root = Path(staging.name) / 'disk' if staging else work
+    build_root.mkdir(exist_ok=True)
+    app = build_root / 'Установить Косу.app'
     if app.exists():
         shutil.rmtree(app)
     contents = app / 'Contents'
@@ -93,16 +94,12 @@ def main():
     subprocess.run(['codesign', '--force', '--deep', '--sign', '-', str(app)], check=True)
     subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
     if not args.skip_dmg:
-        disk = build_root / 'disk'
-        if disk.exists():
-            shutil.rmtree(disk)
-        disk.mkdir()
-        shutil.copytree(app, disk / app.name, symlinks=True)
-        (disk / 'Начни здесь.txt').write_text('Открой «Установить Диктофон» и нажми «Установить и открыть».\nНужны Mac с Apple Silicon, macOS 14+, 22 ГБ свободного места и интернет.\nПриложение появится в папке «Приложения» твоего профиля.\n')
+        (build_root / 'Начни здесь.txt').write_text('Открой «Установить Косу» и нажми «Установить и открыть».\nНужны Mac с Apple Silicon, macOS 14+, 22 ГБ свободного места и интернет.\nПриложение «Коса» появится в папке «Приложения» твоего профиля.\n')
         dmg = work / ('lecture-recorder-' + version['version'] + '-arm64.dmg')
-        dmg.unlink(missing_ok=True)
-        subprocess.run(['hdiutil', 'create', '-volname', 'Диктофон', '-srcfolder', str(disk), '-format', 'UDZO', str(dmg)], check=True)
-        subprocess.run(['hdiutil', 'verify', str(dmg)], check=True)
+        incoming = Path(staging.name) / dmg.name
+        subprocess.run(['hdiutil', 'create', '-volname', 'Коса', '-srcfolder', str(build_root), '-format', 'UDZO', str(incoming)], check=True)
+        subprocess.run(['hdiutil', 'verify', str(incoming)], check=True)
+        incoming.replace(dmg)
         print(dmg)
     if args.skip_dmg:
         print(app)

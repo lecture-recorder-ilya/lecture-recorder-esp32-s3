@@ -55,6 +55,8 @@ test("Прокрутка поворачивает корпус на компью
         const page = await context.newPage();
         await page.goto(url);
         await page.waitForSelector('.model-stage[data-rendered="true"]');
+        assert.equal(await page.locator(".top .brand").innerText(), "Коса");
+        assert.equal(await page.locator("#product-title").innerText(), "Коса");
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), width);
         const widths = [];
         for (const fraction of [.08, .22, .38, .5, .62, .78, .94]) {

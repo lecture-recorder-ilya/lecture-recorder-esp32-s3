@@ -13,6 +13,7 @@ import tempfile
 import threading
 import unittest
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
@@ -119,14 +120,14 @@ class InstallerTests(unittest.TestCase):
     def test_shortcut_preserves_foreign_application(self):
         applications = self.root / 'Applications'
         applications.mkdir()
-        foreign = applications / 'Диктофон.app'
+        foreign = applications / 'Коса.app'
         foreign.mkdir()
         (foreign / 'fixture').write_text('keep')
         target = self.root / 'project/outputs/Запись лекций.app'
         target.mkdir(parents=True)
         result = installer.install_shortcut(self.root / 'project', applications)
         self.assertEqual(result.resolve(), target.resolve())
-        self.assertEqual(result.name, 'Диктофон — локальная.app')
+        self.assertEqual(result.name, 'Коса — локальная.app')
         self.assertEqual((foreign / 'fixture').read_text(), 'keep')
         self.assertEqual(installer.install_shortcut(self.root / 'project', applications), result)
 
@@ -137,15 +138,18 @@ class InstallerTests(unittest.TestCase):
         target.mkdir(parents=True)
         applications = self.root / 'Applications'
         applications.mkdir()
-        old = applications / 'Запись лекций.app'
+        old = applications / 'Диктофон.app'
         old.symlink_to(target)
+        alternate = applications / 'На полях.app'
+        alternate.symlink_to(self.root / 'другое приложение.app')
         with patch.object(Path, 'home', return_value=self.root):
             refresh_installed_shortcut(self.root / 'test-checkout')
-            self.assertEqual(list(applications.iterdir()), [old])
+            self.assertEqual(set(applications.iterdir()), {old, alternate})
             refresh_installed_shortcut(project)
             refresh_installed_shortcut(project)
-        self.assertTrue(old.samefile(applications / 'Диктофон.app'))
-        self.assertEqual(len(list(applications.iterdir())), 2)
+        self.assertTrue(old.samefile(applications / 'Коса.app'))
+        self.assertEqual(alternate.readlink(), self.root / 'другое приложение.app')
+        self.assertEqual(len(list(applications.iterdir())), 3)
 
     def test_packaged_installer_starts_in_isolated_python(self):
         for source in (ROOT / 'installer/install.py', ROOT / 'outputs/recorder/app_shortcut.py'):
@@ -160,12 +164,32 @@ class InstallerTests(unittest.TestCase):
         project = self.root / 'project'
         target = project / 'outputs/Запись лекций.app'
         target.mkdir(parents=True)
-        foreign = applications / 'Диктофон.app'
+        foreign = applications / 'Коса.app'
         foreign.symlink_to(self.root / 'missing.app')
-        (applications / 'Диктофон — локальная.app').mkdir()
+        (applications / 'Коса — локальная.app').mkdir()
         self.assertEqual(installer.install_shortcut(project, applications), target)
         self.assertFalse(foreign.exists())
         self.assertTrue(foreign.is_symlink())
+        legacy = applications / 'Диктофон.app'
+        legacy.symlink_to(target)
+        self.assertEqual(installer.install_shortcut(project, applications), legacy)
+
+    def test_parallel_shortcut_refresh_creates_one_link(self):
+        applications = self.root / 'Applications'
+        project = self.root / 'project'
+        target = project / 'outputs/Запись лекций.app'
+        target.mkdir(parents=True)
+        gate = threading.Barrier(8)
+
+        def refresh(_):
+            gate.wait(timeout=10)
+            return installer.install_shortcut(project, applications)
+
+        with ThreadPoolExecutor(max_workers=8) as workers:
+            links = set(workers.map(refresh, range(8)))
+        self.assertEqual(links, {applications / 'Коса.app'})
+        self.assertEqual(set(applications.iterdir()), links)
+        self.assertTrue((applications / 'Коса.app').samefile(target))
 
     def test_complete_state_requires_all_verifications_and_retry_preserves_data(self):
         resources = self.resources()
@@ -187,7 +211,7 @@ class InstallerTests(unittest.TestCase):
             with self.assertRaises(installer.InstallError):
                 installer.install(resources, support, self.root / 'Applications')
         self.assertEqual(installer.read(support / 'install-state.json')['status'], 'installing')
-        self.assertFalse((self.root / 'Applications/Запись лекций.app').exists())
+        self.assertFalse((self.root / 'Applications/Коса.app').exists())
         with patch.object(installer, 'run', side_effect=lambda args, *unused: commands.append(args)), \
                 patch.object(installer, 'download_models'), patch.object(installer, 'stop_managed_services'), patch.object(installer, 'emit'):
             installer.install(resources, support, self.root / 'Applications')
@@ -249,7 +273,7 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(request.call_count, 1)
 
     def test_recorder_verification_does_not_wait_for_installer_lock(self):
-        python = ROOT / 'work/installer/Установить Диктофон.app/Contents/Resources/Setup/python/bin/python3.12'
+        python = Path(os.environ.get('RECORDER_TEST_PYTHON', ROOT / 'work/installer/Установить Косу.app/Contents/Resources/Setup/python/bin/python3.12'))
         if not python.exists():
             self.skipTest('Bundled Python required')
         root = self.root / 'project'

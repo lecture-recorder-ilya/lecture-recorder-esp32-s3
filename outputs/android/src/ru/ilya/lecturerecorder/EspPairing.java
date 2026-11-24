@@ -64,7 +64,7 @@ final class EspPairing {
         sheet.setBackground(StudioStyle.card(activity, 24));
         sheet.setFocusableInTouchMode(true);
 
-        TextView title = text("Подключить ClipMic", 23, TEXT);
+        TextView title = text("Подключить диктофон", 23, TEXT);
         title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         if (Build.VERSION.SDK_INT >= 28) title.setAccessibilityHeading(true);
         sheet.addView(title, new LinearLayout.LayoutParams(-1, -2));

@@ -45,7 +45,7 @@ struct CaptureDesk: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 12) {
                 FieldMark().frame(width: 40, height: 40).accessibilityHidden(true)
-                Text("Запись")
+                Text("Коса")
                     .font(.largeTitle.weight(.bold)).tracking(-1.4)
                     .foregroundStyle(Studio.ink)
                     .accessibilityAddTraits(.isHeader)

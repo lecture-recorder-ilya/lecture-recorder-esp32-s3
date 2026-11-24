@@ -11,15 +11,15 @@ def main():
     project = folder / 'LectureRecorder.xcodeproj'
     project.mkdir(parents=True, exist_ok=True)
     info = {
-        'CFBundleDevelopmentRegion': 'ru', 'CFBundleDisplayName': 'Диктофон',
+        'CFBundleDevelopmentRegion': 'ru', 'CFBundleDisplayName': 'Коса',
         'CFBundleExecutable': '$(EXECUTABLE_NAME)', 'CFBundleIdentifier': '$(PRODUCT_BUNDLE_IDENTIFIER)',
-        'CFBundleName': '$(PRODUCT_NAME)', 'CFBundlePackageType': 'APPL',
+        'CFBundleName': 'Коса', 'CFBundlePackageType': 'APPL',
         'CFBundleShortVersionString': version['version'], 'CFBundleVersion': str(version['code']),
         'LSRequiresIPhoneOS': True, 'UILaunchScreen': {}, 'UIBackgroundModes': ['audio', 'bluetooth-central'],
-        'NSMicrophoneUsageDescription': 'Запись с микрофона телефона или подключённой гарнитуры.',
-        'NSBluetoothAlwaysUsageDescription': 'Подключение к диктофону ClipMic для записи по Bluetooth.',
-        'NSSpeechRecognitionUsageDescription': 'Распознавание речи в сохранённых записях на этом устройстве.',
-        'NSLocalNetworkUsageDescription': 'Подключение к твоему Mac для переноса записей, расшифровок и конспектов.',
+        'NSMicrophoneUsageDescription': '«Коса» записывает звук с микрофона устройства или подключённой гарнитуры.',
+        'NSBluetoothAlwaysUsageDescription': '«Коса» подключается к диктофону ClipMic, чтобы записывать с него звук по Bluetooth.',
+        'NSSpeechRecognitionUsageDescription': '«Коса» распознаёт речь на этом устройстве, чтобы добавить текст к записи.',
+        'NSLocalNetworkUsageDescription': '«Коса» подключается к твоему Mac для переноса записей, расшифровок и конспектов.',
         'NSAppTransportSecurity': {'NSAllowsLocalNetworking': True},
         'UISupportedInterfaceOrientations': ['UIInterfaceOrientationPortrait', 'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
         'UISupportedInterfaceOrientations~ipad': ['UIInterfaceOrientationPortrait', 'UIInterfaceOrientationPortraitUpsideDown', 'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],

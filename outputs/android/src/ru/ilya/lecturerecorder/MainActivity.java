@@ -31,9 +31,9 @@ public class MainActivity extends Activity {
  private int deviceCharge=-1;
  private static final String SOURCE_MODE="capture_source";
  private final List<ChoiceDropdown.Option> sources=new ArrayList<>(Arrays.asList(
-  new ChoiceDropdown.Option("auto","Автоматически","ClipMic рядом, гарнитура или телефон"),
+  new ChoiceDropdown.Option("auto","Автоматически","Внешний диктофон, гарнитура или телефон"),
   new ChoiceDropdown.Option("phone","Телефон или гарнитура","Системный аудиовход"),
-  new ChoiceDropdown.Option("ble","Только ClipMic","Bluetooth")));
+  new ChoiceDropdown.Option("ble","Внешний диктофон","Bluetooth")));
  private GradientDrawable linkDot;
  private CaptureService.Link displayedLink;
  private CaptureService.Link idleLink=CaptureService.Link.OFF;
@@ -311,7 +311,7 @@ public class MainActivity extends Activity {
   mark.setImageResource(R.mipmap.launcher_icon);
   mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   masthead.addView(mark,new LinearLayout.LayoutParams(dp(34),dp(34)));
-  TextView brand=heading("Диктофон",22);
+  TextView brand=heading("Коса",22);
   brand.setTypeface(Typeface.create("sans-serif",Typeface.BOLD));
   brand.setLetterSpacing(-.045f);
   LinearLayout.LayoutParams brandSize=new LinearLayout.LayoutParams(0,-2,1);
@@ -380,7 +380,7 @@ public class MainActivity extends Activity {
   SharedPreferences settings=getSharedPreferences("settings",0);
   if("wifi".equals(settings.getString("transport",""))||"wifi".equals(settings.getString(SOURCE_MODE,""))
       ||(!settings.getString("ip","").isEmpty()&&!settings.getString("token","").isEmpty())){
-   sources.add(new ChoiceDropdown.Option("wifi","ClipMic по Wi-Fi","Сохранённое подключение"));
+   sources.add(new ChoiceDropdown.Option("wifi","Диктофон по Wi-Fi","Сохранённое подключение"));
   }
   transport=new ChoiceDropdown(this,"Источник звука","Нет доступных источников",()->sources,option->{
    SharedPreferences.Editor editor=settings.edit().putString(SOURCE_MODE,option.value);
@@ -505,7 +505,7 @@ public class MainActivity extends Activity {
   transport.setEnabled(ready);
   transport.button.setVisibility(ready||mode==CaptureMode.STARTING?View.VISIBLE:View.GONE);
   String autoInput=getSharedPreferences("settings",0).getString("ble_address","").isEmpty()
-      ?"Авто · телефон или гарнитура":"Авто · ClipMic или телефон";
+      ?"Авто · телефон или гарнитура":"Авто · диктофон или телефон";
   transport.setCollapsedTitle("auto".equals(source.value)?autoInput:null);
   if(saved)showConnection(CaptureService.Link.CONNECTED,receiptSource);
   signal.setVisibility(active||saved||!local?View.VISIBLE:View.GONE);
@@ -728,7 +728,7 @@ public class MainActivity extends Activity {
   row.setBackground(new android.graphics.drawable.RippleDrawable(
    android.content.res.ColorStateList.valueOf(0x22ffffff),null,surface(Color.WHITE,12)));
   row.setOnClickListener(view->toggleDevicePanel());
-  row.addView(heading("Диктофон ClipMic",14),new LinearLayout.LayoutParams(0,-2,1));
+  row.addView(heading("Внешний диктофон",14),new LinearLayout.LayoutParams(0,-2,1));
   deviceChevron=note("⌄");
   deviceChevron.setGravity(Gravity.CENTER);
   deviceChevron.setRotation(deviceExpanded?180f:0f);
@@ -811,7 +811,7 @@ public class MainActivity extends Activity {
   deviceBattery.setText(deviceCharge<0?"Заряд недоступен":"Заряд · "+deviceCharge+"%");
  }
  private String panelAction(){
-  return (deviceExpanded?"Свернуть":"Раскрыть")+" настройки диктофона ClipMic";
+  return (deviceExpanded?"Свернуть":"Раскрыть")+" настройки внешнего диктофона";
  }
  private void toggleDevicePanel(){
   setDeviceExpanded(!deviceExpanded);
@@ -939,7 +939,7 @@ public class MainActivity extends Activity {
     paintConnection(CaptureService.Link.ERROR,true,CaptureService.status);
    }else{
     boolean clipMic="auto".equals(source)&&!getSharedPreferences("settings",0).getString("ble_address","").isEmpty();
-    showConnection(CaptureService.Link.OFF,clipMic?"Сначала ClipMic рядом, затем гарнитура или телефон":"Гарнитура с микрофоном или сам телефон");
+    showConnection(CaptureService.Link.OFF,clipMic?"Сначала внешний диктофон рядом, затем гарнитура или телефон":"Гарнитура с микрофоном или сам телефон");
    }
    return;
   }

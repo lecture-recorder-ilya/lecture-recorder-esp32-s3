@@ -46,7 +46,7 @@ final class BleStream extends InputStream {
   if (adapter == null || !adapter.isEnabled()) throw new IOException("Включи Bluetooth на телефоне");
   String address = settings.getString("ble_address", "");
   if (trustedOnly && (!BluetoothAdapter.checkBluetoothAddress(address) || (!bonded && token.isEmpty()))) {
-   throw new IOException("Сначала подключи свой ClipMic");
+   throw new IOException("Сначала подключи диктофон");
   }
   try {
    if (!address.isEmpty()) {
@@ -60,7 +60,7 @@ final class BleStream extends InputStream {
       scan = null;
       connect(result.getDevice());
      }
-     public void onScanFailed(int code) { fail("Не удалось найти ClipMic по Bluetooth"); }
+     public void onScanFailed(int code) { fail("Не удалось найти диктофон по Bluetooth"); }
     };
     scanner.startScan(Collections.singletonList(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(SERVICE)).build()),
        new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), scan);
@@ -71,7 +71,7 @@ final class BleStream extends InputStream {
     ready.await(Math.min(remaining, 100), TimeUnit.MILLISECONDS);
    }
    if (cancelled.getAsBoolean() || ready.getCount() != 0 || !error.isEmpty()) {
-    throw new IOException(error.isEmpty() ? "ClipMic не найден по Bluetooth" : error);
+    throw new IOException(error.isEmpty() ? "Диктофон не найден по Bluetooth" : error);
    }
   } catch (Exception failure) {
    close();

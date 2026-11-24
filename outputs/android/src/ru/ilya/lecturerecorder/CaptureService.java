@@ -74,7 +74,7 @@ public class CaptureService extends Service {
    recording = true; stop = false; current = ""; samples = 0; peak = 0;
    PhraseReplay.cancelActive();
    lastStatusSecond = -1; lastStatusInput = "";
-   status = phoneMicrophone ? "Включаю микрофон…" : "Подключаюсь к ClipMic…";
+   status = phoneMicrophone ? "Включаю микрофон…" : "Подключаюсь к диктофону…";
    try { notifyState(); } catch (RuntimeException error) {
     link = Link.ERROR; recording = false; status = "Открой экран записи и попробуй ещё раз"; stopSelf(); return START_NOT_STICKY;
    }
@@ -323,7 +323,7 @@ public class CaptureService extends Service {
    wifi.acquire();
    discover();
   }
-  String label = wirelessLan ? "ClipMic · Wi-Fi" : "ClipMic · Bluetooth";
+  String label = wirelessLan ? "Диктофон · Wi-Fi" : "Диктофон · Bluetooth";
   long gapAt = -1, lastAudio = 0;
   try {
    while (!stop) {
@@ -375,7 +375,7 @@ public class CaptureService extends Service {
     } finally { socket = null; }
     if (stop) break;
     if (gapAt < 0 && lastAudio > 0) gapAt = lastAudio;
-    link = Link.ERROR; status = "Связь с ClipMic потеряна · переподключаюсь…";
+    link = Link.ERROR; status = "Связь с диктофоном потеряна · переподключаюсь…";
     for (int i=0; i<20 && !stop; i++) Thread.sleep(100);
    }
   } finally {
@@ -391,7 +391,7 @@ public class CaptureService extends Service {
  private static byte[] readPcm(DataInputStream input) throws IOException {
   byte[] header = new byte[6];
   input.readFully(header);
-  if (header[0]!='P' || header[1]!='C' || header[2]!='M' || header[3]!='1') throw new IOException("Некорректный поток ClipMic");
+  if (header[0]!='P' || header[1]!='C' || header[2]!='M' || header[3]!='1') throw new IOException("Диктофон передал некорректный аудиопоток");
   int count = (header[4]&255) | ((header[5]&255)<<8);
   if (count == 0 || count > 4096 || count % 2 != 0) throw new IOException("Некорректный размер блока");
   byte[] pcm = new byte[count];

@@ -71,7 +71,7 @@ def manifest_for_preview(build):
     manifest = tree.getroot()
     manifest.set("package", PACKAGE + ".preview")
     app = manifest.find("application")
-    app.set(ANDROID + "label", "Диктофон · ИИ")
+    app.set(ANDROID + "label", "Коса · ИИ")
     for component in app:
         name = component.get(ANDROID + "name", "")
         if name.startswith("."):

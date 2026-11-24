@@ -86,7 +86,7 @@ final class ClipMicBluetooth: NSObject, CBCentralManagerDelegate, CBPeripheralDe
             }
         case .unknown, .resetting:
             if stage == .streaming { finish("Bluetooth прервал запись ClipMic") }
-        case .unauthorized: finish("Разреши доступ к Bluetooth для ClipMic в настройках iPhone")
+        case .unauthorized: finish("Открой настройки приложения «Коса» и разреши доступ к Bluetooth")
         case .poweredOff: finish("Bluetooth выключен")
         default: finish("Bluetooth для ClipMic недоступен")
         }
