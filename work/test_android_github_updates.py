@@ -9,13 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / 'outputs/android/src/ru/ilya/lecturerecorder'
 
 
-class GitHubUpdatesTest(unittest.TestCase):
-    def test_release_selection_and_download(self):
-        gson = ROOT / 'work/android-deps/gson.jar'
-        if not gson.is_file():
-            self.skipTest('Build the Android APK to fetch its Gson dependency')
-        java = Path(os.environ.get('JAVA_HOME', '')) / 'bin' if os.environ.get('JAVA_HOME') else Path()
-        sources = {
+def client_fixtures():
+    return {
             'android/content/Context.java': r'''
 package android.content;
 import java.io.*;
@@ -39,6 +34,7 @@ public class JSONObject {
  JSONObject(JsonObject item) { data = item; }
  public String getString(String key) { return data.get(key).getAsString(); }
  public long getLong(String key) { return data.get(key).getAsLong(); }
+ public long optLong(String key) { return has(key) ? getLong(key) : 0; }
  public int getInt(String key) { return data.get(key).getAsInt(); }
  public int optInt(String key, int fallback) { return has(key) ? getInt(key) : fallback; }
  public boolean optBoolean(String key) { return has(key) && data.get(key).getAsBoolean(); }
@@ -182,16 +178,149 @@ public class Harness {
  }
 }''',
         }
+
+
+class GitHubUpdatesTest(unittest.TestCase):
+    def run_java(self, fixtures, production, main):
+        gson = ROOT / 'work/android-deps/gson.jar'
+        if not gson.is_file():
+            self.skipTest('Build the Android APK to fetch its Gson dependency')
+        java = Path(os.environ['JAVA_HOME']) / 'bin' if os.environ.get('JAVA_HOME') else Path()
         with tempfile.TemporaryDirectory() as directory:
             fixture = Path(directory)
-            for name, source in sources.items():
+            for name, source in fixtures.items():
                 file = fixture / name
                 file.parent.mkdir(parents=True, exist_ok=True)
                 file.write_text(source, encoding='utf-8')
             subprocess.run([str(java / 'javac'), '-encoding', 'UTF-8', '-cp', str(gson), '-d', directory,
-                            str(SRC / 'GitHubUpdateClient.java'), *map(str, fixture.rglob('*.java'))], check=True)
+                            *map(str, production), *map(str, fixture.rglob('*.java'))], check=True)
             subprocess.run([str(java / 'java'), '-cp', f'{directory}{os.pathsep}{gson}',
-                            'ru.ilya.lecturerecorder.Harness', str(fixture / 'apk')], check=True, timeout=30)
+                            'ru.ilya.lecturerecorder.' + main, str(fixture / 'apk')], check=True, timeout=45)
+
+    def test_release_selection_and_download(self):
+        self.run_java(client_fixtures(), [SRC / 'GitHubUpdateClient.java'], 'Harness')
+
+    def test_automatic_public_and_interactive_private_updates(self):
+        fixtures = client_fixtures()
+        del fixtures['ru/ilya/lecturerecorder/GitHubUpdates.java']
+        del fixtures['ru/ilya/lecturerecorder/Harness.java']
+        fixtures.update(flow_fixtures())
+        self.run_java(fixtures, [SRC / 'GitHubUpdates.java', SRC / 'GitHubUpdateClient.java',
+                                 ROOT / 'tests/android/GitHubUpdateFlowTest.java'], 'GitHubUpdateFlowTest')
+
+
+def flow_fixtures():
+    return {
+        'android/content/Context.java': r'''
+package android.content;
+import java.io.*;
+import java.util.concurrent.ConcurrentHashMap;
+import android.net.ConnectivityManager;
+public class Context {
+ public String packageName = "ru.ilya.lecturerecorder";
+ public ConnectivityManager connectivity = new ConnectivityManager();
+ private final ConcurrentHashMap<String,SharedPreferences> prefs = new ConcurrentHashMap<>();
+ public Context getApplicationContext() { return this; }
+ public Context getAssets() { return this; }
+ public Context getPackageManager() { return this; }
+ public Context getPackageInfo(String name, int flags) { return this; }
+ public String versionName = "0.5.18";
+ public String getPackageName() { return packageName; }
+ public InputStream open(String name) {
+  return new ByteArrayInputStream("{\"client_id\":\"test\",\"repository\":\"org/repo\"}".getBytes());
+ }
+ public SharedPreferences getSharedPreferences(String name, int mode) { return prefs.computeIfAbsent(name, key -> new SharedPreferences()); }
+ public <T> T getSystemService(Class<T> type) { return type.cast(connectivity); }
+}''',
+        'android/content/SharedPreferences.java': '''
+package android.content;
+import java.util.concurrent.ConcurrentHashMap;
+public class SharedPreferences {
+ private final ConcurrentHashMap<String,Object> data = new ConcurrentHashMap<>();
+ public long getLong(String key, long other) { return (long)data.getOrDefault(key, other); }
+ public String getString(String key, String other) { return (String)data.getOrDefault(key, other); }
+ public SharedPreferences edit() { return this; }
+ public SharedPreferences putLong(String key, long value) { data.put(key, value); return this; }
+ public SharedPreferences putString(String key, String value) { data.put(key, value); return this; }
+ public SharedPreferences remove(String key) { data.remove(key); return this; }
+ public void apply() {}
+}''',
+        'android/app/Activity.java': '''
+package android.app;
+public class Activity extends android.content.Context {
+ public boolean isFinishing() { return false; }
+ public boolean isDestroyed() { return false; }
+ public void startActivity(android.content.Intent intent) {}
+}''',
+        'android/app/AlertDialog.java': '''
+package android.app;
+public class AlertDialog {
+ public static int dialogs;
+ public interface Listener { void click(Object dialog, int which); }
+ public static class Builder {
+  public Builder(Activity activity) {}
+  public Builder setTitle(String value) { return this; }
+  public Builder setMessage(String value) { return this; }
+  public Builder setPositiveButton(String value, Listener listener) { return this; }
+  public Builder setNeutralButton(String value, Listener listener) { return this; }
+  public Builder setNegativeButton(String value, Listener listener) { return this; }
+  public void show() { dialogs++; }
+ }
+}''',
+        'android/content/ActivityNotFoundException.java': 'package android.content; public class ActivityNotFoundException extends RuntimeException {}',
+        'android/content/Intent.java': 'package android.content; public class Intent {public static final String ACTION_VIEW="view"; public Intent(String action,android.net.Uri uri) {}}',
+        'android/content/ClipData.java': 'package android.content; public class ClipData {public static ClipData newPlainText(String title,String text){return new ClipData();}}',
+        'android/content/ClipboardManager.java': 'package android.content; public class ClipboardManager {public void setPrimaryClip(ClipData clip){}}',
+        'android/net/Uri.java': 'package android.net; public class Uri {public static Uri parse(String uri){return new Uri();}}',
+        'android/net/Network.java': 'package android.net; public class Network {}',
+        'android/net/ConnectivityManager.java': '''
+package android.net;
+public class ConnectivityManager {
+ public boolean online = true;
+ public Network getActiveNetwork() { return online ? new Network() : null; }
+ public NetworkCapabilities getNetworkCapabilities(Network network) { return new NetworkCapabilities(); }
+}''',
+        'android/net/NetworkCapabilities.java': 'package android.net; public class NetworkCapabilities {public static final int NET_CAPABILITY_VALIDATED=16; public boolean hasCapability(int value){return true;}}',
+        'android/os/Looper.java': 'package android.os; public class Looper { public static Looper getMainLooper(){return new Looper();} }',
+        'android/os/Handler.java': 'package android.os; public class Handler {public Handler(Looper looper) {} public void post(Runnable action){action.run();}}',
+        'android/os/SystemClock.java': '''
+package android.os;
+public class SystemClock {
+ public static long advance;
+ public static long elapsedRealtime() {return System.nanoTime()/1000000 + advance;}
+}''',
+        'ru/ilya/lecturerecorder/GitHubUpdateCredentials.java': '''
+package ru.ilya.lecturerecorder;
+import android.content.Context;
+import org.json.JSONObject;
+class GitHubUpdateCredentials {
+ static JSONObject stored;
+ GitHubUpdateCredentials(Context context) {}
+ boolean exists() {return stored != null;}
+ JSONObject read() {return stored;}
+ void clear() {stored = null;}
+ void save(JSONObject value) {stored = new JSONObject("{\\"access_token\\":\\"" + value.getString("access_token") + "\\",\\"expires_at\\":" + Long.MAX_VALUE + "}");}
+}''',
+        'ru/ilya/lecturerecorder/AppUpdates.java': '''
+package ru.ilya.lecturerecorder;
+import android.content.Context;
+import java.io.*;
+import java.nio.file.*;
+class AppUpdates {
+ static File target;
+ static boolean active;
+ static int staged;
+ static boolean active(){return active;}
+ static File apk(Context context){return target;}
+ static boolean ready(Context context){return target.isFile();}
+ static void stage(Context context,File part,String checksum,String source) throws IOException {
+  if (!"github".equals(source)) throw new IOException("source");
+  Files.copy(part.toPath(),target.toPath(),StandardCopyOption.REPLACE_EXISTING);
+  context.getSharedPreferences("updates",0).edit().putString("sha256",checksum).apply();
+  staged++;
+ }
+}''',
+    }
 
 
 if __name__ == '__main__':

@@ -51,7 +51,7 @@ final class GitHubUpdates {
         long elapsed = SystemClock.elapsedRealtime();
         if (elapsed < nextTick || busy()) return;
         nextTick = elapsed + TimeUnit.SECONDS.toMillis(30);
-        if (AppUpdates.active() || !signedIn(activity)) return;
+        if (AppUpdates.active()) return;
         long now = System.currentTimeMillis();
         long after = activity.getSharedPreferences("updates", 0).getLong("github_after", 0);
         if (after > now && after - now <= INTERVAL) return;
@@ -82,7 +82,10 @@ final class GitHubUpdates {
                 delay = INTERVAL;
             } catch (InterruptedException cancelled) {
                 status = "Вход в GitHub отменён.";
-            } catch (Failure | GitHubUpdateClient.AuthorizationRequired error) {
+            } catch (GitHubUpdateClient.AuthorizationRequired privateChannel) {
+                delay = INTERVAL;
+                status = interactive ? privateChannel.getMessage() : "Для закрытого канала нужен вход в GitHub.";
+            } catch (Failure | GitHubUpdateClient.PublicLimit error) {
                 status = error.getMessage();
             } catch (Exception failed) {
                 status = "Не удалось проверить GitHub. Проверь интернет и повтори.";
@@ -109,15 +112,13 @@ final class GitHubUpdates {
     private static void check(Context context, WeakReference<Activity> screen, boolean interactive) throws Exception {
         GitHubUpdateClient client = new GitHubUpdateClient(context);
         GitHubUpdateCredentials credentials = new GitHubUpdateCredentials(context);
-        String token;
         try {
-            token = accessToken(client, credentials);
-        } catch (GitHubUpdateClient.AuthorizationRequired expired) {
-            token = null;
-        }
-        if (token == null) {
-            credentials.clear();
-            if (!interactive) throw new GitHubUpdateClient.AuthorizationRequired();
+            checkRelease(context, client, null);
+        } catch (GitHubUpdateClient.PublicLimit limited) {
+            if (!checkSaved(context, client, credentials)) throw limited;
+        } catch (GitHubUpdateClient.AuthorizationRequired privateChannel) {
+            if (checkSaved(context, client, credentials)) return;
+            if (!interactive) throw privateChannel;
             GitHubUpdateClient.DeviceCode code = client.startAuthorization();
             pending = code;
             status = "Подтверди вход в GitHub.";
@@ -127,20 +128,38 @@ final class GitHubUpdates {
             });
             JSONObject response = client.awaitAuthorization(code);
             credentials.save(response);
-            token = response.getString("access_token");
             pending = null;
+            try {
+                checkRelease(context, client, response.getString("access_token"));
+            } catch (GitHubUpdateClient.AuthorizationRequired rejected) {
+                credentials.clear();
+                throw rejected;
+            }
         }
+    }
+
+    private static boolean checkSaved(Context context, GitHubUpdateClient client, GitHubUpdateCredentials credentials) throws Exception {
+        if (!credentials.exists()) return false;
+        try {
+            String saved = accessToken(client, credentials);
+            if (saved != null) {
+                checkRelease(context, client, saved);
+                return true;
+            }
+        } catch (GitHubUpdateClient.AuthorizationRequired expired) {
+            credentials.clear();
+            return false;
+        }
+        credentials.clear();
+        return false;
+    }
+
+    private static void checkRelease(Context context, GitHubUpdateClient client, String token) throws Exception {
         String packageName = context.getPackageName();
         String current = context.getPackageManager().getPackageInfo(packageName, 0).versionName;
         String name = packageName.endsWith(".preview") ? "lecture-recorder-android.apk" : "lecture-recorder.apk";
         status = "Проверяю GitHub…";
-        GitHubUpdateClient.Asset asset;
-        try {
-            asset = client.latest(token, current, name);
-        } catch (GitHubUpdateClient.AuthorizationRequired expired) {
-            credentials.clear();
-            throw expired;
-        }
+        GitHubUpdateClient.Asset asset = client.latest(token, current, name);
         if (asset == null) {
             status = "Установлена последняя версия с GitHub.";
             return;

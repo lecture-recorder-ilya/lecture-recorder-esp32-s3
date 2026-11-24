@@ -213,7 +213,7 @@ public class MainActivity extends Activity {
   installUpdate=button("Установить обновление",()->AppUpdates.install(this),true);
   installUpdate.setVisibility(View.GONE);
   updates.addView(installUpdate);
-  githubCheck=button("Получать обновления без Mac",()->GitHubUpdates.start(this,true));
+  githubCheck=button("Проверить GitHub",()->GitHubUpdates.start(this,true));
   updates.addView(githubCheck);
   githubDisconnect=button("Отключить GitHub на телефоне",()->GitHubUpdates.disconnect(this));
   updates.addView(githubDisconnect);
@@ -1065,7 +1065,7 @@ public class MainActivity extends Activity {
   boolean available=AppUpdates.ready(this);
   boolean signedIn=GitHubUpdates.signedIn(this);
   boolean authorizing=GitHubUpdates.authorizing();
-  String label=authorizing?"Показать код GitHub":signedIn?"Проверить GitHub":"Получать обновления без Mac";
+  String label=authorizing?"Показать код GitHub":"Проверить GitHub";
   if(!label.contentEquals(githubCheck.getText()))githubCheck.setText(label);
   boolean idle=!recording&&!PhoneAnalysisService.busy();
   githubCheck.setEnabled(idle&&(!GitHubUpdates.busy()||authorizing));

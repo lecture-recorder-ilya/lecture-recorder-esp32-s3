@@ -29,6 +29,10 @@ final class GitHubUpdateClient {
         AuthorizationRequired() { super("Войди в GitHub для проверки обновлений."); }
     }
 
+    static final class PublicLimit extends IOException {
+        PublicLimit() { super("GitHub временно ограничил частоту проверок. Повтори позже."); }
+    }
+
     static final class DeviceCode {
         final String userCode;
         final String deviceCode;
@@ -99,7 +103,7 @@ final class GitHubUpdateClient {
         while (endpoint != null) {
             HttpURLConnection http = connect(endpoint, "application/vnd.github+json", token);
             try {
-                checkStatus(http.getResponseCode());
+                checkStatus(http.getResponseCode(), token == null);
                 String body = read(http.getInputStream(), 8 * 1024 * 1024);
                 if (stable) return compatible(new JSONObject(body), installed, assetName, true);
                 JSONArray page = new JSONArray(body);
@@ -159,8 +163,10 @@ final class GitHubUpdateClient {
                 http.disconnect();
                 http = connect(location.toExternalForm(), "application/octet-stream", null);
                 status = http.getResponseCode();
+                if (status != 200) throw new GitHubUpdates.Failure("GitHub временно не отдал файл обновления.");
+            } else {
+                checkStatus(status, token == null);
             }
-            checkStatus(status);
             long received = 0;
             try (InputStream input = http.getInputStream(); FileOutputStream output = new FileOutputStream(target)) {
                 byte[] buffer = new byte[64 * 1024];
@@ -179,9 +185,10 @@ final class GitHubUpdateClient {
         }
     }
 
-    private static void checkStatus(int status) throws IOException {
+    private static void checkStatus(int status, boolean anonymousChannel) throws IOException {
         if (status == 200) return;
-        if (status == 401) throw new AuthorizationRequired();
+        if (status == 401 || status == 404 && anonymousChannel) throw new AuthorizationRequired();
+        if (anonymousChannel && (status == 403 || status == 429)) throw new PublicLimit();
         if (status == 403 || status == 404)
             throw new GitHubUpdates.Failure("GitHub не открыл канал обновлений. Проверь доступ аккаунта к репозиторию.");
         throw new GitHubUpdates.Failure("GitHub временно не ответил. Повтори проверку.");
@@ -201,7 +208,7 @@ final class GitHubUpdateClient {
             http.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
             http.setFixedLengthStreamingMode(body.length);
             try (OutputStream out = http.getOutputStream()) { out.write(body); }
-            checkStatus(http.getResponseCode());
+            checkStatus(http.getResponseCode(), false);
             return new JSONObject(read(http.getInputStream(), 32 * 1024));
         } finally {
             http.disconnect();
