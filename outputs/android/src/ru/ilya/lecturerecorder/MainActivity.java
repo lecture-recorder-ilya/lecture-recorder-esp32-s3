@@ -323,10 +323,22 @@ public class MainActivity extends Activity {
   receiptDetails.setVisibility(View.GONE);
   page.addView(receiptDetails);
 
+  LinearLayout recorderArea=page,controls=page;
+  boolean split=landscape&&getResources().getConfiguration().screenWidthDp>=640;
+  if(split){
+   LinearLayout columns=new LinearLayout(this);
+   page.addView(columns,spaced(8));
+   recorderArea=column();
+   controls=column();
+   columns.addView(recorderArea,new LinearLayout.LayoutParams(0,-2,1.12f));
+   LinearLayout.LayoutParams side=new LinearLayout.LayoutParams(0,-2,1);
+   side.setMarginStart(dp(14));
+   columns.addView(controls,side);
+  }
   LinearLayout hero=column();
   hero.setPadding(dp(20),dp(16),dp(20),dp(16));
   hero.setBackground(StudioStyle.surface(this,StudioStyle.RECORDER,18));
-  page.addView(hero,spaced(12));
+  recorderArea.addView(hero,spaced(split?0:12));
   recordState=text("Длительность",14);
   recordState.setTextColor(StudioStyle.MINT);
   recordState.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
@@ -353,7 +365,7 @@ public class MainActivity extends Activity {
   hero.addView(recordAction,spaced(12));
 
   TextView sourceLabel=heading("Источник звука",16);
-  page.addView(sourceLabel,spaced(14));
+  controls.addView(sourceLabel,spaced(split?0:14));
   SharedPreferences settings=getSharedPreferences("settings",0);
   if("wifi".equals(settings.getString("transport",""))||"wifi".equals(settings.getString(SOURCE_MODE,""))
       ||(!settings.getString("ip","").isEmpty()&&!settings.getString("token","").isEmpty())){
@@ -370,9 +382,9 @@ public class MainActivity extends Activity {
    renderRecorder(CaptureService.recording);
   });
   transport.setSelected(selectedSource());
-  page.addView(transport.button,spaced(2));
-  page.addView(transport.list,spaced(4));
-  addSourceStatus(page);
+  controls.addView(transport.button,spaced(2));
+  controls.addView(transport.list,spaced(4));
+  addSourceStatus(controls);
   recordImport=button("Импортировать аудио",()->{
    if(CaptureService.recording){takeBoardPhoto();return;}
    if(startPendingUntil!=0||lessonFlow.savingDirect())return;
@@ -388,16 +400,16 @@ public class MainActivity extends Activity {
   recordImport.setPadding(dp(10),dp(6),dp(10),dp(6));
   recordImport.setCompoundDrawablePadding(dp(12));
   StudioStyle.actionTone(recordImport,Color.TRANSPARENT,accent);
-  page.addView(recordImport,spaced(10));
+  controls.addView(recordImport,spaced(10));
   pendingLesson=button("Указать предмет",()->{
    if(!receiptFile.isEmpty()&&receiptPending)lessonFlow.openPending(receiptFile);
    else lessonFlow.openPending();
   });
   pendingLesson.setVisibility(View.GONE);
-  page.addView(pendingLesson,spaced(6));
+  controls.addView(pendingLesson,spaced(6));
   recentRecording=button("Последняя запись",()->openRecording(lastSavedRecording));
   recentRecording.setVisibility(View.GONE);
-  page.addView(recentRecording,spaced(6));
+  controls.addView(recentRecording,spaced(6));
   updateRecent();
  }
  private void prepareNextRecording(){

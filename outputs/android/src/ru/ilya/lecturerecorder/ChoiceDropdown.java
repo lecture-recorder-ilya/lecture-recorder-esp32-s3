@@ -11,7 +11,6 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -112,7 +111,8 @@ final class ChoiceDropdown {
         if (!isOpen()) return;
         List<Option> entries = new ArrayList<>(options.get());
         if (entries.isEmpty()) entries.add(new Option(null, empty, ""));
-        list.setAdapter(new Adapter(entries));
+        Adapter adapter = new Adapter(entries);
+        list.setAdapter(adapter);
         list.setOnItemClickListener((parent, row, index, id) -> {
             Option option = entries.get(index);
             if (option.value == null) return;
@@ -123,7 +123,15 @@ final class ChoiceDropdown {
         ViewGroup.LayoutParams layout = list.getLayoutParams();
         int limit = dp(240);
         if (heightLimit != null) limit = Math.min(limit, Math.max(dp(58), heightLimit.getAsInt()));
-        layout.height = Math.min(limit, rowHeight() * entries.size() + dp(6) + dp(1) * (entries.size() - 1));
+        int width = View.MeasureSpec.makeMeasureSpec(Math.max(1, button.getWidth()), View.MeasureSpec.EXACTLY);
+        int available = list.getPaddingTop() + list.getPaddingBottom();
+        View row = null;
+        for (int index = 0; index < entries.size() && available < limit; index++) {
+            row = adapter.getView(index, row, list);
+            row.measure(width, View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            available += row.getMeasuredHeight() + (index == 0 ? 0 : list.getDividerHeight());
+        }
+        layout.height = Math.min(limit, available);
         list.setLayoutParams(layout);
     }
 
@@ -184,10 +192,6 @@ final class ChoiceDropdown {
         return drawable;
     }
 
-    private int rowHeight() {
-        return dp(context.getResources().getConfiguration().fontScale > 1.25f ? 72 : 52);
-    }
-
     private int dp(int value) {
         return Math.round(value * context.getResources().getDisplayMetrics().density);
     }
@@ -235,16 +239,17 @@ final class ChoiceDropdown {
 
         Row() {
             super(context);
-            setGravity(Gravity.CENTER_VERTICAL);
-            setPadding(dp(14), 0, dp(12), 0);
-            setLayoutParams(new AbsListView.LayoutParams(-1, rowHeight()));
+            setOrientation(VERTICAL);
+            setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+            setPadding(dp(14), dp(7), dp(12), dp(7));
+            setMinimumHeight(dp(52));
             title.setTextSize(15);
             title.setMaxLines(2);
             title.setEllipsize(TextUtils.TruncateAt.END);
-            addView(title, new LinearLayout.LayoutParams(0, -2, 1));
+            addView(title, new LinearLayout.LayoutParams(-1, -2));
             detail.setTextSize(14);
             detail.setTextColor(MUTED);
-            detail.setPadding(dp(8), 0, 0, 0);
+            detail.setPadding(0, dp(2), 0, 0);
             addView(detail);
         }
     }

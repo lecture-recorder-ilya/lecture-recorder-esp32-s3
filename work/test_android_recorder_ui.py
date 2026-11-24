@@ -23,19 +23,24 @@ class RecorderUiTests(unittest.TestCase):
 
     @classmethod
     def adb(cls, *command):
-        return subprocess.check_output([*cls.command, *map(str, command)], timeout=30)
+        return subprocess.check_output([*cls.command, *map(str, command)], timeout=30, stderr=subprocess.STDOUT)
 
-    def screen(self, name=None):
+    def screen(self):
         path = "/sdcard/fieldnotes-recorder-ui.xml"
-        self.adb("shell", "uiautomator", "dump", path)
-        xml = self.adb("exec-out", "cat", path)
+        for _ in range(3):
+            result = self.adb("shell", "uiautomator", "dump", path)
+            if b"dumped to:" in result:
+                self.xml = self.adb("exec-out", "cat", path)
+                return list(ElementTree.fromstring(self.xml).iter("node"))
+        self.fail(f"Android не вернул актуальное дерево экрана: {result!r}")
+
+    def photograph(self, name):
         folder = os.environ.get("FIELDNOTES_UI_ARTIFACTS")
         if name and folder:
             target = Path(folder)
             target.mkdir(parents=True, exist_ok=True)
-            (target / (name + ".xml")).write_bytes(xml)
+            (target / (name + ".xml")).write_bytes(self.xml)
             (target / (name + ".png")).write_bytes(self.adb("exec-out", "screencap", "-p"))
-        return list(ElementTree.fromstring(xml).iter("node"))
 
     def wait_for(self, label, description=False, photograph=None):
         end = time.monotonic() + 18
@@ -45,7 +50,7 @@ class RecorderUiTests(unittest.TestCase):
                 field = "content-desc" if description else "text"
                 if node.get(field) == label and node.get("enabled") == "true":
                     if photograph:
-                        self.screen(photograph)
+                        self.photograph(photograph)
                     return node
             if time.monotonic() >= end:
                 self.fail(f"{label!r}: {[node.get('text') for node in nodes if node.get('text')]}")
