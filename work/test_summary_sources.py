@@ -9,6 +9,50 @@ from summary_sources import reconcile
 
 
 class SourceTests(unittest.TestCase):
+    def test_reassigned_audience_quote_is_not_still_homework(self):
+        from ai_worker import validate_part
+        quote='На дом решите задачу 15.'
+        row=dict(id=7,start=1,end=4,text=quote,speaker_role='teacher')
+        report=validate_part(dict(homework=[dict(quote=quote,segment_id=7,deadline='до пятницы')]),[row])
+        report['segments']=[row]
+        report=reconcile(report,fresh=True)
+        self.assertEqual(len(report['homework']),1)
+        for role in ('student','audience'):
+            with self.subTest(role=role):
+                report['segments'][0]['speaker_role']=role
+                updated=reconcile(report)
+                self.assertEqual(updated['homework'],[])
+                item=updated['homework_review'][0]
+                self.assertEqual(item['utterance_kind'],'audience')
+                self.assertEqual(item['verification_status'],'needs_review')
+                self.assertEqual((item['quote'],item['start'],item['end']),(quote,1,4))
+                self.assertNotIn('deadline',item)
+                self.assertEqual(reconcile(updated),updated)
+                from transcript_quality import markdown
+                exported=markdown(updated)
+                self.assertNotIn('## Задания из записи',exported)
+                self.assertIn('## Реплики без подтверждённой выдачи ДЗ',exported)
+                self.assertIn(quote,exported)
+
+    def test_newly_split_source_checks_roles_in_both_parts(self):
+        report=dict(segments=[dict(id=20,start=5,end=6,text='На дом',speaker_role='teacher'),
+                              dict(id=21,start=6,end=8,text='решите задачу 15.',speaker_role='audience')],
+                    homework=[dict(quote='На дом решите задачу 15.',task='На дом решите задачу 15.',
+                                   start=1,end=4,segment_id=7)])
+        updated=reconcile(report)
+        self.assertEqual(updated['homework'],[])
+        item=updated['homework_review'][0]
+        self.assertEqual((item['start'],item['end'],item['segment_id']),(5,8,20))
+        self.assertEqual(item['original_source']['start'],1)
+
+    def test_teacher_unknown_and_other_audience_do_not_remove_homework(self):
+        quote='На дом решите задачу 15.'
+        for role in ('teacher',None):
+            report=dict(segments=[dict(id=7,start=1,end=4,text=quote,speaker_role=role),
+                                  dict(id=8,start=2,end=3,text='Реплика.',speaker_role='audience')],
+                        homework=[dict(quote=quote,task=quote,start=1,end=4,segment_id=7)])
+            self.assertEqual(len(reconcile(report,fresh=True)['homework']),1)
+
     def report(self):
         quote='Икс не равен пяти.'
         return dict(summary=[quote],summary_evidence=[dict(quote=quote,segment_id=7,start=1,end=4)],

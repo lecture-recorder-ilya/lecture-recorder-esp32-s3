@@ -60,6 +60,13 @@ def bind(anchor,rows,fresh=False):
     return result
 
 
+def source_roles(anchor,rows):
+    for first,span in matches(anchor.get('quote',''),rows):
+        if fingerprint(span,first)==anchor.get('source_fingerprint'):
+            return [row.get('speaker_role') for row in span]
+    return []
+
+
 def reconcile(report,fresh=False):
     result=copy.deepcopy(report);rows=result.get('segments') or [];pending=0
     points=result.get('summary') or [];sources=result.get('summary_evidence') or []
@@ -76,8 +83,10 @@ def reconcile(report,fresh=False):
         anchors.append(anchor)
     if 'summary' in result:result['summary_evidence']=anchors
     if overview_derived:result['overview']=' '.join(points[:3])[:1500]
+    reassigned=[]
     for field in ('homework','homework_review','formulas','formula_review','highlights'):
-        for index,item in enumerate(result.get(field) or []):
+        items=[]
+        for item in result.get(field) or []:
             anchor=bind(item,rows,fresh)
             if anchor['source_status']=='needs_review':
                 pending+=1
@@ -85,7 +94,23 @@ def reconcile(report,fresh=False):
                     original=anchor.setdefault('source_point',anchor.get('task',anchor.get('quote','')))
                     anchor['task']=original+'\n'+NOTICE;anchor.pop('deadline',None)
             elif field=='homework' and 'source_point' in anchor:anchor['task']=anchor.pop('source_point')
-            result[field][index]=anchor
+            if field=='homework' and anchor['source_status']=='confirmed':
+                roles=source_roles(anchor,rows)
+                if any(role in ('student','audience') for role in roles):
+                    from homework_evidence import classify,LABELS
+                    kind=classify(anchor.get('quote',''),roles)
+                    anchor.update(verification_status='needs_review',utterance_kind=kind,review_note=LABELS[kind])
+                    anchor['candidate_task']=anchor.pop('task',anchor.get('quote',''))
+                    anchor.pop('deadline',None)
+                    reassigned.append(anchor)
+                    continue
+            items.append(anchor)
+        if field in result:result[field]=items
+    if reassigned:
+        reviews=result.setdefault('homework_review',[])
+        for anchor in reassigned:
+            if not any(all(item.get(key)==anchor.get(key) for key in ('quote','segment_id','start','end','utterance_kind')) for item in reviews):
+                reviews.append(anchor)
     if 'moments' in result:
         from learning_moments import supported_moments
         result['moments']=supported_moments(result['moments'],rows,fresh)
