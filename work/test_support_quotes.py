@@ -34,7 +34,7 @@ class SupportQuoteTests(unittest.TestCase):
         self.assertEqual(result['summary'],[self.quote])
         self.assertTrue(result['draft'])
         self.assertEqual(result['draft_kind'],'support_quotes')
-        self.assertIn('Черновик',result['overview'])
+        self.assertEqual(result['draft_notice'],'Первые цитаты из расшифровки. Нажми на время, чтобы сверить со звуком.')
         self.assertEqual(result['homework'],[])
         anchor=result['summary_evidence'][0]
         self.assertEqual((anchor['quote'],anchor['segment_id'],anchor['start'],anchor['end']),

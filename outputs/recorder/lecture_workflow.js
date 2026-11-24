@@ -96,7 +96,7 @@
    const b=node('button',title);b.type='button';b.setAttribute('role','tab');b.id='reader-'+encodeURIComponent(name)+'-'+key;b.onclick=()=>show(key);buttons[key]=b;tabs.append(b);
    b.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const keys=Object.keys(buttons),i=keys.indexOf(key);const next=e.key==='Home'?0:e.key==='End'?keys.length-1:(i+(e.key==='ArrowRight'?1:-1)+keys.length)%keys.length;show(keys[next]);buttons[keys[next]].focus()};
   }
-  const badge=node('span',report.draft_kind==='support_quotes'?'Опорные цитаты · черновик':report.draft?'Текст появляется по мере обработки':'Разбор готов','reader-badge');
+  const badge=node('span',report.draft_kind==='support_quotes'?'Черновик':report.draft?'Текст появляется по мере обработки':'Разбор готов','reader-badge');
   const playback=node('div',undefined,'reader-playback');
   if(card.playerDock?.isConnected&&card.audioTools){
    card.audioTools.append(card.audio);
@@ -303,7 +303,7 @@
    if(report.draft&&report.draft_kind!=='support_quotes'){summary.append(node('h4','Готовим конспект'),node('p','Сначала распознаём запись целиком. Уже готовый текст доступен на вкладке «Текст».','muted'));return summary}
    if(report.overview){if(!report.draft)summary.append(node('h4','Главное за пару'));summary.append(node('p',report.overview))}
    if(report.summary?.length){
-    summary.append(node('h4',report.draft?'Опорные цитаты · черновик':'Ключевые мысли'));
+    summary.append(node('h4',report.draft?'Опорные цитаты':'Ключевые мысли'));
     const list=node('ul'),evidence=new Map((report.summary_evidence||[]).map(item=>[item.quote,item]));
     for(const point of report.summary){
      const item=node('li',point),source=evidence.get(point);
