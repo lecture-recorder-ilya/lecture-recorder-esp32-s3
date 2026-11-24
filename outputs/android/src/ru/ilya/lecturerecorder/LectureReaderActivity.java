@@ -59,7 +59,7 @@ public class LectureReaderActivity extends Activity {
     private JSONObject document;
     private File note, edits;
     private String recording;
-    private boolean local;
+    private boolean local, fromLibrary, chooseReadingTab;
     private String stamp = "";
     private String searchQuery = "";
     private AlertDialog searchDialog;
@@ -95,9 +95,11 @@ public class LectureReaderActivity extends Activity {
         speedIndex = library.speed();
         pendingSeek = library.position(recording, 0);
         local = getIntent().getBooleanExtra("local", false);
+        fromLibrary = getIntent().getBooleanExtra("from_library", false);
         note = LectureNotes.file(this, recording, local);
         edits = TranscriptEdits.file(this, recording);
         String requestedTab = saved == null ? getIntent().getStringExtra("tab") : saved.getString("reader_tab");
+        chooseReadingTab = "read".equals(requestedTab);
         if ("summary".equals(requestedTab) || "review".equals(requestedTab)) tab = requestedTab;
         if (saved != null) {
             String selectedKind = saved.getString("reader_review_kind", "all");
@@ -138,23 +140,41 @@ public class LectureReaderActivity extends Activity {
         LinearLayout navigation = new LinearLayout(this);
         boolean compact = getResources().getConfiguration().screenWidthDp < 560
                 || getResources().getConfiguration().fontScale > 1.25f;
-        Button back = button("‹ Аудио", this::finish);
-        navigation.addView(back, new LinearLayout.LayoutParams(compact ? 0 : -2, -2, compact ? 1 : 0));
-        if (LectureNotes.file(this, recording, !local).isFile()) {
-            Button source = button(local ? "Версия с Mac" : "Версия с телефона", () -> {
-                startActivity(new Intent(this, LectureReaderActivity.class)
-                        .putExtra("file", note.getName()).putExtra("local", !local).putExtra("tab", tab));
-                finish();
-            });
-            LinearLayout.LayoutParams item = withGap(compact ? 0 : -2, -2, 4);
-            item.weight = compact ? 1.55f : 0;
-            navigation.addView(source, item);
-        }
+        Button back = button(fromLibrary ? "‹ Библиотека" : "‹ К записи", this::finish);
+        back.setTextColor(ACCENT);
+        back.setBackground(StudioStyle.control(this, Color.TRANSPARENT, 10));
+        navigation.addView(back, new LinearLayout.LayoutParams(compact ? 0 : -2, -2, compact ? 1.6f : 0));
         Button search = button("Найти", this::findInTranscript);
         search.setContentDescription("Найти в тексте лекции");
         LinearLayout.LayoutParams searchSize = withGap(compact ? 0 : -2, -2, 4);
         searchSize.weight = compact ? 1 : 0;
         navigation.addView(search, searchSize);
+        boolean alternate = LectureNotes.file(this, recording, !local).isFile();
+        boolean audioDetails = fromLibrary && Store.audio(this, recording).isFile();
+        if (alternate || audioDetails) {
+            Button more = button("Ещё");
+            more.setContentDescription("Действия с записью");
+            more.setOnClickListener(view -> {
+                PopupMenu menu = new PopupMenu(this, more);
+                if (audioDetails) menu.getMenu().add(0, 1, 0, "Аудио и правки");
+                if (alternate) menu.getMenu().add(0, 2, 1, local ? "Версия с Mac" : "Версия с телефона");
+                menu.setOnMenuItemClickListener(item -> {
+                    if (item.getItemId() == 1) {
+                        setResult(RESULT_OK, new Intent().putExtra("audio", recording));
+                    } else {
+                        Intent version = new Intent(this, LectureReaderActivity.class)
+                                .putExtra("file", note.getName()).putExtra("local", !local)
+                                .putExtra("from_library", fromLibrary).putExtra("tab", tab);
+                        if (fromLibrary) version.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+                        startActivity(version);
+                    }
+                    finish();
+                    return true;
+                });
+                menu.show();
+            });
+            navigation.addView(more, withGap(-2, -2, 4));
+        }
         page.addView(navigation);
         LinearLayout tabs = new LinearLayout(this);
         tabs.setBackground(StudioStyle.card(this, 15));
@@ -248,6 +268,14 @@ public class LectureReaderActivity extends Activity {
         if (document == null) return;
         JSONObject report = document.optJSONObject("report");
         if (report == null) return;
+        if (chooseReadingTab) {
+            JSONArray points = report.optJSONArray("summary");
+            tab = !report.optBoolean("draft") && !report.optBoolean(LectureNotes.SUMMARY_PENDING)
+                    && (!report.optString("overview").trim().isEmpty() || points != null && points.length() > 0)
+                    ? "summary" : "text";
+            chooseReadingTab = false;
+            updateTabs();
+        }
         if (replayDialog != null) replayDialog.dismiss();
         int offset = Math.max(scroll.getScrollY(), contentScroll);
         contentScroll = 0;
@@ -722,7 +750,7 @@ public class LectureReaderActivity extends Activity {
 
     @Override public void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
-        state.putString("reader_tab", tab);
+        state.putString("reader_tab", chooseReadingTab ? "read" : tab);
         state.putString("text_query", searchQuery);
         state.putString("reader_review_kind", reviewKind);
         state.putInt("review_page", reviewPage);
@@ -810,12 +838,19 @@ public class LectureReaderActivity extends Activity {
 
     private TextView heading(String value, int size) {
         TextView heading = text(value, size, TEXT);
-        heading.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        heading.setTypeface(Typeface.create("serif", Typeface.NORMAL));
         return heading;
     }
 
     private Button button(String value, Runnable action) {
+        Button button = button(value);
+        button.setOnClickListener(view -> action.run());
+        return button;
+    }
+
+    private Button button(String value) {
         Button button = new Button(this);
+        button.setStateListAnimator(null);
         button.setText(value);
         button.setTextSize(14);
         button.setMinHeight(dp(48));
@@ -824,7 +859,6 @@ public class LectureReaderActivity extends Activity {
         button.setTextColor(TEXT);
         button.setPadding(dp(10), 0, dp(10), 0);
         button.setBackground(control(CONTROL));
-        button.setOnClickListener(view -> action.run());
         return button;
     }
 

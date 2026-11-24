@@ -107,7 +107,6 @@ final class AudioTranscriptPage extends LinearLayout {
     private Button summary;
     private final TextView recordingTitle;
     private final Button playbackOptions;
-    private final Button openLibrary;
     private final TextView recordingHint;
     private TextView times;
     private TextView waveStatus;
@@ -144,7 +143,7 @@ final class AudioTranscriptPage extends LinearLayout {
         setPadding(inset, dp(12), inset, dp(8));
         landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
         largeText = getResources().getConfiguration().fontScale >= 1.6f;
-        if (!landscape) addView(StudioStyle.title(activity, "Аудио и текст"));
+
 
         LinearLayout playback = this;
         LinearLayout columns = null;
@@ -158,8 +157,15 @@ final class AudioTranscriptPage extends LinearLayout {
             columns.addView(playerScroll, new LinearLayout.LayoutParams(0, -1, 10));
         }
 
-        recordingTitle = text("", 15, MUTED);
-        recordingTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        Button openLibrary = button("‹  Библиотека", openLibraryPage);
+        openLibrary.setTextColor(ACCENT);
+        openLibrary.setBackground(StudioStyle.control(activity, Color.TRANSPARENT, 10));
+        openLibrary.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        openLibrary.setPadding(dp(4), 0, dp(10), 0);
+        openLibrary.setContentDescription("Вернуться в библиотеку");
+        playback.addView(openLibrary, new LinearLayout.LayoutParams(-2, dp(48)));
+        recordingTitle = StudioStyle.title(activity, "");
+        recordingTitle.setTextSize(landscape ? 21 : 25);
         recordingTitle.setMaxLines(landscape || largeText ? 1 : 2);
         recordingTitle.setEllipsize(TextUtils.TruncateAt.END);
         recordingTitle.setVisibility(View.GONE);
@@ -176,8 +182,6 @@ final class AudioTranscriptPage extends LinearLayout {
 
         recordingHint = text("Выбери запись в библиотеке.", 15, MUTED);
         playback.addView(recordingHint, spaced(-1, -2, 12));
-        openLibrary = StudioStyle.action(activity, "Открыть библиотеку", openLibraryPage, true);
-        playback.addView(openLibrary, spaced(-1, -2, 8));
 
         audioPanel = card();
         audioPanel.setVisibility(View.GONE);
@@ -395,7 +399,6 @@ final class AudioTranscriptPage extends LinearLayout {
         repeating = false;
         updatePlaybackOptions();
         recordingHint.setVisibility(View.GONE);
-        openLibrary.setVisibility(View.GONE);
         noteRevision = null;
         modelRequestStopping = false;
         setTranscriptRows(Collections.emptyList());
@@ -404,6 +407,7 @@ final class AudioTranscriptPage extends LinearLayout {
         duration = 0;
         File audioFile = Store.audio(activity, name);
         String title = RecordingLibraryPage.title(activity, name, audioFile);
+        if ("Запись пары".equals(title)) title = Store.recordingTitle(name);
         recordingTitle.setText(title);
         recordingTitle.setTooltipText(title);
         recordingTitle.setVisibility(View.VISIBLE);

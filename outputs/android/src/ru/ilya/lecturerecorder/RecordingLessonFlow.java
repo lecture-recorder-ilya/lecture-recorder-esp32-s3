@@ -42,6 +42,7 @@ final class RecordingLessonFlow {
     private String checkedGroup = "";
     private boolean disposed;
     private boolean pendingChecked;
+    private boolean savingDirect;
     private String pending = "";
     private String lastRecording = "";
 
@@ -64,18 +65,58 @@ final class RecordingLessonFlow {
 
     boolean hasPending() { return !pending.isEmpty(); }
 
+    boolean savingDirect() { return savingDirect; }
+
+    boolean hasLessonChoice(String name) {
+        return !profile.getString("group", "").isEmpty() || choiceDrafts.contains(name + ".choice")
+                || !draftTitle(activity, name).isEmpty();
+    }
+
+    void keepWithoutLesson(String name, Runnable open) {
+        if (disposed || savingDirect || dialog != null || CaptureService.recording) return;
+        savingDirect = true;
+        saves.execute(() -> {
+            try {
+                java.io.File audio = Store.audio(activity, name);
+                if (!audio.isFile()) throw new java.io.IOException("Запись не найдена");
+                if (Store.readObject(new java.io.File(audio.getPath() + ".json")).optBoolean("awaiting_lesson")) {
+                    Store.finishLesson(activity, name, null);
+                }
+                activity.runOnUiThread(() -> {
+                    if (disposed) return;
+                    savingDirect = false;
+                    finished(name);
+                    open.run();
+                });
+            } catch (Exception error) {
+                activity.runOnUiThread(() -> {
+                    if (disposed) return;
+                    savingDirect = false;
+                    Toast.makeText(activity, "Не удалось сохранить запись. " + error.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+
+    private void finished(String name) {
+        resolve(name);
+        onSaved.accept(name);
+        boolean analyze = android.os.Process.is64Bit() && !PhoneAnalysisService.busy() && PhoneModels.ready(activity);
+        if (analyze) PhoneAnalysisService.request(activity, name, Store.recordingTitle(activity, name));
+    }
+
     void openPending() {
-        if (disposed || dialog != null || CaptureService.recording) return;
+        if (disposed || savingDirect || dialog != null || CaptureService.recording) return;
         pending = Store.pendingLesson(activity);
         if (hasPending()) choose(pending);
     }
 
     void openPending(String name) {
-        if (disposed || dialog != null || CaptureService.recording) return;
+        if (disposed || savingDirect || dialog != null || CaptureService.recording) return;
         choose(name);
     }
 
-    void refresh(boolean recording, boolean allowAutomaticChoice) {
+    void refresh(boolean recording) {
         if (recording) {
             pendingChecked = false;
             return;
@@ -91,7 +132,7 @@ final class RecordingLessonFlow {
             if (!hasPending()) {
                 if (profile.contains(DEFERRED)) profile.edit().remove(DEFERRED).apply();
                 warmSchedule();
-            } else if (allowAutomaticChoice && !deferred().contains(pending)) choose(pending);
+            }
         }
     }
 
@@ -308,12 +349,8 @@ final class RecordingLessonFlow {
                         Store.finishLesson(activity, name, selectedLesson);
                         activity.runOnUiThread(() -> {
                             if (disposed) return;
-                            resolve(name);
                             choice.dismiss();
-                            onSaved.accept(name);
-                            boolean analyze = android.os.Process.is64Bit() && !PhoneAnalysisService.busy()
-                                    && PhoneModels.ready(activity);
-                            if (analyze) PhoneAnalysisService.request(activity, name, Store.recordingTitle(activity, name));
+                            finished(name);
                         });
                     } catch (Exception error) {
                         activity.runOnUiThread(() -> {

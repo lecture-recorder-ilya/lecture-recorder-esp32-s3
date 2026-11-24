@@ -2,7 +2,6 @@ package ru.ilya.lecturerecorder;
 
 import android.app.*;
 import android.content.*;
-import android.graphics.Color;
 import android.net.wifi.WifiManager;
 import android.os.*;
 import android.text.Editable;
@@ -28,7 +27,7 @@ final class MacPairing {
  private final List<ChoiceDropdown.Option> discovered=new ArrayList<>();
  MacPairing(Activity activity,Runnable connected){this.activity=activity;this.connected=connected;}
  private int dp(int value){return (int)(activity.getResources().getDisplayMetrics().density*value);}
- private TextView text(String value){TextView view=new TextView(activity);view.setText(value);view.setTextColor(Color.rgb(238,238,238));view.setTextSize(16);view.setPadding(0,dp(8),0,dp(8));return view;}
+ private TextView text(String value){TextView view=new TextView(activity);view.setText(value);view.setTextColor(StudioStyle.TEXT);view.setTextSize(16);view.setPadding(0,dp(8),0,dp(8));return view;}
  private void show(Runnable action){ui.post(()->{if(!cancelled.get()&&!activity.isFinishing()&&!activity.isDestroyed())action.run();});}
  void open(){
   LinearLayout content=new LinearLayout(activity);content.setOrientation(1);content.setPadding(dp(20),dp(8),dp(20),dp(8));
@@ -48,7 +47,7 @@ final class MacPairing {
   computerList.topMargin=dp(6);
   computers.addView(computerChoice.list,computerList);
   content.addView(computers);
-  address=new EditText(activity);address.setSingleLine(true);address.setTextColor(Color.WHITE);address.setHintTextColor(Color.LTGRAY);address.setHint("Адрес Mac, если он не найден");address.setContentDescription("Адрес Mac");address.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);content.addView(address);
+  address=new EditText(activity);address.setSingleLine(true);address.setTextColor(StudioStyle.TEXT);address.setHintTextColor(StudioStyle.MUTED);address.setHint("Адрес Mac, если он не найден");address.setContentDescription("Адрес Mac");address.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);content.addView(address);
   address.addTextChangedListener(new TextWatcher(){
    @Override public void beforeTextChanged(CharSequence value,int start,int count,int after){}
    @Override public void onTextChanged(CharSequence value,int start,int previous,int count){
@@ -56,7 +55,7 @@ final class MacPairing {
    }
    @Override public void afterTextChanged(Editable value){}
   });
-  pin=new EditText(activity);pin.setSingleLine(true);pin.setTextColor(Color.WHITE);pin.setHintTextColor(Color.LTGRAY);pin.setHint("Код Mac · 12 символов");pin.setContentDescription("Код Mac");pin.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);content.addView(pin);
+  pin=new EditText(activity);pin.setSingleLine(true);pin.setTextColor(StudioStyle.TEXT);pin.setHintTextColor(StudioStyle.MUTED);pin.setHint("Код Mac · 12 символов");pin.setContentDescription("Код Mac");pin.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);content.addView(pin);
   ScrollView scroll=new ScrollView(activity);scroll.addView(content);
   dialog=new AlertDialog.Builder(activity).setTitle("Подключить Mac").setView(scroll).setPositiveButton("Продолжить",null).setNegativeButton("Отмена",(d,w)->cancel()).create();
   dialog.setOnKeyListener((active,key,event)->key==KeyEvent.KEYCODE_BACK

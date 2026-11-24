@@ -24,23 +24,26 @@ import android.widget.TextView;
 import android.graphics.Typeface;
 
 final class StudioStyle {
-    static final int BACKGROUND = 0xff101517;
-    static final int PANEL = 0xff1a2022;
-    static final int CONTROL = 0xff273034;
-    static final int LINE = 0xff4e6061;
-    static final int TEXT = 0xffeff6f4;
-    static final int MUTED = 0xffb1c3c1;
-    static final int ACCENT = 0xff80e2ce;
-    static final int ACTIVE = 0xff214440;
-    static final int RECORDING = 0xffffc0b1;
-    private static final int RECORDING_LINE = 0xff915d58;
-    static final int GOOD = 0xff9fdfc6;
-    static final int WARNING = 0xfff3c287;
-    static final int INK = 0xff102725;
+    static final int BACKGROUND = 0xfff7f5ef;
+    static final int PANEL = 0xfffffefa;
+    static final int CONTROL = 0xffedece4;
+    static final int LINE = 0xffccd1c6;
+    static final int TEXT = 0xff1d302e;
+    static final int MUTED = 0xff52665f;
+    static final int ACCENT = 0xff146b5c;
+    static final int ACTIVE = 0xffd9ece3;
+    static final int RECORDING = 0xff9a4534;
+    static final int RECORDER = 0xff193531;
+    static final int RECORDER_TEXT = 0xfff4f7ec;
+    static final int MINT = 0xffa7ebd5;
+    static final int ON_AIR = 0xffffceb9;
+    static final int GOOD = 0xff276346;
+    static final int WARNING = 0xff83501c;
+    static final int INK = 0xffffffff;
+    static final int[] SPECTRUM = {0xff446d64, ACCENT, 0xff49766b, 0xff85593b};
     static final int ACTION_HEIGHT = 48;
     static final int PAGE_INSET = 16;
     static final int CARD_RADIUS = 18;
-    static final int[] SPECTRUM = {0xff5d9d96, 0xff6cbcaf, ACCENT, RECORDING, WARNING};
     private static final PathInterpolator MOTION = new PathInterpolator(.2f, .72f, .27f, 1f);
 
     private StudioStyle() {}
@@ -52,7 +55,9 @@ final class StudioStyle {
             window.setNavigationBarColor(Color.TRANSPARENT);
             window.setNavigationBarContrastEnforced(false);
             android.view.WindowInsetsController controller = window.getDecorView().getWindowInsetsController();
-            if (controller != null) controller.setSystemBarsAppearance(0,
+            if (controller != null) controller.setSystemBarsAppearance(
+                    android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                            | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
                     android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
                             | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
         } else {
@@ -98,12 +103,10 @@ final class StudioStyle {
         return drawable;
     }
 
-    static GradientDrawable recorderCard(Context context, boolean recording) {
-        GradientDrawable drawable = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                new int[] {0xff233735, PANEL, PANEL});
-        drawable.setCornerRadius(dp(context, 20));
-        drawable.setStroke(dp(context, 1), recording ? RECORDING_LINE : LINE);
-        return drawable;
+    static boolean motion(View view) {
+        android.view.accessibility.AccessibilityManager service = view.getContext()
+                .getSystemService(android.view.accessibility.AccessibilityManager.class);
+        return ValueAnimator.areAnimatorsEnabled() && (service == null || !service.isTouchExplorationEnabled());
     }
 
     static void settle(View view) {
@@ -117,7 +120,7 @@ final class StudioStyle {
 
     static void enter(View view, boolean opening) {
         settle(view);
-        if (!ValueAnimator.areAnimatorsEnabled()) return;
+        if (!motion(view)) return;
         view.setAlpha(.86f);
         view.setTranslationY(dp(view.getContext(), opening ? 6 : 4));
         view.animate().alpha(1f).translationY(0).setDuration(opening ? 180 : 150)
@@ -126,7 +129,7 @@ final class StudioStyle {
 
     static void changeAction(View view) {
         settle(view);
-        if (!ValueAnimator.areAnimatorsEnabled()) return;
+        if (!motion(view)) return;
         view.setAlpha(.76f);
         view.setScaleX(.985f);
         view.setScaleY(.985f);
@@ -138,8 +141,8 @@ final class StudioStyle {
         TextView title = new TextView(context);
         title.setText(label);
         title.setTextColor(TEXT);
-        title.setTextSize(26);
-        title.setTypeface(Typeface.DEFAULT_BOLD);
+        title.setTextSize(32);
+        title.setTypeface(Typeface.create("serif", Typeface.NORMAL));
         title.setLetterSpacing(-.02f);
         if (android.os.Build.VERSION.SDK_INT >= 28) title.setAccessibilityHeading(true);
         return title;
@@ -151,6 +154,7 @@ final class StudioStyle {
         button.setTextSize(15);
         button.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         button.setAllCaps(false);
+        button.setStateListAnimator(null);
         button.setMinimumHeight(dp(context, ACTION_HEIGHT));
         button.setMinHeight(dp(context, ACTION_HEIGHT));
         button.setPadding(dp(context, 12), dp(context, 6), dp(context, 12), dp(context, 6));
@@ -166,7 +170,7 @@ final class StudioStyle {
 
     static ColorStateList actionColors(int color) {
         return new ColorStateList(new int[][] {{-android.R.attr.state_enabled}, {}},
-                new int[] {0xff839895, color});
+                new int[] {0xff62746f, color});
     }
 
     static Drawable control(Context context, int color, int radius) {
@@ -176,12 +180,12 @@ final class StudioStyle {
         states.addState(new int[] {-android.R.attr.state_enabled}, surface(context, color == 0 ? 0 : PANEL, radius));
         states.addState(new int[] {android.R.attr.state_focused}, focus);
         states.addState(new int[0], surface(context, color, radius));
-        return new RippleDrawable(ColorStateList.valueOf(0x28ffffff), states, null);
+        return new RippleDrawable(ColorStateList.valueOf(0x240f5a4c), states, null);
     }
 
     static void enterPage(View view, int direction, boolean vertical) {
         settle(view);
-        if (!ValueAnimator.areAnimatorsEnabled()) return;
+        if (!motion(view)) return;
         float offset = Integer.signum(direction) * dp(view.getContext(), 16);
         view.setAlpha(.86f);
         if (vertical) view.setTranslationY(offset);
@@ -192,7 +196,7 @@ final class StudioStyle {
 
     static void moveSelection(View view, float x, float y, boolean animate) {
         view.animate().cancel();
-        if (animate && ValueAnimator.areAnimatorsEnabled()) {
+        if (animate && motion(view)) {
             view.animate().translationX(x).translationY(y).setDuration(140).setInterpolator(MOTION).start();
         } else {
             view.setTranslationX(x);
@@ -208,7 +212,7 @@ final class StudioStyle {
         StateListDrawable states = new StateListDrawable();
         states.addState(new int[]{android.R.attr.state_checked}, selected);
         states.addState(new int[0], normal);
-        return new RippleDrawable(ColorStateList.valueOf(0x24ffffff), states, null);
+        return new RippleDrawable(ColorStateList.valueOf(0x240f5a4c), states, null);
     }
 
     static void recordIcon(TextView button, boolean recording, boolean animate) {
@@ -222,14 +226,14 @@ final class StudioStyle {
             button.setCompoundDrawablesRelative(glyph, null, null, null);
             button.setCompoundDrawablePadding(dp(button.getContext(), 10));
         }
-        glyph.setRecording(recording, animate && button.isShown());
+        glyph.setRecording(recording, animate && button.isShown() && motion(button));
     }
 
     private static final class RecordGlyph extends GradientDrawable {
         private final ValueAnimator corners = new ValueAnimator();
 
         RecordGlyph(int size) {
-            setColor(INK);
+            setColor(RECORDER);
             setBounds(0, 0, size, size);
             corners.setDuration(190);
             corners.setInterpolator(MOTION);

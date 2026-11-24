@@ -5,14 +5,12 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.SystemClock;
 import android.view.View;
+import java.util.Arrays;
 
 final class RecordingMeter extends View {
-    private static final int COLUMNS = 44;
-    private static final int ROWS = 6;
-    private static final long SAMPLE_INTERVAL_MS = 85;
-
+    private static final int COLUMNS = 54;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final int[] history = new int[COLUMNS];
+    private final float[] levels = new float[COLUMNS];
     private int cursor;
     private long nextSample;
     private boolean recording;
@@ -20,13 +18,13 @@ final class RecordingMeter extends View {
     RecordingMeter(Context context) {
         super(context);
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-        setBackground(StudioStyle.surface(context, StudioStyle.BACKGROUND, 14));
+        paint.setStrokeCap(Paint.Cap.ROUND);
     }
 
     void setRecording(boolean active) {
         if (recording == active) return;
         recording = active;
-        java.util.Arrays.fill(history, 0);
+        Arrays.fill(levels, 0);
         cursor = 0;
         nextSample = 0;
         invalidate();
@@ -34,39 +32,31 @@ final class RecordingMeter extends View {
 
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (recording && CaptureService.recording) {
+        boolean live = recording && CaptureService.recording;
+        boolean scrolling = live && StudioStyle.motion(this);
+        if (live) {
             long now = SystemClock.uptimeMillis();
             if (now >= nextSample) {
                 int peak = CaptureService.link == CaptureService.Link.CONNECTED ? CaptureService.peak : 0;
-                float db = peak == 0 ? -54 : (float) (20 * Math.log10(peak / 32768.0));
-                history[cursor] = Math.round(ROWS * Math.max(0, (db + 54) / 54));
+                float db = peak <= 0 ? -54f : (float) (20 * Math.log10(peak / 32768.0));
+                levels[cursor] = Math.max(0f, Math.min(1f, (db + 54f) / 54f));
                 cursor = (cursor + 1) % COLUMNS;
-                nextSample = now + SAMPLE_INTERVAL_MS;
+                nextSample = now + (scrolling ? 110 : 1000);
             }
-            postInvalidateDelayed(nextSample - now);
+            postInvalidateDelayed(Math.max(1, nextSample - now));
         }
 
-        float insetX = StudioStyle.dp(getContext(), 10);
-        float insetY = StudioStyle.dp(getContext(), 3);
-        float stepX = (getWidth() - 2 * insetX) / COLUMNS;
-        float stepY = (getHeight() - 2 * insetY) / ROWS;
-        float width = Math.min(stepX * .68f, stepY * .7f);
-        if (width <= 0) return;
-
+        float step = getWidth() / (float) COLUMNS;
+        float mid = getHeight() * .5f;
+        paint.setStrokeWidth(Math.max(2f, step * .30f));
+        float current = levels[(cursor + COLUMNS - 1) % COLUMNS];
         for (int i = 0; i < COLUMNS; i++) {
-            int level = history[(cursor + i) % COLUMNS];
-            float x = insetX + (i + .5f) * stepX;
-            for (int row = 0; row < ROWS; row++) {
-                float y = getHeight() - insetY - (row + .5f) * stepY;
-                if (row < level) {
-                    paint.setColor(StudioStyle.SPECTRUM[row * (StudioStyle.SPECTRUM.length - 1) / (ROWS - 1)]);
-                    canvas.drawRoundRect(x - width / 2, y - width / 2, x + width / 2, y + width / 2,
-                            .22f * width, .22f * width, paint);
-                } else {
-                    paint.setColor(row == 0 ? StudioStyle.LINE : StudioStyle.CONTROL);
-                    canvas.drawCircle(x, y, width * .23f, paint);
-                }
-            }
+            float x = step * (i + .5f);
+            float level = scrolling ? levels[(cursor + i) % COLUMNS] : 0f;
+            float height = Math.max(i % 9 == 0 ? mid * .19f : mid * .06f, mid * .91f * level);
+            boolean filled = scrolling ? level > 0 : live && i < Math.round(current * COLUMNS);
+            paint.setColor(filled ? StudioStyle.MINT : 0xff64847a);
+            canvas.drawLine(x, mid - height, x, mid + height, paint);
         }
     }
 }

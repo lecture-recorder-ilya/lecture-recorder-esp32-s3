@@ -37,6 +37,7 @@ final class ChoiceDropdown {
     private Consumer<Boolean> expansion;
     private IntSupplier heightLimit;
     private Option selected;
+    private String collapsedTitle;
     private Object backDispatcher;
     private Object backCallback;
 
@@ -49,6 +50,7 @@ final class ChoiceDropdown {
         this.onChoice = onChoice;
 
         button = new Button(context);
+        button.setStateListAnimator(null);
         button.setTextSize(15);
         button.setTextColor(TEXT);
         button.setAllCaps(false);
@@ -92,6 +94,12 @@ final class ChoiceDropdown {
         selected = option;
         updateButton();
         if (list.getAdapter() instanceof Adapter) ((Adapter) list.getAdapter()).notifyDataSetChanged();
+    }
+
+    void setCollapsedTitle(String title) {
+        if (java.util.Objects.equals(collapsedTitle, title)) return;
+        collapsedTitle = title;
+        updateButton();
     }
 
     void setEnabled(boolean enabled) {
@@ -161,9 +169,12 @@ final class ChoiceDropdown {
 
     private void updateButton() {
         boolean open = isOpen();
-        button.setText((selected == null ? label : selected.title) + (open ? "  ▴" : "  ▾"));
+        String title = selected == null ? label : selected.title;
+        if (!open && collapsedTitle != null) title = collapsedTitle;
+        button.setText(title);
+        button.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, open ? R.drawable.action_collapse : R.drawable.action_expand, 0);
         button.setTooltipText(selected == null ? null : selected.title);
-        button.setContentDescription(open ? "Свернуть список" : selected == null ? label : label + ". " + selected.title);
+        button.setContentDescription(open ? "Свернуть список" : selected == null ? label : label + ". " + title);
     }
 
     private GradientDrawable surface(int color) {

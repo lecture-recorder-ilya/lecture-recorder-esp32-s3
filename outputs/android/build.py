@@ -71,7 +71,7 @@ def manifest_for_preview(build):
     manifest = tree.getroot()
     manifest.set("package", PACKAGE + ".preview")
     app = manifest.find("application")
-    app.set(ANDROID + "label", "Запись лекций · ИИ")
+    app.set(ANDROID + "label", "На полях · ИИ")
     for component in app:
         name = component.get(ANDROID + "name", "")
         if name.startswith("."):
@@ -115,7 +115,6 @@ def main():
         dexer, jars, native = prepare_dependencies(build)
         resources = build / "res"
         shutil.copytree(ROOT / "res", resources)
-        shutil.copyfile(PROJECT / "outputs/recorder-icon.png", resources / "drawable/icon.png")
         run(tools / "aapt2", "compile", "--dir", resources, "-o", build / "res.zip")
         generated = build / "generated"
         generated.mkdir()

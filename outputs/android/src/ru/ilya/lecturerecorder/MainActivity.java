@@ -43,17 +43,21 @@ public class MainActivity extends Activity {
  private boolean lastRecording;
  private static final String MICROPHONE_PERMISSION=android.Manifest.permission.RECORD_AUDIO;
  private static final String MICROPHONE_ASKED="microphone_permission_asked";
- private boolean showingMicrophoneHelp;
  private Button recordAction, recordImport;
  private boolean stoppingRecording;
  private long startPendingUntil, captureTapUntil;
  private Button recentRecording;
  private Button pendingLesson;
- private TextView recordState;
+ private TextView recordTitle,recordState,receiptDetails;
+ private LinearLayout signal;
+ private FrameLayout navigationBar;
+ private String receiptFile="",receiptSource="",receiptTime="",captureProblem="";
+ private boolean receiptPending;
+ private CaptureMode paintedMode;
+ private enum CaptureMode { READY, STARTING, LIVE, STOPPING, SAVED }
  private String lastSavedRecording="";
  private RecordingLessonFlow lessonFlow;
  private TextView mireaProfileStatus;
- private LinearLayout recordCard;
  private boolean recordingActionShown;
  private ChoiceDropdown transport;
  private final Handler timer=new Handler();
@@ -104,10 +108,12 @@ public class MainActivity extends Activity {
   LinearLayout content=column();
   int inset=dp(StudioStyle.PAGE_INSET);
   content.setPadding(inset,dp(12),inset,dp(12));
-  TextView heading=StudioStyle.title(this,title);
-  LinearLayout.LayoutParams titleLayout=new LinearLayout.LayoutParams(-1,-2);
-  titleLayout.bottomMargin=dp(10);
-  content.addView(heading,titleLayout);
+  if(title!=null){
+   TextView heading=StudioStyle.title(this,title);
+   LinearLayout.LayoutParams titleLayout=new LinearLayout.LayoutParams(-1,-2);
+   titleLayout.bottomMargin=dp(14);
+   content.addView(heading,titleLayout);
+  }
   scroll.addView(content);
   pages[index]=scroll;
   host.addView(scroll,new FrameLayout.LayoutParams(-1,-1));
@@ -118,7 +124,7 @@ public class MainActivity extends Activity {
   boolean entering=!pageShown||selectedPage!=index;
   int direction=0;
   if(pageShown&&entering&&selectedPage>=0&&selectedPage<tabs.length){
-   Button from=tabs[selectedPage],to=tabs[index];
+   Button from=tabs[navPage(selectedPage)],to=tabs[navPage(index)];
    direction=landscape?to.getTop()-from.getTop():to.getLeft()-from.getLeft();
   }
   if(entering&&index==0)lessonFlow.onResume();
@@ -127,22 +133,26 @@ public class MainActivity extends Activity {
    boolean active=i==index;
    if(!active&&pages[i].getVisibility()==View.VISIBLE)StudioStyle.settle(pages[i]);
    pages[i].setVisibility(active?View.VISIBLE:View.GONE);
-   tabs[i].setSelected(active);
-   int color=active?accent:muted;
+   if(tabs[i]==null)continue;
+   boolean tabSelected=i==navPage(index);
+   tabs[i].setSelected(tabSelected);
+   int color=tabSelected?accent:muted;
    tabs[i].setTextColor(color);
    StudioStyle.tabIcon(tabs[i],i==LIBRARY_PAGE?5:i,color);
   }
+  navigationBar.setVisibility(index==AUDIO_PAGE?View.GONE:View.VISIBLE);
   positionNavSelection(pageShown&&entering);
-  meter.setRecording(CaptureService.recording);
+  meter.setRecording(index==0&&CaptureService.recording);
   audioPage.setActive(resumed&&index==AUDIO_PAGE);
-  if(index==0&&resumed)refreshConnection();
+  if(index==0&&resumed&&(CaptureService.recording||receiptFile.isEmpty()))refreshConnection();
   if(index==SETTINGS_PAGE)refreshSyncSettings(CaptureService.recording);
   if(index==LIBRARY_PAGE)refreshLibrary();
   if(entering&&pageShown)StudioStyle.enterPage(pages[index],direction,landscape);
   pageShown=true;
  }
+ private int navPage(int page){return page==AUDIO_PAGE?LIBRARY_PAGE:page;}
  private void positionNavSelection(boolean animate){
-  Button active=tabs[selectedPage];
+  Button active=tabs[navPage(selectedPage)];
   if(active.getWidth()==0)return;
   android.view.ViewGroup.LayoutParams size=navSelection.getLayoutParams();
   if(size.width!=active.getWidth()||size.height!=active.getHeight()){
@@ -160,10 +170,13 @@ public class MainActivity extends Activity {
   }
   if(saved!=null){pendingPhoto=saved.getString("pending_photo");selectedPage=saved.getInt("page",0);deviceExpanded=saved.getBoolean("device_expanded");deviceCharge=saved.getInt("device_charge",-1);}try{CaptureService.provision(this);if(!CaptureService.recording)Store.recover(this);}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
   lastSavedRecording=getPreferences(MODE_PRIVATE).getString("last_saved_recording","");
-  if(saved!=null)stoppingRecording=saved.getBoolean("stopping_recording");
+  if(saved!=null){
+   stoppingRecording=saved.getBoolean("stopping_recording");
+   recordingActionShown=saved.getBoolean("capture_observed",stoppingRecording);
+  }
   landscape=getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;
   lessonFlow=new RecordingLessonFlow(this,this::showSavedRecording,()->{
-   refreshPendingLesson(CaptureService.recording);
+   renderRecorder(CaptureService.recording);
    if(selectedPage==LIBRARY_PAGE)refreshLibrary();
   },this::showDiscardedRecording);
   LinearLayout root=column();
@@ -172,90 +185,8 @@ public class MainActivity extends Activity {
   root.requestApplyInsets();
   FrameLayout host=new FrameLayout(this);
   root.addView(host,landscape?new LinearLayout.LayoutParams(0,-1,1):new LinearLayout.LayoutParams(-1,0,1));
-  LinearLayout record=page(host,0,"Новая запись");
-  LinearLayout hero=card(record);
-  recordCard=hero;
-  hero.setBackground(StudioStyle.recorderCard(this,false));
-
-  recordState=note("Готово к записи");
-  recordState.setTextColor(accent);
-  recordState.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));
-  recordState.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-  hero.addView(recordState);
-  duration=text("00:00",46);
-  duration.setTypeface(Typeface.MONOSPACE);
-  duration.setFontFeatureSettings("tnum");
-  duration.setLetterSpacing(-.015f);
-  duration.setIncludeFontPadding(false);
-  duration.setSingleLine(true);
-  duration.setAutoSizeTextTypeUniformWithConfiguration(26,52,1,android.util.TypedValue.COMPLEX_UNIT_SP);
-  duration.setPadding(0,0,0,dp(4));
-  duration.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
-  duration.setContentDescription("Длительность записи 00:00");
-  hero.addView(duration,new LinearLayout.LayoutParams(-1,dp(landscape?48:62)));
-
-  recordAction=button("Начать запись",()->{
-   long now=SystemClock.elapsedRealtime();
-   if(now<captureTapUntil||startPendingUntil!=0||stoppingRecording||recordingActionShown!=CaptureService.recording)return;
-   captureTapUntil=now+ViewConfiguration.getDoubleTapTimeout();
-   if(!recordingActionShown){begin();return;}
-   try{
-    startForegroundService(CaptureService.command(this,"STOP"));
-    stoppingRecording=true;
-    showStoppingRecording();
-    requestCaptureRefresh();
-   }catch(RuntimeException error){
-    setRecordState("Не удалось остановить запись. Повтори попытку.",StudioStyle.RECORDING);
-   }
-  },true);
-  recordAction.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
-  recordAction.setPadding(dp(16),dp(12),dp(16),dp(12));
-  recordAction.setMinHeight(dp(54));
-  recordAction.setMinimumHeight(dp(54));
-  StudioStyle.recordIcon(recordAction,false,false);
-  hero.addView(recordAction);
-  meter=new RecordingMeter(this);
-  meter.setContentDescription("Уровень сигнала");
-  LinearLayout.LayoutParams meterSize=new LinearLayout.LayoutParams(-1,dp(22));
-  meterSize.topMargin=dp(8);
-  hero.addView(meter,meterSize);
-  pendingLesson=button("Выбрать пару для записи",lessonFlow::openPending);
-  pendingLesson.setVisibility(View.GONE);
-  hero.addView(pendingLesson);
-  recentRecording=button("Последняя запись",this::openSavedRecording);
-  recentRecording.setVisibility(View.GONE);
-  hero.addView(recentRecording);
-  recordImport=button("Импорт аудио",()->{
-   if(!CaptureService.recording&&startPendingUntil==0&&!AudioImport.busy)chooseAudio();
-  });
-  LinearLayout.LayoutParams importSize=new LinearLayout.LayoutParams(-1,-2);
-  importSize.topMargin=dp(8);
-  hero.addView(recordImport,importSize);
-
-  LinearLayout microphone=card(record);
-  microphone.addView(heading("Источник звука",16));
-  SharedPreferences sourceSettings=getSharedPreferences("settings",0);
-  if("wifi".equals(sourceSettings.getString("transport",""))||"wifi".equals(sourceSettings.getString(SOURCE_MODE,""))
-     ||(!sourceSettings.getString("ip","").isEmpty()&&!sourceSettings.getString("token","").isEmpty())){
-   sources.add(new ChoiceDropdown.Option("wifi","ClipMic по Wi-Fi","Сохранённое подключение"));
-  }
-  transport=new ChoiceDropdown(this,"Источник звука","Нет доступных источников",()->sources,
-   option->{
-    SharedPreferences.Editor editor=sourceSettings.edit().putString(SOURCE_MODE,option.value);
-    if("ble".equals(option.value)||"wifi".equals(option.value))editor.putString("transport",option.value);
-    editor.apply();
-    stopPresenceCheck();
-    presenceSource="";
-    refreshConnection();
-   });
-  transport.setSelected(selectedSource());
-  microphone.addView(transport.button,new LinearLayout.LayoutParams(-1,-2));
-  LinearLayout.LayoutParams sourceList=new LinearLayout.LayoutParams(-1,-2);
-  sourceList.topMargin=dp(6);
-  microphone.addView(transport.list,sourceList);
-  addConnectionPanel(microphone);
-  record.addView(button("Фото доски",this::takeBoardPhoto));
-  if(saved!=null)deviceModel.setYaw(saved.getFloat("device_rotation",-.30f));
+  buildRecorder(page(host,0,null));
+  if(saved!=null)presentReceipt(saved.getString("receipt_file",""));
   LinearLayout settingsPage=page(host,SETTINGS_PAGE,"Настройки");
   LinearLayout mac=card(settingsPage);
   mac.addView(heading("Синхронизация",18));
@@ -287,22 +218,26 @@ public class MainActivity extends Activity {
   githubDisconnect=button("Отключить GitHub на телефоне",()->GitHubUpdates.disconnect(this));
   updates.addView(githubDisconnect);
   LinearLayout connection=card(settingsPage);
-  connection.addView(heading("Диктофон ClipMic",18));
+  addConnectionPanel(connection);
+  if(saved!=null)deviceModel.setYaw(saved.getFloat("device_rotation",-.30f));
   firmwareButton=button("Проверить версию прошивки",this::checkFirmware);
   connection.addView(firmwareButton);
   firmwareStatus=note("");
   firmwareStatus.setVisibility(View.GONE);
   firmwareStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
   connection.addView(firmwareStatus);
+  LinearLayout materials=card(settingsPage);
+  materials.addView(heading("Материалы пары",18));
+  materials.addView(button("Сфотографировать доску",this::takeBoardPhoto));
   audioPage=new AudioTranscriptPage(this,saved==null?null:saved.getBundle("audio_page"),()->showPage(LIBRARY_PAGE),this::exportRecording);
   pages[AUDIO_PAGE]=audioPage;
   host.addView(audioPage,new FrameLayout.LayoutParams(-1,-1));
-  libraryPage=new RecordingLibraryPage(this,this::chooseAudio,()->showPage(0),entry->{
+  libraryPage=new RecordingLibraryPage(this,this::chooseAudio,entry->{
    if(entry.pending){
     if(CaptureService.recording)Toast.makeText(this,"Выбор пары доступен после записи.",Toast.LENGTH_SHORT).show();
     else lessonFlow.openPending(entry.file);
    }else{
-    openRecording(entry.file);
+    openLibraryRecording(entry.file);
    }
   });
   if(saved!=null)libraryPage.restoreQuery(saved.getString("library_query",""),saved.getBoolean("library_waiting"),saved.getBoolean("library_favorites"));
@@ -310,6 +245,7 @@ public class MainActivity extends Activity {
   host.addView(libraryPage,new FrameLayout.LayoutParams(-1,-1));
 
   FrameLayout nav=new FrameLayout(this);
+  navigationBar=nav;
   nav.setBackground(StudioStyle.card(this,StudioStyle.CARD_RADIUS));
   navSelection=new View(this);
   navSelection.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -319,15 +255,13 @@ public class MainActivity extends Activity {
   navTabs.setOrientation(landscape?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);
   navTabs.setPadding(dp(4),dp(4),dp(4),dp(4));
   nav.addView(navTabs,new FrameLayout.LayoutParams(-1,landscape?-1:-2));
-  String[] labels={"Запись","Аудио","Настройки","Записи"};
-  for(int index:new int[]{0,LIBRARY_PAGE,AUDIO_PAGE,SETTINGS_PAGE}){
+  String[] labels={"Запись","","Настройки","Библиотека"};
+  for(int index:new int[]{0,LIBRARY_PAGE,SETTINGS_PAGE}){
    int pageIndex=index;
-   boolean compactSettings=index==SETTINGS_PAGE&&getResources().getConfiguration().fontScale>=1.6f;
-   Button tab=button(compactSettings?"Настр.":labels[index],()->showPage(pageIndex));
+   Button tab=button(labels[index],()->showPage(pageIndex));
    if(index==LIBRARY_PAGE)tab.setContentDescription("Библиотека");
-   if(index==AUDIO_PAGE)tab.setContentDescription("Аудио и текст");
    if(index==SETTINGS_PAGE)tab.setContentDescription("Настройки");
-   StudioStyle.fitLabel(tab,7,12);
+   StudioStyle.fitLabel(tab,10,14);
    tab.setPadding(dp(2),dp(3),dp(2),dp(3));
    LinearLayout.LayoutParams lp=landscape?new LinearLayout.LayoutParams(-1,0,1):new LinearLayout.LayoutParams(0,dp(54),1);
    tab.setBackground(StudioStyle.control(this,Color.TRANSPARENT,12));
@@ -356,6 +290,209 @@ public class MainActivity extends Activity {
    getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,callback);
    systemBackCallback=callback;
   }
+ }
+ private LinearLayout.LayoutParams spaced(int gap) {
+  LinearLayout.LayoutParams size=new LinearLayout.LayoutParams(-1,-2);
+  size.topMargin=dp(gap);
+  return size;
+ }
+ private void buildRecorder(LinearLayout page) {
+  LinearLayout masthead=new LinearLayout(this);
+  masthead.setGravity(Gravity.CENTER_VERTICAL);
+  ImageView mark=new ImageView(this);
+  mark.setImageResource(R.mipmap.launcher_icon);
+  mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+  masthead.addView(mark,new LinearLayout.LayoutParams(dp(34),dp(34)));
+  TextView brand=heading("На полях",20);
+  LinearLayout.LayoutParams brandSize=new LinearLayout.LayoutParams(0,-2,1);
+  brandSize.setMarginStart(dp(8));
+  masthead.addView(brand,brandSize);
+  String today=java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("d MMMM",new Locale("ru")));
+  masthead.addView(note(today));
+  page.addView(masthead);
+  View rule=new View(this);
+  rule.setBackgroundColor(line);
+  LinearLayout.LayoutParams ruleSize=new LinearLayout.LayoutParams(-1,dp(1));
+  ruleSize.topMargin=dp(10);
+  page.addView(rule,ruleSize);
+
+  recordTitle=StudioStyle.title(this,"Новая запись");
+  recordTitle.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+  page.addView(recordTitle,spaced(landscape?8:20));
+  receiptDetails=note("");
+  receiptDetails.setVisibility(View.GONE);
+  page.addView(receiptDetails);
+
+  LinearLayout hero=column();
+  hero.setPadding(dp(20),dp(16),dp(20),dp(16));
+  hero.setBackground(StudioStyle.surface(this,StudioStyle.RECORDER,18));
+  page.addView(hero,spaced(12));
+  recordState=text("Длительность",14);
+  recordState.setTextColor(StudioStyle.MINT);
+  recordState.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+  hero.addView(recordState);
+  duration=text("00:00",62);
+  duration.setTypeface(Typeface.create("sans-serif-light",Typeface.NORMAL));
+  duration.setTextColor(StudioStyle.RECORDER_TEXT);
+  duration.setFontFeatureSettings("tnum");
+  duration.setLetterSpacing(-.025f);
+  duration.setIncludeFontPadding(false);
+  duration.setSingleLine(true);
+  duration.setAutoSizeTextTypeUniformWithConfiguration(30,66,2,android.util.TypedValue.COMPLEX_UNIT_SP);
+  duration.setPadding(0,0,0,0);
+  duration.setContentDescription("Длительность записи 00:00");
+  hero.addView(duration,new LinearLayout.LayoutParams(-1,dp(landscape?68:80)));
+  meter=new RecordingMeter(this);
+  hero.addView(meter,new LinearLayout.LayoutParams(-1,dp(26)));
+  recordAction=button("Начать запись",this::recorderAction,true);
+  recordAction.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
+  recordAction.setPadding(dp(18),dp(8),dp(18),dp(8));
+  recordAction.setMinHeight(dp(54));
+  recordAction.setMinimumHeight(dp(54));
+  recordAction.setTextSize(17);
+  hero.addView(recordAction,spaced(12));
+
+  TextView sourceLabel=heading("Источник звука",16);
+  page.addView(sourceLabel,spaced(14));
+  SharedPreferences settings=getSharedPreferences("settings",0);
+  if("wifi".equals(settings.getString("transport",""))||"wifi".equals(settings.getString(SOURCE_MODE,""))
+      ||(!settings.getString("ip","").isEmpty()&&!settings.getString("token","").isEmpty())){
+   sources.add(new ChoiceDropdown.Option("wifi","ClipMic по Wi-Fi","Сохранённое подключение"));
+  }
+  transport=new ChoiceDropdown(this,"Источник звука","Нет доступных источников",()->sources,option->{
+   SharedPreferences.Editor editor=settings.edit().putString(SOURCE_MODE,option.value);
+   if("ble".equals(option.value)||"wifi".equals(option.value))editor.putString("transport",option.value);
+   editor.apply();
+   stopPresenceCheck();
+   presenceSource="";
+   captureProblem="";
+   refreshConnection();
+   renderRecorder(CaptureService.recording);
+  });
+  transport.setSelected(selectedSource());
+  page.addView(transport.button,spaced(2));
+  page.addView(transport.list,spaced(4));
+  addSourceStatus(page);
+  recordImport=button("Импортировать аудио",()->{
+   if(CaptureService.recording){takeBoardPhoto();return;}
+   if(startPendingUntil!=0||lessonFlow.savingDirect())return;
+   if(!receiptFile.isEmpty()){
+    String file=receiptFile;
+    if(receiptPending&&!lessonFlow.hasLessonChoice(file))lessonFlow.keepWithoutLesson(file,()->{
+     if(resumed&&selectedPage==0&&file.equals(receiptFile))prepareNextRecording();
+    });
+    else prepareNextRecording();
+   }else if(!AudioImport.busy)chooseAudio();
+  });
+  recordImport.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
+  recordImport.setPadding(dp(10),dp(6),dp(10),dp(6));
+  recordImport.setCompoundDrawablePadding(dp(12));
+  StudioStyle.actionTone(recordImport,Color.TRANSPARENT,accent);
+  page.addView(recordImport,spaced(10));
+  pendingLesson=button("Указать предмет",()->{
+   if(!receiptFile.isEmpty()&&receiptPending)lessonFlow.openPending(receiptFile);
+   else lessonFlow.openPending();
+  });
+  pendingLesson.setVisibility(View.GONE);
+  page.addView(pendingLesson,spaced(6));
+  recentRecording=button("Последняя запись",()->openRecording(lastSavedRecording));
+  recentRecording.setVisibility(View.GONE);
+  page.addView(recentRecording,spaced(6));
+  updateRecent();
+ }
+ private void prepareNextRecording(){
+  receiptFile="";
+  captureProblem="";
+  refreshConnection();
+  renderRecorder(false);
+ }
+ private void updateRecent() {
+  boolean exists=LectureNotes.valid(lastSavedRecording)&&(Store.audio(this,lastSavedRecording).isFile()
+      ||LectureNotes.file(this,lastSavedRecording,true).isFile()||LectureNotes.file(this,lastSavedRecording,false).isFile());
+  recentRecording.setTag(exists);
+  if(exists)recentRecording.setText("Последняя запись · "+Store.recordingTitle(this,lastSavedRecording));
+ }
+ private void recorderAction() {
+  long now=SystemClock.elapsedRealtime();
+  if(now<captureTapUntil||startPendingUntil!=0||stoppingRecording||lessonFlow.savingDirect()
+      ||recordingActionShown!=CaptureService.recording)return;
+  captureTapUntil=now+ViewConfiguration.getDoubleTapTimeout();
+  if(!recordingActionShown&&!receiptFile.isEmpty()){
+   String file=receiptFile;
+   if(!receiptPending)openRecording(file);
+   else if(lessonFlow.hasLessonChoice(file))lessonFlow.openPending(file);
+   else lessonFlow.keepWithoutLesson(file,()->{if(resumed&&selectedPage==0&&file.equals(receiptFile))openRecording(file);});
+   renderRecorder(false);
+   return;
+  }
+  if(!recordingActionShown){begin();return;}
+  try {
+   startForegroundService(CaptureService.command(this,"STOP"));
+   stoppingRecording=true;
+   renderRecorder(true);
+   requestCaptureRefresh();
+  }catch(RuntimeException error){
+   captureProblem="Не удалось остановить запись. Повтори попытку.";
+   renderRecorder(true);
+  }
+ }
+ private void renderRecorder(boolean active) {
+  CaptureMode mode=active?(stoppingRecording?CaptureMode.STOPPING:CaptureMode.LIVE)
+      :startPendingUntil!=0?CaptureMode.STARTING:receiptFile.isEmpty()?CaptureMode.READY:CaptureMode.SAVED;
+  boolean saved=mode==CaptureMode.SAVED;
+  boolean ready=mode==CaptureMode.READY;
+  boolean live=mode==CaptureMode.LIVE;
+  boolean choosing=saved&&receiptPending&&lessonFlow.hasLessonChoice(receiptFile);
+  boolean saving=lessonFlow.savingDirect();
+  ChoiceDropdown.Option source=selectedSource();
+  boolean local="auto".equals(source.value)||"phone".equals(source.value);
+  boolean permission=ready&&local&&microphonePermissionDenied();
+  String title=saved?"Запись сохранена":active?"Идёт запись":"Новая запись";
+  if(!title.contentEquals(recordTitle.getText()))recordTitle.setText(title);
+  String label="Длительность";
+  int tone=StudioStyle.MINT;
+  if(!captureProblem.isEmpty()){label=captureProblem;tone=StudioStyle.ON_AIR;}
+  else if(permission){label="Для записи нужен доступ к микрофону";tone=StudioStyle.ON_AIR;}
+  else if(mode==CaptureMode.STARTING)label="Включаю микрофон…";
+  else if(mode==CaptureMode.STOPPING||saving)label="Сохраняю…";
+  else if(saved)label="На телефоне";
+  else if(live&&CaptureService.link==CaptureService.Link.ERROR){label="Связь прервалась. Подключаюсь снова…";tone=StudioStyle.ON_AIR;}
+  setRecordState(label,tone);
+  String time=saved?receiptTime:active?LectureReaderActivity.clock(CaptureService.samples/16000.0):"00:00";
+  if(!time.contentEquals(duration.getText())){
+   duration.setText(time);
+   duration.setContentDescription("Длительность записи "+time);
+  }
+  receiptDetails.setVisibility(saved?View.VISIBLE:View.GONE);
+  String action=permission?(microphoneNeedsSettings()?"Открыть настройки":"Разрешить микрофон")
+      :saved?(choosing?"Выбрать пару":"Открыть запись"):live?"Завершить запись"
+      :mode==CaptureMode.STOPPING?"Сохраняю…":"Начать запись";
+  if(!action.contentEquals(recordAction.getText()))recordAction.setText(action);
+  recordAction.setEnabled(!saving&&(live||saved||ready&&firmwareQuery==null));
+  if(paintedMode!=mode){
+   StudioStyle.actionTone(recordAction,active?StudioStyle.ON_AIR:StudioStyle.MINT,StudioStyle.RECORDER);
+   int secondaryIcon=saved?R.drawable.action_new:active?R.drawable.action_photo:R.drawable.action_import;
+   recordImport.setCompoundDrawablesRelativeWithIntrinsicBounds(secondaryIcon,0,R.drawable.action_next,0);
+   if(saved)recordAction.setCompoundDrawablesRelative(null,null,null,null);
+   else StudioStyle.recordIcon(recordAction,active,paintedMode!=null&&resumed&&selectedPage==0);
+   if(paintedMode!=null&&selectedPage==0&&resumed)StudioStyle.changeAction(recordAction);
+   paintedMode=mode;
+  }
+  meter.setRecording(active&&selectedPage==0);
+  transport.setEnabled(ready);
+  transport.button.setVisibility(ready||mode==CaptureMode.STARTING?View.VISIBLE:View.GONE);
+  String autoInput=getSharedPreferences("settings",0).getString("ble_address","").isEmpty()
+      ?"Авто · телефон или гарнитура":"Авто · ClipMic или телефон";
+  transport.setCollapsedTitle("auto".equals(source.value)?autoInput:null);
+  if(saved)showConnection(CaptureService.Link.CONNECTED,receiptSource);
+  signal.setVisibility(active||saved||!local?View.VISIBLE:View.GONE);
+  String other=saved?"Новая запись":active?"Сфотографировать доску":"Импортировать аудио";
+  if(!other.contentEquals(recordImport.getText()))recordImport.setText(other);
+  recordImport.setEnabled(!saving&&(live||saved||ready&&!AudioImport.busy));
+  String pending=saved?"Указать предмет":"Выбрать пару для отложенной записи";
+  if(!pending.contentEquals(pendingLesson.getText()))pendingLesson.setText(pending);
+  pendingLesson.setVisibility(!saving&&(saved&&receiptPending&&!choosing||ready&&lessonFlow.hasPending())?View.VISIBLE:View.GONE);
+  recentRecording.setVisibility(ready&&Boolean.TRUE.equals(recentRecording.getTag())?View.VISIBLE:View.GONE);
  }
  private TextView firmwareStatus,macStatus,updateStatus;
  private Button firmwareButton,connectMac,installUpdate,profileAction,githubCheck,githubDisconnect;
@@ -431,10 +568,12 @@ public class MainActivity extends Activity {
    startPendingUntil=now+2500;
    captureTapUntil=now+ViewConfiguration.getDoubleTapTimeout();
    recordAction.setEnabled(false);
-   setRecordState("Включаю запись…",muted);
+   captureProblem="";
+   renderRecorder(false);
    requestCaptureRefresh();
   }catch(RuntimeException error){
-   setRecordState("Не удалось начать запись. Повтори попытку.",StudioStyle.RECORDING);
+   captureProblem="Не удалось начать запись. Повтори попытку.";
+   renderRecorder(false);
   }
  }
  @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grant){super.onRequestPermissionsResult(code,permissions,grant);if(code==EspPairing.BLUETOOTH_PERMISSION){if(devicePairing!=null)devicePairing.permissionResult(grant);return;}if(code==9){for(int result:grant)if(result!=0)return;if(grant.length>0)checkFirmware();return;}if(code==8){
@@ -476,42 +615,58 @@ public class MainActivity extends Activity {
    runOnUiThread(()->Toast.makeText(application,message,Toast.LENGTH_LONG).show());
   },"Lecture export").start();
  }
- @Override protected void onActivityResult(int code,int result,Intent data){super.onActivityResult(code,result,data);if(code==EXPORT_DOCUMENT){finishExport(result,data);return;}if(code==EspPairing.ENABLE_BLUETOOTH){if(devicePairing!=null)devicePairing.bluetoothEnableResult(result);return;}if(code==7&&result==RESULT_OK&&data!=null&&data.getData()!=null){android.net.Uri uri=data.getData();try{getContentResolver().takePersistableUriPermission(uri,data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}AudioImport.start(this,uri);return;}if(code==4&&result==RESULT_OK)begin();if(code==6&&result==RESULT_OK){final String id=pendingPhoto;pendingPhoto=null;new Thread(()->{try{BoardPhotos.markReady(this,id);BoardPhotos.finish(this,id);runOnUiThread(()->{Toast.makeText(this,"Фото сохранено · будет перенесено и разобрано на Mac",1).show();transfer();});}catch(Exception e){runOnUiThread(()->Toast.makeText(this,e.getMessage(),1).show());}},"Save board photo").start();}else if(code==6){BoardPhotos.cancel(this,pendingPhoto);pendingPhoto=null;}}
- @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putString("pending_photo",pendingPhoto);out.putInt("page",selectedPage);out.putBundle("audio_page",audioPage.snapshot());out.putBoolean("device_expanded",deviceExpanded);out.putInt("device_charge",deviceCharge);out.putFloat("device_rotation",deviceModel.rotation());out.putBoolean("stopping_recording",stoppingRecording);out.putString("library_query",libraryPage.queryText());out.putBoolean("library_waiting",libraryPage.waitingOnly());out.putBoolean("library_favorites",libraryPage.favoritesOnly());if(exportKind!=null){out.putString("export_file",exportFile);out.putString("export_kind",exportKind.name());}}
+ @Override protected void onActivityResult(int code,int result,Intent data){super.onActivityResult(code,result,data);if(code==READ_FROM_LIBRARY){
+  if(result==RESULT_OK&&data!=null&&LectureNotes.valid(data.getStringExtra("audio")))openRecording(data.getStringExtra("audio"));
+  return;
+ }if(code==EXPORT_DOCUMENT){finishExport(result,data);return;}if(code==EspPairing.ENABLE_BLUETOOTH){if(devicePairing!=null)devicePairing.bluetoothEnableResult(result);return;}if(code==7&&result==RESULT_OK&&data!=null&&data.getData()!=null){android.net.Uri uri=data.getData();try{getContentResolver().takePersistableUriPermission(uri,data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}AudioImport.start(this,uri);showPage(LIBRARY_PAGE);return;}if(code==4&&result==RESULT_OK)begin();if(code==6&&result==RESULT_OK){final String id=pendingPhoto;pendingPhoto=null;new Thread(()->{try{BoardPhotos.markReady(this,id);BoardPhotos.finish(this,id);runOnUiThread(()->{Toast.makeText(this,"Фото сохранено · будет перенесено и разобрано на Mac",1).show();transfer();});}catch(Exception e){runOnUiThread(()->Toast.makeText(this,e.getMessage(),1).show());}},"Save board photo").start();}else if(code==6){BoardPhotos.cancel(this,pendingPhoto);pendingPhoto=null;}}
+ @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putString("pending_photo",pendingPhoto);out.putInt("page",selectedPage);out.putBundle("audio_page",audioPage.snapshot());out.putBoolean("device_expanded",deviceExpanded);out.putInt("device_charge",deviceCharge);out.putFloat("device_rotation",deviceModel.rotation());out.putBoolean("stopping_recording",stoppingRecording);out.putBoolean("capture_observed",recordingActionShown);out.putString("receipt_file",receiptFile);out.putString("library_query",libraryPage.queryText());out.putBoolean("library_waiting",libraryPage.waitingOnly());out.putBoolean("library_favorites",libraryPage.favoritesOnly());if(exportKind!=null){out.putString("export_file",exportFile);out.putString("export_kind",exportKind.name());}}
  private void showSavedRecording(String file){
   lastSavedRecording=file;
+  updateRecent();
   getPreferences(MODE_PRIVATE).edit().putString("last_saved_recording",file).apply();
-  if(!CaptureService.recording)setRecordState("Запись сохранена",StudioStyle.GOOD);
+  presentReceipt(file);
+  renderRecorder(CaptureService.recording);
   if(selectedPage==LIBRARY_PAGE){
-   libraryPage.showOutcome("Пара сохранена",()->openRecording(file));
+   libraryPage.showOutcome("Запись сохранена",()->openRecording(file));
    refreshLibrary();
   }
-  refreshSavedRecording(CaptureService.recording);
-  refreshPendingLesson(CaptureService.recording);
  }
- private void refreshPendingLesson(boolean recording){
-  int visibility=!recording&&lessonFlow.hasPending()?View.VISIBLE:View.GONE;
-  if(visibility==pendingLesson.getVisibility())return;
-  pendingLesson.setVisibility(visibility);
-  if(visibility==View.VISIBLE&&selectedPage==0)StudioStyle.enter(pendingLesson,false);
+ private void presentReceipt(String name){
+  if(!LectureNotes.valid(name))return;
+  java.io.File audio=Store.audio(this,name);
+  if(!audio.isFile())return;
+  receiptFile=name;
+  receiptTime=LectureReaderActivity.clock(Math.max(0L,audio.length()-44)/32000.0);
+  receiptDetails.setText(Store.recordingTitle(this,name));
+  receiptPending=false;
+  receiptSource="";
+  try{
+   org.json.JSONObject metadata=Store.readObject(new java.io.File(audio.getPath()+".json"));
+   receiptPending=metadata.optBoolean("awaiting_lesson");
+   org.json.JSONArray routes=metadata.optJSONArray("input_routes");
+   if(routes!=null&&routes.length()>0)receiptSource=routes.getJSONObject(routes.length()-1).optString("label");
+   if(receiptSource.isEmpty()&&metadata.optBoolean("imported"))receiptSource="Импортированный файл";
+  }catch(Exception ignored){}
+  if(receiptPending&&!lessonFlow.hasLessonChoice(name))receiptDetails.append(" · Без пары");
+  if(receiptSource.isEmpty()&&name.equals(CaptureService.current))receiptSource=CaptureService.inputLabel;
+  if(receiptSource.isEmpty())receiptSource="Не указан";
  }
- private void refreshSavedRecording(boolean recording){
-  int visibility=!recording&&LectureNotes.valid(lastSavedRecording)&&
-    (Store.audio(this,lastSavedRecording).isFile()||LectureNotes.file(this,lastSavedRecording,true).isFile()||
-     LectureNotes.file(this,lastSavedRecording,false).isFile())?View.VISIBLE:View.GONE;
-  if(visibility==recentRecording.getVisibility())return;
-  recentRecording.setVisibility(visibility);
-  if(visibility==View.VISIBLE&&selectedPage==0)StudioStyle.enter(recentRecording,false);
- }
- private void openSavedRecording(){
-  openRecording(lastSavedRecording);
+ private static final int READ_FROM_LIBRARY=12;
+ private void openLibraryRecording(String file){
+  boolean local=LectureNotes.file(this,file,true).isFile();
+  if(!local&&!LectureNotes.file(this,file,false).isFile()){openRecording(file);return;}
+  Intent reader=new Intent(this,LectureReaderActivity.class).putExtra("file",file+".json")
+      .putExtra("local",local).putExtra("from_library",true).putExtra("tab","read");
+  startActivityForResult(reader,READ_FROM_LIBRARY);
  }
  private void openRecording(String file){
   audioPage.openRecording(file);
   showPage(AUDIO_PAGE);
  }
  private void showDiscardedRecording(){
-  setRecordState("Запись отменена",muted);
+  if(!receiptFile.isEmpty()&&!Store.audio(this,receiptFile).isFile())receiptFile="";
+  captureProblem="Запись удалена";
+  renderRecorder(CaptureService.recording);
   if(selectedPage==LIBRARY_PAGE){
    libraryPage.showOutcome("Запись отменена",null);
    refreshLibrary();
@@ -523,8 +678,8 @@ public class MainActivity extends Activity {
    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
   startActivityForResult(pick,7);
  }
- private void addConnectionPanel(LinearLayout panel){
-  LinearLayout signal=new LinearLayout(this);
+ private void addSourceStatus(LinearLayout panel){
+  signal=new LinearLayout(this);
   signal.setGravity(Gravity.CENTER_VERTICAL);
   signal.setMinimumHeight(dp(36));
   View indicator=new View(this);
@@ -540,6 +695,8 @@ public class MainActivity extends Activity {
   signal.addView(state,new LinearLayout.LayoutParams(0,-2,1));
   panel.addView(signal,new LinearLayout.LayoutParams(-1,-2));
 
+ }
+ private void addConnectionPanel(LinearLayout panel){
   LinearLayout row=new LinearLayout(this);
   deviceToggle=row;
   row.setGravity(Gravity.CENTER_VERTICAL);
@@ -585,7 +742,6 @@ public class MainActivity extends Activity {
   deviceReveal.setClipChildren(true);
   deviceReveal.addView(deviceDetails,new FrameLayout.LayoutParams(-1,-2));
   panel.addView(deviceReveal,new LinearLayout.LayoutParams(-1,-2));
-  showConnection(CaptureService.Link.OFF,"Микрофон выключен");
   updateDevicePanel();
   deviceReveal.setVisibility(deviceExpanded?View.VISIBLE:View.GONE);
  }
@@ -643,7 +799,7 @@ public class MainActivity extends Activity {
   updateDevicePanel();
   deviceChevron.animate().cancel();
   float rotation=expanded?180f:0f;
-  if(ValueAnimator.areAnimatorsEnabled())deviceChevron.animate().rotation(rotation).setDuration(180).start();
+  if(StudioStyle.motion(deviceChevron))deviceChevron.animate().rotation(rotation).setDuration(180).start();
   else deviceChevron.setRotation(rotation);
 
   if(deviceExpansion!=null){
@@ -657,7 +813,7 @@ public class MainActivity extends Activity {
    View panel=(View)deviceReveal.getParent();
    width=panel.getWidth()-panel.getPaddingLeft()-panel.getPaddingRight();
   }
-  if(width<=0||!ValueAnimator.areAnimatorsEnabled()){
+  if(width<=0||!StudioStyle.motion(deviceReveal)){
    ViewGroup.LayoutParams layout=deviceReveal.getLayoutParams();
    layout.height=ViewGroup.LayoutParams.WRAP_CONTENT;
    deviceReveal.setLayoutParams(layout);
@@ -832,24 +988,6 @@ public class MainActivity extends Activity {
  private boolean microphoneNeedsSettings(){
   return microphonePermissionDenied()&&!shouldShowRequestPermissionRationale(MICROPHONE_PERMISSION);
  }
- private void refreshMicrophoneAction(){
-  String source=selectedSource().value;
-  boolean needsPermission=("auto".equals(source)||"phone".equals(source))&&microphonePermissionDenied();
-  if(needsPermission){
-   String action=microphoneNeedsSettings()?"Открыть настройки":"Разрешить микрофон";
-   if(!action.contentEquals(recordAction.getText()))recordAction.setText(action);
-   setRecordState("Для записи нужен доступ к микрофону",StudioStyle.WARNING);
-  }else if(showingMicrophoneHelp){
-   recordAction.setText("Начать запись");
-   setRecordState("Готово к записи",accent);
-  }
-  showingMicrophoneHelp=needsPermission;
- }
- private void showStoppingRecording(){
-  setRecordState("Сохраняю аудио…",muted);
-  recordAction.setText("Сохраняю…");
-  recordAction.setEnabled(false);
- }
  private void setRecordState(String value,int color){
   if(!value.contentEquals(recordState.getText()))recordState.setText(value);
   if(recordState.getCurrentTextColor()!=color)recordState.setTextColor(color);
@@ -868,51 +1006,28 @@ public class MainActivity extends Activity {
   else if(startPendingUntil!=0&&SystemClock.elapsedRealtime()>=startPendingUntil){
    startPendingUntil=0;
    String error=CaptureService.link==CaptureService.Link.ERROR?CaptureService.status:"";
-   setRecordState(error.isEmpty()?"Не удалось начать запись. Повтори попытку.":error,StudioStyle.RECORDING);
+   captureProblem=error.isEmpty()?"Не удалось начать запись. Повтори попытку.":error;
   }
   if(!active)stoppingRecording=false;
   else if("Сохраняю запись…".equals(CaptureService.status))stoppingRecording=true;
-  if(selectedPage==0)refreshConnection();
-  String elapsed=LectureReaderActivity.clock(CaptureService.samples/16000.0);
-  if(!elapsed.contentEquals(duration.getText())){
-   duration.setText(elapsed);
-   duration.setContentDescription("Длительность записи "+elapsed);
-  }
+  if(selectedPage==0&&(active||receiptFile.isEmpty()))refreshConnection();
   boolean pairingAvailable=!active&&firmwareQuery==null&&devicePairing==null;
   addDevice.setEnabled(pairingAvailable);
   reconnectDevice.setEnabled(pairingAvailable);
   firmwareButton.setEnabled(!active&&firmwareQuery==null);
-  if(active!=recordingActionShown){
-   recordingActionShown=active;
-   if(active)setRecordState("Идёт запись",StudioStyle.RECORDING);
-   else if(CaptureService.link==CaptureService.Link.ERROR)setRecordState(CaptureService.status,StudioStyle.RECORDING);
-   else if(CaptureService.samples>0)setRecordState("Аудио сохранено",StudioStyle.GOOD);
-   else setRecordState(CaptureService.status,muted);
-   recordAction.setText(active?"Завершить запись":"Начать запись");
-   StudioStyle.actionTone(recordAction,active?StudioStyle.RECORDING:accent,StudioStyle.INK);
-   StudioStyle.recordIcon(recordAction,active,selectedPage==0&&resumed);
-   recordCard.setBackground(StudioStyle.recorderCard(this,active));
+  if(!active&&recordingActionShown){
+   presentReceipt(CaptureService.current.isEmpty()?Store.pendingLesson(this):CaptureService.current);
+   if(CaptureService.link==CaptureService.Link.ERROR||receiptFile.isEmpty())captureProblem=CaptureService.status;
   }
-  if(active&&!stoppingRecording){
-   if(CaptureService.link==CaptureService.Link.ERROR)setRecordState("Связь прервалась · переподключаюсь",StudioStyle.WARNING);
-   else if(CaptureService.link==CaptureService.Link.CONNECTING)setRecordState(CaptureService.status,muted);
-   else setRecordState(CaptureService.inputLabel.isEmpty()?"Идёт запись":"Идёт запись · "+CaptureService.inputLabel,StudioStyle.RECORDING);
-  }
-  if(!active&&startPendingUntil==0)refreshMicrophoneAction();
-  refreshSavedRecording(active);
-  if(stoppingRecording){
-   if(recordAction.isEnabled())showStoppingRecording();
-  }else recordAction.setEnabled(active||startPendingUntil==0&&firmwareQuery==null);
-  recordImport.setEnabled(!active&&startPendingUntil==0&&!AudioImport.busy);
-  transport.setEnabled(!active&&startPendingUntil==0);
-  meter.setRecording(active);
+  if(active&&!recordingActionShown){receiptFile="";captureProblem="";}
+  recordingActionShown=active;
+  lessonFlow.refresh(active);
+  renderRecorder(active);
   GitHubUpdates.whenOpen(this);
   if(selectedPage==SETTINGS_PAGE)refreshSyncSettings(active);
   String profile=lessonFlow.profileLabel();
   if(!profile.contentEquals(mireaProfileStatus.getText()))mireaProfileStatus.setText(profile);
   profileAction.setEnabled(!active);
-  lessonFlow.refresh(active,selectedPage==0);
-  refreshPendingLesson(active);
   if(selectedPage==LIBRARY_PAGE&&SystemClock.elapsedRealtime()>=nextLibraryRefresh)refreshLibrary();
   timer.postDelayed(refreshTask,startPendingUntil!=0||stoppingRecording?100:500);
  }
@@ -953,15 +1068,12 @@ public class MainActivity extends Activity {
    if(!audioPage.exitReview())showPage(LIBRARY_PAGE);
    return true;
   }
+  if(selectedPage==SETTINGS_PAGE&&deviceExpanded){setDeviceExpanded(false);return true;}
   if(selectedPage!=0){
    showPage(0);
    return true;
   }
   if(transport.close())return true;
-  if(deviceExpanded){
-   setDeviceExpanded(false);
-   return true;
-  }
   return false;
  }
  @Override public void onBackPressed(){

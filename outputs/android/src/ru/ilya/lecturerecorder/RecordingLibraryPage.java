@@ -66,7 +66,6 @@ final class RecordingLibraryPage extends LinearLayout {
     private final ListView list;
     private final ArrayAdapter<Entry> adapter;
     private final Button importButton;
-    private final Button recordButton;
     private final TextView empty;
     private final TextView status;
     private final LinearLayout outcome;
@@ -74,20 +73,23 @@ final class RecordingLibraryPage extends LinearLayout {
     private final Button outcomeAction;
     private Runnable openOutcome;
     private List<Entry> entries = Collections.emptyList();
+    private final android.util.LruCache<String, String> noteTitles = new android.util.LruCache<>(128);
 
-    RecordingLibraryPage(Context context, Runnable importAudio, Runnable record, Consumer<Entry> open) {
+    RecordingLibraryPage(Context context, Runnable importAudio, Consumer<Entry> open) {
         super(context);
         library = new ListeningLibrary(context);
         setOrientation(VERTICAL);
         int inset = dp(StudioStyle.PAGE_INSET);
         setPadding(inset, dp(12), inset, dp(8));
         LinearLayout header = new LinearLayout(context);
-        boolean wide = getResources().getConfiguration().screenWidthDp >= 480;
+        boolean wide = getResources().getConfiguration().screenWidthDp >= 345
+                && getResources().getConfiguration().fontScale <= 1.30f;
         header.setOrientation(wide ? HORIZONTAL : VERTICAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
         TextView title = StudioStyle.title(context, "Библиотека");
         header.addView(title, new LayoutParams(wide ? 0 : -1, -2, wide ? 1 : 0));
-        importButton = StudioStyle.action(context, "Импорт аудио", importAudio, true);
+        importButton = StudioStyle.action(context, "Импорт", importAudio, false);
+        importButton.setContentDescription("Импортировать аудио");
         header.addView(importButton, new LayoutParams(wide ? -2 : -1, -2));
         addView(header);
 
@@ -106,7 +108,6 @@ final class RecordingLibraryPage extends LinearLayout {
             Runnable action = openOutcome;
             if (action == null) return;
             outcome.setVisibility(GONE);
-            StudioStyle.actionTone(importButton, StudioStyle.ACCENT, StudioStyle.INK);
             openOutcome = null;
             action.run();
         }, true);
@@ -159,12 +160,10 @@ final class RecordingLibraryPage extends LinearLayout {
             starred.setChecked(false);
         }, false);
         addView(reset, spaced(6));
-        recordButton = StudioStyle.action(context, "К записи пары", record, false);
-        addView(recordButton, spaced(8));
 
         list = new ListView(context);
-        list.setDivider(new ColorDrawable(Color.TRANSPARENT));
-        list.setDividerHeight(dp(6));
+        list.setDivider(new ColorDrawable(StudioStyle.LINE));
+        list.setDividerHeight(dp(1));
         adapter = new ArrayAdapter<Entry>(context, 0) {
             @Override public View getView(int position, View previous, ViewGroup parent) {
                 Row row = previous == null ? new Row(context) : (Row) previous;
@@ -203,8 +202,6 @@ final class RecordingLibraryPage extends LinearLayout {
         outcomeLabel.setText(message);
         outcomeAction.setVisibility(open == null ? GONE : VISIBLE);
         outcome.setVisibility(VISIBLE);
-        StudioStyle.actionTone(importButton, open == null ? StudioStyle.ACCENT : StudioStyle.CONTROL,
-                open == null ? StudioStyle.INK : StudioStyle.TEXT);
     }
 
     void refresh() {
@@ -291,7 +288,7 @@ final class RecordingLibraryPage extends LinearLayout {
         clear.setVisibility(query.length() == 0 ? GONE : VISIBLE);
         filters.setVisibility(entries.isEmpty() ? GONE : VISIBLE);
         empty.setVisibility(visible.isEmpty() ? VISIBLE : GONE);
-        String explanation = "Записей пока нет. Запиши пару или импортируй аудиофайл.";
+        String explanation = "Пока нет записей. Здесь появится аудио, которое ты запишешь или импортируешь.";
         if (!entries.isEmpty()) {
             if (words.length > 0) explanation = "По этому запросу записей нет.";
             else if (starred.isChecked() && waiting.isChecked()) explanation = "В избранном нет записей, которые ждут разбора.";
@@ -300,25 +297,24 @@ final class RecordingLibraryPage extends LinearLayout {
         }
         if (!explanation.contentEquals(empty.getText())) empty.setText(explanation);
         reset.setVisibility(!entries.isEmpty() && visible.isEmpty() ? VISIBLE : GONE);
-        recordButton.setVisibility(entries.isEmpty() ? VISIBLE : GONE);
         list.setVisibility(visible.isEmpty() ? GONE : VISIBLE);
     }
 
-    private static List<Entry> collect(Context context) {
+    private List<Entry> collect(Context context) {
         TreeMap<String, Entry> records = new TreeMap<>(Collections.reverseOrder());
         for (File file : Store.audioFiles(context)) {
             String name = file.getName();
             long seconds = Math.max(0, file.length() - 44) / (PcmWave.SAMPLE_RATE * 2);
             boolean notes = LectureNotes.file(context, name, true).isFile() || LectureNotes.file(context, name, false).isFile();
             String details = Store.recordingTitle(name) + " · " + LectureReaderActivity.clock(seconds);
-            if (!notes) details += " · Ждёт разбора";
-            records.put(name, new Entry(name, title(context, name, file), details, false, !notes));
+            details += notes ? " · Аудио и текст" : " · Ждёт разбора";
+            records.put(name, new Entry(name, catalogTitle(context, name, file), details, false, !notes));
         }
         for (boolean local : new boolean[]{true, false}) {
             for (File note : LectureNotes.files(context, local)) {
                 String name = note.getName().substring(0, note.getName().length() - 5);
                 if (LectureNotes.valid(name) && !records.containsKey(name)) {
-                    records.put(name, new Entry(name, title(context, name, Store.audio(context, name)),
+                    records.put(name, new Entry(name, catalogTitle(context, name, Store.audio(context, name)),
                             Store.recordingTitle(name) + " · Только текст", false, false));
                 }
             }
@@ -338,6 +334,30 @@ final class RecordingLibraryPage extends LinearLayout {
             }
         }
         return new ArrayList<>(records.values());
+    }
+
+    private String catalogTitle(Context context, String name, File audio) {
+        String named = Store.recordingName(context, name, audio);
+        if (!named.isEmpty()) return named;
+        File note = LectureNotes.file(context, name, true);
+        if (!note.isFile()) note = LectureNotes.file(context, name, false);
+        if (note.isFile()) {
+            String revision = note.getPath() + ":" + note.lastModified() + ":" + note.length();
+            String topic = noteTitles.get(revision);
+            if (topic == null) {
+                topic = "";
+                try {
+                    org.json.JSONObject report = Store.readObject(note).optJSONObject("report");
+                    if (report != null) {
+                        topic = report.optString("topic").trim();
+                        if (topic.isEmpty()) topic = report.optString("subject").trim();
+                    }
+                } catch (Exception ignored) {}
+                noteTitles.put(revision, topic);
+            }
+            if (!topic.isEmpty()) return topic;
+        }
+        return "Запись пары";
     }
 
     static String title(Context context, String name, File audio) {
@@ -362,7 +382,7 @@ final class RecordingLibraryPage extends LinearLayout {
     }
 
     private final class Row extends LinearLayout {
-        final TextView title = text("", 16, StudioStyle.TEXT);
+        final TextView title = text("", 19, StudioStyle.TEXT);
         final TextView details = text("", 13, StudioStyle.MUTED);
         final LinearLayout content;
         final CheckBox star;
@@ -374,14 +394,15 @@ final class RecordingLibraryPage extends LinearLayout {
             setMinimumHeight(dp(64));
             setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
             setPadding(dp(12), dp(8), dp(12), dp(8));
-            setBackground(StudioStyle.control(context, StudioStyle.PANEL, 12));
+            setBackgroundColor(StudioStyle.PANEL);
             content = new LinearLayout(context);
             content.setOrientation(VERTICAL);
             content.setGravity(Gravity.CENTER_VERTICAL);
             content.setMinimumHeight(dp(48));
             content.setFocusable(true);
             content.setBackground(StudioStyle.control(context, StudioStyle.PANEL, 8));
-            title.setTypeface(Typeface.DEFAULT_BOLD);
+            title.setTypeface(Typeface.create("serif", Typeface.NORMAL));
+            details.setPadding(0, dp(4), 0, 0);
             title.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
             details.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
             content.addView(title);
@@ -392,7 +413,7 @@ final class RecordingLibraryPage extends LinearLayout {
             star.setTextSize(23);
             star.setGravity(Gravity.CENTER);
             star.setPadding(0, 0, 0, 0);
-            star.setBackground(StudioStyle.control(context, StudioStyle.CONTROL, 10));
+            star.setBackground(StudioStyle.control(context, Color.TRANSPARENT, 10));
             LayoutParams starSize = new LayoutParams(dp(48), dp(48));
             starSize.setMarginStart(dp(8));
             addView(star, starSize);
