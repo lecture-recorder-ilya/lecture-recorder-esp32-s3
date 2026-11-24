@@ -6,6 +6,7 @@ import android.content.res.AssetFileDescriptor;
 import java.io.*;
 import java.net.URL;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 final class PhoneModels {
@@ -15,6 +16,7 @@ final class PhoneModels {
     private static final String GIGAAM_SHA = "2e3fcb7a7b66030336fd10c2fcfb033bd1dc7e1bf238fe5cfd83b1d0cfc9d28e";
     private static final String TEXT = "qwen3-0.6b-int4.litertlm";
     private static final long TEXT_BYTES = 343490560L;
+    private static final String TEXT_SHA = "bf1aba9ce8d963124407353c6aa4cbf72eba78db21ae133de983eac672ce83e0";
 
     static boolean ready(Context context) {
         File directory = directory(context);
@@ -83,7 +85,7 @@ final class PhoneModels {
         return obtain(context, TEXT,
                 "https://huggingface.co/litert-community/Qwen3-0.6B/resolve/"
                         + "2670e142a0d16a1b685be6604e5b4f2b31a826d7/Qwen3-0.6B_dynamic_wi4b32_afp32.litertlm",
-                TEXT_BYTES, "bf1aba9ce8d963124407353c6aa4cbf72eba78db21ae133de983eac672ce83e0",
+                TEXT_BYTES, TEXT_SHA,
                 "Скачиваю модель конспекта", job);
     }
 
@@ -97,6 +99,22 @@ final class PhoneModels {
         } catch (IOException absent) {
             return false;
         }
+    }
+
+    static void preserveBundledForUpdate(Context context, File candidate, PhoneAnalysisService.Job job) throws Exception {
+        if (!bundled(context, GIGAAM, GIGAAM_BYTES) && !bundled(context, TEXT, TEXT_BYTES)) return;
+        try (ZipFile apk = new ZipFile(candidate)) {
+            preserveModel(context, apk, GIGAAM, GIGAAM_BYTES, GIGAAM_SHA, job);
+            preserveModel(context, apk, TEXT, TEXT_BYTES, TEXT_SHA, job);
+        }
+    }
+
+    static void preserveModel(Context context, ZipFile apk, String name, long bytes,
+                                      String sha, PhoneAnalysisService.Job job) throws Exception {
+        if (!bundled(context, name, bytes) || new File(directory(context), name).length() == bytes) return;
+        ZipEntry replacement = apk.getEntry("assets/models/" + name);
+        if (replacement != null && replacement.getSize() == bytes && replacement.getMethod() == ZipEntry.STORED) return;
+        obtain(context, name, null, bytes, sha, "Сохраняю офлайн-модель", job);
     }
 
     private static synchronized File obtain(Context context, String name, String url, long bytes, String sha,

@@ -41,7 +41,7 @@ final class AppUpdates {
         if (available) {
             if (CaptureService.recording) return "Обновление готово. Установи его после записи.";
             if (PhoneAnalysisService.busy()) return "Обновление готово. Установи его после разбора.";
-            if (checkingInstall) return "Проверяю подпись APK…";
+            if (checkingInstall) return installMessage.isEmpty() ? "Проверяю подпись APK…" : installMessage;
             String issue = installMessage;
             if (!issue.isEmpty() && (!INSTALL_PERMISSION.equals(issue) || !context.getPackageManager().canRequestPackageInstalls())) return issue;
             return "github".equals(prefs.getString("source", "mac"))
@@ -155,6 +155,8 @@ final class AppUpdates {
             try {
                 if (!Store.hash(file).equals(expected)) throw new IOException("APK изменился. Проверь обновления ещё раз.");
                 verify(activity, file);
+                PhoneModels.preserveBundledForUpdate(activity, file, new PhoneAnalysisService.Job(value -> installMessage = value));
+                installMessage = "";
                 activity.runOnUiThread(() -> {
                     if (active() || activity.isFinishing() || activity.isDestroyed() || !file.equals(apk(activity))) return;
                     try {
