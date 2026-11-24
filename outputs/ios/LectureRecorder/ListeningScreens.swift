@@ -2,8 +2,16 @@ import AVFoundation
 import SwiftUI
 import UniformTypeIdentifiers
 
+private struct LibraryRoute: Hashable {
+    let file: String
+    var location: LibraryLocation?
+}
+
 struct LibraryScreen: View {
     @ObservedObject var model: PhoneModel
+    @Binding var requestedFile: String?
+    @State private var path: [LibraryRoute] = []
+    @State private var openedReceipt: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var query = ""
     @State private var favoritesOnly = false
@@ -11,7 +19,7 @@ struct LibraryScreen: View {
     @State private var results: [LibraryResult] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
                 Picker("Записи", selection: $favoritesOnly) {
                     Text("Все").tag(false)
@@ -26,9 +34,18 @@ struct LibraryScreen: View {
                         }
                     }
                 }
-                if model.message != "Готово к записи" && !model.message.isEmpty {
-                    Text(model.message).font(.footnote).foregroundStyle(Studio.muted)
+                if model.busy && !model.starting {
+                    ProgressView("Сохраняем запись…").listRowBackground(Color.clear)
+                }
+                if !model.captureNotice.isEmpty {
+                    Text(model.captureNotice).font(.footnote).foregroundStyle(Studio.muted)
                         .listRowBackground(Color.clear)
+                }
+                if let saved = model.savedItem, openedReceipt != saved.id {
+                    Button { path = [LibraryRoute(file: saved.id)] } label: {
+                        SavedRecordingRow(title: saved.title)
+                    }
+                    .buttonStyle(.plain).listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
                 }
                 if results.isEmpty {
                     Text(!query.isEmpty ? "По запросу ничего не найдено" : (favoritesOnly ? "В избранном пока пусто" : "Пока нет записей"))
@@ -36,9 +53,7 @@ struct LibraryScreen: View {
                 } else {
                     ForEach(results) { result in
                         let favorite = model.listening.favorites.contains(result.id)
-                        NavigationLink {
-                            ReaderScreen(model: model, initial: result.item, match: result.match)
-                        } label: {
+                        NavigationLink(value: LibraryRoute(file: result.id, location: result.match?.location)) {
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack(alignment: .firstTextBaseline, spacing: 7) {
                                     Text(result.item.title).font(.headline).fixedSize(horizontal: false, vertical: true)
@@ -55,7 +70,7 @@ struct LibraryScreen: View {
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button { model.listening.toggleFavorite(result.id) } label: {
                                 Label(favorite ? "Убрать" : "В избранное", systemImage: favorite ? "star.slash" : "star")
-                            }.tint(Studio.hero)
+                            }.tint(Studio.card)
                         }
                         .accessibilityAction(named: favorite ? "Убрать из избранного" : "Добавить в избранное") {
                             model.listening.toggleFavorite(result.id)
@@ -65,6 +80,13 @@ struct LibraryScreen: View {
                 }
             }
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Название или фраза")
+            .navigationDestination(for: LibraryRoute.self) { route in
+                if let item = model.libraryItems.first(where: { $0.id == route.file }) {
+                    ReaderScreen(model: model, initial: item, location: route.location)
+                } else {
+                    Text("Материал больше недоступен").foregroundStyle(Studio.muted)
+                }
+            }
             .onAppear { filter() }
             .onReceive(model.$libraryItems) { filter(items: $0) }
             .onReceive(model.listening.$favorites) { filter(favorites: $0) }
@@ -82,12 +104,15 @@ struct LibraryScreen: View {
             }
             .safeAreaInset(edge: .bottom, spacing: 0) { MiniPlayer(model: model, playback: model.playback) }
             .studioScreen()
-            .fileImporter(isPresented: $importing, allowedContentTypes: [.audio, .movie]) { result in
-                switch result {
-                case .success(let file): model.importAudio(file)
-                case .failure(let error): if (error as NSError).code != NSUserCancelledError { model.message = error.localizedDescription }
-                }
-            }
+            .fileImporter(isPresented: $importing, allowedContentTypes: [.audio, .movie], onCompletion: model.selectImport)
+        }
+        .onChange(of: path) { routes in
+            if let file = routes.last?.file, file == model.savedFile { openedReceipt = file }
+        }
+        .task(id: requestedFile) {
+            guard let file = requestedFile else { return }
+            path = [LibraryRoute(file: file)]
+            requestedFile = nil
         }
     }
 
@@ -106,7 +131,7 @@ private struct MiniPlayer: View {
     var body: some View {
         if let id = playback.file, let item = model.libraryItems.first(where: { $0.id == id }), let file = item.audio {
             HStack {
-                NavigationLink { ReaderScreen(model: model, initial: item, match: nil) } label: {
+                NavigationLink(value: LibraryRoute(file: item.id)) {
                     VStack(alignment: .leading) {
                         Text(item.title).font(.subheadline.weight(.semibold)).lineLimit(2)
                         Text(clock(playback.elapsed)).font(.caption.monospacedDigit()).foregroundStyle(Studio.muted)
@@ -134,17 +159,17 @@ struct ReaderScreen: View {
     @ObservedObject var model: PhoneModel
     @ObservedObject private var listening: ListeningLibrary
     let initial: LibraryItem
-    let match: LibraryMatch?
+    let location: LibraryLocation?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var textSize
     @State private var tab: Int
     @State private var bookmark: BookmarkDraft?
     @State private var toRemove: AudioBookmark?
 
-    init(model: PhoneModel, initial: LibraryItem, match: LibraryMatch?) {
-        self.model = model; self.initial = initial; self.match = match
+    init(model: PhoneModel, initial: LibraryItem, location: LibraryLocation?) {
+        self.model = model; self.initial = initial; self.location = location
         _listening = ObservedObject(wrappedValue: model.listening)
-        _tab = State(initialValue: initial.note == nil ? 2 : (match?.location.materialTab ?? 0))
+        _tab = State(initialValue: initial.note == nil ? 2 : (location?.materialTab ?? 0))
     }
     private var item: LibraryItem { model.libraryItems.first { $0.id == initial.id } ?? initial }
 
@@ -220,12 +245,12 @@ struct ReaderScreen: View {
                         Text("Конспект пока пуст").foregroundStyle(Studio.muted)
                     }
                 }
-                if !model.message.isEmpty && model.message != "Готово к записи" {
+                if !model.message.isEmpty {
                     Text(model.message).font(.footnote).foregroundStyle(Studio.muted).listRowBackground(Color.clear)
                 }
             }
             .task {
-                if let location = match?.location {
+                if let location {
                     await Task.yield()
                     scroll.scrollTo(location, anchor: .top)
                 }

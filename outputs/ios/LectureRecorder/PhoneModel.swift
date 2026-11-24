@@ -1,7 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
-import CoreMedia
+import UIKit
 import CoreBluetooth
 
 @MainActor final class PhoneModel: NSObject, ObservableObject, AVAudioRecorderDelegate {
@@ -14,11 +14,35 @@ import CoreBluetooth
     @Published var recording = false
     @Published var busy = false
     @Published var seconds = 0.0
-    @Published var message = "Готово к записи"
-    @Published var macName = SavedMac.load()?.name ?? "Mac не подключён"
+    @Published var message = ""
+    @Published var captureNotice = ""
+    @Published private(set) var savedFile: String?
+    @Published private(set) var importingFile = false
+    @Published private(set) var needsMicrophoneAccess = false
+    @Published private(set) var macStatus = ""
+    @Published var macName = "Mac не подключён"
     @Published var pairing = false
     @Published var verification = ""
-    @Published var inputLabel = "Автовыбор микрофона"
+    @Published private(set) var inputLabel = ""
+    private var deviceName: String { UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone" }
+    var savedItem: LibraryItem? { savedFile.flatMap { id in libraryItems.first { $0.id == id } } }
+    var sourceLabel: String {
+        if recording || busy { return inputLabel }
+        if boardID != nil && CBCentralManager.authorization == .allowedAlways { return "ClipMic, если рядом" }
+        let session = AVAudioSession.sharedInstance()
+        if let input = preferredExternalInput(session) ?? session.currentRoute.inputs.first { return name(of: input) }
+        if let output = session.currentRoute.outputs.first, [.builtInSpeaker, .builtInReceiver].contains(output.portType) {
+            return "Микрофон " + deviceName
+        }
+        return deviceName + " или гарнитура"
+    }
+
+    func meterLevel() -> Double {
+        if let tape { return tape.meterLevel }
+        guard let recorder else { return 0 }
+        recorder.updateMeters()
+        return max(0, min(1, (Double(recorder.peakPower(forChannel: 0)) + 60) / 60))
+    }
     @Published var findingBoard = false
     @Published var boards: [ClipMicChoice] = []
     @Published var boardStatus = ""
@@ -43,22 +67,39 @@ import CoreBluetooth
     private var noteVersions: [URL: String] = [:]
     private var documents: [URL: LectureNote] = [:]
 
-    override init() {
-        let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Lectures", isDirectory: true)
-        do { files = try PhoneFiles(root: root) } catch { fatalError("Не удалось открыть хранилище приложения") }
+    override convenience init() {
+        let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Lectures", isDirectory: true)
+        do { self.init(files: try PhoneFiles(root: root)) }
+        catch { fatalError("Не удалось открыть хранилище приложения") }
+        startSync()
+    }
+
+    init(files: PhoneFiles) {
+        self.files = files
         super.init()
-        do { try ClipMicTape.recover(in: files) } catch { message = "Не удалось восстановить запись ClipMic" }
-        refresh(); startSync()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in Task { @MainActor in
+        do { try ClipMicTape.recover(in: files) } catch { captureNotice = "Не удалось восстановить запись ClipMic" }
+        refresh()
+        let tick = Timer(timeInterval: 1, repeats: true) { [weak self] _ in Task { @MainActor in
             guard let self = self else { return }
             if let tape = self.tape { self.seconds = Double(tape.frames) / 16000 }
             else if let recorder = self.recorder { self.seconds = recorder.currentTime; self.updateInput() }
             self.playback.tick()
             self.refresh()
         } }
+        timer = tick
+        RunLoop.main.add(tick, forMode: .common)
         NotificationCenter.default.addObserver(self, selector: #selector(routeChanged), name: AVAudioSession.routeChangeNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(interrupted), name: AVAudioSession.interruptionNotification, object: nil)
     }
+    func applicationDidBecomeActive() {
+        if needsMicrophoneAccess && AVAudioSession.sharedInstance().recordPermission == .granted {
+            needsMicrophoneAccess = false
+            captureNotice = ""
+        }
+        refresh()
+    }
+
     func refresh() {
         let current = files.recordings()
         let audioChanged = current != recordings
@@ -141,11 +182,12 @@ import CoreBluetooth
         cancelBoardSearch(); cancelTranscription(); stopPlayback()
         let id = UUID()
         captureID = id; busy = true; seconds = 0
+        savedFile = nil; captureNotice = ""; needsMicrophoneAccess = false
         guard let boardID, CBCentralManager.authorization == .allowedAlways else {
             startLocal(id)
             return
         }
-        inputLabel = "Подключаю ClipMic…"; message = "Проверяю сохранённый диктофон"
+        inputLabel = "Подключаем ClipMic…"
         if AVAudioSession.sharedInstance().recordPermission == .granted {
             try? beginLocalRecorder()
         }
@@ -174,7 +216,7 @@ import CoreBluetooth
                         let prefix = try ClipMicPrefix.read(localURL, trimmingTail: lag)
                         try capture.prependLocal(prefix, startedMs: self.localStarted, inputs: self.inputChanges, leadingMissing: packet.offset)
                     } catch {
-                        self.message = "Начало записи доступно в черновиках"
+                        self.captureNotice = "Начало записи доступно в черновиках библиотеки"
                         self.refresh()
                         throw error
                     }
@@ -186,7 +228,7 @@ import CoreBluetooth
                     try? FileManager.default.removeItem(at: localURL.appendingPathExtension("json"))
                 }
                 self.busy = false; self.recording = true; self.inputLabel = "ClipMic · Bluetooth"
-                self.message = localURL == nil ? "Идёт запись с диктофона" : "Источник переключён на ClipMic"
+                self.captureNotice = ""
             } else { try self.tape?.append(data) }
         }
         connection.onEnd = { [weak self] reason in
@@ -196,20 +238,20 @@ import CoreBluetooth
             self.tape = nil
             if captured == nil, self.recorder != nil {
                 self.captureID = nil
-                self.message = (reason ?? "ClipMic недоступен") + ". Идёт запись · " + self.inputLabel
+                self.captureNotice = (reason ?? "ClipMic недоступен") + ". Продолжаем с другого микрофона."
                 return
             }
             do { try captured?.finish(interruption: reason) } catch {
                 self.captureID = nil; self.busy = false; self.recording = false
-                self.inputLabel = "Автовыбор микрофона"; self.message = "Ошибка сохранения ClipMic: " + error.localizedDescription
+                self.inputLabel = ""; self.captureNotice = "Не удалось сохранить запись ClipMic. " + error.localizedDescription
                 return
             }
             if let captured, captured.frames > 0 {
                 self.seconds = Double(captured.frames) / 16000
                 self.captureID = nil; self.busy = false; self.recording = false
-                self.inputLabel = "Автовыбор микрофона"
-                self.message = reason.map { $0 + ". Полученный звук сохранён" } ?? "Запись с ClipMic сохранена"
-                self.refresh()
+                self.inputLabel = ""
+                self.captureNotice = reason.map { $0 + ". Полученный звук сохранён." } ?? ""
+                self.didSave(captured.recordingName)
             } else {
                 self.recording = false; self.busy = true
                 self.startLocal(id, fallback: reason ?? "ClipMic недоступен")
@@ -222,33 +264,37 @@ import CoreBluetooth
         guard starting else { return }
         captureID = nil; busy = false
         bluetooth?.finish(); bluetooth = nil
-        inputLabel = "Автовыбор микрофона"; message = "Запись отменена"
+        inputLabel = ""; captureNotice = ""
     }
 
-    private func chooseLocalInput(_ session: AVAudioSession) {
+    private func preferredExternalInput(_ session: AVAudioSession) -> AVAudioSessionPortDescription? {
         let external = (session.availableInputs ?? []).filter {
             [.headsetMic, .bluetoothHFP, .bluetoothLE, .usbAudio, .lineIn].contains($0.portType)
         }
         let active = session.currentRoute.inputs.first
-        let preferred = external.first { $0.uid == active?.uid } ?? external.first
+        return external.first { $0.uid == active?.uid } ?? external.first
+    }
+
+    private func chooseLocalInput(_ session: AVAudioSession) {
+        let preferred = preferredExternalInput(session)
         if session.preferredInput?.uid != preferred?.uid { try? session.setPreferredInput(preferred) }
     }
 
     private func startLocal(_ id: UUID, fallback: String? = nil) {
-        inputLabel = "Включаю микрофон…"
-        message = fallback.map { $0 + ". Включаю микрофон телефона или гарнитуры" } ?? "Включаю микрофон"
+        inputLabel = deviceName + " или гарнитура"
+        captureNotice = fallback ?? ""
         AVAudioSession.sharedInstance().requestRecordPermission { [weak self] allowed in Task { @MainActor in
             guard let self, self.captureID == id else { return }
             self.captureID = nil; self.busy = false
             guard allowed else {
-                self.inputLabel = "Автовыбор микрофона"; self.message = "Разреши микрофон в настройках iPhone"
+                self.inputLabel = ""; self.needsMicrophoneAccess = true
+                self.captureNotice = "Разреши доступ к микрофону, чтобы начать запись."
                 return
             }
             do {
                 try self.beginLocalRecorder()
-                if let fallback { self.message = fallback + ". Идёт запись · " + self.inputLabel }
             } catch {
-                self.inputLabel = "Автовыбор микрофона"; self.message = error.localizedDescription
+                self.inputLabel = ""; self.captureNotice = error.localizedDescription
             }
         } }
     }
@@ -263,10 +309,10 @@ import CoreBluetooth
             let mic = try AVAudioRecorder(url: url, settings: [AVFormatIDKey: kAudioFormatLinearPCM, AVSampleRateKey: 16000,
                   AVNumberOfChannelsKey: 1, AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false, AVLinearPCMIsBigEndianKey: false])
             mic.delegate = self
+            mic.isMeteringEnabled = true
             guard mic.record(forDuration: 8 * 3600) else { throw RecorderFailure.message("Не удалось включить микрофон") }
             recorder = mic; draft = url; recording = true; busy = false
             inputChanges = []; localStarted = Int64(Date().timeIntervalSince1970 * 1000)
-            message = "Идёт запись"
             updateInput()
         } catch {
             try? session.setActive(false, options: .notifyOthersOnDeactivation)
@@ -276,7 +322,10 @@ import CoreBluetooth
 
     @objc private func routeChanged(_ notification: Notification) {
         Task { @MainActor in
-            guard self.recorder != nil else { return }
+            guard self.recorder != nil else {
+                if !self.recording && !self.busy { self.objectWillChange.send() }
+                return
+            }
             if let value = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
                [.newDeviceAvailable, .oldDeviceUnavailable].contains(AVAudioSession.RouteChangeReason(rawValue: value)) {
                 self.chooseLocalInput(.sharedInstance())
@@ -288,28 +337,29 @@ import CoreBluetooth
     private func updateInput() {
         guard let recorder, let draft else { return }
         let input = AVAudioSession.sharedInstance().currentRoute.inputs.first
-        let name: String
-        if let input {
-            name = input.portType == .builtInMic ? "Микрофон телефона" : input.portName
-        } else { name = "Аудиовход недоступен" }
+        let name = input.map(name(of:)) ?? "Аудиовход недоступен"
         guard name != inputLabel || inputChanges.isEmpty else { return }
-        if !inputChanges.isEmpty { message = "Источник звука изменился · " + name }
         inputLabel = name
         inputChanges.append(["at": inputChanges.isEmpty ? 0 : recorder.currentTime, "name": name,
                              "type": input?.portType.rawValue ?? "unavailable"])
         let meta: [String: Any] = ["started_ms": localStarted, "input_routes": inputChanges]
         do { try JSONSerialization.data(withJSONObject: meta).write(to: draft.appendingPathExtension("json"), options: .atomic) }
-        catch { message = "Идёт запись · не удалось сохранить сведения о микрофоне" }
+        catch { captureNotice = "Идёт запись. Не удалось сохранить сведения о микрофоне." }
+    }
+
+    private func name(of port: AVAudioSessionPortDescription) -> String {
+        port.portType == .builtInMic ? "Микрофон " + deviceName : port.portName
     }
 
     func stopRecording() {
         if tape != nil { bluetooth?.finish(); return }
         guard let url = draft else { return }
         captureID = nil; bluetooth?.finish(); bluetooth = nil
-        draft = nil; let active = recorder; recorder = nil; active?.stop(); recording = false
-        inputLabel = "Автовыбор микрофона"
+        draft = nil; let active = recorder; recorder = nil
+        if let active { seconds = max(seconds, active.currentTime); active.stop() }
+        recording = false
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-        importAudio(url, removeDraft: true)
+        importAudio(url, removeDraft: true, microphone: inputLabel)
     }
 
     @objc private func interrupted(_ notification: Notification) {
@@ -348,45 +398,42 @@ import CoreBluetooth
         localTranscript.cancel(); transcribingFile = nil; message = "Расшифровка отменена"
     }
 
-    func importAudio(_ source: URL, removeDraft: Bool = false) {
-        guard !busy, !recording else { return }; busy = true; message = "Сохраняю запись…"
-        let target = files.folder("recordings").appendingPathComponent(files.name()), temporary = files.folder("drafts").appendingPathComponent(UUID().uuidString + ".wav")
+    func importAudio(_ source: URL, removeDraft: Bool = false, microphone: String? = nil) {
+        guard !busy, !recording else { return }
+        busy = true; savedFile = nil; captureNotice = ""; needsMicrophoneAccess = false
+        importingFile = !removeDraft
+        inputLabel = microphone ?? (removeDraft ? "Черновик записи" : source.lastPathComponent)
+        if microphone == nil { seconds = 0 }
         Task {
             do {
-                try await Task.detached(priority: .utility) {
-                    let permitted = source.startAccessingSecurityScopedResource(); defer { if permitted { source.stopAccessingSecurityScopedResource() } }
-                    let asset = AVURLAsset(url: source)
-                    guard let track = try await asset.loadTracks(withMediaType: .audio).first else { throw RecorderFailure.message("В файле нет аудиодорожки") }
-                    let reader = try AVAssetReader(asset: asset)
-                    let output = AVAssetReaderTrackOutput(track: track, outputSettings: [AVFormatIDKey: kAudioFormatLinearPCM, AVSampleRateKey: 16000, AVNumberOfChannelsKey: 1, AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false, AVLinearPCMIsBigEndianKey: false, AVLinearPCMIsNonInterleaved: false])
-                    output.alwaysCopiesSampleData = false; guard reader.canAdd(output) else { throw RecorderFailure.message("Этот формат не открылся") }; reader.add(output)
-                    let writer = try WaveWriter(temporary)
-                    guard reader.startReading() else { throw RecorderFailure.message("Не удалось открыть аудиозапись") }
-                    while let sample = output.copyNextSampleBuffer() {
-                        if let buffer = CMSampleBufferGetDataBuffer(sample) {
-                            let length = CMBlockBufferGetDataLength(buffer); var data = Data(count: length)
-                            let status = data.withUnsafeMutableBytes { CMBlockBufferCopyDataBytes(buffer, atOffset: 0, dataLength: length, destination: $0.baseAddress!) }
-                            guard status == noErr else { throw RecorderFailure.message("Аудиофайл повреждён") }; try writer.write(data)
-                        }
-                    }
-                    guard reader.status == .completed else { throw reader.error ?? RecorderFailure.message("Чтение аудио прервалось") }
-                    try writer.finish()
-                    guard (try temporary.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0) > 44 else { throw RecorderFailure.message("Аудиозапись пустая") }
-                    var meta: [String: Any] = ["source": "ios", "started_ms": Int64(Date().timeIntervalSince1970 * 1000), "imported": !removeDraft, "original_name": source.lastPathComponent, "gaps": []]
-                    let draftMeta = source.appendingPathExtension("json")
-                    if removeDraft, let data = try? Data(contentsOf: draftMeta),
-                       let routes = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                        for key in ["started_ms", "input_routes"] { meta[key] = routes[key] ?? meta[key] }
-                    }
-                    try JSONSerialization.data(withJSONObject: meta).write(to: target.appendingPathExtension("json"), options: .atomic)
-                    try FileManager.default.moveItem(at: temporary, to: target)
-                    if removeDraft { try? FileManager.default.removeItem(at: source); try? FileManager.default.removeItem(at: draftMeta) }
-                }.value
-                message = "Запись сохранена в библиотеке"
-            } catch { try? FileManager.default.removeItem(at: temporary); message = error.localizedDescription }
-            busy = false; refresh()
+                let file = try await RecordingImport.save(source, in: files, recoveringDraft: removeDraft)
+                didSave(file)
+            } catch {
+                captureNotice = removeDraft
+                    ? "Не удалось сохранить запись. Черновик доступен в библиотеке. " + error.localizedDescription
+                    : "Не удалось импортировать файл. " + error.localizedDescription
+                refresh()
+            }
+            busy = false; importingFile = false; inputLabel = ""
         }
     }
+
+    private func didSave(_ file: String) {
+        refresh()
+        savedFile = file
+    }
+
+    func selectImport(_ result: Result<URL, Error>) {
+        switch result {
+        case .success(let file):
+            importAudio(file)
+        case .failure(let error):
+            guard (error as NSError).code != NSUserCancelledError else { return }
+            savedFile = nil
+            captureNotice = "Не удалось выбрать файл. " + error.localizedDescription
+        }
+    }
+
     func play(_ url: URL, at seconds: Double? = nil) {
         guard !recording, !busy else { return }
         let source = files.localAudio(url.lastPathComponent) ?? url
@@ -395,34 +442,36 @@ import CoreBluetooth
     }
     func stopPlayback() { playback.stop() }
     func startSync() {
-        guard let mac = SavedMac.load() else { return }; sync?.stop(); sync = PhoneSyncServer(files: files, key: mac.token)
-        do { try sync?.start(); macName = mac.name } catch { message = "Не удалось включить перенос. Закрой и открой приложение." }
+        guard let mac = SavedMac.load() else { return }
+        macName = mac.name
+        sync?.stop(); sync = PhoneSyncServer(files: files, key: mac.token)
+        do { try sync?.start() } catch { macStatus = "Не удалось включить перенос. Закрой и открой приложение." }
     }
     func disconnect() { guard !recording else { return }; pairingTask?.cancel(); sync?.stop(); sync = nil; SavedMac.forget(); macName = "Mac не подключён" }
     func connect(host: String, code: String) {
         guard !recording, !pairing else { return }
         let host = host.trimmingCharacters(in: .whitespacesAndNewlines), code = code.uppercased().filter { !$0.isWhitespace && $0 != "-" }
-        guard host.range(of: "^[A-Za-z0-9.-]{1,253}$", options: .regularExpression) != nil, code.range(of: "^[A-Z2-7]{12}$", options: .regularExpression) != nil else { message = "Введи адрес Mac и 12 символов его кода"; return }
-        pairing = true; verification = ""; message = "Подключаюсь к Mac…"
+        guard host.range(of: "^[A-Za-z0-9.-]{1,253}$", options: .regularExpression) != nil, code.range(of: "^[A-Z2-7]{12}$", options: .regularExpression) != nil else { macStatus = "Введи адрес Mac и 12 символов его кода"; return }
+        pairing = true; verification = ""; macStatus = "Подключаюсь к Mac…"
         pairingTask = Task {
             defer { pairing = false }
             do {
                 let client = PinnedMac(host: host, code: code)
                 let request = try await client.post("/pair/request", ["name": "iPhone / iPad", "device_id": UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased(), "nonce": UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()])
                 guard let id = request["request_id"] as? String else { throw RecorderFailure.message("Запрос не создан") }
-                verification = request["verification"] as? String ?? ""; message = "Сравни цифры с Mac и подтверди подключение на компьютере"
+                verification = request["verification"] as? String ?? ""; macStatus = "Сравни цифры с Mac и подтверди подключение на компьютере"
                 for _ in 0..<300 {
                     try Task.checkCancellation()
                     let reply = try await client.post("/pair/status", ["request_id": id])
                     if ["approved", "complete"].contains(reply["status"] as? String ?? ""), let token = reply["sync_token"] as? String, token.range(of: "^[A-Za-z0-9_-]{43}$", options: .regularExpression) != nil {
                         try Task.checkCancellation(); try SavedMac(host: host, name: reply["mac_name"] as? String ?? "Mac", token: token).save()
-                        _ = try? await client.post("/pair/ack", ["request_id": id]); startSync(); verification = ""; message = "Mac подключён · записи и тексты переносятся автоматически"; return
+                        _ = try? await client.post("/pair/ack", ["request_id": id]); startSync(); verification = ""; macStatus = "Mac подключён · записи и тексты переносятся автоматически"; return
                     }
                     try await Task.sleep(nanoseconds: 1_000_000_000)
                 }
                 throw RecorderFailure.message("Код истёк. Открой подключение на Mac заново")
-            } catch is CancellationError { message = "Подключение отменено" }
-            catch { message = "Не удалось подключиться. Проверь код, дату и общую Wi-Fi сеть. " + error.localizedDescription }
+            } catch is CancellationError { macStatus = "Подключение отменено" }
+            catch { macStatus = "Не удалось подключиться. Проверь код, дату и общую Wi-Fi сеть. " + error.localizedDescription }
         }
     }
     func cancelPairing() { pairingTask?.cancel(); pairing = false; verification = "" }

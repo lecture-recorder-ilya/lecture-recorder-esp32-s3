@@ -50,6 +50,22 @@ final class ClipMicTape {
     private var routes: [[String: Any]] = []
     private var prefixFrames = 0
     private var coveredLeading = 0
+    private var latestPCM = Data()
+    private var lastPacketTime = 0.0
+    var recordingName: String { temporary.deletingPathExtension().lastPathComponent }
+    var meterLevel: Double {
+        guard ProcessInfo.processInfo.systemUptime - lastPacketTime < 0.4 else { return 0 }
+        let peak = latestPCM.withUnsafeBytes { raw -> Int in
+            var peak = 0
+            for index in stride(from: 0, to: raw.count, by: 2) {
+                let sample = Int16(littleEndian: raw.loadUnaligned(fromByteOffset: index, as: Int16.self))
+                peak = max(peak, abs(Int(sample)))
+            }
+            return peak
+        }
+        guard peak > 0 else { return 0 }
+        return max(0, min(1, (20 * log10(Double(peak) / 32768) + 60) / 60))
+    }
     private(set) var boardFrames = 0
     var frames: Int { prefixFrames + max(0, boardFrames - coveredLeading) }
 
@@ -97,6 +113,8 @@ final class ClipMicTape {
             buffer.append(Data(repeating: 0, count: missing * 2))
         }
         buffer.append(packet.pcm)
+        latestPCM = packet.pcm
+        lastPacketTime = ProcessInfo.processInfo.systemUptime
         if boardFrames == 0 || buffer.count >= 32000 || missing > 0 { try flush() }
         boardFrames = end
         nextSequence = packet.sequence + 1
