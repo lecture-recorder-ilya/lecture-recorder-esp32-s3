@@ -124,7 +124,11 @@ def report_for(root, name):
             decisions=json.loads((root/'study'/(stem+'.notes.json')).read_text()).get('transcript_review',{})
         except (OSError,ValueError,TypeError):
             decisions={}
-        return reconcile(finalize(annotate(report,decisions)))
+        report=annotate(report,decisions)
+        if path!=final:
+            from support_quotes import add
+            report=add(report)
+        return reconcile(finalize(report))
     return None
 
 
