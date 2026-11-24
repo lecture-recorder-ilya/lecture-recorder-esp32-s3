@@ -58,7 +58,7 @@ def main():
     subprocess.run([sys.executable, str(ROOT / 'tools/build_mac.py')], check=True)
     staging = tempfile.TemporaryDirectory(prefix='lecture-installer-') if not args.skip_dmg else None
     build_root = Path(staging.name) if staging else work
-    app = build_root / 'Установить На полях.app'
+    app = build_root / 'Установить Диктофон.app'
     if app.exists():
         shutil.rmtree(app)
     contents = app / 'Contents'
@@ -98,10 +98,10 @@ def main():
             shutil.rmtree(disk)
         disk.mkdir()
         shutil.copytree(app, disk / app.name, symlinks=True)
-        (disk / 'Начни здесь.txt').write_text('Открой «Установить На полях» и нажми «Установить и открыть».\nНужны Mac с Apple Silicon, macOS 14+, 22 ГБ свободного места и интернет.\nПриложение появится в папке «Приложения» твоего профиля.\n')
+        (disk / 'Начни здесь.txt').write_text('Открой «Установить Диктофон» и нажми «Установить и открыть».\nНужны Mac с Apple Silicon, macOS 14+, 22 ГБ свободного места и интернет.\nПриложение появится в папке «Приложения» твоего профиля.\n')
         dmg = work / ('lecture-recorder-' + version['version'] + '-arm64.dmg')
         dmg.unlink(missing_ok=True)
-        subprocess.run(['hdiutil', 'create', '-volname', 'На полях', '-srcfolder', str(disk), '-format', 'UDZO', str(dmg)], check=True)
+        subprocess.run(['hdiutil', 'create', '-volname', 'Диктофон', '-srcfolder', str(disk), '-format', 'UDZO', str(dmg)], check=True)
         subprocess.run(['hdiutil', 'verify', str(dmg)], check=True)
         print(dmg)
     if args.skip_dmg:

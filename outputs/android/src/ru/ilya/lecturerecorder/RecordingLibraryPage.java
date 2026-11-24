@@ -391,7 +391,7 @@ final class RecordingLibraryPage extends LinearLayout {
             super(context);
             setOrientation(HORIZONTAL);
             setGravity(Gravity.CENTER_VERTICAL);
-            setMinimumHeight(dp(64));
+            setMinimumHeight(dp(72));
             setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
             setPadding(dp(12), dp(8), dp(12), dp(8));
             setBackgroundColor(StudioStyle.PANEL);
@@ -401,7 +401,8 @@ final class RecordingLibraryPage extends LinearLayout {
             content.setMinimumHeight(dp(48));
             content.setFocusable(true);
             content.setBackground(StudioStyle.control(context, StudioStyle.PANEL, 8));
-            title.setTypeface(Typeface.create("serif", Typeface.NORMAL));
+            title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            title.setLetterSpacing(-.02f);
             details.setPadding(0, dp(4), 0, 0);
             title.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
             details.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);

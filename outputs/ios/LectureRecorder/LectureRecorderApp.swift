@@ -8,6 +8,7 @@ import UniformTypeIdentifiers
     var body: some Scene {
         WindowGroup {
             FieldNotesHome(model: model)
+                .preferredColorScheme(.dark)
                 .onChange(of: phase) { value in
                     if value == .active { model.applicationDidBecomeActive() }
                     else { model.playback.checkpoint() }
@@ -61,12 +62,26 @@ struct ScreenEntry: ViewModifier {
     }
 }
 
+private struct StudioScreen: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var opaque
+
+    @ViewBuilder func body(content: Content) -> some View {
+        let screen = content.background(Studio.background.ignoresSafeArea())
+        if opaque {
+            screen.toolbarBackground(Studio.background, for: .navigationBar, .tabBar)
+                .toolbarBackground(.visible, for: .navigationBar, .tabBar)
+        } else if #available(iOS 26.0, *) {
+            screen
+        } else {
+            screen.toolbarBackground(.ultraThinMaterial, for: .navigationBar, .tabBar)
+                .toolbarBackground(.visible, for: .navigationBar, .tabBar)
+        }
+    }
+}
+
 extension View {
     func studioScreen() -> some View {
-        self
-            .background(Studio.background.ignoresSafeArea())
-            .toolbarBackground(Studio.background, for: .navigationBar, .tabBar)
-            .toolbarBackground(.visible, for: .navigationBar, .tabBar)
+        modifier(StudioScreen())
     }
 }
 

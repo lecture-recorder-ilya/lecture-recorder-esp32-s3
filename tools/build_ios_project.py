@@ -11,7 +11,7 @@ def main():
     project = folder / 'LectureRecorder.xcodeproj'
     project.mkdir(parents=True, exist_ok=True)
     info = {
-        'CFBundleDevelopmentRegion': 'ru', 'CFBundleDisplayName': 'На полях',
+        'CFBundleDevelopmentRegion': 'ru', 'CFBundleDisplayName': 'Диктофон',
         'CFBundleExecutable': '$(EXECUTABLE_NAME)', 'CFBundleIdentifier': '$(PRODUCT_BUNDLE_IDENTIFIER)',
         'CFBundleName': '$(PRODUCT_NAME)', 'CFBundlePackageType': 'APPL',
         'CFBundleShortVersionString': version['version'], 'CFBundleVersion': str(version['code']),

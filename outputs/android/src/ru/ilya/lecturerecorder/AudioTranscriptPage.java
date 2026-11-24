@@ -1150,7 +1150,7 @@ final class AudioTranscriptPage extends LinearLayout {
             addView(badges, badge);
             words.setLineSpacing(dp(3), 1);
             words.setMovementMethod(LinkMovementMethod.getInstance());
-            words.setHighlightColor(0x5580e2ce);
+            words.setHighlightColor(0x557b58b4);
             addView(words, new LinearLayout.LayoutParams(0, -2, 1));
         }
     }
@@ -1204,7 +1204,7 @@ final class AudioTranscriptPage extends LinearLayout {
                 float peak = envelope.peaks[i];
                 float height = Math.max(.5f, peak * (midpoint - dp(7)));
                 boolean played = x <= marker;
-                paint.setColor(played ? StudioStyle.TEXT : peak > .6f ? 0xff8ab8ae : 0xff6d8985);
+                paint.setColor(played ? StudioStyle.TEXT : peak > .6f ? 0xffcbb9a4 : 0xff899c9e);
                 paint.setShader(played ? spectrum : null);
                 canvas.drawLine(x, midpoint - height, x, midpoint + height, paint);
             }

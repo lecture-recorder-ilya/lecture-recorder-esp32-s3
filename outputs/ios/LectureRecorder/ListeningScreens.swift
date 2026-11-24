@@ -54,18 +54,25 @@ struct LibraryScreen: View {
                     ForEach(results) { result in
                         let favorite = model.listening.favorites.contains(result.id)
                         NavigationLink(value: LibraryRoute(file: result.id, location: result.match?.location)) {
-                            VStack(alignment: .leading, spacing: 5) {
-                                HStack(alignment: .firstTextBaseline, spacing: 7) {
-                                    Text(result.item.title).font(.headline).fixedSize(horizontal: false, vertical: true)
-                                    if favorite { Image(systemName: "star.fill").font(.caption).foregroundStyle(Studio.accent).accessibilityLabel("В избранном") }
+                            HStack(spacing: 13) {
+                                Image(systemName: result.item.audio == nil ? "doc.text" : "waveform")
+                                    .font(.body.weight(.medium)).foregroundStyle(Studio.accent)
+                                    .frame(width: 40, height: 44)
+                                    .background(Studio.hero, in: RoundedRectangle(cornerRadius: 10))
+                                    .accessibilityHidden(true)
+                                VStack(alignment: .leading, spacing: 5) {
+                                    HStack(alignment: .firstTextBaseline, spacing: 7) {
+                                        Text(result.item.title).font(.headline).fixedSize(horizontal: false, vertical: true)
+                                        if favorite { Image(systemName: "star.fill").font(.caption).foregroundStyle(Studio.accent).accessibilityLabel("В избранном") }
+                                    }
+                                    if !result.item.info.isEmpty {
+                                        Text(result.item.info).font(.footnote).foregroundStyle(Studio.muted)
+                                    }
+                                    if let match = result.match {
+                                        Text(match.text).font(.subheadline).foregroundStyle(.secondary).lineLimit(3)
+                                    }
                                 }
-                                if !result.item.info.isEmpty {
-                                    Text(result.item.info).font(.footnote).foregroundStyle(Studio.muted)
-                                }
-                                if let match = result.match {
-                                    Text(match.text).font(.subheadline).foregroundStyle(.secondary).lineLimit(3)
-                                }
-                            }.padding(.vertical, 5)
+                            }.padding(.vertical, 7)
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button { model.listening.toggleFavorite(result.id) } label: {
@@ -145,7 +152,8 @@ private struct MiniPlayer: View {
                     .disabled(model.recording || model.busy)
             }
             .padding(.horizontal, 20).padding(.vertical, 5)
-            .background(Studio.hero)
+            .modifier(DeskGlass(radius: 20))
+            .padding(.horizontal, 12).padding(.vertical, 4)
         }
     }
 }
@@ -223,11 +231,11 @@ struct ReaderScreen: View {
                     }.listRowBackground(Studio.panel)
                 } else if let note = item.note, tab == 0 {
                     ForEach(Array((note.report.segments ?? []).enumerated()), id: \.offset) { index, segment in
-                        quotation(segment.text, at: segment.start, review: segment.needs_review == true)
+                        quotation(segment.text, at: segment.start, end: segment.end, review: segment.needs_review == true)
                             .id(LibraryLocation.segment(index))
                     }
                 } else if let note = item.note {
-                    if let overview = note.report.overview, !overview.isEmpty { Text(overview).id(LibraryLocation.overview).listRowBackground(Studio.panel) }
+                    if let overview = note.report.overview, !overview.isEmpty { Text(overview).font(.system(.body, design: .serif)).foregroundStyle(Studio.paperInk).id(LibraryLocation.overview).listRowBackground(Studio.paper) }
                     ForEach(Array((note.report.summary ?? []).enumerated()), id: \.offset) { index, text in
                         let citations = note.report.summary_evidence ?? []
                         quotation(text, at: note.report.sourceTime(citations.indices.contains(index) ? citations[index] : nil)).id(LibraryLocation.summary(index))
@@ -290,16 +298,35 @@ struct ReaderScreen: View {
         else { control.pickerStyle(.segmented) }
     }
 
-    @ViewBuilder private func quotation(_ text: String, at start: Double?, review: Bool = false) -> some View {
+    @ViewBuilder private func quotation(_ text: String, at start: Double?, end: Double? = nil, review: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            if let start { Label(clock(start), systemImage: "play.circle").font(.caption.monospacedDigit()).foregroundStyle(Studio.accent) }
-            Text(text).multilineTextAlignment(.leading)
-            if review { Label("Проверь по записи", systemImage: "ear").font(.caption).foregroundStyle(Studio.warning) }
+            if let start { Label(clock(start), systemImage: "play.circle").font(.caption.monospacedDigit()).foregroundStyle(Studio.paperAccent) }
+            Text(text).font(.system(.body, design: .serif)).lineSpacing(3)
+                .foregroundStyle(Studio.paperInk).multilineTextAlignment(.leading)
+            if review { Label("Проверь по записи", systemImage: "ear").font(.caption).foregroundStyle(Studio.paperWarning) }
         }
-        .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 4)
+        .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 7)
         .modifier(PlayableQuote(action: item.audio.flatMap { audio in start.map { seconds in { model.play(audio, at: seconds) } } },
                                 disabled: model.recording || model.busy))
-        .listRowBackground(Studio.panel)
+        .listRowBackground(PlaybackPaper(playback: model.playback, file: item.id, start: start, end: end))
+    }
+}
+
+private struct PlaybackPaper: View {
+    @ObservedObject var playback: LecturePlayback
+    let file: String
+    let start: Double?
+    let end: Double?
+
+    var body: some View {
+        if playback.playing, playback.file == file, let start, let end,
+           start <= playback.elapsed, playback.elapsed < end {
+            Studio.paperSelection.overlay(alignment: .leading) {
+                Rectangle().fill(Studio.paperAccent).frame(width: 3)
+            }
+        } else {
+            Studio.paper
+        }
     }
 }
 
@@ -379,8 +406,14 @@ private struct PlaybackControls: View {
 
     private var toggle: some View {
         Button { if playing { playback.pause() } else { model.play(audio) } } label: {
-            Label(playing ? "Пауза" : (time > 0 ? "Продолжить" : "Слушать"), systemImage: playing ? "pause.fill" : "play.fill")
-                .font(.headline).fixedSize(horizontal: true, vertical: false).frame(minHeight: 44)
+            HStack(spacing: 7) {
+                if playing { PlayingBars(active: true) } else { Image(systemName: "play.fill").accessibilityHidden(true) }
+                Text(playing ? "Пауза" : (time > 0 ? "Продолжить" : "Слушать"))
+            }
+                .font(.headline).fixedSize(horizontal: true, vertical: false)
+                .padding(.horizontal, 14).frame(minHeight: 44)
+                .foregroundStyle(Studio.card)
+                .modifier(DeskGlass(radius: 22, tint: Studio.accent, interactive: true))
         }.buttonStyle(.borderless)
     }
     private var rate: some View {

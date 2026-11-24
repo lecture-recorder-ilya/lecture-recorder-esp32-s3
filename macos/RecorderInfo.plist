@@ -9,9 +9,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>local.esp.recorder</string>
 	<key>CFBundleName</key>
-	<string>На полях</string>
+	<string>Диктофон</string>
 	<key>CFBundleDisplayName</key>
-	<string>На полях</string>
+	<string>Диктофон</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>NSAppTransportSecurity</key>

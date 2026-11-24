@@ -17,16 +17,42 @@ jobs:
           python3 - <<'PYTHON'
           import json
           import os
+          import re
           import subprocess
+          from pathlib import Path
 
-          devices = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "--json"]))["devices"]
-          runtime, phone = next(
-              (runtime, device) for runtime, group in devices.items() for device in group
-              if device["isAvailable"] and device["name"].startswith("iPhone")
-          )
+          default = Path(subprocess.check_output(["xcode-select", "-p"], text=True).strip()).resolve()
+          developers = {default}
+          for app in Path("/Applications").glob("Xcode*.app"):
+              if "beta" not in app.name.lower():
+                  developers.add((app / "Contents/Developer").resolve())
+          choices = []
+          for developer in sorted(developers):
+              settings = dict(os.environ, DEVELOPER_DIR=str(developer))
+              try:
+                  sdk = subprocess.check_output(["xcrun", "--sdk", "iphonesimulator", "--show-sdk-version"], env=settings, text=True)
+                  version = tuple(int(n) for n in re.findall(r"\d+", sdk))
+                  devices = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "--json"], env=settings))["devices"]
+              except (subprocess.CalledProcessError, ValueError):
+                  continue
+              for runtime, group in devices.items():
+                  match = re.fullmatch(r".*\.iOS-(\d+(?:-\d+)*)", runtime)
+                  if not match:
+                      continue
+                  os_version = tuple(map(int, match[1].split("-")))
+                  if os_version[0] > version[0]:
+                      continue
+                  for phone in group:
+                      if phone["isAvailable"] and phone["name"].startswith("iPhone"):
+                          choices.append((os_version, version, developer, phone, runtime))
+          if not choices:
+              raise SystemExit("Не найден доступный симулятор iPhone")
+          _, _, developer, phone, runtime = max(choices, key=lambda choice: choice[:2])
+          os.environ["DEVELOPER_DIR"] = str(developer)
           device_id = phone["udid"]
-          print(f"{phone['name']} · {runtime} · {device_id}", flush=True)
+          print(f"{developer} · {phone['name']} · {runtime} · {device_id}", flush=True)
           with open(os.environ["GITHUB_ENV"], "a") as env:
+              print(f"DEVELOPER_DIR={developer}", file=env)
               print(f"IOS_SIMULATOR_UDID={device_id}", file=env)
           if phone["state"] == "Shutdown":
               subprocess.run(["xcrun", "simctl", "boot", device_id], check=True)
@@ -49,6 +75,15 @@ jobs:
           echo "Установлено $version ($build_number) · $installed_app"
       - name: Проверить запуск приложения
         run: xcrun simctl launch "$IOS_SIMULATOR_UDID" ru.ilya.lecturerecorder.ios
+      - name: Снять экран записи с симулятора
+        run: |
+          sleep 3
+          xcrun simctl io "$IOS_SIMULATOR_UDID" screenshot "$RUNNER_TEMP/capture-iphone.png"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-capture
+          path: ${{ runner.temp }}/capture-iphone.png
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && steps.build_simulator.outcome == 'success' }}
         with:

@@ -119,14 +119,14 @@ class InstallerTests(unittest.TestCase):
     def test_shortcut_preserves_foreign_application(self):
         applications = self.root / 'Applications'
         applications.mkdir()
-        foreign = applications / 'На полях.app'
+        foreign = applications / 'Диктофон.app'
         foreign.mkdir()
         (foreign / 'fixture').write_text('keep')
         target = self.root / 'project/outputs/Запись лекций.app'
         target.mkdir(parents=True)
         result = installer.install_shortcut(self.root / 'project', applications)
         self.assertEqual(result.resolve(), target.resolve())
-        self.assertEqual(result.name, 'На полях — локальная.app')
+        self.assertEqual(result.name, 'Диктофон — локальная.app')
         self.assertEqual((foreign / 'fixture').read_text(), 'keep')
         self.assertEqual(installer.install_shortcut(self.root / 'project', applications), result)
 
@@ -144,7 +144,7 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(list(applications.iterdir()), [old])
             refresh_installed_shortcut(project)
             refresh_installed_shortcut(project)
-        self.assertTrue(old.samefile(applications / 'На полях.app'))
+        self.assertTrue(old.samefile(applications / 'Диктофон.app'))
         self.assertEqual(len(list(applications.iterdir())), 2)
 
     def test_packaged_installer_starts_in_isolated_python(self):
@@ -160,9 +160,9 @@ class InstallerTests(unittest.TestCase):
         project = self.root / 'project'
         target = project / 'outputs/Запись лекций.app'
         target.mkdir(parents=True)
-        foreign = applications / 'На полях.app'
+        foreign = applications / 'Диктофон.app'
         foreign.symlink_to(self.root / 'missing.app')
-        (applications / 'На полях — локальная.app').mkdir()
+        (applications / 'Диктофон — локальная.app').mkdir()
         self.assertEqual(installer.install_shortcut(project, applications), target)
         self.assertFalse(foreign.exists())
         self.assertTrue(foreign.is_symlink())
@@ -249,7 +249,7 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(request.call_count, 1)
 
     def test_recorder_verification_does_not_wait_for_installer_lock(self):
-        python = ROOT / 'work/installer/Установить На полях.app/Contents/Resources/Setup/python/bin/python3.12'
+        python = ROOT / 'work/installer/Установить Диктофон.app/Contents/Resources/Setup/python/bin/python3.12'
         if not python.exists():
             self.skipTest('Bundled Python required')
         root = self.root / 'project'

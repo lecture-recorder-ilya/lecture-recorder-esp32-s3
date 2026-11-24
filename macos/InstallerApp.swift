@@ -36,7 +36,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate
         appMenu.addItem(NSMenuItem(title: "Выйти", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         NSApp.mainMenu = menu
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 700, height: 610), styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-        window.title = "Установка · На полях"
+        window.title = "Установка · Диктофон"
         window.delegate = self
         window.center()
         let content = window.contentView!
@@ -52,7 +52,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate
         icon.heightAnchor.constraint(equalToConstant: 72).isActive = true
         header.addArrangedSubview(icon)
         let titles = NSStackView(); titles.orientation = .vertical; titles.alignment = .leading; titles.spacing = 7
-        let title = label("На полях", size: 27)
+        let title = label("Диктофон", size: 27)
         title.font = .systemFont(ofSize: 27, weight: .semibold)
         titles.addArrangedSubview(title)
         titles.addArrangedSubview(label("Записи, расшифровки и конспекты в одном месте", size: 14, color: .secondaryLabelColor))
@@ -178,7 +178,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate
         complete = true; progress.isIndeterminate = false; progress.doubleValue = 100; percent.stringValue = "100 %"
         stage.stringValue = "Всё готово"
         let applications = fm.homeDirectoryForCurrentUser.appendingPathComponent("Applications")
-        let shortcut = ["На полях.app", "На полях — локальная.app", "Запись лекций.app"]
+        let shortcut = ["Диктофон.app", "Диктофон — локальная.app", "На полях.app", "На полях — локальная.app", "Запись лекций.app"]
             .map { applications.appendingPathComponent($0) }
             .first { $0.resolvingSymlinksInPath().path == application.resolvingSymlinksInPath().path }
         if let shortcut {

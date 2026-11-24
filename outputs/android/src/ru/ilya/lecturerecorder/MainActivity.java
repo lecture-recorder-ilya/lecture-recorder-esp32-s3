@@ -246,10 +246,11 @@ public class MainActivity extends Activity {
 
   FrameLayout nav=new FrameLayout(this);
   navigationBar=nav;
-  nav.setBackground(StudioStyle.card(this,StudioStyle.CARD_RADIUS));
+  nav.setBackground(StudioStyle.glass(this,22,false));
+  nav.setElevation(dp(4));
   navSelection=new View(this);
   navSelection.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-  navSelection.setBackground(StudioStyle.surface(this,StudioStyle.ACTIVE,16));
+  navSelection.setBackground(StudioStyle.glass(this,16,true));
   nav.addView(navSelection,new FrameLayout.LayoutParams(0,0,Gravity.LEFT|Gravity.TOP));
   LinearLayout navTabs=new LinearLayout(this);
   navTabs.setOrientation(landscape?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);
@@ -310,7 +311,9 @@ public class MainActivity extends Activity {
   mark.setImageResource(R.mipmap.launcher_icon);
   mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   masthead.addView(mark,new LinearLayout.LayoutParams(dp(34),dp(34)));
-  TextView brand=heading("На полях",20);
+  TextView brand=heading("Диктофон",22);
+  brand.setTypeface(Typeface.create("sans-serif",Typeface.BOLD));
+  brand.setLetterSpacing(-.045f);
   LinearLayout.LayoutParams brandSize=new LinearLayout.LayoutParams(0,-2,1);
   brandSize.setMarginStart(dp(8));
   masthead.addView(brand,brandSize);
@@ -342,12 +345,13 @@ public class MainActivity extends Activity {
    side.setMarginStart(dp(14));
    columns.addView(controls,side);
   }
+  CaptureCover cover=new CaptureCover(this);
   LinearLayout hero=column();
-  hero.setPadding(dp(20),dp(16),dp(20),dp(16));
-  hero.setBackground(StudioStyle.surface(this,StudioStyle.RECORDER,18));
-  recorderArea.addView(hero,spaced(split?0:12));
+  hero.setPadding(dp(20),dp(16),dp(20),dp(18));
+  cover.addView(hero,new FrameLayout.LayoutParams(-1,-2));
+  recorderArea.addView(cover,spaced(split?0:12));
   recordState=text("Длительность",14);
-  recordState.setTextColor(StudioStyle.MINT);
+  recordState.setTextColor(StudioStyle.ACCENT);
   recordState.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
   hero.addView(recordState);
   duration=text("00:00",62);
@@ -362,7 +366,7 @@ public class MainActivity extends Activity {
   duration.setContentDescription("Длительность записи 00:00");
   hero.addView(duration,new LinearLayout.LayoutParams(-1,dp(landscape?68:80)));
   meter=new RecordingMeter(this);
-  hero.addView(meter,new LinearLayout.LayoutParams(-1,dp(26)));
+  hero.addView(meter,new LinearLayout.LayoutParams(-1,dp(36)));
   recordAction=button("Начать запись",this::recorderAction,true);
   recordAction.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
   recordAction.setPadding(dp(18),dp(8),dp(18),dp(8));
@@ -469,7 +473,7 @@ public class MainActivity extends Activity {
   String title=saved?"Запись сохранена":active?"Идёт запись":"Новая запись";
   if(!title.contentEquals(recordTitle.getText()))recordTitle.setText(title);
   String label="Длительность";
-  int tone=StudioStyle.MINT;
+  int tone=StudioStyle.ACCENT;
   if(!captureProblem.isEmpty()){label=captureProblem;tone=StudioStyle.ON_AIR;}
   else if(permission){label="Для записи нужен доступ к микрофону";tone=StudioStyle.ON_AIR;}
   else if(mode==CaptureMode.STARTING)label="Включаю микрофон…";
@@ -489,7 +493,7 @@ public class MainActivity extends Activity {
   if(!action.contentEquals(recordAction.getText()))recordAction.setText(action);
   recordAction.setEnabled(!saving&&(live||saved||ready&&firmwareQuery==null));
   if(paintedMode!=mode){
-   StudioStyle.actionTone(recordAction,active?StudioStyle.ON_AIR:StudioStyle.MINT,StudioStyle.RECORDER);
+   StudioStyle.actionTone(recordAction,active?StudioStyle.ON_AIR:StudioStyle.ACCENT,StudioStyle.RECORDER);
    int secondaryIcon=saved?R.drawable.action_new:active?R.drawable.action_photo:R.drawable.action_import;
    recordImport.setCompoundDrawablesRelativeWithIntrinsicBounds(secondaryIcon,0,R.drawable.action_next,0);
    if(saved)recordAction.setCompoundDrawablesRelative(null,null,null,null);
@@ -778,7 +782,7 @@ public class MainActivity extends Activity {
   GradientDrawable tile=surface(StudioStyle.CONTROL,18);
   tile.setStroke(dp(1),line);
   square.setBackground(new android.graphics.drawable.RippleDrawable(
-   android.content.res.ColorStateList.valueOf(0x2680e2ce),tile,null));
+   android.content.res.ColorStateList.valueOf(0x30ffbe75),tile,null));
   square.setContentDescription("Добавить устройство");
   square.setFocusable(true);
   square.setOnClickListener(view->openDevicePairing());

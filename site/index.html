@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c1216">
+  <title>Диктофон — аудио, текст и конспекты</title>
+  <meta name="description" content="Записывай лекции и встречи. Ищи по расшифровке, слушай с нужной фразы и сохраняй важное в закладках.">
+  <meta property="og:title" content="Диктофон">
+  <meta property="og:description" content="Запись, текст с таймкодами и конспект в одном приложении.">
+  <link rel="canonical" href="https://lecture-recorder-ilya.github.io/lecture-recorder-esp32-s3/">
+  <meta property="og:image" content="https://lecture-recorder-ilya.github.io/lecture-recorder-esp32-s3/assets/recorder-poster.webp">
+  <link rel="icon" href="assets/mark.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="device.js"></script>
+  <script defer src="home.js"></script>
+  <script defer src="motion.js"></script>
+</head>
+<body class="product-page">
+  <a class="skip" href="#device">К диктофону</a>
+  <header class="top wrap">
+    <a class="brand" href="./" aria-label="На главную"><i class="brand-mark" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></i></a>
+    <nav aria-label="Разделы сайта"><a class="wide-link" href="#record">Запись</a><a class="wide-link" href="#inside">Текст</a><a href="#download">Скачать</a><a class="nav-pill" href="library.html">Библиотека</a></nav>
+  </header>
+  <main>
+    <section class="product-hero" id="device" aria-labelledby="product-title">
+      <div class="model-sequence"><div class="model-pin">
+      <div class="model-stage">
+        <img class="model-poster" src="assets/recorder-poster.webp" alt="Графитовый диктофон с дисплеем и кнопкой записи" fetchpriority="high">
+        <canvas id="device-model" tabindex="0" role="img" aria-label="Диктофон в 3D. Поворачивай прокруткой страницы, стрелками или перетаскиванием."></canvas>
+        <span class="model-hint" aria-hidden="true">↓ Прокрути, чтобы повернуть</span>
+      </div>
+      <div class="model-tools">
+        <span class="model-context"><b id="model-angle">Лицевая сторона</b></span>
+        <div class="model-views" role="group" aria-label="Ракурс диктофона"><button type="button" data-model-view="front">Спереди</button><button type="button" data-model-view="side">Сбоку</button><button type="button" data-model-view="back">Сзади</button><button type="button" data-model-view="detail">Крупнее</button></div>
+        <button type="button" id="model-motion" aria-pressed="true"><i aria-hidden="true"></i><span data-motion-label>Остановить вращение</span></button>
+      </div>
+      <div class="model-progress" aria-hidden="true"></div>
+      <div class="product-intro"><h1 id="product-title">Диктофон</h1><div><p>Записывай лекции и встречи. В приложении нажми на фразу в расшифровке, чтобы услышать её в оригинале.</p><a class="button primary" href="#download">Скачать приложение <i class="arrow" aria-hidden="true"></i></a></div></div>
+      </div></div>
+    </section>
+
+    <section class="product-closeup" data-scene aria-labelledby="controls-title">
+      <div class="wrap closeup-inner">
+        <div class="section-copy"><h2 id="controls-title">Управление</h2><p>Кнопка записи и дисплей с таймером находятся рядом, у верхнего края диктофона.</p></div>
+        <div class="closeup-frame"><img src="assets/controls.webp" width="1040" height="580" loading="lazy" alt="Крупный план дисплея и круглой кнопки в графитовом корпусе"></div>
+      </div>
+    </section>
+    <section id="record" class="band section" data-scene>
+      <div class="wrap feature-grid">
+        <div class="section-copy"><h2>Запись</h2><p>Используй микрофон телефона, подключи гарнитуру или открой готовый файл.</p>
+          <div class="source-switch" role="group" aria-label="Источник записи">
+            <button type="button" data-source="phone" aria-pressed="true">Телефон</button><button type="button" data-source="device" aria-pressed="false">Диктофон</button><button type="button" data-source="file" aria-pressed="false">Файл</button>
+          </div>
+        </div>
+        <article class="source-panel" data-mode="phone" aria-live="polite">
+          <div class="source-visual" aria-hidden="true"><canvas id="sound-ribbon"></canvas></div>
+          <div class="source-description"><h3 id="source-title">Телефон или гарнитура</h3><p id="source-copy">Открой приложение и нажми «Начать запись». Перед стартом проверь выбранный микрофон, а во время записи следи за уровнем входа.</p></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section wrap feature-grid reading-section" id="inside" data-scene>
+      <div class="section-copy"><h2>Текст и звук</h2><p>Найди нужные слова в тексте и сразу послушай этот момент. Конспект и закладки хранятся рядом с записью.</p><a class="text-link" href="guide.html">Как работать с записью <i class="arrow" aria-hidden="true"></i></a></div>
+      <div class="reading-paper">
+        <details open><summary>Текст и таймкоды</summary><p>Найди слово в расшифровке и нажми на строку. Плеер откроется на нужной секунде.</p></details>
+        <details><summary>Проверка на слух</summary><p>Приложение отмечает сомнительные фразы. Открой отметку и прослушай исходный звук, прежде чем использовать цитату.</p></details>
+        <details><summary>Конспект и закладки</summary><p>Из тезиса можно перейти к его источнику, когда у него есть ссылка. Закладкой удобно отметить объяснение, к которому захочется вернуться.</p></details>
+      </div>
+    </section>
+
+    <section class="personal-band" data-scene><div class="wrap personal-inner"><div><h2>Библиотека</h2><p>Открой аудио в браузере, выбери скорость и поставь закладку. Файл останется на твоём устройстве.</p></div><a class="button paper-button" href="library.html">Открыть библиотеку <i class="arrow" aria-hidden="true"></i></a></div></section>
+
+    <section id="download" class="wrap download section" data-scene>
+      <div class="section-copy"><p class="eyebrow">Версия 0.5.21</p><h2>Приложение</h2></div>
+      <ul class="platforms">
+        <li><div><b>Mac</b><span>Apple Silicon, macOS 14 и новее</span></div><a class="outline" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.21/lecture-recorder-0.5.21-arm64.dmg">Скачать DMG</a></li>
+        <li><div><b>Android</b><span>Основная сборка для телефона</span><a class="inline-link" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/latest/download/lecture-recorder-offline.apk">Версия с офлайн-моделями</a></div><a class="outline" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/latest/download/lecture-recorder.apk">Скачать APK</a></li>
+        <li><div><b>iPhone</b><span>Библиотека работает в Safari</span><a class="inline-link" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/latest/download/lecture-recorder-ios-project.zip">Нативный проект для Xcode</a></div><a class="outline" href="library.html">Открыть</a></li>
+      </ul>
+    </section>
+  </main>
+  <footer class="wrap foot"><a href="#device">Наверх ↑</a><div><a href="guide.html">Справка</a><a href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/latest">GitHub</a></div></footer>
+</body>
+</html>

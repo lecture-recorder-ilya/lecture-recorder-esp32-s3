@@ -55,7 +55,7 @@ final class RecordingMeter extends View {
             float level = scrolling ? levels[(cursor + i) % COLUMNS] : 0f;
             float height = Math.max(i % 9 == 0 ? mid * .19f : mid * .06f, mid * .91f * level);
             boolean filled = scrolling ? level > 0 : live && i < Math.round(current * COLUMNS);
-            paint.setColor(filled ? StudioStyle.MINT : 0xff64847a);
+            paint.setColor(filled ? StudioStyle.ACCENT : 0xffa0b1b1);
             canvas.drawLine(x, mid - height, x, mid + height, paint);
         }
     }

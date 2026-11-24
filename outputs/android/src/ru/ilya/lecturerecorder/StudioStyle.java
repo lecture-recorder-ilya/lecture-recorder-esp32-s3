@@ -24,23 +24,22 @@ import android.widget.TextView;
 import android.graphics.Typeface;
 
 final class StudioStyle {
-    static final int BACKGROUND = 0xfff7f5ef;
-    static final int PANEL = 0xfffffefa;
-    static final int CONTROL = 0xffedece4;
-    static final int LINE = 0xffccd1c6;
-    static final int TEXT = 0xff1d302e;
-    static final int MUTED = 0xff52665f;
-    static final int ACCENT = 0xff146b5c;
-    static final int ACTIVE = 0xffd9ece3;
-    static final int RECORDING = 0xff9a4534;
-    static final int RECORDER = 0xff193531;
-    static final int RECORDER_TEXT = 0xfff4f7ec;
-    static final int MINT = 0xffa7ebd5;
-    static final int ON_AIR = 0xffffceb9;
-    static final int GOOD = 0xff276346;
-    static final int WARNING = 0xff83501c;
-    static final int INK = 0xffffffff;
-    static final int[] SPECTRUM = {0xff446d64, ACCENT, 0xff49766b, 0xff85593b};
+    static final int BACKGROUND = 0xff0c1216;
+    static final int PANEL = 0xff182126;
+    static final int CONTROL = 0xff263236;
+    static final int LINE = 0xff354449;
+    static final int TEXT = 0xffeef2f0;
+    static final int MUTED = 0xffaebebd;
+    static final int ACCENT = 0xffffbe75;
+    static final int ACTIVE = 0xff423325;
+    static final int RECORDING = 0xffffa89e;
+    static final int RECORDER = 0xff10191c;
+    static final int RECORDER_TEXT = 0xfff3f5f2;
+    static final int ON_AIR = 0xffff9e83;
+    static final int GOOD = 0xff98d9b9;
+    static final int WARNING = 0xfff0c486;
+    static final int INK = 0xff261b0f;
+    static final int[] SPECTRUM = {0xff93afae, ACCENT, 0xffa7babb, 0xffe1b389};
     static final int ACTION_HEIGHT = 48;
     static final int PAGE_INSET = 16;
     static final int CARD_RADIUS = 18;
@@ -56,8 +55,7 @@ final class StudioStyle {
             window.setNavigationBarContrastEnforced(false);
             android.view.WindowInsetsController controller = window.getDecorView().getWindowInsetsController();
             if (controller != null) controller.setSystemBarsAppearance(
-                    android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                            | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+                    0,
                     android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
                             | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
         } else {
@@ -103,6 +101,15 @@ final class StudioStyle {
         return drawable;
     }
 
+    static GradientDrawable glass(Context context, int radius, boolean selected) {
+        int[] colors = selected ? new int[] {0xff574937, 0xff3c3024, 0xff32291e}
+                : new int[] {0xf13a494c, 0xf0263337, 0xf0182327};
+        GradientDrawable drawable = new GradientDrawable(GradientDrawable.Orientation.TL_BR, colors);
+        drawable.setCornerRadius(dp(context, radius));
+        drawable.setStroke(dp(context, 1), selected ? 0x9affce94 : 0x608aa6a7);
+        return drawable;
+    }
+
     static boolean motion(View view) {
         android.view.accessibility.AccessibilityManager service = view.getContext()
                 .getSystemService(android.view.accessibility.AccessibilityManager.class);
@@ -142,7 +149,7 @@ final class StudioStyle {
         title.setText(label);
         title.setTextColor(TEXT);
         title.setTextSize(32);
-        title.setTypeface(Typeface.create("serif", Typeface.NORMAL));
+        title.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
         title.setLetterSpacing(-.02f);
         if (android.os.Build.VERSION.SDK_INT >= 28) title.setAccessibilityHeading(true);
         return title;
@@ -170,7 +177,7 @@ final class StudioStyle {
 
     static ColorStateList actionColors(int color) {
         return new ColorStateList(new int[][] {{-android.R.attr.state_enabled}, {}},
-                new int[] {0xff62746f, color});
+                new int[] {0xff92909e, color});
     }
 
     static Drawable control(Context context, int color, int radius) {
@@ -180,7 +187,7 @@ final class StudioStyle {
         states.addState(new int[] {-android.R.attr.state_enabled}, surface(context, color == 0 ? 0 : PANEL, radius));
         states.addState(new int[] {android.R.attr.state_focused}, focus);
         states.addState(new int[0], surface(context, color, radius));
-        return new RippleDrawable(ColorStateList.valueOf(0x240f5a4c), states, null);
+        return new RippleDrawable(ColorStateList.valueOf(0x35ffbe75), states, null);
     }
 
     static void enterPage(View view, int direction, boolean vertical) {
@@ -212,7 +219,7 @@ final class StudioStyle {
         StateListDrawable states = new StateListDrawable();
         states.addState(new int[]{android.R.attr.state_checked}, selected);
         states.addState(new int[0], normal);
-        return new RippleDrawable(ColorStateList.valueOf(0x240f5a4c), states, null);
+        return new RippleDrawable(ColorStateList.valueOf(0x35ffbe75), states, null);
     }
 
     static void recordIcon(TextView button, boolean recording, boolean animate) {
@@ -250,6 +257,39 @@ final class StudioStyle {
                 setCornerRadius(radius);
             }
         }
+    }
+
+    static void playingIcon(TextView action, boolean playing) {
+        if (action == null) return;
+        if (!playing) {
+            action.setCompoundDrawablesRelative(null, null, null, null);
+            return;
+        }
+        Drawable bars = new Drawable() {
+            private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            @Override public void draw(Canvas canvas) {
+                Rect box = getBounds();
+                boolean move = action.isShown() && action.getWindowVisibility() == View.VISIBLE && motion(action);
+                double phase = move ? (android.os.SystemClock.uptimeMillis() % 1800) * Math.PI / 900 : 0;
+                float step = box.width() / 5f;
+                paint.setColor(INK);
+                paint.setStrokeCap(Paint.Cap.ROUND);
+                paint.setStrokeWidth(step * .56f);
+                for (int index = 0; index < 5; index++) {
+                    float half = box.height() * (.1f + .28f * (float) Math.abs(Math.sin(phase + index * .83)));
+                    float x = box.left + (index + .5f) * step;
+                    canvas.drawLine(x, box.exactCenterY() - half, x, box.exactCenterY() + half, paint);
+                }
+                if (move) action.postInvalidateDelayed(50);
+            }
+            @Override public void setAlpha(int alpha) {}
+            @Override public void setColorFilter(ColorFilter filter) {}
+            @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }
+        };
+        int size = dp(action.getContext(), 16);
+        bars.setBounds(0, 0, size, size);
+        action.setCompoundDrawablePadding(dp(action.getContext(), 6));
+        action.setCompoundDrawablesRelative(bars, null, null, null);
     }
 
     static void tabIcon(TextView tab, int index, int color) {

@@ -2,9 +2,8 @@ import Cocoa
 
 let iconset = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 
-let ink = NSColor(srgbRed: 25 / 255, green: 53 / 255, blue: 49 / 255, alpha: 1)
-let paper = NSColor(srgbRed: 247 / 255, green: 245 / 255, blue: 239 / 255, alpha: 1)
-let margin = NSColor(srgbRed: 97 / 255, green: 207 / 255, blue: 178 / 255, alpha: 1)
+let ink = NSColor(srgbRed: 15 / 255, green: 23 / 255, blue: 26 / 255, alpha: 1)
+let signal = NSColor(srgbRed: 255 / 255, green: 190 / 255, blue: 117 / 255, alpha: 1)
 
 func drawIcon(size: Int, fullBleed: Bool) -> Data {
     let alpha: CGImageAlphaInfo = fullBleed ? .noneSkipLast : .premultipliedLast
@@ -22,17 +21,12 @@ func drawIcon(size: Int, fullBleed: Bool) -> Data {
         NSBezierPath(roundedRect: NSRect(x: 50, y: 50, width: 924, height: 924),
                      xRadius: 210, yRadius: 210).fill()
     }
-    let page = NSRect(x: 257, y: 199, width: 510, height: 626)
-    let sheet = NSBezierPath(roundedRect: page, xRadius: 57, yRadius: 57)
-    paper.setFill()
-    sheet.fill()
-    sheet.addClip()
-    margin.setFill()
-    NSBezierPath(rect: NSRect(x: 345, y: page.minY, width: 39, height: page.height)).fill()
-    ink.setFill()
-    for (height, width) in [(614, 230), (502, 155), (390, 210)] {
-        NSBezierPath(roundedRect: NSRect(x: 440, y: height, width: width, height: 33),
-                     xRadius: 16.5, yRadius: 16.5).fill()
+    context.translateBy(x: -80, y: 0)
+    context.concatenate(CGAffineTransform(a: 1, b: 0, c: 0.156, d: 1, tx: 0, ty: 0))
+    signal.setFill()
+    for (index, height) in [200, 356, 520, 398, 238].enumerated() {
+        let bar = NSRect(x: 231 + index * 126, y: (1024 - height) / 2, width: 74, height: height)
+        NSBezierPath(roundedRect: bar, xRadius: 37, yRadius: 37).fill()
     }
     NSGraphicsContext.restoreGraphicsState()
     return NSBitmapImageRep(cgImage: context.makeImage()!).representation(using: .png, properties: [:])!

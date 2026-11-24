@@ -70,7 +70,7 @@ class RecorderUiTests(unittest.TestCase):
         new = next((n for n in nodes if n.get("text") == "Новая запись" and n.get("clickable") == "true"), None)
         if new is not None:
             self.tap(new)
-        self.wait_for("На полях")
+        self.wait_for("Диктофон")
         self.wait_for("Источник звука")
         self.wait_for("Импортировать аудио")
         self.tap(self.wait_for("Начать запись", photograph="01-ready"))

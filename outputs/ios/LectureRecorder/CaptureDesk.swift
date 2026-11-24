@@ -39,14 +39,14 @@ struct CaptureDesk: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
-    @ScaledMetric(relativeTo: .largeTitle) private var timerSize = 72.0
+    @ScaledMetric(relativeTo: .largeTitle) private var timerSize = 76.0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 12) {
                 FieldMark().frame(width: 40, height: 40).accessibilityHidden(true)
-                Text("На полях")
-                    .font(.system(.largeTitle, design: .serif).weight(.medium))
+                Text("Запись")
+                    .font(.largeTitle.weight(.bold)).tracking(-1.4)
                     .foregroundStyle(Studio.ink)
                     .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 0)
@@ -54,8 +54,7 @@ struct CaptureDesk: View {
                     Image(systemName: "gearshape").font(.title3)
                         .frame(width: 44, height: 44)
                         .foregroundStyle(Studio.ink)
-                        .background(Studio.panel, in: Circle())
-                        .overlay { Circle().strokeBorder(Studio.line) }
+                        .modifier(DeskGlass(radius: 22, interactive: true))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Настройки")
@@ -86,7 +85,7 @@ struct CaptureDesk: View {
 
                     HStack(alignment: .center, spacing: 12) {
                         Image(systemName: "mic.fill")
-                            .foregroundStyle(Studio.mint).accessibilityHidden(true)
+                            .foregroundStyle(Studio.accent).accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(phase == .ready ? "Источник при старте" : "Источник").font(.caption).foregroundStyle(Studio.cardMuted)
                             Text(source).font(.body.weight(.medium)).foregroundStyle(Studio.cardInk)
@@ -112,13 +111,17 @@ struct CaptureDesk: View {
                     .padding(.horizontal, 12).padding(.vertical, 14)
                     .frame(maxWidth: .infinity, minHeight: 50)
                     .foregroundStyle(Studio.card)
-                    .background(phase == .recording ? Studio.live : Studio.mint, in: RoundedRectangle(cornerRadius: 13))
+                    .modifier(DeskGlass(radius: 15, tint: phase == .recording ? Studio.live : Studio.accent, interactive: true))
                 }
                 .buttonStyle(DeskButtonStyle())
                 .disabled(phase == .saving || phase == .importing)
             }
             .padding(typeSize.isAccessibilitySize ? 18 : 22)
-            .background(Studio.card, in: RoundedRectangle(cornerRadius: 24))
+            .background {
+                CaptureArtwork(live: phase == .recording, signal: signal)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .overlay { RoundedRectangle(cornerRadius: 24).strokeBorder(Studio.line).allowsHitTesting(false) }
             .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: phase)
 
             if !notice.isEmpty {
@@ -155,8 +158,7 @@ struct CaptureDesk: View {
                 .multilineTextAlignment(.leading)
                 .padding(.vertical, 13).padding(.horizontal, 14)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Studio.panel, in: RoundedRectangle(cornerRadius: 17))
-                .overlay { RoundedRectangle(cornerRadius: 17).strokeBorder(Studio.line) }
+                .modifier(DeskGlass(radius: 17, interactive: true))
             }
             .buttonStyle(DeskButtonStyle())
             .disabled(phase != .ready)
@@ -202,7 +204,7 @@ struct SavedRecordingRow: View {
         .multilineTextAlignment(.leading)
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
-        .background(Studio.hero, in: RoundedRectangle(cornerRadius: 17))
+        .modifier(DeskGlass(radius: 17, interactive: true))
         .accessibilityElement(children: .combine)
         .accessibilityHint("Открывает материал в библиотеке")
     }
@@ -211,18 +213,58 @@ struct SavedRecordingRow: View {
 private struct FieldMark: View {
     var body: some View {
         Canvas { context, size in
-            context.scaleBy(x: size.width / 1024, y: size.height / 1024)
-            let tile = CGRect(x: 0, y: 0, width: 1024, height: 1024)
-            context.fill(Path(roundedRect: tile, cornerRadius: 244), with: .color(Studio.card))
-            let page = Path(roundedRect: CGRect(x: 257, y: 199, width: 510, height: 626), cornerRadius: 57)
-            context.fill(page, with: .color(Studio.cardInk))
-            context.clip(to: page)
-            context.fill(Path(CGRect(x: 345, y: 199, width: 39, height: 626)), with: .color(Studio.margin))
-            for (y, width): (CGFloat, CGFloat) in [(377, 230), (489, 155), (601, 210)] {
-                let rule = CGRect(x: 440, y: y, width: width, height: 33)
-                context.fill(Path(roundedRect: rule, cornerRadius: 16.5), with: .color(Studio.card))
+            context.scaleBy(x: size.width / 64, y: size.height / 64)
+            context.concatenate(CGAffineTransform(a: 1, b: 0, c: -0.156, d: 1, tx: 5, ty: 0))
+            for (index, height) in [16, 30, 44, 34, 20].enumerated() {
+                let bar = CGRect(x: 9 + index * 10, y: (64 - height) / 2, width: 6, height: height)
+                context.fill(Path(roundedRect: bar, cornerRadius: 3), with: .color(Studio.accent))
             }
         }
+    }
+}
+
+private struct CaptureArtwork: View {
+    let live: Bool
+    let signal: () -> Double
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scene
+
+    var body: some View {
+        let still = reduceMotion || scene != .active
+        TimelineView(.animation(minimumInterval: 1.0 / 24, paused: still)) { frame in
+            let angle = still ? 0 : frame.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 16) * .pi / 8
+            GeometryReader { area in
+                Image("CaptureWave").resizable().scaledToFill().saturation(0.06)
+                    .frame(width: area.size.width, height: area.size.height)
+                    .scaleEffect(1.10 + (live && !still ? 0.04 * signal() : 0))
+                    .offset(x: sin(angle) * area.size.width * 0.035, y: cos(angle) * area.size.height * 0.025)
+                    .clipped()
+                    .overlay {
+                        LinearGradient(stops: [
+                            .init(color: Studio.card, location: 0),
+                            .init(color: Studio.card.opacity(0.91), location: 0.42),
+                            .init(color: Studio.card.opacity(0.30), location: 1)
+                        ], startPoint: .leading, endPoint: .trailing)
+                    }
+            }
+        }.accessibilityHidden(true)
+    }
+}
+
+struct PlayingBars: View {
+    let active: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scene
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !active || reduceMotion || scene != .active)) { frame in
+            let phase = active && !reduceMotion ? frame.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 2) * .pi : 0
+            HStack(spacing: 2) {
+                ForEach(0..<5, id: \.self) { index in
+                    Capsule().frame(width: 2, height: 4 + 11 * abs(sin(phase + Double(index) * 0.83)))
+                }
+            }
+        }.frame(width: 20, height: 18).accessibilityHidden(true)
     }
 }
 
@@ -235,7 +277,7 @@ private struct InputMeter: View {
             let lit = Int((max(0, min(1, signal())) * 10).rounded())
             HStack(alignment: .bottom, spacing: 2) {
                 ForEach(0..<10, id: \.self) { index in
-                    Capsule().fill(index < lit ? Studio.mint : Studio.cardMuted.opacity(0.3))
+                    Capsule().fill(index < lit ? Studio.accent : Studio.cardMuted.opacity(0.3))
                         .frame(width: 3, height: CGFloat(4 + index * 2))
                 }
             }

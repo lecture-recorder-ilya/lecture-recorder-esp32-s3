@@ -190,7 +190,7 @@ final class RecorderModelView extends View {
                 float nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
                 float length = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
                 float facing = length == 0 ? 0 : Math.abs((nx * .24f + ny * -.52f + nz * -.82f) / length);
-                face.color = Color.rgb((int) (92 + facing * 152), (int) (35 + facing * 65), (int) (37 + facing * 60));
+                face.color = Color.rgb((int) (27 + facing * 69), (int) (28 + facing * 70), (int) (32 + facing * 74));
                 face.depth = oriented[a + 2] + oriented[b + 2] + oriented[c + 2];
             }
             Arrays.sort(faces, backToFront);

@@ -16,7 +16,7 @@
  const nav=create('nav','app-nav');nav.setAttribute('aria-label','Разделы приложения');
  const brand=create('div','brand');
  const logo=document.createElement('img');logo.src='/vendor/interface/fieldnotes.svg';logo.alt='';logo.width=40;logo.height=40;
- brand.append(logo,create('span','','На полях'));nav.append(brand);
+ brand.append(logo,create('span','','Студия записи'));nav.append(brand);
  const views={};const buttons={};
  const navIcons={record:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',library:'<path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/>',settings:'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/>'};
  const options=[['record','Запись'],['library','Библиотека'],['settings','Настройки']];
@@ -123,7 +123,9 @@
   usbStatus.hidden=wifi;
   wifiSettings.hidden=!wifi||running;
   sourceStatus.hidden=!sourceStatus.textContent;
-  meterTrack.style.setProperty('--signal-scale',String(Math.min(1,Math.max(0,meter.value/100))));
+  const signal=Math.min(1,Math.max(0,meter.value/100));
+  meterTrack.style.setProperty('--signal-scale',String(signal));
+  core.style.setProperty('--input-light',s.recording?String(.58 + signal * .42):'1');
   const hint=s.reconnecting?'Запись продолжится в том же файле. Пропущенный звук заменяется тишиной.'
    :!running&&!wifi&&!s.usb_present?'Подключи микрофон по USB или выбери Wi‑Fi.':'';
   recovery.hidden=!hint;

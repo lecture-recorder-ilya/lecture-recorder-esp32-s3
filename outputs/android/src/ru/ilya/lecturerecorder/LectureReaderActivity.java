@@ -34,12 +34,13 @@ import java.util.Locale;
 
 public class LectureReaderActivity extends Activity {
     private static final int BACKGROUND = StudioStyle.BACKGROUND;
-    private static final int CONTROL = StudioStyle.CONTROL;
-    private static final int DIVIDER = StudioStyle.LINE;
-    private static final int TEXT = StudioStyle.TEXT;
-    private static final int MUTED = StudioStyle.MUTED;
-    private static final int ACCENT = StudioStyle.ACCENT;
-    private static final int ACTIVE = StudioStyle.ACTIVE;
+    private static final int PAPER = 0xffeef2f0;
+    private static final int CONTROL = 0xffdfe5e0;
+    private static final int DIVIDER = 0xffc3cdca;
+    private static final int TEXT = 0xff1e2829;
+    private static final int MUTED = 0xff505e5f;
+    private static final int ACCENT = 0xff80501f;
+    private static final int ACTIVE = 0xfff4dfc1;
     private static final String[] TABS = {"summary", "text", "review"};
     private static final String[] TAB_LABELS = {"Конспект", "Текст", "Проверить"};
 
@@ -121,11 +122,15 @@ public class LectureReaderActivity extends Activity {
         scroll.setFillViewport(true);
         scroll.setFocusableInTouchMode(true);
         body = column();
-        body.setPadding(0, dp(8), 0, dp(8));
+        body.setPadding(dp(14), dp(14), dp(14), dp(18));
+        scroll.setBackground(surface(PAPER, 18));
+        scroll.setClipToOutline(true);
         scroll.addView(body, new ScrollView.LayoutParams(-1, -2));
-        page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        LinearLayout.LayoutParams sheet = new LinearLayout.LayoutParams(-1, 0, 1);
+        sheet.topMargin = dp(8);
+        page.addView(scroll, sheet);
 
-        status = text("", 13, MUTED);
+        status = text("", 13, StudioStyle.MUTED);
         status.setVisibility(View.GONE);
         status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         page.addView(status, spaced(-1, -2, 4));
@@ -141,10 +146,11 @@ public class LectureReaderActivity extends Activity {
         boolean compact = getResources().getConfiguration().screenWidthDp < 560
                 || getResources().getConfiguration().fontScale > 1.25f;
         Button back = button(fromLibrary ? "‹ Библиотека" : "‹ К записи", this::finish);
-        back.setTextColor(ACCENT);
+        back.setTextColor(StudioStyle.ACCENT);
         back.setBackground(StudioStyle.control(this, Color.TRANSPARENT, 10));
         navigation.addView(back, new LinearLayout.LayoutParams(compact ? 0 : -2, -2, compact ? 1.6f : 0));
         Button search = button("Найти", this::findInTranscript);
+        StudioStyle.actionTone(search, StudioStyle.CONTROL, StudioStyle.TEXT);
         search.setContentDescription("Найти в тексте лекции");
         LinearLayout.LayoutParams searchSize = withGap(compact ? 0 : -2, -2, 4);
         searchSize.weight = compact ? 1 : 0;
@@ -153,6 +159,7 @@ public class LectureReaderActivity extends Activity {
         boolean audioDetails = fromLibrary && Store.audio(this, recording).isFile();
         if (alternate || audioDetails) {
             Button more = button("Ещё");
+            StudioStyle.actionTone(more, StudioStyle.CONTROL, StudioStyle.TEXT);
             more.setContentDescription("Действия с записью");
             more.setOnClickListener(view -> {
                 PopupMenu menu = new PopupMenu(this, more);
@@ -177,7 +184,7 @@ public class LectureReaderActivity extends Activity {
         }
         page.addView(navigation);
         LinearLayout tabs = new LinearLayout(this);
-        tabs.setBackground(StudioStyle.card(this, 15));
+        tabs.setBackground(StudioStyle.glass(this, 15, false));
         tabs.setPadding(dp(3), dp(3), dp(3), dp(3));
         for (int index = 0; index < TABS.length; index++) {
             String target = TABS[index];
@@ -210,8 +217,8 @@ public class LectureReaderActivity extends Activity {
             boolean active = tab.equals(TABS[index]);
             Button button = tabButtons[index];
             button.setSelected(active);
-            button.setTextColor(active ? ACCENT : MUTED);
-            button.setBackground(control(active ? ACTIVE : Color.TRANSPARENT));
+            button.setTextColor(active ? StudioStyle.ACCENT : StudioStyle.MUTED);
+            button.setBackground(control(active ? StudioStyle.ACTIVE : Color.TRANSPARENT));
         }
     }
 
@@ -223,7 +230,7 @@ public class LectureReaderActivity extends Activity {
                 || getResources().getConfiguration().fontScale > 1.25f;
         LinearLayout panel = column();
         panel.setPadding(dp(8), dp(4), dp(8), dp(4));
-        panel.setBackground(StudioStyle.card(this, 16));
+        panel.setBackground(StudioStyle.glass(this, 18, false));
         LinearLayout commands = new LinearLayout(this);
         commands.setGravity(Gravity.CENTER_VERTICAL);
         panel.addView(commands);
@@ -231,9 +238,10 @@ public class LectureReaderActivity extends Activity {
             if (ready && player.isPlaying()) pausePlayback();
             else playAt(actualPosition());
         });
-        StudioStyle.actionTone(toggle, ACCENT, StudioStyle.INK);
+        StudioStyle.actionTone(toggle, StudioStyle.ACCENT, StudioStyle.INK);
         commands.addView(toggle, new LinearLayout.LayoutParams(compact ? 0 : -2, -2, compact ? 1 : 0));
         speedButton = button(ListeningLibrary.SPEED_LABELS[speedIndex], this::chooseSpeed);
+        StudioStyle.actionTone(speedButton, StudioStyle.CONTROL, StudioStyle.TEXT);
         updateSpeedLabel();
         commands.addView(speedButton, withGap(-2, -2, 6));
         LinearLayout trackRow = compact ? new LinearLayout(this) : commands;
@@ -242,8 +250,8 @@ public class LectureReaderActivity extends Activity {
 
         position = new SeekBar(this);
         position.setContentDescription("Позиция записи");
-        position.setProgressTintList(ColorStateList.valueOf(ACCENT));
-        position.setThumbTintList(ColorStateList.valueOf(ACCENT));
+        position.setProgressTintList(ColorStateList.valueOf(StudioStyle.ACCENT));
+        position.setThumbTintList(ColorStateList.valueOf(StudioStyle.ACCENT));
         position.setEnabled(false);
         position.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onStartTrackingTouch(SeekBar bar) {}
@@ -257,7 +265,7 @@ public class LectureReaderActivity extends Activity {
         position.setMax(duration);
         position.setProgress(pendingSeek);
         trackRow.addView(position, track);
-        elapsed = text(clock(pendingSeek / 1000.0) + " / " + clock(duration / 1000.0), 13, MUTED);
+        elapsed = text(clock(pendingSeek / 1000.0) + " / " + clock(duration / 1000.0), 13, StudioStyle.MUTED);
         elapsed.setTypeface(Typeface.MONOSPACE);
         StudioStyle.fitLabel(elapsed, 8, 12);
         trackRow.addView(elapsed, withGap(dp(100), dp(36), 4));
@@ -428,11 +436,13 @@ public class LectureReaderActivity extends Activity {
             LinearLayout block = card();
             if (!reviewOnly) {
                 textRows.put(index, block);
-                if (index == highlightedSegment) block.setBackground(StudioStyle.control(this, StudioStyle.ACTIVE, 12));
+                if (index == highlightedSegment) block.setBackground(control(ACTIVE));
             }
             boolean timed = row.has("start") && row.has("end");
             int start = (int) (row.optDouble("start") * 1000);
-            TextView phrase = text(row.optString("text"), 16, TEXT);
+            TextView phrase = text(row.optString("text"), 17, TEXT);
+            phrase.setTypeface(Typeface.create("serif", Typeface.NORMAL));
+            phrase.setLineSpacing(dp(5), 1);
             if (timed) {
                 phrase.setOnClickListener(view -> playAt(start));
                 phrase.setFocusable(true);
@@ -666,6 +676,7 @@ public class LectureReaderActivity extends Activity {
                 library.savePosition(recording, 0, complete.getDuration());
                 complete.seekTo(0);
                 toggle.setText(idlePlayLabel());
+                StudioStyle.playingIcon(toggle, false);
             });
             player.setOnErrorListener((failed, what, extra) -> {
                 releasePlayer();
@@ -728,18 +739,21 @@ public class LectureReaderActivity extends Activity {
         }
         player.start();
         toggle.setText("Пауза");
+        StudioStyle.playingIcon(toggle, true);
     }
 
     private void pausePlayback() {
         savePosition();
         if (ready && player.isPlaying()) {
             player.pause();
+            StudioStyle.playingIcon(toggle, false);
             toggle.setText(idlePlayLabel());
         }
         focus.release();
     }
 
     private void releasePlayer() {
+        StudioStyle.playingIcon(toggle, false);
         focus.release();
         ready = false;
         if (player != null) {
@@ -817,7 +831,7 @@ public class LectureReaderActivity extends Activity {
     private LinearLayout card() {
         LinearLayout card = column();
         card.setPadding(dp(14), dp(12), dp(14), dp(12));
-        card.setBackground(StudioStyle.card(this, 18));
+        card.setBackground(surface(0xfff7faf7, 12));
         return card;
     }
 
@@ -870,7 +884,7 @@ public class LectureReaderActivity extends Activity {
     }
 
     private RippleDrawable control(int color) {
-        return new RippleDrawable(ColorStateList.valueOf(0x2880e2ce), surface(color, 12), null);
+        return new RippleDrawable(ColorStateList.valueOf(0x277553aa), surface(color, 12), null);
     }
 
     private LinearLayout.LayoutParams spaced(int width, int height, int gap) {
