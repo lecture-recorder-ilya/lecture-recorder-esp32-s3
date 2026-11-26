@@ -111,11 +111,14 @@ test("Прокрутка поворачивает корпус на компью
         assert.notEqual(await frameDigest(page), paused);
 
         await showRibbon(page);
-        const moving = await page.locator("#sound-ribbon").evaluate(canvas => canvas.toDataURL());
-        await page.waitForFunction(previous => document.querySelector("#sound-ribbon").toDataURL() !== previous,
-          moving, {polling: 120, timeout: 6000});
+        const idle = await frameDigest(page, "#sound-ribbon");
+        await page.waitForTimeout(220);
+        assert.equal(await frameDigest(page, "#sound-ribbon"), idle);
+        const firstMode = await page.locator("#sound-ribbon").evaluate(canvas => canvas.toDataURL());
         await page.locator("[data-source=file]").click();
         await page.waitForFunction(() => document.querySelector(".source-panel").dataset.mode === "file");
+        await page.waitForFunction(previous => document.querySelector("#sound-ribbon").toDataURL() !== previous,
+          firstMode, {polling: 120, timeout: 6000});
         await page.locator("footer").evaluate(footer => footer.scrollIntoView({behavior: "instant"}));
         await page.waitForFunction(() => !document.querySelector(".source-panel").classList.contains("in-view"));
         const hidden = await frameDigest(page, "#sound-ribbon");

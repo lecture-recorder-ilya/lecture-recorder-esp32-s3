@@ -9,7 +9,7 @@
   const context = canvas?.getContext("2d");
   const source = document.querySelector(".source-panel");
   let measureFrame = 0, ribbonFrame = 0, lastTick = 0;
-  let visible = false, phase = 0, blend = 0, width = 0, height = 0, lineColor;
+  let visible = false, blend = 0, width = 0, height = 0, lineColor;
 
   function position() {
     measureFrame = 0;
@@ -64,8 +64,8 @@
     const delta = lastTick ? Math.min(.12, (now - lastTick) / 1000) : 0;
     lastTick = now;
     const target = source.dataset.mode === "device" ? 1 : source.dataset.mode === "file" ? 2 : 0;
-    blend = reduced.matches ? target : blend + (target - blend) * (1 - Math.exp(-delta * 6));
-    phase = reduced.matches ? 0 : (phase + delta * .57) % (Math.PI * 2);
+    blend = reduced.matches || Math.abs(target - blend) < .006 ? target : blend + (target - blend) * (1 - Math.exp(-delta * 7));
+    const phase = blend * .57;
     context.clearRect(0, 0, width, height);
     context.strokeStyle = lineColor;
     const count = width < 430 ? 27 : 42;
@@ -86,7 +86,7 @@
       context.stroke();
     }
     context.globalAlpha = 1;
-    if (!reduced.matches) requestRibbon();
+    if (blend !== target) requestRibbon();
   }
   function requestRibbon() {
     if (visible && !document.hidden && !ribbonFrame) ribbonFrame = requestAnimationFrame(drawRibbon);

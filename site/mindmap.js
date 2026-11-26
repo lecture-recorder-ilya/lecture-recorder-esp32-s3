@@ -109,7 +109,7 @@ globalThis.ZuMind = (() => {
     function draw(){
       const actual=viewport.clientWidth || 760;fromSize=actual;const wide=actual>=710;
       const visible=topics.slice(0,count),cols=wide?2:1,lanes=Math.ceil(visible.length/cols);
-      width=wide?Math.max(actual,840):Math.max(actual,315);
+      width=Math.max(actual,315);
       const laneH=wide?112:126;
       height=lanes*laneH+(wide?32:92);
       world.replaceChildren();world.style.width=width+"px";world.style.height=height+"px";
@@ -147,9 +147,12 @@ globalThis.ZuMind = (() => {
       all.hidden=count>=topics.length;zoom(0);viewport.scrollTop=state.y || 0;viewport.scrollLeft=state.x || 0;
     }
     tools.append(status,less,more,all);section.append(tools,viewport);
-    requestAnimationFrame(()=>{if(section.isConnected)draw();});
-    const observer=new ResizeObserver(()=>{if(section.isConnected && Math.abs(viewport.clientWidth-fromSize)>1)draw();});observer.observe(viewport);
-    section.dispose=()=>observer.disconnect();
+    const observer=typeof ResizeObserver==="function" ? new ResizeObserver(()=>{
+      if(section.isConnected && Math.abs(viewport.clientWidth-fromSize)>1)draw();
+    }) : null;
+    observer?.observe(viewport);
+    section.fit=draw;
+    section.dispose=()=>observer?.disconnect();
     return section;
   }
   return {groups,outline,archive,graphical,roles};

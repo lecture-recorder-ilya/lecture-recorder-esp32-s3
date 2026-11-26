@@ -251,6 +251,7 @@ globalThis.ZuConversation = (() => {
           if(details){details.open=true;details.querySelector("summary").focus();details.scrollIntoView({block:"nearest"});}
         },data.play,view.zoom,data.canPlay!==false);
         host.append(view.graph);
+        view.graph.fit();
       }
       host.append(top,tree);
       const tools=element("div","zu-map-tools");
