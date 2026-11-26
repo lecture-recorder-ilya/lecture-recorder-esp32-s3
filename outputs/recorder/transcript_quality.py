@@ -1,6 +1,7 @@
 import hashlib
 import json
 import math
+import re
 from pathlib import Path
 
 
@@ -23,6 +24,11 @@ def assess(segment):
     context = segment.get('context_review') if isinstance(segment.get('context_review'), dict) else {}
     if segment.get('needs_review'):
         reasons.append('Распознавание требует проверки по записи')
+    evidence = recognition.get('word_evidence')
+    if isinstance(evidence, list) and any(
+            isinstance(word, dict) and isinstance(word.get('text'), str)
+            and re.search(r'[^\W\d_][.,!?;:]{2,}[^\W\d_]', word['text']) for word in evidence):
+        reasons.append('В распознавании склеены части слов')
     confidence = recognition.get('ctc_confidence')
     if number(confidence) and confidence < .85:
         reasons.append('Модель неуверенно различила слова')
