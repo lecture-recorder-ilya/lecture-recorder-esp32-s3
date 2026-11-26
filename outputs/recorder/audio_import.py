@@ -92,6 +92,10 @@ def normalize(source, target, project, run=subprocess.run):
         converters.append([ffmpeg, '-nostdin', '-v', 'error', '-y', '-i', str(source), '-vn', '-ac', '1', '-ar', '16000', '-c:a', 'pcm_s16le', '-f', 'wav', str(target)])
     if Path('/usr/bin/afconvert').exists():
         converters.append(['/usr/bin/afconvert', '-f', 'WAVE', '-d', 'LEI16@16000', '-c', '1', '--mix', str(source), str(target)])
+    decoder = project / 'outputs/recorder/media_decode.py'
+    interpreter = project / 'work/asr-env/bin/python'
+    if decoder.is_file() and interpreter.is_file():
+        converters.append([str(interpreter), str(decoder), str(source), str(target)])
     if not converters:
         raise ValueError('Не удалось открыть этот формат. Экспортируй запись в WAV, MP3 или M4A на Mac.')
     for command in converters:
