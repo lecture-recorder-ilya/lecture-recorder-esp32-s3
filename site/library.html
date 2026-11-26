@@ -1,13 +1,55 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#111110"><title>Библиотека · зу</title><link rel="icon" href="assets/zu-wordmark.svg"><link rel="stylesheet" href="styles.css"><script defer src="library.js"></script></head>
-<body><a class="skip" href="#library-main">К библиотеке</a>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111110">
+  <title>Библиотека · зу</title>
+  <link rel="icon" href="assets/zu-wordmark.svg">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="conversation-map.css"><link rel="stylesheet" href="library-storage.css">
+  <script defer src="mindmap-zip.js"></script><script defer src="mindmap.js"></script><script defer src="conversation-map.js"></script><script defer src="library-storage.js"></script><script defer src="library.js"></script>
+</head>
+<body>
+<a class="skip" href="#library-main">К библиотеке</a>
 <header class="top wrap"><a class="brand" href="./" aria-label="зу, на главную"><span>зу</span></a><nav><a href="guide.html">Справка</a><a class="nav-pill" href="./#download">Скачать</a></nav></header>
-<main class="wrap library-main" id="library-main"><header class="library-head"><div><p class="eyebrow">На этом устройстве</p><h1>Моя библиотека</h1></div><button class="button primary" id="choose" type="button">Открыть аудио</button><input type="file" accept="audio/*,.m4a,.opus,.ogg,.flac" id="files" multiple hidden></header>
-<div id="empty" class="empty-library"><div class="empty-signal" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><h2>Здесь будут твои записи</h2><p>Выбери файл или перетащи его сюда. Аудио останется на устройстве и будет доступно до закрытия вкладки.</p></div>
-<div id="workspace" class="workbench" hidden><aside class="file-rail"><h2>Записи</h2><div id="file-list"></div></aside>
-<article class="local-reader"><h2 id="file-title"></h2><audio id="audio" preload="metadata"></audio>
-<div class="local-player"><button id="play" type="button" class="round" aria-label="Слушать"><i class="play-shape" aria-hidden="true"></i></button><div class="local-track"><canvas id="signal" aria-hidden="true"></canvas><input id="seek" type="range" min="0" value="0" max="0" step=".05" aria-label="Позиция в записи"><div class="time-ruler"><span id="elapsed">0:00</span><span id="length">—</span></div></div><button id="rate" class="speed" type="button" aria-label="Изменить скорость воспроизведения">1×</button></div>
-<div class="local-actions"><button class="outline" id="add-mark" type="button">Поставить закладку</button><button class="outline" id="import-text" type="button">Добавить текст</button><input type="file" accept=".srt,.vtt,text/vtt" id="captions" hidden></div>
-<div class="local-sheet"><div class="sheet-head"><h3>Текст записи</h3><span id="cue-total"></span></div><p id="text-help">Открой субтитры в формате SRT или WebVTT, чтобы слушать по нажатию на фразу.</p><input id="cue-query" type="search" aria-label="Найти фразу" placeholder="Найти фразу" hidden><label class="cue-context" id="cue-context" hidden><input id="lead-in" type="checkbox">Слушать с двух секунд до фразы</label><div id="cues"></div></div>
-<section class="marks-block" aria-labelledby="marks-title"><h3 id="marks-title">Закладки</h3><div id="marks"></div></section></article></div>
-<p id="notice" role="status"></p></main></body></html>
+<main class="wrap library-main" id="library-main">
+  <header class="library-head"><div><p class="eyebrow">На этом устройстве</p><h1>Моя библиотека</h1></div></header>
+  <div id="start-tools" class="library-start">
+    <button class="button primary" id="choose" type="button" disabled>Слушать файл в браузере</button>
+    <input type="file" accept="audio/*,.m4a,.opus,.ogg,.flac,.wav,.webm,.aif,.aiff,.caf" id="files" multiple hidden>
+    <details id="transcribe-help" class="transcription-routes"><summary>Получить расшифровку</summary>
+      <div><p>Если у тебя только аудио, открой его в приложении и продолжи работу с текстом там. В браузере можно слушать запись и открыть уже готовый SRT или WebVTT.</p>
+        <p><strong>Mac.</strong> Открой «Новая запись», перетащи файл и запусти расшифровку. Речь обрабатывается на Mac после установки модели. <a href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.22/lecture-recorder-0.5.22-arm64.dmg" target="_blank" rel="noopener noreferrer">Скачать для Mac с Apple Silicon</a></p>
+        <p><strong>Android.</strong> Нажми «Импортировать аудио» и запусти распознавание на телефоне. Для первого запуска понадобится модель русской речи, около 225 МБ. <a href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/latest/download/lecture-recorder.apk" target="_blank" rel="noopener noreferrer">Скачать для Android</a></p>
+      </div>
+    </details>
+  </div>
+  <noscript><p>Чтобы открыть запись и сохранить заметки, включи JavaScript в браузере.</p></noscript>
+  <label class="private-open"><input id="temporary-only" type="checkbox"> Следующие файлы открывать во временном режиме</label>
+  <div id="empty" class="empty-library"><div class="empty-signal" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><h2>Открой свою запись</h2><p>Перетащи аудио сюда. Сразу сможешь слушать и ставить закладки. Для поиска по словам добавь субтитры. Аудио останется в исходном файле на твоём устройстве.</p></div>
+  <details id="saved-library" class="saved-library"><summary>Сохранённые заметки на устройстве</summary><div id="saved-list"></div></details>
+  <div id="workspace" class="workbench" hidden>
+    <aside class="file-rail"><h2>Открытые записи</h2><button class="outline file-filter" id="only-favorites" type="button" aria-pressed="false">Избранные</button><div id="file-list"></div></aside>
+    <article class="local-reader">
+      <div class="file-heading"><h2 id="file-title"></h2><button class="file-favorite" id="favorite-file" type="button" aria-pressed="false" aria-label="Добавить разговор в избранное">☆</button></div>
+      <audio id="audio" preload="metadata"></audio>
+      <div class="local-player"><button id="play" type="button" class="round" aria-label="Слушать"><i class="play-shape" aria-hidden="true"></i></button><div class="local-track"><canvas id="signal" aria-hidden="true"></canvas><input id="seek" type="range" min="0" value="0" max="0" step=".05" aria-label="Позиция в записи"><div class="time-ruler"><span id="elapsed">0:00</span><span id="length">—</span></div></div><button id="rate" class="speed" type="button" aria-label="Изменить скорость воспроизведения">1×</button></div>
+      <div class="local-actions"><button class="outline" id="add-mark" type="button">Поставить закладку</button><button class="outline" id="import-text" type="button">Добавить субтитры</button><input type="file" accept=".srt,.vtt,text/vtt" id="captions" hidden></div>
+      <section class="record-storage" aria-labelledby="storage-mode">
+        <h3 id="storage-mode" role="status">Только в этой вкладке</h3>
+        <p id="storage-explain"></p>
+        <div class="storage-buttons"><button id="save-work" class="outline" type="button">Сохранять на этом устройстве</button><button id="export-work" class="text-action" type="button">Скачать заметки JSON</button><button id="import-work" class="text-action" type="button">Открыть заметки JSON</button><input id="notes-file" type="file" accept=".json,application/json" hidden></div>
+        <button class="text-action" type="button" id="legacy-work" hidden>Перенести прежнее избранное и отметки</button>
+        <span id="storage-feedback" role="status"></span>
+      </section>
+      <details class="library-map" id="map-panel"><summary>Карта разговора</summary><p class="map-intro">Из готовых субтитров автоматически строится карта по темам. Нажми на фразу, чтобы услышать её в записи.</p><div id="conversation-map"></div></details>
+      <div class="local-sheet"><div class="sheet-head"><h3>Текст записи</h3><span id="cue-total"></span></div><p id="text-help">Есть SRT или WebVTT? Добавь субтитры, чтобы искать слова и слушать с нужной фразы. <button class="sheet-link" id="inline-transcribe" type="button">Как получить текст из аудио</button></p><input id="cue-query" type="search" aria-label="Найти фразу" placeholder="Найти фразу" hidden><label class="cue-context" id="cue-context" hidden><input id="lead-in" type="checkbox">Слушать с двух секунд до фразы</label><div id="cues"></div></div>
+      <section class="marks-block" aria-labelledby="marks-title"><h3 id="marks-title">Закладки</h3><div id="marks"></div></section>
+      <section class="record-notes" aria-labelledby="notes-title"><h3 id="notes-title">Мои заметки</h3>
+        <form id="note-form"><label for="note-text">Заметка к моменту записи</label><textarea id="note-text" rows="2" maxlength="3000" required placeholder="Что хочешь запомнить?"></textarea><div class="storage-buttons"><button type="submit" id="add-note" class="outline">Добавить к этой секунде</button><button id="cancel-note" type="button" class="text-action" hidden>Отменить правку</button></div></form>
+        <div id="notes-list"></div>
+      </section>
+    </article>
+  </div>
+  <p id="notice" role="status"></p>
+</main></body></html>

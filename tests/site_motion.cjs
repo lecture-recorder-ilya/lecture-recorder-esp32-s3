@@ -62,7 +62,7 @@ test("Прокрутка поворачивает корпус на компью
             return getContext.call(this, type, type === "webgl" ? {...options, preserveDrawingBuffer: true} : options);
           };
         });
-        const mesh = page.waitForResponse(response => new URL(response.url()).pathname.endsWith("/assets/zu-prototype.glb"));
+        const mesh = page.waitForResponse(response => new URL(response.url()).pathname.endsWith("/assets/zu-case.glb"));
         await page.goto(url);
         const response = await mesh;
         assert.ok(response.ok());
@@ -95,7 +95,7 @@ test("Прокрутка поворачивает корпус на компью
         assert.ok(Math.abs(await silhouette(page) - widths[3]) < Math.max(...widths) * .14, "Обратная прокрутка возвращает тот же ракурс");
 
         await page.locator("[data-model-view=detail]").click();
-        await page.waitForFunction(() => document.querySelector("#model-angle").textContent === "Платы микрофонов");
+        await page.waitForFunction(() => document.querySelector("#model-angle").textContent === "Входы микрофонов");
         await scrollScene(page, .62);
         await page.waitForFunction(() => document.querySelector("#model-angle").textContent === "Обратная сторона");
         assert.equal(await page.locator("[data-model-view=detail]").getAttribute("aria-pressed"), "false");
@@ -115,7 +115,7 @@ test("Прокрутка поворачивает корпус на компью
         await page.waitForFunction(previous => document.querySelector("#sound-ribbon").toDataURL() !== previous,
           moving, {polling: 120, timeout: 6000});
         await page.locator("[data-source=file]").click();
-        assert.equal(await page.locator(".source-panel").getAttribute("data-mode"), "file");
+        await page.waitForFunction(() => document.querySelector(".source-panel").dataset.mode === "file");
         await page.locator("footer").evaluate(footer => footer.scrollIntoView({behavior: "instant"}));
         await page.waitForFunction(() => !document.querySelector(".source-panel").classList.contains("in-view"));
         const hidden = await frameDigest(page, "#sound-ribbon");

@@ -11,8 +11,8 @@
   const views = [...document.querySelectorAll("[data-model-view]")];
   const poster = stage.querySelector(".model-poster");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-  const angles = {front: "Лицевая сторона", side: "Торец", back: "Обратная сторона", detail: "Платы микрофонов"};
-  const photos = {front: "prototype-front.webp", side: "prototype-side.webp", back: "prototype-back.webp", detail: "prototype-detail.webp"};
+  const angles = {front: "Лицевая сторона", side: "Торец", back: "Обратная сторона", detail: "Входы микрофонов"};
+  const photos = {front: "zu-case-front.webp", side: "zu-case-side.webp", back: "zu-case-back.webp", detail: "zu-case-detail.webp"};
   const turn = Math.PI * 2, homeAngle = -.52;
   let yaw = homeAngle, destination = null, rotating = !reduced.matches;
   let motionRequested = true, inView = false, dragging = null, frame = 0, lastFrame = 0;
@@ -23,7 +23,7 @@
   function showStatic(view = "front") {
     stage.dataset.rendered = "static";
     poster.src = new URL("assets/" + photos[view], document.baseURI).href;
-    poster.alt = "Открытый прототип «зу». " + angles[view];
+    poster.alt = "Корпус «зу». " + angles[view];
     angleLabel.textContent = angles[view];
     canvas.tabIndex = -1;
     motion.hidden = true;
@@ -35,9 +35,10 @@
     uniform mat3 uRotation;
     uniform vec2 uProjection;
     uniform float uLift;
+    uniform vec3 uCenter;
     varying vec3 vPosition, vNormal, vLocal;
     void main() {
-      vLocal = aPosition * 1000.;
+      vLocal = aPosition * 1000. - uCenter;
       vPosition = uRotation * vLocal;
       vNormal = uRotation * aNormal;
       float perspective = 155. / (155. - vPosition.z);
@@ -68,7 +69,7 @@
       float fill = max(dot(n,normalize(vec3(.84,.12,.64))),0.);
       float fresnel = pow(1.-max(dot(n,eye),0.),5.);
       vec3 base = uColor;
-      if (uFinish.z > 1.5) {
+      if (uFinish.z > 1.5 && uFinish.z < 2.5) {
         float grain = sin(vLocal.x * 38. + vLocal.y * 26.) * sin(vLocal.y * 43. - vLocal.x * 12.);
         base *= 1. + grain*.10;
       }
@@ -78,6 +79,11 @@
       if (uFinish.z > .5 && uFinish.z < 1.5) {
         float band = smoothstep(-.75,.7,r.x*.8+r.y+.03*vLocal.x);
         spec += vec3(.014,.018,.019) * band;
+      }
+      if (uFinish.z > 2.5) {
+        float distanceToLight = length((vPosition.xy - vec2(-22.,38.)) / vec2(76.,96.));
+        diffuse *= mix(.66,1.14,1. - smoothstep(.05,1.23,distanceToLight));
+        spec += vec3(.034,.030,.026)*pow(1.-max(dot(n,eye),0.),2.);
       }
       vec3 lit = diffuse + spec;
       lit = lit / (1. + .43*lit);
@@ -105,7 +111,7 @@
     if (!gl.getProgramParameter(program,gl.LINK_STATUS)) throw Error("Ошибка программы");
     gl.useProgram(program);
     const attributes = Object.fromEntries(["aPosition","aNormal"].map(k=>[k,gl.getAttribLocation(program,k)]));
-    const u = Object.fromEntries(["uRotation","uProjection","uLift","uColor","uFinish"].map(k=>[k,gl.getUniformLocation(program,k)]));
+    const u = Object.fromEntries(["uRotation","uProjection","uLift","uCenter","uColor","uFinish"].map(k=>[k,gl.getUniformLocation(program,k)]));
     const buffers = scene.bufferViews.map(view=>{
       const handle = gl.createBuffer();
       gl.bindBuffer(view.target,handle);
@@ -114,10 +120,15 @@
     });
     const surfaces = scene.meshes.flatMap(mesh=>mesh.primitives.map(p=>{
       const material = scene.materials[p.material], pbr = material.pbrMetallicRoughness;
-      const kind = material.name === "Поляризатор" ? 1 : material.name === "Лента" ? 2 : 0;
+      const kind = material.name === "Поляризатор" ? 1 : material.name === "Лента" ? 2 : material.name.startsWith("Графит") ? 3 : 0;
       return {p: scene.accessors[p.attributes.POSITION], n:scene.accessors[p.attributes.NORMAL], i:scene.accessors[p.indices],
         pigment:pbr.baseColorFactor.slice(0,3), finish:[pbr.metallicFactor,pbr.roughnessFactor,kind]};
     }));
+    const low = [0,1,2].map(axis=>Math.min(...surfaces.map(s=>s.p.min[axis])) * 1000);
+    const high = [0,1,2].map(axis=>Math.max(...surfaces.map(s=>s.p.max[axis])) * 1000);
+    gl.uniform3fv(u.uCenter,low.map((v,i)=>(v+high[i])/2));
+    const modelHeight = high[1] - low[1], modelWidth = high[0] - low[0];
+    if (surfaces.some(s=>s.i.componentType===gl.UNSIGNED_INT) && !gl.getExtension("OES_element_index_uint")) throw Error("Индексы модели");
     gl.enable(gl.DEPTH_TEST);
     gl.enableVertexAttribArray(attributes.aPosition);
     gl.enableVertexAttribArray(attributes.aNormal);
@@ -127,7 +138,7 @@
       if (canvas.width!==w || canvas.height!==h) { canvas.width=w; canvas.height=h; }
       gl.viewport(0,0,w,h);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      const scale = Math.min(height*.79/63.3,width*.76/47.0) * (1 + .82*zoom);
+      const scale = Math.min(height*.78/modelHeight,width*.76/modelWidth) * (1 + .82*zoom);
       const tilt = -.23 - .07*Math.sin(yaw) - .12*zoom, roll = -.20 + .08*zoom;
       const ca=Math.cos(yaw), sa=Math.sin(yaw), cb=Math.cos(tilt), sb=Math.sin(tilt), cc=Math.cos(roll), sc=Math.sin(roll);
       gl.uniformMatrix3fv(u.uRotation,false,[
@@ -139,9 +150,9 @@
       gl.uniform1f(u.uLift,.02-zoom*.83);
       for (const s of surfaces) {
         gl.bindBuffer(gl.ARRAY_BUFFER,buffers[s.p.bufferView]);
-        gl.vertexAttribPointer(attributes.aPosition,3,s.p.componentType,false,0,s.p.byteOffset || 0);
+        gl.vertexAttribPointer(attributes.aPosition,3,s.p.componentType,s.p.normalized || false,scene.bufferViews[s.p.bufferView].byteStride || 0,s.p.byteOffset || 0);
         gl.bindBuffer(gl.ARRAY_BUFFER,buffers[s.n.bufferView]);
-        gl.vertexAttribPointer(attributes.aNormal,3,s.n.componentType,false,0,s.n.byteOffset || 0);
+        gl.vertexAttribPointer(attributes.aNormal,3,s.n.componentType,s.n.normalized || false,scene.bufferViews[s.n.bufferView].byteStride || 0,s.n.byteOffset || 0);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buffers[s.i.bufferView]);
         gl.uniform3fv(u.uColor,s.pigment);
         gl.uniform3fv(u.uFinish,s.finish);
@@ -153,7 +164,7 @@
   async function init() {
     const gl = canvas.getContext("webgl",{alpha:true,antialias:true,powerPreference:"low-power",premultipliedAlpha:false});
     if (!gl || location.protocol === "file:") { showStatic(); return; }
-    const response = await fetch("assets/zu-prototype.glb");
+    const response = await fetch("assets/zu-case.glb");
     if (!response.ok) throw Error("Модель недоступна");
     const bytes = await response.arrayBuffer();
     renderer = loadScene(gl,bytes);

@@ -6,6 +6,8 @@ on:
     paths:
       - "site/**"
       - "tests/site_motion.cjs"
+      - "tests/conversation_map.cjs"
+      - "tests/library_persistence.cjs"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -31,18 +33,22 @@ jobs:
           node --check site/home.js
           node --check site/motion.js
           node --check site/library.js
-          test -s site/assets/recorder-poster.webp
-          test -s site/assets/zu-prototype.glb
-          test -s site/assets/controls.webp
+          test -s site/assets/zu-case-front.webp
+          test -s site/assets/zu-case.glb
+          test -s site/assets/zu-case-exploded.webp
+          unzip -tq site/assets/zu-case-print.zip
+          node --check site/conversation-map.js
+          node --check site/mindmap.js
+          node --check site/library-storage.js
           test -s site/library.html
-      - name: Проверить поворот корпуса в браузере
+      - name: Проверить корпус, библиотеку и карту разговора в браузере
         run: |
           npm install --prefix "$RUNNER_TEMP/web-check" --no-audit --no-fund --ignore-scripts playwright-core@1.62.1
-          python3 -m http.server 4173 --bind 127.0.0.1 --directory site > "$RUNNER_TEMP/site-http.log" 2>&1 &
+          python3 -c 'import http.server,os; os.chdir("site"); http.server.ThreadingHTTPServer.request_queue_size=256; http.server.ThreadingHTTPServer(("127.0.0.1",4173),http.server.SimpleHTTPRequestHandler).serve_forever()' > "$RUNNER_TEMP/site-http.log" 2>&1 &
           server=$!
           trap 'kill "$server"' EXIT
           curl -fsS --retry 12 --retry-connrefused --retry-delay 1 http://127.0.0.1:4173/ -o /dev/null
-          CHROME_BIN="$(command -v google-chrome)" NODE_PATH="$RUNNER_TEMP/web-check/node_modules" node --test tests/site_motion.cjs
+          SITE_URL=http://127.0.0.1:4173/ CHROME_BIN="$(command -v google-chrome)" NODE_PATH="$RUNNER_TEMP/web-check/node_modules" node --test --test-concurrency=1 tests/site_motion.cjs tests/conversation_map.cjs tests/library_persistence.cjs
       - name: Подготовить сайт
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:

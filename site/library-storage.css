@@ -1,0 +1,32 @@
+.library-start,.storage-buttons,.saved-work-row,.note-actions {display:flex;align-items:center;gap:.5rem 1rem;flex-wrap:wrap}
+.library-start {align-items:flex-start;margin-top:1.3rem;gap:.75rem 1.25rem}
+.transcription-routes {min-width:0;max-width:42rem}
+.transcription-routes summary,.saved-library summary {width:fit-content;min-height:44px;padding:.68rem .3rem;cursor:pointer;font-weight:600}
+.transcription-routes>div {padding:.25rem 0 .65rem}
+.transcription-routes p,.record-storage p,.saved-library p {margin:.32rem 0 .6rem;color:var(--muted);line-height:1.5}
+.transcription-routes a,.text-action,.sheet-link {text-decoration:underline;text-underline-offset:.16em}
+.transcription-routes a {color:#fed6bb}
+.saved-library {margin:.9rem 0 .45rem}
+.saved-library>div {max-width:48rem}
+.saved-work-row {padding:.5rem 0;border-bottom:1px solid var(--line)}
+.saved-work-row strong {overflow-wrap:anywhere;flex:1 1 12rem}
+.record-storage {margin:1rem 0;padding:1rem 1.1rem;border:1px solid var(--line);border-radius:.85rem}
+.record-storage h3,.record-notes h3 {font-size:1.15rem;letter-spacing:-.02em;margin:0}
+.record-storage p {font-size:.94rem}
+.text-action,.sheet-link {background:transparent;color:inherit;border:0;cursor:pointer;font:inherit;padding:.4rem .15rem;min-height:44px;text-align:left}
+.sheet-link {color:#65421e;display:inline}
+.storage-buttons .outline {min-height:44px}
+#storage-feedback:not(:empty) {display:block;margin-top:.55rem;line-height:1.45}
+.record-notes {margin:1.3rem 0}
+.record-notes form {margin:.85rem 0}
+.record-notes label {display:block;color:var(--muted);font-size:.95rem;margin-bottom:.4rem}
+.record-notes textarea {font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:.55rem;width:100%;max-width:42rem;padding:.65rem .75rem;resize:vertical}
+.item-note {margin:.7rem 0;border-top:1px solid var(--line);padding-top:.65rem}
+.item-note p {white-space:pre-wrap;overflow-wrap:anywhere;margin:.3rem 0}
+.item-note .text-action {color:var(--muted)}
+.file-row small {display:block;font-size:.8rem;opacity:.88;margin-top:.25rem}
+.library-main button:disabled {cursor:default;opacity:.55}
+#saved-list .text-action {flex:0 0 auto}
+@media(max-width:40rem){.library-start{display:block}.transcription-routes{margin-top:.35rem}.record-storage{padding:.85rem}.storage-buttons{gap:.18rem .8rem}}
+.private-open {display:flex;align-items:center;gap:.55rem;color:var(--muted);min-height:44px;font-size:.92rem;cursor:pointer}
+.private-open input {width:1.1rem;height:1.1rem;flex-shrink:0}
