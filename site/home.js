@@ -22,3 +22,11 @@ for (const choice of choices) {
     }
   });
 }
+
+const masthead = document.querySelector(".product-page .top");
+const firstScreen = document.getElementById("product-title");
+if (masthead && firstScreen && "IntersectionObserver" in window) {
+  new IntersectionObserver(([entry]) => {
+    masthead.classList.toggle("compact", !entry.isIntersecting && entry.boundingClientRect.top < 0);
+  }).observe(firstScreen);
+}

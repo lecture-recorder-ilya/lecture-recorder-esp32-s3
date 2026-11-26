@@ -79,7 +79,8 @@ test("Прокрутка поворачивает корпус на компью
         });
         assert.deepEqual(typefaces, ["400", "600"]);
         assert.equal(await page.locator(".top .brand").innerText(), "зу");
-        assert.match(await page.locator("#product-title").innerText(), /Слушай сейчас\.\s*К словам — потом\./);
+        assert.equal(await page.locator("#product-title").innerText(), "зу");
+        assert.match(await page.locator(".mission h2").innerText(), /Слушай сейчас/);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), width);
         const widths = [];
         for (const fraction of [.08, .22, .38, .5, .62, .78, .94]) {

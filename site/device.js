@@ -82,8 +82,9 @@
       }
       if (uFinish.z > 2.5) {
         float distanceToLight = length((vPosition.xy - vec2(-22.,38.)) / vec2(76.,96.));
-        diffuse *= mix(.66,1.14,1. - smoothstep(.05,1.23,distanceToLight));
-        spec += vec3(.034,.030,.026)*pow(1.-max(dot(n,eye),0.),2.);
+        diffuse *= mix(.57,.90,1. - smoothstep(.05,1.23,distanceToLight));
+        spec *= mix(.43,.84,fresnel);
+        spec += vec3(.021,.029,.036)*pow(1.-max(dot(n,eye),0.),2.);
       }
       vec3 lit = diffuse + spec;
       lit = lit / (1. + .43*lit);

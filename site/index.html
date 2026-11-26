@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111110">
+  <meta name="theme-color" content="#06090c">
   <title>зу — диктофон для живых разговоров</title>
   <meta name="description" content="Записывай лекции и встречи. Ищи по расшифровке, слушай с нужной фразы и сохраняй важное в закладках.">
   <meta property="og:title" content="зу — диктофон для живых разговоров">
@@ -12,6 +12,7 @@
   <meta property="og:image" content="https://lecture-recorder-ilya.github.io/lecture-recorder-esp32-s3/assets/zu-case-hero.webp">
   <link rel="icon" href="assets/zu-wordmark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="product.css">
   <script defer src="device.js"></script>
   <script defer src="home.js"></script>
   <script defer src="motion.js"></script>
@@ -20,7 +21,7 @@
   <a class="skip" href="#device">К диктофону</a>
   <header class="top wrap">
     <a class="brand" href="./" aria-label="зу, на главную"><span>зу</span></a>
-    <nav aria-label="Разделы сайта"><a class="wide-link" href="#housing">Корпус</a><a class="wide-link" href="#inside">Текст</a><a href="#download">Скачать</a><a class="nav-pill" href="library.html">Библиотека</a></nav>
+    <nav aria-label="Разделы сайта"><a href="#download">Скачать</a><a href="library.html">Библиотека</a></nav>
   </header>
   <main>
     <section class="product-hero" id="device" aria-labelledby="product-title">
@@ -31,24 +32,24 @@
         <canvas id="device-model" tabindex="-1" role="img" aria-label="Корпус «зу» в 3D. Прокрутка, стрелки и перетаскивание поворачивают устройство."></canvas>
       </div>
       <div class="product-intro">
-        <h1 id="product-title">Слушай сейчас.<br>К словам — потом.</h1>
-        <p>Запиши пару или встречу в «зу». Потом найди нужные слова и послушай, как они прозвучали.</p>
-        <a class="button primary" href="library.html">Слушать файл в браузере <i class="arrow" aria-hidden="true"></i></a>
-        <a class="text-link hero-transcript" href="#download">Получить расшифровку</a>
+        <h1 id="product-title">зу</h1>
+        <p>Диктофон для лекций<br>и важных разговоров.</p>
+        <div class="intro-actions"><a class="button primary" href="#download">Скачать приложение</a><a class="button secondary" href="library.html">Открыть в браузере</a></div>
       </div>
-      <div class="model-caption"><span>Корпус прототипа</span><b id="model-angle">Лицевая сторона</b></div>
+      <div class="model-caption"><b id="model-angle">Лицевая сторона</b></div>
       <div class="model-tools">
         <span class="model-hint" aria-hidden="true">↓ Поворот при прокрутке</span>
         <div class="model-views" role="group" aria-label="Ракурс диктофона"><button type="button" data-model-view="front">Спереди</button><button type="button" data-model-view="side">Сбоку</button><button type="button" data-model-view="back">Сзади</button><button type="button" data-model-view="detail">Крупнее</button></div>
         <button type="button" id="model-motion" aria-pressed="true"><i aria-hidden="true"></i><span data-motion-label>Остановить вращение</span></button>
       </div>
       <div class="model-progress" aria-hidden="true"></div>
+      <div class="mission wrap"><h2>Слушай сейчас.<br>К словам можно вернуться.</h2><p>На паре или встрече отметь важное одним нажатием. После открой карту разговора и послушай нужный момент.</p></div>
       </div></div>
     </section>
 
     <section class="product-closeup" id="housing" data-scene aria-labelledby="controls-title">
       <div class="wrap closeup-inner">
-        <div class="section-copy"><h2 id="controls-title">Что внутри.</h2><p>Спереди виден экран. У верхнего края звук попадает к двум микрофонам через отдельные прорези. Кабель подключается снизу.</p>
+        <div class="section-copy"><h2 id="controls-title">Устройство</h2><p>Спереди виден экран. У верхнего края звук попадает к двум микрофонам через отдельные прорези. Кабель подключается снизу.</p>
           <dl class="case-facts"><div><dt>Корпус</dt><dd id="case-size">78 × 52 × 22 мм</dd></div><div><dt>Экран</dt><dd>1,3″ · 240 × 240</dd></div></dl>
           <a class="outline case-download" href="assets/zu-case-print.zip" download>Скачать файлы для печати</a>
           <details class="geometry-note"><summary>Перед первой печатью</summary><p>Начни с калибра из архива. На нём можно примерить USB-штекер, винт и гайку до печати всего корпуса. В комплекте есть инструкция и редактируемая модель.</p></details>
@@ -58,7 +59,7 @@
     </section>
     <section id="record" class="band section" data-scene>
       <div class="wrap feature-grid">
-        <div class="section-copy"><h2>С того, что под рукой.</h2><p>Телефон на парте, диктофон ближе к преподавателю или запись, которую прислал друг. Выбери, с чего начать.</p>
+        <div class="section-copy"><h2>Запись с того, что под рукой.</h2><p>Телефон на парте, диктофон ближе к преподавателю или запись, которую прислал друг. Выбери, с чего начать.</p>
           <div class="source-switch" role="group" aria-label="Источник записи">
             <button type="button" data-source="phone" aria-pressed="true">Телефон</button><button type="button" data-source="device" aria-pressed="false">зу</button><button type="button" data-source="file" aria-pressed="false">Файл</button>
           </div>
@@ -91,11 +92,11 @@
     <section class="personal-band" data-scene><div class="wrap personal-inner"><div><h2>Попробуй на своей записи.</h2><p>Открой аудио в браузере. Можно замедлить речь, поставить закладку и приложить субтитры. Всё останется на устройстве.</p></div><a class="button paper-button" href="library.html">Открыть библиотеку <i class="arrow" aria-hidden="true"></i></a></div></section>
 
     <section id="download" class="wrap download section" data-scene>
-      <div class="section-copy"><p class="eyebrow">Опубликованная сборка · 0.5.22</p><h2>Приложение</h2><p>В опубликованной версии 0.5.22 в названии релиза ещё указано прежнее название «Коса». Новую карту уже можно открыть в браузере.</p></div>
+      <div class="section-copy"><p class="eyebrow">Версия 0.5.23</p><h2>Приложение</h2><p>Запись, расшифровка и карта разговора. Выбери сборку для своего устройства.</p></div>
       <ul class="platforms">
-        <li><div><b>Mac</b><span>Apple Silicon, macOS 14 и новее</span></div><a class="outline" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.22/lecture-recorder-0.5.22-arm64.dmg">Скачать DMG</a></li>
-        <li><div><b>Android</b><span>55,4 МиБ. Можно сразу записывать. Модели для текста и конспекта загружаются отдельно.</span><a class="inline-link" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.22/lecture-recorder-offline.apk">Скачать с обеими моделями · 597,5 МиБ</a></div><a class="outline" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.22/lecture-recorder.apk">Скачать APK · 55,4 МиБ</a></li>
-        <li><div><b>iPhone</b><span>Библиотека работает в Safari</span><a class="inline-link" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.22/lecture-recorder-ios-project.zip">Проект Xcode для разработчика</a></div><a class="outline" href="library.html">Открыть в Safari</a></li>
+        <li><div><b>Mac</b><span>Apple Silicon, macOS 14 и новее. Для первой установки потребуется 22 ГБ свободного места.</span></div><a class="outline" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.23/lecture-recorder-0.5.23-arm64.dmg">Скачать DMG</a></li>
+        <li><div><b>Android</b><span>Можно сразу записывать. Модели для текста и конспекта загружаются отдельно.</span><a class="inline-link" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.23/lecture-recorder-offline.apk">Скачать с обеими моделями</a></div><a class="outline" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.23/lecture-recorder.apk">Скачать APK</a></li>
+        <li><div><b>iPhone</b><span>Библиотека работает в Safari</span><a class="inline-link" href="https://github.com/lecture-recorder-ilya/lecture-recorder-esp32-s3/releases/download/v0.5.23/lecture-recorder-ios-project.zip">Проект Xcode для разработчика</a></div><a class="outline" href="library.html">Открыть в Safari</a></li>
       </ul>
     </section>
   </main>
