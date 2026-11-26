@@ -32,12 +32,12 @@ final class RecordingMeter extends View {
 
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        boolean live = recording && CaptureService.recording;
+        boolean live = recording && CaptureService.receivingAudio();
         boolean scrolling = live && StudioStyle.motion(this);
         if (live) {
             long now = SystemClock.uptimeMillis();
             if (now >= nextSample) {
-                int peak = CaptureService.link == CaptureService.Link.CONNECTED ? CaptureService.peak : 0;
+                int peak = CaptureService.peak;
                 float db = peak <= 0 ? -54f : (float) (20 * Math.log10(peak / 32768.0));
                 levels[cursor] = Math.max(0f, Math.min(1f, (db + 54f) / 54f));
                 cursor = (cursor + 1) % COLUMNS;
@@ -55,7 +55,7 @@ final class RecordingMeter extends View {
             float level = scrolling ? levels[(cursor + i) % COLUMNS] : 0f;
             float height = Math.max(i % 9 == 0 ? mid * .19f : mid * .06f, mid * .91f * level);
             boolean filled = scrolling ? level > 0 : live && i < Math.round(current * COLUMNS);
-            paint.setColor(filled ? StudioStyle.ACCENT : 0xffa0b1b1);
+            paint.setColor(filled ? StudioStyle.RECORDING : 0xff798185);
             canvas.drawLine(x, mid - height, x, mid + height, paint);
         }
     }

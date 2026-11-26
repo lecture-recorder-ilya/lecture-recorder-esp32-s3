@@ -162,7 +162,8 @@ def enrich(status):
         meta['has_summary']=bool(result.get('overview') or result.get('summary'))
         draft=read(ROOT/'analysis'/(Path(name).stem+'.live.json'))
         transcript=read(ROOT/'analysis'/(Path(name).stem+'.transcript.json'))
-        meta['has_draft']=bool(draft.get('segments') or transcript.get('segments'))
+        saved_text = result.get('segments') if not meta['has_summary'] else None
+        meta['has_draft']=bool(saved_text or draft.get('segments') or transcript.get('segments'))
         meta['draft_updated']=draft.get('updated',0)
         meta['material_revision']=[p.stat().st_mtime_ns if p.exists() else 0 for p in (ROOT/'analysis'/(Path(name).stem+'.json'),ROOT/'analysis'/(Path(name).stem+'.live.json'),ROOT/'analysis'/(Path(name).stem+'.transcript.json'),ROOT/'study'/(Path(name).stem+'.notes.json'))]
         record_notes=notes(name)

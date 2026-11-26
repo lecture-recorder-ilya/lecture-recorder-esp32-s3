@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>Карта разговора · зу</title><link rel="stylesheet" href="conversation-map.css">
+<style>html{color-scheme:dark}body{margin:0;padding:1rem;background:#191a18;font-family:system-ui,sans-serif}</style>
+<script defer src="mindmap-zip.js"></script><script defer src="mindmap.js"></script><script defer src="conversation-map.js"></script></head><body><main id="map" aria-label="Карта разговора"></main>
+<script>
+const mapHost=document.getElementById("map");
+let mapButton, mapRecording;
+mapHost.addEventListener("click",event=>{mapButton=event.target.closest("button");},true);
+function mapPlace(){
+  if(!mapButton)return "";
+  const el=mapButton, branch=el.closest(".zu-map-branch"), leaf=el.closest(".zu-map-leaf"), graph=el.closest(".zu-viewport");
+  const anchor={offset:Math.round(el.getBoundingClientRect().top)};
+  if(branch && leaf){
+    anchor.group=branch.dataset.group;
+    anchor.ms=leaf.querySelector(".zu-map-pin")?.dataset.ms;
+    anchor.row=[...branch.querySelectorAll(".zu-map-leaf")].indexOf(leaf);
+    anchor.link=[...leaf.querySelectorAll(".zu-map-listen")].indexOf(el);
+  }else if(graph){
+    anchor.quote=[...graph.querySelectorAll(".zu-node-quote")].indexOf(el);
+    anchor.top=graph.scrollTop;anchor.left=graph.scrollLeft;
+    anchor.count=graph.querySelectorAll(".zu-node-topic").length;
+    anchor.scale=parseFloat(graph.querySelector(".zu-world").style.transform.slice(6)) || 1;
+  }else return "";
+  return JSON.stringify(anchor);
+}
+function reopenMapPlace(raw){
+  let point;try{point=JSON.parse(raw);}catch{return;}
+  if(!point || !Number.isFinite(point.offset))return;
+  const align=el=>{if(!el)return;el.focus({preventScroll:true});window.scrollBy(0,el.getBoundingClientRect().top-point.offset);};
+  if(typeof point.group==="string"){
+    const branch=[...mapHost.querySelectorAll(".zu-map-branch")].find(d=>d.dataset.group===point.group);
+    if(!branch)return;
+    branch.open=true;
+    setTimeout(()=>{
+      let rows=branch.querySelectorAll(".zu-map-leaf");
+      while(Number.isInteger(point.row) && point.row>=rows.length && rows.length<1000){
+        const more=branch.querySelector(":scope > .zu-map-more");if(!more)break;
+        more.click();const next=branch.querySelectorAll(".zu-map-leaf");if(next.length<=rows.length)break;rows=next;
+      }
+      const row=[...rows].find(item=>item.querySelector(".zu-map-pin")?.dataset.ms===point.ms);
+      if(!row){align(branch.querySelector("summary"));return;}
+      const link=row.querySelectorAll(".zu-map-listen")[point.link];
+      const refs=link?.closest(".zu-map-references");if(refs)refs.open=true;
+      align(link || row.querySelector(".zu-map-listen"));
+    },0);
+  }else if(Number.isInteger(point.quote) && point.quote>=0){
+    const graph=mapHost.querySelector(".zu-viewport");if(!graph)return;
+    const controls=mapHost.querySelector(".zu-canvas-controls");
+    const more=controls.lastElementChild;
+    while(!more.hidden && graph.querySelectorAll(".zu-node-topic").length<Math.min(point.count,240))more.click();
+    const scale=Number.isFinite(point.scale)?point.scale:1;
+    const steps=Math.min(10,Math.round(Math.abs(scale-1)/.15));
+    for(let i=0;i<steps;i++)controls.querySelector(scale>1?'[aria-label="Увеличить карту"]':'[aria-label="Уменьшить карту"]').click();
+    graph.scrollTop=point.top || 0;graph.scrollLeft=point.left || 0;
+    align(graph.querySelectorAll(".zu-node-quote")[point.quote]);
+  }
+}
+function renderNativeMap(data) {
+  const command=(action,t)=>{const place=action==="play"?mapPlace():"";location.href="zumap://"+action+"/"+Math.round(t*1000)+(place?"?place="+encodeURIComponent(place):"");};
+  ZuConversation.mount(mapHost,{
+    ...data,
+    play:t=>command("play",t),
+    onPin:(t,on)=>command(on?"pin":"unpin",t),
+    onFile:(name,mime,bytes)=>{
+      let packed="";
+      for(let i=0;i<bytes.length;i+=8192) packed+=String.fromCharCode(...bytes.subarray(i,i+8192));
+      globalThis.zuFile={name,mime,body:btoa(packed)};command("export",0);
+    }
+  });
+  if(mapRecording!==data.key && data.place)reopenMapPlace(data.place);
+  mapRecording=data.key;
+}
+</script></body></html>

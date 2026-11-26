@@ -19,13 +19,26 @@ final class PhoneModels {
     private static final String TEXT_SHA = "bf1aba9ce8d963124407353c6aa4cbf72eba78db21ae133de983eac672ce83e0";
 
     static boolean ready(Context context) {
+        return speechReady(context) && summaryReady(context);
+    }
+
+    static boolean speechReady(Context context) {
+        return new File(directory(context), GIGAAM).length() == GIGAAM_BYTES || bundled(context, GIGAAM, GIGAAM_BYTES);
+    }
+
+    static boolean savedSpeechFallback(Context context) {
         File directory = directory(context);
-        return (new File(directory, GIGAAM).length() == GIGAAM_BYTES || bundled(context, GIGAAM, GIGAAM_BYTES))
-                && summaryReady(context);
+        return new File(new File(directory, SPEECH), ".ready").isFile() || new File(directory, SPEECH + ".zip").length() == 46236750L;
     }
 
     static boolean summaryReady(Context context) {
         return new File(directory(context), TEXT).length() == TEXT_BYTES || bundled(context, TEXT, TEXT_BYTES);
+    }
+
+    static String localStorageStatus(Context context) {
+        String speech = speechReady(context) ? "Модель речи доступна" : "Модель речи · 225 МБ для загрузки";
+        String notes = summaryReady(context) ? "Модель конспекта доступна" : "Модель конспекта · 343 МБ для загрузки";
+        return speech + "\n" + notes;
     }
 
     static File acoustic(Context context, PhoneAnalysisService.Job job) throws Exception {

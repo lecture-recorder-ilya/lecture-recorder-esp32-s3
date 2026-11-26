@@ -1,5 +1,6 @@
 import json
 import plistlib
+import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -8,18 +9,23 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     version = json.loads((ROOT / 'release.json').read_text())
     folder = ROOT / 'outputs/ios'
+    assets = folder / 'LectureRecorder/ConversationMap'
+    assets.mkdir(exist_ok=True)
+    for name in ('conversation-map.js', 'conversation-map.css', 'conversation-mobile.html', 'mindmap.js', 'mindmap-zip.js'):
+        shutil.copy2(ROOT / 'outputs/recorder/vendor/interface' / name, assets / name)
     project = folder / 'LectureRecorder.xcodeproj'
     project.mkdir(parents=True, exist_ok=True)
     info = {
-        'CFBundleDevelopmentRegion': 'ru', 'CFBundleDisplayName': 'Коса',
+        'CFBundleDevelopmentRegion': 'ru', 'CFBundleDisplayName': 'зу',
         'CFBundleExecutable': '$(EXECUTABLE_NAME)', 'CFBundleIdentifier': '$(PRODUCT_BUNDLE_IDENTIFIER)',
-        'CFBundleName': 'Коса', 'CFBundlePackageType': 'APPL',
+        'CFBundleName': 'зу', 'CFBundlePackageType': 'APPL',
         'CFBundleShortVersionString': version['version'], 'CFBundleVersion': str(version['code']),
         'LSRequiresIPhoneOS': True, 'UILaunchScreen': {}, 'UIBackgroundModes': ['audio', 'bluetooth-central'],
-        'NSMicrophoneUsageDescription': '«Коса» записывает звук с микрофона устройства или подключённой гарнитуры.',
-        'NSBluetoothAlwaysUsageDescription': '«Коса» подключается к диктофону ClipMic, чтобы записывать с него звук по Bluetooth.',
-        'NSSpeechRecognitionUsageDescription': '«Коса» распознаёт речь на этом устройстве, чтобы добавить текст к записи.',
-        'NSLocalNetworkUsageDescription': '«Коса» подключается к твоему Mac для переноса записей, расшифровок и конспектов.',
+        'UIAppFonts': ['ZuForma-Semibold.ttf'],
+        'NSMicrophoneUsageDescription': '«зу» записывает звук с микрофона устройства или подключённой гарнитуры.',
+        'NSBluetoothAlwaysUsageDescription': '«зу» подключается к диктофону по Bluetooth для записи звука.',
+        'NSSpeechRecognitionUsageDescription': '«зу» распознаёт речь на этом устройстве, чтобы добавить текст к записи.',
+        'NSLocalNetworkUsageDescription': '«зу» подключается к твоему Mac для переноса записей, расшифровок и конспектов.',
         'NSAppTransportSecurity': {'NSAllowsLocalNetworking': True},
         'UISupportedInterfaceOrientations': ['UIInterfaceOrientationPortrait', 'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
         'UISupportedInterfaceOrientations~ipad': ['UIInterfaceOrientationPortrait', 'UIInterfaceOrientationPortraitUpsideDown', 'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
@@ -34,20 +40,27 @@ def main():
     builds = ','.join(f'{i:024X}' for i in range(200, 200 + len(sources)))
     catalog = f'{20:024X}'
     catalog_build = f'{21:024X}'
+    font = f'{22:024X}'
+    font_build = f'{23:024X}'
     objects.append(f'{catalog} = {{isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = LectureRecorder/Assets.xcassets; sourceTree = "<group>"; }};')
     objects.append(f'{catalog_build} = {{isa = PBXBuildFile; fileRef = {catalog}; }};')
+    objects.append(f'{font} = {{isa = PBXFileReference; lastKnownFileType = file; path = "LectureRecorder/ZuForma-Semibold.ttf"; sourceTree = "<group>"; }};')
+    objects.append(f'{font_build} = {{isa = PBXBuildFile; fileRef = {font}; }};')
+    map_folder, map_build = f'{24:024X}', f'{25:024X}'
+    objects.append(f'{map_folder} = {{isa = PBXFileReference; lastKnownFileType = folder; path = LectureRecorder/ConversationMap; sourceTree = "<group>"; }};')
+    objects.append(f'{map_build} = {{isa = PBXBuildFile; fileRef = {map_folder}; }};')
     config = 'ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; PRODUCT_BUNDLE_IDENTIFIER = ru.ilya.lecturerecorder.ios; PRODUCT_NAME = "$(TARGET_NAME)"; INFOPLIST_FILE = LectureRecorder/Info.plist; CODE_SIGN_STYLE = Automatic; SUPPORTS_MACCATALYST = NO; ENABLE_USER_SCRIPT_SANDBOXING = YES;'
     for number, name, extra in [(10, 'Debug', 'SWIFT_OPTIMIZATION_LEVEL = "-Onone";'), (11, 'Release', 'SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O";')]:
         objects.append(f'{number:024X} = {{isa = XCBuildConfiguration; name = {name}; buildSettings = {{{config} {extra}}}; }};')
     objects += [
         f'{1:024X} = {{isa = PBXProject; attributes = {{LastUpgradeCheck = 1600; }}; buildConfigurationList = {12:024X}; compatibilityVersion = "Xcode 14.0"; developmentRegion = ru; knownRegions = (ru, en, Base); mainGroup = {2:024X}; productRefGroup = {3:024X}; projectDirPath = ""; projectRoot = ""; targets = ({4:024X}); }};',
-        f'{2:024X} = {{isa = PBXGroup; children = ({refs},{catalog},{3:024X}); sourceTree = "<group>"; }};',
+        f'{2:024X} = {{isa = PBXGroup; children = ({refs},{catalog},{font},{map_folder},{3:024X}); sourceTree = "<group>"; }};',
         f'{3:024X} = {{isa = PBXGroup; children = ({5:024X}); name = Products; sourceTree = "<group>"; }};',
         f'{4:024X} = {{isa = PBXNativeTarget; buildConfigurationList = {9:024X}; buildPhases = ({6:024X},{7:024X},{8:024X}); buildRules = (); dependencies = (); name = LectureRecorder; productName = LectureRecorder; productReference = {5:024X}; productType = "com.apple.product-type.application"; }};',
         f'{5:024X} = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LectureRecorder.app; sourceTree = BUILT_PRODUCTS_DIR; }};',
         f'{6:024X} = {{isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ({builds}); runOnlyForDeploymentPostprocessing = 0; }};',
         f'{7:024X} = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; }};',
-        f'{8:024X} = {{isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({catalog_build}); runOnlyForDeploymentPostprocessing = 0; }};',
+        f'{8:024X} = {{isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({catalog_build},{font_build},{map_build}); runOnlyForDeploymentPostprocessing = 0; }};',
         f'{9:024X} = {{isa = XCConfigurationList; buildConfigurations = ({10:024X},{11:024X}); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; }};',
         f'{12:024X} = {{isa = XCConfigurationList; buildConfigurations = ({13:024X},{14:024X}); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; }};',
         f'{13:024X} = {{isa = XCBuildConfiguration; name = Debug; buildSettings = {{SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 16.0;}}; }};',

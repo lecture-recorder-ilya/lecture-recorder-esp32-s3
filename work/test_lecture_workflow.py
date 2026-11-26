@@ -305,6 +305,24 @@ class HttpTests(unittest.TestCase):
         self.assertTrue(value['draft'])
         self.assertEqual(value['quality']['pending'], 1)
 
+    def test_saved_segments_open_from_library_without_summary_or_sidecars(self):
+        final = self.root / 'analysis' / (Path(NAME).stem + '.json')
+        segments = [{'start': 0, 'end': 1, 'text': 'Обсудим срок.'}]
+        study_store.save(final, {'segments': segments})
+        def material():
+            return study_store.enrich({'files': [NAME]})['lessons'][NAME]
+        card = material()
+        self.assertTrue(card['has_draft'])
+        self.assertFalse(card['has_summary'])
+        with self.get('/analysis/' + NAME) as response:
+            self.assertEqual(json.load(response)['segments'][0]['text'], segments[0]['text'])
+        study_store.save(final, {'segments': []})
+        self.assertFalse(material()['has_draft'])
+        study_store.save(final, {'segments': segments, 'summary': ['Обсудили срок.']})
+        card = material()
+        self.assertTrue(card['has_summary'])
+        self.assertFalse(card['has_draft'])
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

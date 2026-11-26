@@ -28,7 +28,7 @@ import CoreBluetooth
     var savedItem: LibraryItem? { savedFile.flatMap { id in libraryItems.first { $0.id == id } } }
     var sourceLabel: String {
         if recording || busy { return inputLabel }
-        if boardID != nil && CBCentralManager.authorization == .allowedAlways { return "ClipMic, если рядом" }
+        if boardID != nil && CBCentralManager.authorization == .allowedAlways { return "зу, если рядом" }
         let session = AVAudioSession.sharedInstance()
         if let input = preferredExternalInput(session) ?? session.currentRoute.inputs.first { return name(of: input) }
         if let output = session.currentRoute.outputs.first, [.builtInSpeaker, .builtInReceiver].contains(output.portType) {
@@ -78,7 +78,7 @@ import CoreBluetooth
     init(files: PhoneFiles) {
         self.files = files
         super.init()
-        do { try ClipMicTape.recover(in: files) } catch { captureNotice = "Не удалось восстановить запись ClipMic" }
+        do { try ClipMicTape.recover(in: files) } catch { captureNotice = "Не удалось восстановить запись зу" }
         refresh()
         let tick = Timer(timeInterval: 1, repeats: true) { [weak self] _ in Task { @MainActor in
             guard let self = self else { return }
@@ -141,14 +141,14 @@ import CoreBluetooth
     }
     func findBoard() {
         guard !findingBoard, !recording, !busy else { return }
-        findingBoard = true; boards = []; boardStatus = "Ищу ClipMic рядом…"
+        findingBoard = true; boards = []; boardStatus = "Ищу зу рядом…"
         let connection = ClipMicBluetooth(known: nil)
         bluetooth = connection
         connection.onChoices = { [weak self] in self?.boards = $0 }
         connection.onPaired = { [weak self] id in
             self?.boardID = id
             UserDefaults.standard.set(id.uuidString, forKey: "clipmic.peripheral")
-            self?.boardStatus = "ClipMic подключён"
+            self?.boardStatus = "зу подключён"
         }
         connection.onEnd = { [weak self] reason in
             guard let self else { return }
@@ -187,7 +187,7 @@ import CoreBluetooth
             startLocal(id)
             return
         }
-        inputLabel = "Подключаем ClipMic…"
+        inputLabel = "Подключаем зу…"
         if AVAudioSession.sharedInstance().recordPermission == .granted {
             try? beginLocalRecorder()
         }
@@ -199,10 +199,10 @@ import CoreBluetooth
                 let packet = try ClipMicPacket(data)
                 guard packet.offset <= 160000, packet.sequence <= UInt32(packet.offset),
                       (packet.offset == 0) == (packet.sequence == 0) else {
-                    throw RecorderFailure.message("Некорректное начало потока ClipMic")
+                    throw RecorderFailure.message("Некорректное начало потока зу")
                 }
                 if let active = self.recorder, active.currentTime > 10 {
-                    throw RecorderFailure.message("ClipMic подключился слишком поздно")
+                    throw RecorderFailure.message("зу подключился слишком поздно")
                 }
                 let capture = try ClipMicTape(files: self.files)
                 let localURL = self.draft
@@ -227,7 +227,7 @@ import CoreBluetooth
                     try? FileManager.default.removeItem(at: localURL)
                     try? FileManager.default.removeItem(at: localURL.appendingPathExtension("json"))
                 }
-                self.busy = false; self.recording = true; self.inputLabel = "ClipMic · Bluetooth"
+                self.busy = false; self.recording = true; self.inputLabel = "зу · Bluetooth"
                 self.captureNotice = ""
             } else { try self.tape?.append(data) }
         }
@@ -238,12 +238,12 @@ import CoreBluetooth
             self.tape = nil
             if captured == nil, self.recorder != nil {
                 self.captureID = nil
-                self.captureNotice = (reason ?? "ClipMic недоступен") + ". Продолжаем с другого микрофона."
+                self.captureNotice = (reason ?? "зу недоступен") + ". Продолжаем с другого микрофона."
                 return
             }
             do { try captured?.finish(interruption: reason) } catch {
                 self.captureID = nil; self.busy = false; self.recording = false
-                self.inputLabel = ""; self.captureNotice = "Не удалось сохранить запись ClipMic. " + error.localizedDescription
+                self.inputLabel = ""; self.captureNotice = "Не удалось сохранить запись зу. " + error.localizedDescription
                 return
             }
             if let captured, captured.frames > 0 {
@@ -254,7 +254,7 @@ import CoreBluetooth
                 self.didSave(captured.recordingName)
             } else {
                 self.recording = false; self.busy = true
-                self.startLocal(id, fallback: reason ?? "ClipMic недоступен")
+                self.startLocal(id, fallback: reason ?? "зу недоступен")
             }
         }
         connection.begin()

@@ -144,13 +144,13 @@ struct SettingsScreen: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Диктофон ClipMic") {
+                Section("Диктофон «зу»") {
                     if let id = model.boardID {
-                        Label("Сохранённый ClipMic · " + String(id.uuidString.suffix(4)), systemImage: "checkmark.circle")
+                        Label("Диктофон «зу» · " + String(id.uuidString.suffix(4)), systemImage: "checkmark.circle")
                         Button("Забыть диктофон", role: .destructive) { model.forgetBoard() }
                             .disabled(model.recording || model.busy || model.findingBoard)
                     } else {
-                        Text("Удержи REC на ClipMic P1 или BOOT на плате около секунды, затем выбери его здесь. В следующий раз достаточно нажать «Начать запись».")
+                        Text("Удержи REC на диктофоне «зу» или BOOT на плате около секунды, затем выбери его здесь. В следующий раз достаточно нажать «Начать запись».")
                             .font(.footnote)
                         if model.findingBoard {
                             ForEach(model.boards) { board in
@@ -158,11 +158,15 @@ struct SettingsScreen: View {
                             }
                             Button("Отменить поиск") { model.cancelBoardSearch() }
                         } else {
-                            Button("Найти ClipMic по Bluetooth") { model.findBoard() }
+                            Button("Найти зу по Bluetooth") { model.findBoard() }
                                 .disabled(model.recording || model.busy)
                         }
                     }
                     if !model.boardStatus.isEmpty { Text(model.boardStatus).font(.footnote).foregroundStyle(.secondary) }
+                }
+                Section("Разбор на iPhone") {
+                    Text(OnDeviceTranscript.supported ? "Русская модель iOS доступна. Звук распознаётся на этом iPhone." : "На этом iPhone сейчас недоступна локальная русская модель. Можно передать запись на сопряжённый Mac.")
+                        .font(.footnote)
                 }
                 Section("Телефон и Mac") {
                     Text(model.macName)

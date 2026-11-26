@@ -59,7 +59,7 @@ def main():
     staging = tempfile.TemporaryDirectory(prefix='.kosa-', dir=work) if not args.skip_dmg else None
     build_root = Path(staging.name) / 'disk' if staging else work
     build_root.mkdir(exist_ok=True)
-    app = build_root / 'Установить Косу.app'
+    app = build_root / 'Установить зу.app'
     if app.exists():
         shutil.rmtree(app)
     contents = app / 'Contents'
@@ -94,10 +94,10 @@ def main():
     subprocess.run(['codesign', '--force', '--deep', '--sign', '-', str(app)], check=True)
     subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
     if not args.skip_dmg:
-        (build_root / 'Начни здесь.txt').write_text('Открой «Установить Косу» и нажми «Установить и открыть».\nНужны Mac с Apple Silicon, macOS 14+, 22 ГБ свободного места и интернет.\nПриложение «Коса» появится в папке «Приложения» твоего профиля.\n')
+        (build_root / 'Начни здесь.txt').write_text('Открой «Установить зу» и нажми «Установить и открыть».\nНужны Mac с Apple Silicon, macOS 14+, 22 ГБ свободного места и интернет.\nПриложение «зу» появится в папке «Приложения» твоего профиля.\n')
         dmg = work / ('lecture-recorder-' + version['version'] + '-arm64.dmg')
         incoming = Path(staging.name) / dmg.name
-        subprocess.run(['hdiutil', 'create', '-volname', 'Коса', '-srcfolder', str(build_root), '-format', 'UDZO', str(incoming)], check=True)
+        subprocess.run(['hdiutil', 'create', '-volname', 'зу', '-srcfolder', str(build_root), '-format', 'UDZO', str(incoming)], check=True)
         subprocess.run(['hdiutil', 'verify', str(incoming)], check=True)
         incoming.replace(dmg)
         print(dmg)

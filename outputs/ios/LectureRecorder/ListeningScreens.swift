@@ -1,6 +1,7 @@
 import AVFoundation
 import SwiftUI
 import UniformTypeIdentifiers
+import WebKit
 
 private struct LibraryRoute: Hashable {
     let file: String
@@ -173,6 +174,8 @@ struct ReaderScreen: View {
     @State private var tab: Int
     @State private var bookmark: BookmarkDraft?
     @State private var toRemove: AudioBookmark?
+    @State private var showMap = false
+    @State private var mapPlace = ""
 
     init(model: PhoneModel, initial: LibraryItem, location: LibraryLocation?) {
         self.model = model; self.initial = initial; self.location = location
@@ -205,6 +208,9 @@ struct ReaderScreen: View {
                 }
                 if item.note != nil {
                     materialPicker.listRowBackground(Studio.panel)
+                    Button { showMap = true } label: {
+                        Label("Карта разговора", systemImage: "point.3.connected.trianglepath.dotted")
+                    }.listRowBackground(Studio.panel)
                 }
                 if (tab == 2 || item.note == nil) {
                     Section("Закладки") {
@@ -276,6 +282,17 @@ struct ReaderScreen: View {
                 Button { listening.toggleFavorite(item.id) } label: {
                     Image(systemName: listening.favorites.contains(item.id) ? "star.fill" : "star")
                 }.accessibilityLabel(listening.favorites.contains(item.id) ? "Убрать из избранного" : "Добавить в избранное")
+            }
+        }
+        .sheet(isPresented: $showMap) {
+            NavigationStack {
+                ConversationMapScreen(file: item.id, title: item.title, segments: item.note?.report.segments ?? [],
+                                      marks: listening.bookmarks(item.id), citations: item.note?.report.summary_evidence ?? [],
+                                      canPlay: item.audio != nil && !model.recording && !model.busy, place: $mapPlace) { seconds in
+                    if let audio = item.audio, !model.recording && !model.busy { model.play(audio, at: seconds); showMap = false }
+                }
+                .navigationTitle("Карта разговора").navigationBarTitleDisplayMode(.inline)
+                .toolbar { Button("Закрыть") { showMap = false } }
             }
         }
         .sheet(item: $bookmark) { draft in
@@ -434,5 +451,118 @@ private struct PlaybackControls: View {
     }
     private func rateLabel(_ value: Float) -> String {
         value.formatted(.number.locale(Locale(identifier: "ru_RU")).precision(.fractionLength(0...2))) + "×"
+    }
+}
+
+private struct ConversationMapScreen: UIViewRepresentable {
+    let file: String
+    let title: String
+    let segments: [LectureNote.Segment]
+    let marks: [AudioBookmark]
+    let citations: [LectureNote.Citation]
+    let canPlay: Bool
+    @Binding var place: String
+    let play: (Double) -> Void
+
+    private var storageKey: String { "zu.conversation.pins." + file }
+    private var pins: [Double] { UserDefaults.standard.array(forKey: storageKey) as? [Double] ?? [] }
+    private func toggle(_ seconds: Double, keep: Bool) {
+        var values = Set(pins)
+        if keep { values.insert(seconds) } else { values.remove(seconds) }
+        UserDefaults.standard.set(values.sorted(), forKey: storageKey)
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeUIView(context: Context) -> WKWebView {
+        let web = WKWebView()
+        web.isOpaque = false
+        web.backgroundColor = UIColor(white: 0.1, alpha: 1)
+        web.navigationDelegate = context.coordinator
+        if let url = Bundle.main.url(forResource: "conversation-mobile", withExtension: "html", subdirectory: "ConversationMap") {
+            web.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        }
+        return web
+    }
+
+    func updateUIView(_ web: WKWebView, context: Context) {
+        context.coordinator.parent = self
+        context.coordinator.render(web)
+    }
+
+    final class Coordinator: NSObject, WKNavigationDelegate {
+        var parent: ConversationMapScreen
+        private var ready = false
+        private var lastData: Data?
+        init(_ parent: ConversationMapScreen) { self.parent = parent }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            ready = true
+            render(webView)
+        }
+
+        func render(_ web: WKWebView) {
+            guard ready else { return }
+            let segments: [[String: Any]] = parent.segments.enumerated().compactMap { index, row in
+                guard let start = row.start, let end = row.end, start.isFinite, end.isFinite else { return nil }
+                return ["id": index, "start": start, "end": end, "text": row.text, "needs_review": row.needs_review ?? false]
+            }
+            let marks: [[String: Any]] = parent.marks.map { ["time": $0.time, "name": $0.name] }
+            let evidence: [[String: Any]] = parent.citations.compactMap { cite in
+                guard let quote = cite.quote ?? cite.original_source?.quote else { return nil }
+                var entry: [String: Any] = ["quote": quote, "source_status": cite.source_status ?? "unverified"]
+                if let start = cite.start, let end = cite.end { entry["start"] = start; entry["end"] = end }
+                if let id = cite.segment_id { entry["segment_id"] = id }
+                if let old = cite.original_source, let start = old.start, let end = old.end {
+                    entry["original_source"] = ["start": start, "end": end, "quote": old.quote ?? quote]
+                }
+                return entry
+            }
+            let data: [String: Any] = ["evidence": evidence, "key": parent.file, "title": parent.title, "segments": segments,
+                                       "marks": marks, "pins": parent.pins, "canPlay": parent.canPlay, "place": parent.place]
+            guard let bytes = try? JSONSerialization.data(withJSONObject: data, options: .sortedKeys), bytes != lastData else { return }
+            lastData = bytes
+            web.callAsyncJavaScript("renderNativeMap(data)", arguments: ["data": data], in: nil, in: .page) { _ in }
+        }
+
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
+                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            guard let url = navigationAction.request.url else { decisionHandler(.cancel); return }
+            if url.isFileURL && !ready { decisionHandler(.allow); return }
+            decisionHandler(.cancel)
+            guard url.scheme == "zumap", let millis = Int(url.lastPathComponent), millis >= 0 else { return }
+            let seconds = Double(millis) / 1000
+            switch url.host {
+            case "play" where parent.canPlay:
+                let saved = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "place" }?.value ?? ""
+                parent.place = saved.utf8.count <= 4096 ? saved : ""
+                parent.play(seconds)
+            case "pin": parent.toggle(seconds, keep: true)
+            case "unpin": parent.toggle(seconds, keep: false)
+            case "export":
+                webView.evaluateJavaScript("globalThis.zuFile") { value, _ in
+                    guard let doc = value as? [String: String], let name = doc["name"], let encoded = doc["body"],
+                          let bytes = Data(base64Encoded: encoded),
+                          name == (name as NSString).lastPathComponent, name.hasSuffix(".md") || name.hasSuffix(".xmind") else { return }
+                    let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+                    do {
+                        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                        let file = folder.appendingPathComponent(name)
+                        try bytes.write(to: file, options: .atomic)
+                        var presenter = webView.window?.rootViewController
+                        while let next = presenter?.presentedViewController { presenter = next }
+                        guard let presenter else { try? FileManager.default.removeItem(at: folder); return }
+                        let share = UIActivityViewController(activityItems: [file], applicationActivities: nil)
+                        share.popoverPresentationController?.sourceView = webView
+                        share.popoverPresentationController?.sourceRect = CGRect(x: webView.bounds.midX, y: webView.bounds.midY, width: 1, height: 1)
+                        share.completionWithItemsHandler = { _, _, _, _ in try? FileManager.default.removeItem(at: folder) }
+                        presenter.present(share, animated: true)
+                    } catch {
+                        try? FileManager.default.removeItem(at: folder)
+                    }
+                }
+            default: break
+            }
+        }
     }
 }

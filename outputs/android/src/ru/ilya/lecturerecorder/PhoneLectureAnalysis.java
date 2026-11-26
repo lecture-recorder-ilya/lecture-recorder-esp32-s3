@@ -21,7 +21,7 @@ import java.io.*;
 import java.util.*;
 
 final class PhoneLectureAnalysis {
-    static void run(Context context, PhoneAnalysisService.Job job, String name, String title,
+    static boolean run(Context context, PhoneAnalysisService.Job job, String name, String title,
                     boolean retranscribe, boolean summaryOnly) throws Exception {
         File existing = LectureNotes.file(context, name, true);
         JSONObject document = null;
@@ -68,18 +68,22 @@ final class PhoneLectureAnalysis {
         JSONObject report = document.getJSONObject("report");
         if (!report.optBoolean(LectureNotes.SUMMARY_PENDING)) {
             PhoneSummaryProgress.clear(context, name);
-            return;
+            return true;
         }
         job.check();
         JSONArray segments = report.getJSONArray("segments");
         String emptyMessage = preserveReady ? "Не удалось завершить повтор. Прежний разбор сохранён"
-                : "Не нашёл уверенных пунктов. Расшифровка сохранена";
+                : "Не нашёл уверенных пунктов для конспекта.";
         if (!PhoneSummarySelection.hasContent(segments)) {
             PhoneSummaryProgress.clear(context, name);
             throw new IOException(emptyMessage);
         }
         PhoneSummaryProgress progress = PhoneSummaryProgress.open(context, name, segments);
         if (progress.next < segments.length()) {
+            if (!PhoneModels.summaryReady(context) && (!job.allowSummaryDownload || !PhoneAnalysisService.networkAvailable(context))) {
+                if (preserveReady) throw new IOException("Для пересчёта конспекта нужна модель (343 МБ). Прежний разбор сохранён.");
+                return false;
+            }
             File text = PhoneModels.text(context, job);
             summarize(context, job, text, report, progress);
         }
@@ -93,6 +97,7 @@ final class PhoneLectureAnalysis {
         else job.check();
         LectureNotes.saveSummary(context, document, preserveReady);
         PhoneSummaryProgress.clear(context, name);
+        return true;
     }
 
     static JSONArray transcribeVosk(Context context, PhoneAnalysisService.Job job, String name, File speech)

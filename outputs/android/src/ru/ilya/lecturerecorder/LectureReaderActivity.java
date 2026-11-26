@@ -71,6 +71,48 @@ public class LectureReaderActivity extends Activity {
     private int reviewPage;
     private static final int REVIEW_PAGE_SIZE = 24;
     private MediaPlayer player;
+    private File pendingMap;
+    private String mapPlace = "";
+    private static final int SAVE_MAP = 188;
+
+    private void playFromMap(int millis, String place) {
+        try { mapPlace = place == null || place.isEmpty() ? "" : new JSONObject(place).toString(); }
+        catch (org.json.JSONException invalid) { mapPlace = ""; }
+        playAt(millis);
+    }
+
+    void saveMap(JSONObject payload) throws Exception {
+        if (pendingMap != null) return;
+        String name = payload.getString("name");
+        boolean workbook = name.endsWith(".xmind");
+        if (!workbook && !name.endsWith(".md")) throw new java.io.IOException("Неизвестный формат карты");
+        File source = File.createTempFile("conversation-", ".export", getCacheDir());
+        try {
+            byte[] file = android.util.Base64.decode(payload.getString("body"), android.util.Base64.DEFAULT);
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(source)) { out.write(file); }
+            pendingMap = source;
+            Intent pick = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                    .setType(workbook ? "application/vnd.xmind.workbook" : "text/markdown").putExtra(Intent.EXTRA_TITLE, name);
+            startActivityForResult(pick, SAVE_MAP);
+        } catch (Exception failure) { pendingMap = null; source.delete(); throw failure; }
+    }
+
+    @Override protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request != SAVE_MAP || pendingMap == null) return;
+        File source = pendingMap; pendingMap = null;
+        if (result != RESULT_OK || data == null || data.getData() == null) { source.delete(); return; }
+        new Thread(() -> {
+            try (java.io.InputStream in = new java.io.FileInputStream(source);
+                 java.io.OutputStream out = getContentResolver().openOutputStream(data.getData(), "wt")) {
+                if (out == null) throw new java.io.IOException("Папка недоступна");
+                byte[] block = new byte[65536]; int count;
+                while ((count = in.read(block)) >= 0) out.write(block, 0, count);
+            } catch (Exception failure) {
+                runOnUiThread(() -> android.widget.Toast.makeText(this, "Не удалось записать карту", android.widget.Toast.LENGTH_LONG).show());
+            } finally { source.delete(); }
+        }, "Сохранение карты").start();
+    }
     private ForegroundAudio focus;
     private int pendingSeek, contentScroll;
     private boolean ready, foreground;
@@ -92,6 +134,9 @@ public class LectureReaderActivity extends Activity {
             finish();
             return;
         }
+        if (saved != null && saved.getString("pending_map", "").matches("conversation-[0-9]+\\.export")) {
+            pendingMap = new File(getCacheDir(), saved.getString("pending_map"));
+        }
         library = new ListeningLibrary(this);
         speedIndex = library.speed();
         pendingSeek = library.position(recording, 0);
@@ -103,6 +148,7 @@ public class LectureReaderActivity extends Activity {
         chooseReadingTab = "read".equals(requestedTab);
         if ("summary".equals(requestedTab) || "review".equals(requestedTab)) tab = requestedTab;
         if (saved != null) {
+            if (recording.equals(saved.getString("map_recording"))) mapPlace = saved.getString("map_place", "");
             String selectedKind = saved.getString("reader_review_kind", "all");
             for (String kind : TranscriptReview.KINDS) if (kind.equals(selectedKind)) reviewKind = kind;
             reviewPage = Math.max(0, saved.getInt("review_page"));
@@ -293,6 +339,11 @@ public class LectureReaderActivity extends Activity {
         finishSummary = null;
         TextView heading = heading(report.optString("topic", LectureNotes.title(document)), 24);
         body.addView(heading, spaced(-1, -2, 4));
+        if ("summary".equals(tab) || "text".equals(tab)) {
+            Button map = button("Карта разговора", () -> ConversationMap.show(this, recording,
+                    LectureNotes.title(document), report, Store.audio(this, recording).isFile(), mapPlace, this::playFromMap));
+            body.addView(map, spaced(-1, dp(48), 8));
+        }
         if ("summary".equals(tab)) renderSummary(report);
         else renderTranscript(report, "review".equals(tab));
         scroll.post(() -> scroll.scrollTo(0, offset));
@@ -304,7 +355,7 @@ public class LectureReaderActivity extends Activity {
             pendingSummaryStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
             body.addView(pendingSummaryStatus, spaced(-1, -2, 12));
             if (android.os.Process.is64Bit()) {
-                finishSummary = button("Завершить конспект", () ->
+                finishSummary = button(PhoneAnalysisService.summaryAction(this), () ->
                         PhoneAnalysisService.requestSummary(this, recording, LectureNotes.title(document)));
                 body.addView(finishSummary, spaced(-1, dp(48), 8));
             }
@@ -381,10 +432,13 @@ public class LectureReaderActivity extends Activity {
 
     private void updatePendingSummary() {
         if (pendingSummaryStatus == null) return;
-        String message = PhoneAnalysisService.busyFor(recording)
-                ? PhoneAnalysisService.statusFor(recording) : "Конспект не готов";
+        String message = PhoneAnalysisService.pendingSummaryMessage(this, recording);
         if (!message.contentEquals(pendingSummaryStatus.getText())) pendingSummaryStatus.setText(message);
-        if (finishSummary != null) finishSummary.setEnabled(!PhoneAnalysisService.busy());
+        if (finishSummary != null) {
+            String action = PhoneAnalysisService.summaryAction(this);
+            if (!action.contentEquals(finishSummary.getText())) finishSummary.setText(action);
+            finishSummary.setEnabled(!PhoneAnalysisService.busy());
+        }
     }
 
     private void shareSummary() {
@@ -764,6 +818,11 @@ public class LectureReaderActivity extends Activity {
 
     @Override public void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
+        if (!mapPlace.isEmpty()) {
+            state.putString("map_recording", recording);
+            state.putString("map_place", mapPlace);
+        }
+        if (pendingMap != null) state.putString("pending_map", pendingMap.getName());
         state.putString("reader_tab", chooseReadingTab ? "read" : tab);
         state.putString("text_query", searchQuery);
         state.putString("reader_review_kind", reviewKind);

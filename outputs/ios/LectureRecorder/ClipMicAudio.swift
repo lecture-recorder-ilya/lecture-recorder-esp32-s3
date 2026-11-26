@@ -6,7 +6,7 @@ enum ClipMicPrefix {
         let input = try AVAudioFile(forReading: url, commonFormat: .pcmFormatInt16, interleaved: true)
         let format = input.processingFormat
         guard format.sampleRate == 16000, format.channelCount == 1, input.length <= 12 * 16000 else {
-            throw RecorderFailure.message("Не удалось соединить запись телефона и ClipMic")
+            throw RecorderFailure.message("Не удалось соединить запись телефона и диктофона «зу»")
         }
         let frames = AVAudioFrameCount(max(0, input.length - Int64((seconds * format.sampleRate).rounded())))
         guard frames > 0 else { return Data() }
@@ -28,7 +28,7 @@ struct ClipMicPacket {
 
     init(_ bytes: Data) throws {
         guard bytes.count >= 10, bytes.count <= 508, bytes.count.isMultiple(of: 2) else {
-            throw RecorderFailure.message("Повреждён пакет ClipMic")
+            throw RecorderFailure.message("Повреждён пакет диктофона «зу»")
         }
         func littleEndian(_ start: Int) -> UInt32 {
             (0..<4).reduce(0) { $0 | UInt32(bytes[bytes.startIndex + start + $1]) << (8 * $1) }
@@ -93,7 +93,7 @@ final class ClipMicTape {
         started = startedMs
         let boundary = Double(prefixFrames) / 16000
         routes = inputs.filter { ($0["at"] as? Double ?? 0) < boundary }
-        routes.append(["at": boundary, "name": "ClipMic", "type": "clipmic_ble"])
+        routes.append(["at": boundary, "name": "зу", "type": "clipmic_ble"])
         try saveMetadata()
     }
 
@@ -102,10 +102,10 @@ final class ClipMicTape {
         guard packet.offset >= boardFrames, packet.offset - boardFrames <= 160_000, packet.sequence >= nextSequence,
               UInt64(packet.sequence) - UInt64(nextSequence) <= UInt64(packet.offset - boardFrames),
               (packet.sequence == nextSequence) == (packet.offset == boardFrames) else {
-            throw RecorderFailure.message("Нарушен порядок аудиопакетов ClipMic")
+            throw RecorderFailure.message("Нарушен порядок аудиопакетов диктофона")
         }
         let missing = packet.offset - boardFrames - (boardFrames == 0 ? coveredLeading : 0)
-        guard missing >= 0 else { throw RecorderFailure.message("Некорректное начало потока ClipMic") }
+        guard missing >= 0 else { throw RecorderFailure.message("Некорректное начало потока диктофона") }
         let end = packet.offset + packet.pcm.count / 2
         guard end + prefixFrames - coveredLeading <= 8 * 3600 * 16000 else { throw RecorderFailure.message("Достигнут предел длительности записи") }
         if missing > 0 {

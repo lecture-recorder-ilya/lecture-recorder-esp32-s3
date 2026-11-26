@@ -147,7 +147,7 @@ final class WaveWriter {
         let file = try FileHandle(forUpdating: url)
         defer { try? file.close() }
         let size = try file.seekToEnd()
-        guard size >= 44, size - 44 <= 8 * 3600 * 32000 else { throw RecorderFailure.message("Некорректный размер записи ClipMic") }
+        guard size >= 44, size - 44 <= 8 * 3600 * 32000 else { throw RecorderFailure.message("Некорректный размер записи зу") }
         let count = UInt32(size - 44) & ~1
         try file.truncate(atOffset: UInt64(count) + 44)
         try file.seek(toOffset: 0)

@@ -16,7 +16,8 @@ final class RecordingExport {
     enum Kind {
         WAV("WAV", "audio/wav", ".wav", "WAV"),
         TEXT("Расшифровка", "text/plain", " — расшифровка.txt", "TXT"),
-        SUMMARY("Конспект", "text/markdown", " — конспект.md", "MD");
+        SUMMARY("Конспект", "text/markdown", " — конспект.md", "MD"),
+        SRT("Субтитры", "application/x-subrip", ".srt", "SRT");
 
         final String label, mime, suffix, format;
 
@@ -52,6 +53,28 @@ final class RecordingExport {
                 .putExtra(Intent.EXTRA_TITLE, date + " — " + title + kind.suffix);
     }
 
+    private static String stamp(double seconds) {
+        long ms = Math.round(seconds * 1000);
+        return String.format(java.util.Locale.ROOT, "%02d:%02d:%02d,%03d", ms/3600000, ms/60000%60, ms/1000%60, ms%1000);
+    }
+
+    static String subtitles(JSONObject report) throws IOException {
+        org.json.JSONArray rows = report.optJSONArray("segments");
+        StringBuilder text = new StringBuilder();
+        int index = 0;
+        for (int i = 0; rows != null && i < rows.length(); i++) {
+            JSONObject row = rows.optJSONObject(i);
+            if (row == null) continue;
+            double start = row.optDouble("start"), end = row.optDouble("end");
+            String quote = row.optString("text").trim().replaceAll("\\s+", " ");
+            if (!Double.isFinite(start) || !Double.isFinite(end) || start < 0 || end <= start || quote.isEmpty()) continue;
+            text.append(++index).append('\n').append(stamp(start)).append(" --> ").append(stamp(end))
+                    .append('\n').append(quote).append("\n\n");
+        }
+        if (index == 0) throw new IOException("Пока нет фраз с таймкодами");
+        return text.toString();
+    }
+
     static void write(Context context, String name, Kind kind, Uri destination) throws Exception {
         byte[] text = null;
         if (kind != Kind.WAV) {
@@ -59,7 +82,8 @@ final class RecordingExport {
             File notes = LectureNotes.file(context, name, local);
             JSONObject document = new JSONObject(Store.read(notes));
             TranscriptEdits.apply(document, TranscriptEdits.read(TranscriptEdits.file(context, name)), local);
-            String content = kind == Kind.TEXT ? LectureNotes.text(document) : LectureNotes.summary(document);
+            String content = kind == Kind.SRT ? subtitles(document.getJSONObject("report")) :
+                    kind == Kind.TEXT ? LectureNotes.text(document) : LectureNotes.summary(document);
             text = content.getBytes(StandardCharsets.UTF_8);
         }
         try (OutputStream output = context.getContentResolver().openOutputStream(destination, "wt")) {

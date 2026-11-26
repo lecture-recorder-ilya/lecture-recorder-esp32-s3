@@ -77,7 +77,9 @@
  stop.textContent='Завершить запись';
  stop.hidden=true;
  const core=create('div','capture-core'),clock=create('div','capture-clock'),actions=create('div','capture-actions');
- clock.append(status,create('div','timer-caption','Длительность записи'),timer);
+ const inputLine=create('p','capture-source');
+ inputLine.id='capture-source';
+ clock.append(status,create('div','timer-caption','Длительность записи'),timer,inputLine);
  actions.append(primary,stop);
  core.append(clock,actions);
  const meter=document.querySelector('#level'),meterLabel=meter.nextElementSibling;
@@ -120,12 +122,20 @@
   if((running&&focus===primary)||(!running&&focus===stop)) (running?stop:primary).focus({preventScroll:true});
   recording.classList.toggle('is-recording',Boolean(s.recording));
   const wifi=transport.value==='wifi';
+  const activeSource=s.recording && s.transport ? s.transport : transport.value;
+  const inputName=activeSource==='wifi'?'зу по Wi-Fi':activeSource==='usb'?'зу по USB':'Диктофон';
+  const phase=s.reconnecting?'reconnecting':s.recording?'recording':s.busy?'connecting':'ready';
+  recording.dataset.phase=phase;
+  const sourceText=phase==='recording'?'Источник записи · '+inputName:
+   phase==='reconnecting'?'Ждём восстановления связи · '+inputName:
+   phase==='connecting'?'Подключение · '+inputName:'Выбран вход · '+inputName;
+  if(inputLine.textContent!==sourceText)inputLine.textContent=sourceText;
   usbStatus.hidden=wifi;
   wifiSettings.hidden=!wifi||running;
   sourceStatus.hidden=!sourceStatus.textContent;
-  const signal=Math.min(1,Math.max(0,meter.value/100));
+  const signal=s.recording&&!s.reconnecting?Math.min(1,Math.max(0,meter.value/100)):0;
   meterTrack.style.setProperty('--signal-scale',String(signal));
-  core.style.setProperty('--input-light',s.recording?String(.58 + signal * .42):'1');
+  core.style.setProperty('--input-light',String(.40 + signal * .60));
   const hint=s.reconnecting?'Запись продолжится в том же файле. Пропущенный звук заменяется тишиной.'
    :!running&&!wifi&&!s.usb_present?'Подключи микрофон по USB или выбери Wi‑Fi.':'';
   recovery.hidden=!hint;
@@ -152,6 +162,9 @@
  const searchDetails=create('details','card library-search-tools');searchDetails.append(create('summary','','Найти фрагмент во всех лекциях'),studyPanel);
  views.library.append(searchDetails,archiveTitle,files);archiveTitle.textContent='Папки занятий';archiveTitle.className='section-title';
  heading(views.settings,'Настройки');
+ const localProcessing=create('section','card settings-card');
+ localProcessing.append(create('h2','','Разбор на Mac'),create('p','muted','Голос распознаётся здесь. Модели речи и конспекта хранятся на диске Mac. После установки для разбора интернет не нужен.'));
+ views.settings.append(localProcessing);
  connection.classList.add('settings-card');document.querySelector('#wifi-details').open=false;document.querySelector('#wifi-details>summary').textContent='Подключить микрофон по Wi-Fi';
  analysis.classList.add('settings-card');analysis.querySelector('h2').textContent='Автоматический разбор';
  for(const id of ['auto-ai','pause-ai','eco-ai']){

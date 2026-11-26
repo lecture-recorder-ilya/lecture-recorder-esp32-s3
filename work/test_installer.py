@@ -120,14 +120,14 @@ class InstallerTests(unittest.TestCase):
     def test_shortcut_preserves_foreign_application(self):
         applications = self.root / 'Applications'
         applications.mkdir()
-        foreign = applications / 'Коса.app'
+        foreign = applications / 'зу.app'
         foreign.mkdir()
         (foreign / 'fixture').write_text('keep')
         target = self.root / 'project/outputs/Запись лекций.app'
         target.mkdir(parents=True)
         result = installer.install_shortcut(self.root / 'project', applications)
         self.assertEqual(result.resolve(), target.resolve())
-        self.assertEqual(result.name, 'Коса — локальная.app')
+        self.assertEqual(result.name, 'зу — локальная.app')
         self.assertEqual((foreign / 'fixture').read_text(), 'keep')
         self.assertEqual(installer.install_shortcut(self.root / 'project', applications), result)
 
@@ -147,7 +147,7 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(set(applications.iterdir()), {old, alternate})
             refresh_installed_shortcut(project)
             refresh_installed_shortcut(project)
-        self.assertTrue(old.samefile(applications / 'Коса.app'))
+        self.assertTrue(old.samefile(applications / 'зу.app'))
         self.assertEqual(alternate.readlink(), self.root / 'другое приложение.app')
         self.assertEqual(len(list(applications.iterdir())), 3)
 
@@ -164,9 +164,9 @@ class InstallerTests(unittest.TestCase):
         project = self.root / 'project'
         target = project / 'outputs/Запись лекций.app'
         target.mkdir(parents=True)
-        foreign = applications / 'Коса.app'
+        foreign = applications / 'зу.app'
         foreign.symlink_to(self.root / 'missing.app')
-        (applications / 'Коса — локальная.app').mkdir()
+        (applications / 'зу — локальная.app').mkdir()
         self.assertEqual(installer.install_shortcut(project, applications), target)
         self.assertFalse(foreign.exists())
         self.assertTrue(foreign.is_symlink())
@@ -187,9 +187,9 @@ class InstallerTests(unittest.TestCase):
 
         with ThreadPoolExecutor(max_workers=8) as workers:
             links = set(workers.map(refresh, range(8)))
-        self.assertEqual(links, {applications / 'Коса.app'})
+        self.assertEqual(links, {applications / 'зу.app'})
         self.assertEqual(set(applications.iterdir()), links)
-        self.assertTrue((applications / 'Коса.app').samefile(target))
+        self.assertTrue((applications / 'зу.app').samefile(target))
 
     def test_complete_state_requires_all_verifications_and_retry_preserves_data(self):
         resources = self.resources()
@@ -211,7 +211,7 @@ class InstallerTests(unittest.TestCase):
             with self.assertRaises(installer.InstallError):
                 installer.install(resources, support, self.root / 'Applications')
         self.assertEqual(installer.read(support / 'install-state.json')['status'], 'installing')
-        self.assertFalse((self.root / 'Applications/Коса.app').exists())
+        self.assertFalse((self.root / 'Applications/зу.app').exists())
         with patch.object(installer, 'run', side_effect=lambda args, *unused: commands.append(args)), \
                 patch.object(installer, 'download_models'), patch.object(installer, 'stop_managed_services'), patch.object(installer, 'emit'):
             installer.install(resources, support, self.root / 'Applications')
@@ -273,7 +273,7 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(request.call_count, 1)
 
     def test_recorder_verification_does_not_wait_for_installer_lock(self):
-        python = Path(os.environ.get('RECORDER_TEST_PYTHON', ROOT / 'work/installer/Установить Косу.app/Contents/Resources/Setup/python/bin/python3.12'))
+        python = Path(os.environ.get('RECORDER_TEST_PYTHON', ROOT / 'work/installer/Установить зу.app/Contents/Resources/Setup/python/bin/python3.12'))
         if not python.exists():
             self.skipTest('Bundled Python required')
         root = self.root / 'project'

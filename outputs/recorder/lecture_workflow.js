@@ -92,7 +92,7 @@
   let indicatorMotion,panelMotion;
   const cancelMotion=()=>{indicatorMotion?.cancel();panelMotion?.cancel()};
   reducedMotion.addEventListener('change',cancelMotion,{signal});
-  for(const [key,title] of [['text','Расшифровка'],['summary','Конспект'],['review','Проверить']]){
+  for(const [key,title] of [['text','Расшифровка'],['summary','Конспект'],['map','Карта'],['review','Проверить']]){
    const b=node('button',title);b.type='button';b.setAttribute('role','tab');b.id='reader-'+encodeURIComponent(name)+'-'+key;b.onclick=()=>show(key);buttons[key]=b;tabs.append(b);
    b.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const keys=Object.keys(buttons),i=keys.indexOf(key);const next=e.key==='Home'?0:e.key==='End'?keys.length-1:(i+(e.key==='ArrowRight'?1:-1)+keys.length)%keys.length;show(keys[next]);buttons[keys[next]].focus()};
   }
@@ -157,6 +157,14 @@
   const empty=node('p','','reader-empty');
   const footer=node('div',undefined,'reader-footer');
   const download=node('a','Скачать текст с таймкодами');download.href='/transcript-export/'+encodeURIComponent(name);download.download=name.replace(/\.wav$/,'.txt');footer.append(download);
+  const srt=node('button','Скачать субтитры .srt');srt.type='button';footer.append(srt);
+  srt.onclick=()=>{
+   const stamp=seconds=>{const ms=Math.round(seconds*1000),pad=(n,w)=>String(n).padStart(w,'0');return pad(Math.floor(ms/3600000),2)+':'+pad(Math.floor(ms/60000)%60,2)+':'+pad(Math.floor(ms/1000)%60,2)+','+pad(ms%1000,3);};
+   const cues=rows.filter(r=>Number.isFinite(r.start)&&Number.isFinite(r.end)&&r.start>=0&&r.end>r.start&&r.text?.trim());
+   if(!cues.length){notice.textContent='Пока нет фраз с таймкодами.';return;}
+   const text=cues.map((r,i)=>(i+1)+'\n'+stamp(r.start)+' --> '+stamp(r.end)+'\n'+r.text.trim().replace(/\s+/gu,' ')).join('\n\n')+'\n';
+   const url=URL.createObjectURL(new Blob([text],{type:'application/x-subrip;charset=utf-8'}));const a=node('a');a.href=url;a.download=name.replace(/\.wav$/i,'.srt');footer.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+  };
   const itemNodes=new Map();
   let activeItem=null;
   let reviewIndex=-1;
@@ -346,6 +354,11 @@
     panelMotion=panel.animate([{opacity:.82,transform:'translateX('+(forward?6:-6)+'px)'},{opacity:1,transform:'none'}],{duration:150,easing});
    }
    if(tab==='summary')panel.append(summary());
+   else if(tab==='map'){
+    const map=node('div');panel.append(map);
+    const marks=(card.lesson?.markers||[]).map(mark=>({time:mark.start,name:mark.title}));
+    window.ZuConversation.mount(map,{key:name,title:recordTitle(name,card.lesson),segments:rows,marks,evidence:report.summary_evidence || [],play:t=>seek(card,t)});
+   }
    else{caption.textContent=tab==='review'?'Прослушай отмеченные фразы и подтверди те, что проверил.':'Нажми на фразу, чтобы услышать её в записи.';panel.append(toolbar,matchCount,caption);if(tab==='review')panel.append(reviewNavigation);panel.append(timeline,footer);renderRows();timeline.scrollTop=state.scroll;
     if(report.quality?.unassessed)panel.append(node('p','Для '+report.quality.unassessed+' фрагм. оценка качества распознавания недоступна.','reader-caption'));
    }

@@ -44,8 +44,8 @@ final class ClipMicBluetooth: NSObject, CBCentralManagerDelegate, CBPeripheralDe
 
     private func checkTimeout() {
         guard stage != .finished, ProcessInfo.processInfo.systemUptime >= deadline else { return }
-        finish(stage == .streaming ? "ClipMic перестал передавать звук" :
-               (known == nil ? "Время сопряжения истекло. Повтори поиск ClipMic" : "ClipMic не ответил"))
+        finish(stage == .streaming ? "зу перестал передавать звук" :
+               (known == nil ? "Время сопряжения истекло. Повтори поиск зу" : "зу не ответил"))
     }
 
     func choose(_ id: UUID) {
@@ -85,10 +85,10 @@ final class ClipMicBluetooth: NSObject, CBCentralManagerDelegate, CBPeripheralDe
                 central.scanForPeripherals(withServices: [Self.service])
             }
         case .unknown, .resetting:
-            if stage == .streaming { finish("Bluetooth прервал запись ClipMic") }
-        case .unauthorized: finish("Открой настройки приложения «Коса» и разреши доступ к Bluetooth")
+            if stage == .streaming { finish("Bluetooth прервал запись зу") }
+        case .unauthorized: finish("Открой настройки приложения «зу» и разреши доступ к Bluetooth")
         case .poweredOff: finish("Bluetooth выключен")
-        default: finish("Bluetooth для ClipMic недоступен")
+        default: finish("Bluetooth для зу недоступен")
         }
     }
 
@@ -107,7 +107,7 @@ final class ClipMicBluetooth: NSObject, CBCentralManagerDelegate, CBPeripheralDe
             if device.identifier == known { connect(device) }
         } else {
             found[device.identifier] = device
-            onChoices(found.values.map { ClipMicChoice(id: $0.identifier, name: $0.name ?? "ClipMic") }
+            onChoices(found.values.map { ClipMicChoice(id: $0.identifier, name: $0.name ?? "зу") }
                 .sorted { $0.label < $1.label })
         }
     }
@@ -118,17 +118,17 @@ final class ClipMicBluetooth: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect device: CBPeripheral, error: Error?) {
-        finish("Не удалось подключиться к ClipMic")
+        finish("Не удалось подключиться к зу")
     }
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral device: CBPeripheral, error: Error?) {
-        finish("Связь с ClipMic прервалась")
+        finish("Связь с зу прервалась")
     }
 
     func peripheral(_ device: CBPeripheral, didDiscoverServices error: Error?) {
         guard stage == .connecting else { return }
         guard error == nil, let service = device.services?.first(where: { $0.uuid == Self.service }) else {
-            finish("На устройстве нет сервиса ClipMic")
+            finish("На устройстве нет сервиса зу")
             return
         }
         device.discoverCharacteristics([Self.controlID, Self.audioID], for: service)
@@ -140,7 +140,7 @@ final class ClipMicBluetooth: NSObject, CBCentralManagerDelegate, CBPeripheralDe
         audio = service.characteristics?.first { $0.uuid == Self.audioID }
         guard error == nil, let control, let audio, control.properties.contains([.write, .read]),
               audio.properties.contains(.notify) else {
-            finish("Для записи нужен ClipMic с прошивкой Bluetooth-сопряжения")
+            finish("Для записи нужен зу с прошивкой Bluetooth-сопряжения")
             return
         }
         if known == nil {
@@ -155,7 +155,7 @@ final class ClipMicBluetooth: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     func peripheral(_ device: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         guard stage == .subscribing, characteristic.uuid == Self.audioID else { return }
         guard error == nil, characteristic.isNotifying, let control else {
-            finish("ClipMic не открыл поток звука")
+            finish("зу не открыл поток звука")
             return
         }
         stage = .starting
@@ -164,24 +164,24 @@ final class ClipMicBluetooth: NSObject, CBCentralManagerDelegate, CBPeripheralDe
 
     func peripheral(_ device: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
         guard characteristic.uuid == Self.controlID, stage == .status || stage == .starting else { return }
-        guard error == nil else { finish("Подтверди сопряжение с ClipMic и повтори"); return }
+        guard error == nil else { finish("Подтверди сопряжение с зу и повтори"); return }
         device.readValue(for: characteristic)
     }
 
     func peripheral(_ device: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         guard stage != .finished else { return }
-        guard error == nil, let data = characteristic.value else { finish("Ошибка чтения ClipMic"); return }
+        guard error == nil, let data = characteristic.value else { finish("Ошибка чтения зу"); return }
         if characteristic.uuid == Self.controlID {
             let reply = String(decoding: data, as: UTF8.self)
             if stage == .status {
                 guard reply == "READY 16000 mic=1" || reply == "READY 16000 mic=0" else {
-                    finish("Удержи REC или BOOT на ClipMic, подтверди сопряжение и повтори")
+                    finish("Удержи REC или BOOT на зу, подтверди сопряжение и повтори")
                     return
                 }
                 onPaired(device.identifier)
                 finish()
             } else if stage == .starting {
-                guard reply == "READY 16000 PCM16" else { finish("ClipMic не разрешил запись"); return }
+                guard reply == "READY 16000 PCM16" else { finish("зу не разрешил запись"); return }
                 stage = .streaming
                 for (packet, arrival) in early where stage == .streaming { deliver(packet, arrival: arrival) }
                 early.removeAll()
@@ -189,7 +189,7 @@ final class ClipMicBluetooth: NSObject, CBCentralManagerDelegate, CBPeripheralDe
         } else if characteristic.uuid == Self.audioID {
             if stage == .starting {
                 earlyBytes += data.count
-                guard earlyBytes <= 65536 else { finish("ClipMic не подтвердил начало записи"); return }
+                guard earlyBytes <= 65536 else { finish("зу не подтвердил начало записи"); return }
                 early.append((data, ProcessInfo.processInfo.systemUptime))
             } else if stage == .streaming { deliver(data, arrival: ProcessInfo.processInfo.systemUptime) }
         }

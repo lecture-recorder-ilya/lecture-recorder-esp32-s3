@@ -3,6 +3,7 @@ package ru.ilya.lecturerecorder;
 import android.app.*;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -25,6 +26,8 @@ public final class PhoneAnalysisService extends Service {
     private static volatile Job active;
     static volatile String status = "";
     private static volatile String recording;
+    private static volatile String failure = "";
+    private static final String MISSING_SUMMARY = "Расшифровка сохранена. Для конспекта нужна модель (343 МБ).";
     private Job current;
 
     static boolean busy() {
@@ -44,6 +47,21 @@ public final class PhoneAnalysisService extends Service {
         return name.equals(recording) ? status : "";
     }
 
+    static boolean networkAvailable(Context context) {
+        ConnectivityManager networks = context.getSystemService(ConnectivityManager.class);
+        return networks != null && networks.getActiveNetwork() != null;
+    }
+
+    static String summaryAction(Context context) {
+        return PhoneModels.summaryReady(context) ? "Завершить конспект" : "Загрузить модель конспекта";
+    }
+
+    static String pendingSummaryMessage(Context context, String name) {
+        if (busyFor(name)) return statusFor(name);
+        if (name.equals(recording) && !failure.isEmpty()) return "Расшифровка сохранена. " + failure;
+        return PhoneModels.summaryReady(context) ? "Расшифровка сохранена. Можно завершить конспект." : MISSING_SUMMARY;
+    }
+
     static void request(Activity screen, String name, String title) {
         request(screen, name, title, false);
     }
@@ -58,13 +76,26 @@ public final class PhoneAnalysisService extends Service {
 
     private static void request(Activity screen, String name, String title, boolean retranscribe, boolean summaryOnly) {
         if (busy() || !LectureNotes.valid(name)) return;
+        boolean online = networkAvailable(screen);
+        boolean speechReady = PhoneModels.speechReady(screen) || (!online && PhoneModels.savedSpeechFallback(screen));
+        boolean summaryReady = PhoneModels.summaryReady(screen);
         Runnable start = () -> screen.startForegroundService(new Intent(screen, PhoneAnalysisService.class)
                 .setAction("analyze").putExtra("name", name).putExtra("title", title)
-                .putExtra("retranscribe", retranscribe).putExtra("summaryOnly", summaryOnly));
-        if (summaryOnly ? PhoneModels.summaryReady(screen) : PhoneModels.ready(screen)) start.run();
-        else new AlertDialog.Builder(screen).setTitle("Модели для разбора")
-                .setMessage(summaryOnly ? "Для конспекта нужно скачать модель (около 344 МБ)."
-                        : "Первый запуск скачает до 570 МБ. После этого разбор работает офлайн.")
+                .putExtra("retranscribe", retranscribe).putExtra("summaryOnly", summaryOnly).putExtra("allow_summary_download", online));
+        boolean canStart = summaryOnly ? summaryReady : speechReady && (summaryReady || !online);
+        if (canStart) {
+            start.run();
+            return;
+        }
+        if (!online) {
+            String message = summaryOnly ? "Расшифровка сохранена. Подключись к интернету, чтобы один раз загрузить модель конспекта (343 МБ)."
+                    : "Запись сохранена. Для первой расшифровки подключись к интернету и загрузи модель речи (225 МБ).";
+            new AlertDialog.Builder(screen).setTitle("Нужен интернет для загрузки").setMessage(message).setPositiveButton("Понятно", null).show();
+            return;
+        }
+        String download = summaryOnly || speechReady ? "Для конспекта нужна модель (343 МБ)."
+                : summaryReady ? "Для расшифровки нужна модель речи (225 МБ)." : "Для речи и конспекта нужно скачать до 570 МБ.";
+        new AlertDialog.Builder(screen).setTitle("Модели для разбора").setMessage(download + " После загрузки обработка работает без сети.")
                 .setPositiveButton("Скачать и разобрать", (dialog, which) -> start.run())
                 .setNegativeButton("Отмена", null).show();
     }
@@ -99,6 +130,8 @@ public final class PhoneAnalysisService extends Service {
             getSystemService(NotificationManager.class).notify(NOTIFICATION, notification(value));
         });
         recording = name;
+        failure = "";
+        job.allowSummaryDownload = intent.getBooleanExtra("allow_summary_download", true);
         current = job;
         active = job;
         PhraseReplay.cancelActive();
@@ -118,11 +151,12 @@ public final class PhoneAnalysisService extends Service {
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "lectures:phone-analysis");
         wakeLock.acquire(2 * 60 * 60 * 1000L);
         try {
+            boolean complete;
             synchronized (MODEL_WORK) {
                 job.check();
-                PhoneLectureAnalysis.run(getApplicationContext(), job, name, title, retranscribe, summaryOnly);
+                complete = PhoneLectureAnalysis.run(getApplicationContext(), job, name, title, retranscribe, summaryOnly);
             }
-            status = retranscribe ? "Расшифровка и конспект готовы" : "Конспект готов";
+            status = complete ? (retranscribe ? "Расшифровка и конспект готовы" : "Конспект готов") : MISSING_SUMMARY;
         } catch (Exception | LinkageError error) {
             if (job.cancelled) {
                 status = "Разбор отменён";
@@ -133,6 +167,7 @@ public final class PhoneAnalysisService extends Service {
                 status = "Не удалось завершить разбор. Можно повторить";
                 Log.e("LectureAnalysis", "Local analysis failed", error);
             }
+            if (!job.cancelled) failure = status;
         } finally {
             job.clearPreview();
             if (wakeLock.isHeld()) wakeLock.release();
@@ -175,6 +210,7 @@ public final class PhoneAnalysisService extends Service {
         private volatile List<Phrase> preview = Collections.emptyList();
         private volatile boolean cancelled;
         private boolean finalSaveStarted;
+        boolean allowSummaryDownload = true;
         volatile Conversation conversation;
 
         Job(Consumer<String> report) {

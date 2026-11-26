@@ -79,7 +79,16 @@ final class Store {
   if(files!=null)for(File file:files){
    String name=file.getName();
    if(name.endsWith(".part")){
-    if(file.length()>44)seal(file);
+    if(file.length()>44){
+     File sidecar=new File(file.getPath()+".json");
+     try{
+      JSONObject metadata;
+      try{metadata=readObject(sidecar);}catch(org.json.JSONException damaged){metadata=new JSONObject();}
+      metadata.put("recovered_after_interruption",true);
+      write(sidecar,metadata);
+     }catch(Exception problem){android.util.Log.w("Запись","Не удалось отметить прерывание",problem);}
+     seal(file);
+    }
     else if(file.delete())new File(file.getPath()+".json").delete();
    }else if(name.endsWith(".part.json")){
     String base=name.substring(0,name.length()-".part.json".length());
@@ -140,6 +149,7 @@ final class Store {
   if(!wav.delete())throw new IOException("Не удалось удалить запись");
   new File(wav.getPath()+".json").delete();
   lessonFile(c,name).delete();
+  RecordingMoments.clear(c,name);
  }
  static String read(File f)throws IOException{try(InputStream i=new FileInputStream(f);ByteArrayOutputStream o=new ByteArrayOutputStream()){byte[] b=new byte[8192];int n;while((n=i.read(b))>0)o.write(b,0,n);return o.toString("UTF-8");}}
  static void write(File f,JSONObject j)throws IOException{File temp=new File(f.getPath()+".tmp");try(FileOutputStream o=new FileOutputStream(temp)){o.write(j.toString().getBytes("UTF-8"));o.getFD().sync();}if(!temp.renameTo(f))throw new IOException("Не удалось сохранить метаданные");}
@@ -158,7 +168,7 @@ final class Store {
     throw new IOException("Аудиокопия в библиотеке отличается");
    if ((keep && metadata.length() > 0) || metadata.optBoolean("imported")) {
     JSONObject labels = new JSONObject();
-    for (String key : new String[]{"imported", "title", "original_name", "source"}) {
+    for (String key : new String[]{"imported", "title", "original_name", "source", "input_routes", "gaps", "recovered_after_interruption"}) {
      if (!metadata.isNull(key)) labels.put(key, metadata.get(key));
     }
     if (labels.length() > 0) write(new File(saved.getPath() + ".json"), labels);

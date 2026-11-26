@@ -1,0 +1,22 @@
+.reading-entry .record-body > .voice-focus {
+  order: 1;
+  margin: 0 0 12px;
+}
+.voice-focus .enhancement-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px 12px;
+}
+.voice-focus .enhancement-actions label {
+  display: grid;
+  gap: 4px;
+}
+.voice-focus .enhancement-actions input {
+  width: 6em;
+  max-width: 100%;
+}
+.voice-focus .enhancement-actions select { max-width: 100%; }
+.voice-focus audio { width: 100%; margin: 8px 0; }
+.voice-focus button { margin: 2px 4px 2px 0; }
+.voice-focus [hidden] { display: none; }

@@ -50,12 +50,18 @@ struct LectureNote: Decodable, Identifiable {
         }
     }
     struct Citation: Decodable {
+        struct Anchor: Decodable {
+            var quote: String?
+            var start: Double?
+            var end: Double?
+        }
         var quote: String?
         var task: String?
         var source_status: String?
         var segment_id: Int?
         var start: Double?
         var end: Double?
+        var original_source: Anchor?
     }
     struct Segment: Decodable {
         var start: Double?

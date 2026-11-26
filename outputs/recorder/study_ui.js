@@ -164,6 +164,7 @@ function initStudyCard(card,name){
   if(panel)tools.append(panel);
  }
  body.append(tools);
+ window.attachVoiceFocus?.(card,name);
  details.ontoggle=()=>{if(details.open)update()};
 }
 async function renderLearningMoments(box,card,result,name,range=null,paper=false){

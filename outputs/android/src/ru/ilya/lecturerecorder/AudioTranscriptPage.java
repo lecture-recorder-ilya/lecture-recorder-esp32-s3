@@ -1,6 +1,7 @@
 package ru.ilya.lecturerecorder;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.app.Dialog;
 import android.content.Context;
@@ -9,6 +10,7 @@ import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.LinearGradient;
 import android.graphics.Shader;
 import android.graphics.Typeface;
@@ -110,6 +112,11 @@ final class AudioTranscriptPage extends LinearLayout {
     private final TextView recordingHint;
     private TextView times;
     private TextView waveStatus;
+    private Button gapButton;
+    private Button addMoment, openMoments;
+    private TextView recoveredNotice;
+    private AlertDialog gapList;
+    private List<RecordingGap> recordingGaps = Collections.emptyList();
     private TextView transcriptStatus;
     private TextView phrasePreview;
     private List<PhoneAnalysisService.Phrase> previewRows = Collections.emptyList();
@@ -251,6 +258,20 @@ final class AudioTranscriptPage extends LinearLayout {
         info.addView(times, new LinearLayout.LayoutParams(0, -2, 1));
         if (!landscape && !largeText) addSummaryButton(info);
         audio.addView(info, spaced(-1, -2, 4));
+        LinearLayout momentActions = new LinearLayout(activity);
+        addMoment = button("Важно", this::markPlayback);
+        openMoments = button("Отметки", this::showMoments);
+        momentActions.addView(addMoment, new LinearLayout.LayoutParams(0, -2, 1));
+        momentActions.addView(openMoments, new LinearLayout.LayoutParams(0, -2, 1));
+        audio.addView(momentActions, spaced(-1, -2, 4));
+        recoveredNotice = text("Запись восстановлена после прерывания. Можно прослушать сохранённую часть.", 14, MUTED);
+        recoveredNotice.setVisibility(View.GONE);
+        audio.addView(recoveredNotice, spaced(-1, -2, 2));
+        gapButton = button("", this::showGaps);
+        gapButton.setVisibility(View.GONE);
+        gapButton.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        gapButton.setTextColor(ACCENT);
+        audio.addView(gapButton, spaced(-1, -2, 2));
         if (landscape || largeText) {
             addTranscribeButton(audio, spaced(-1, dp(48), 8));
         }
@@ -390,6 +411,7 @@ final class AudioTranscriptPage extends LinearLayout {
     }
 
     private void select(String name, int initialPosition) {
+        if (gapList != null) gapList.dismiss();
         rememberPosition();
         releasePlayer();
         if (scan != null) scan.cancel(true);
@@ -399,12 +421,14 @@ final class AudioTranscriptPage extends LinearLayout {
         repeating = false;
         updatePlaybackOptions();
         recordingHint.setVisibility(View.GONE);
+        recoveredNotice.setVisibility(View.GONE);
         noteRevision = null;
         modelRequestStopping = false;
         setTranscriptRows(Collections.emptyList());
         lastSavedPosition = library.position(name, 0);
         position = initialPosition >= 0 ? initialPosition : lastSavedPosition;
         duration = 0;
+        setRecordingGaps(Collections.emptyList());
         File audioFile = Store.audio(activity, name);
         String title = RecordingLibraryPage.title(activity, name, audioFile);
         if ("Запись пары".equals(title)) title = Store.recordingTitle(name);
@@ -455,6 +479,7 @@ final class AudioTranscriptPage extends LinearLayout {
                 if (ready != player) return;
                 prepared = true;
                 duration = ready.getDuration();
+                loadRecordingGaps(name, ready, duration);
                 position = ListeningLibrary.resumable(position, duration);
                 lastSavedPosition = library.position(name, duration);
                 enablePlayback(duration > 0);
@@ -491,16 +516,100 @@ final class AudioTranscriptPage extends LinearLayout {
 
     private void playbackError() {
         releasePlayer();
+        if (gapList != null) gapList.dismiss();
+        setRecordingGaps(Collections.emptyList());
         play.setText("Слушать");
         enablePlayback(false);
         times.setText("Аудио недоступно");
     }
 
+    private void markPlayback() {
+        if (!prepared || player == null || selected == null) return;
+        int millis = player.isPlaying() ? player.getCurrentPosition() : position;
+        int at = RecordingMoments.add(activity, selected, Math.max(0, Math.min(millis, duration - 1)));
+        if (at < 0) {
+            android.widget.Toast.makeText(activity, "Не удалось сохранить отметку", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        refreshMoments();
+        openMoments.announceForAccessibility("Важный момент сохранён");
+    }
+
+    private void refreshMoments() {
+        int count = RecordingMoments.times(activity, selected).size();
+        openMoments.setText("Отметки · " + count);
+        openMoments.setEnabled(prepared && count > 0);
+    }
+
+    private void showMoments() {
+        String file = selected;
+        List<Integer> moments = RecordingMoments.times(activity, file);
+        if (moments.isEmpty()) return;
+        String[] entries = new String[moments.size()];
+        for (int i = 0; i < moments.size(); i++) entries[i] = LectureReaderActivity.clock(moments.get(i) / 1000.0) + " · Важно";
+        new AlertDialog.Builder(activity).setTitle("Важные моменты")
+                .setItems(entries, (dialog, index) -> { if (file.equals(selected)) seek(moments.get(index), true); })
+                .setNeutralButton("Убрать отметку", (dialog, which) ->
+                        new AlertDialog.Builder(activity).setTitle("Какую отметку убрать?").setItems(entries, (list, index) -> {
+                            if (!RecordingMoments.remove(activity, file, moments.get(index)))
+                                android.widget.Toast.makeText(activity, "Не удалось снять отметку", android.widget.Toast.LENGTH_SHORT).show();
+                            if (file.equals(selected)) refreshMoments();
+                        }).setNegativeButton("Назад", null).show())
+                .setNegativeButton("Закрыть", null).show();
+    }
+
     private void enablePlayback(boolean enabled) {
+        addMoment.setEnabled(enabled);
+        refreshMoments();
         play.setEnabled(enabled);
         backTen.setEnabled(enabled);
         aheadTen.setEnabled(enabled);
 
+    }
+
+    private void loadRecordingGaps(String name, MediaPlayer owner, int fileDuration) {
+        recoveredNotice.setVisibility(View.GONE);
+        audioScan.submit(() -> {
+            JSONObject metadata;
+            try {
+                File file = Store.audio(activity, name);
+                metadata = Store.readObject(new File(file.getPath() + ".json"));
+            } catch (Exception unavailable) {
+                return;
+            }
+            List<RecordingGap> gaps = RecordingGap.read(metadata.optJSONArray("gaps"), fileDuration);
+            boolean recovered = metadata != null && metadata.optBoolean("recovered_after_interruption");
+            ui.post(() -> {
+                if (owner == player && !disposed) {
+                    setRecordingGaps(gaps);
+                    recoveredNotice.setVisibility(recovered ? View.VISIBLE : View.GONE);
+                }
+            });
+        });
+    }
+
+    private void setRecordingGaps(List<RecordingGap> gaps) {
+        recordingGaps = gaps;
+        gapButton.setVisibility(gaps.isEmpty() ? View.GONE : View.VISIBLE);
+        gapButton.setText("Пропуски звука · " + gaps.size());
+        waveform.updateGapMarks();
+    }
+
+    private void showGaps() {
+        if (!prepared || recordingGaps.isEmpty()) return;
+        List<RecordingGap> gaps = recordingGaps;
+        ArrayAdapter<RecordingGap> rows = new ArrayAdapter<>(activity, android.R.layout.select_dialog_item, gaps);
+        gapList = new AlertDialog.Builder(activity)
+                .setTitle("Слушать перед пропуском")
+                .setAdapter(rows, (dialog, index) -> {
+                    repeating = false;
+                    updatePlaybackOptions();
+                    seek(gaps.get(index).listenFrom(), true);
+                })
+                .setNegativeButton("Закрыть", null)
+                .create();
+        gapList.setOnDismissListener(dialog -> gapList = null);
+        gapList.show();
     }
 
     private void togglePlayback() {
@@ -730,8 +839,8 @@ final class AudioTranscriptPage extends LinearLayout {
             else if (message.isEmpty()) message = "Готовлю расшифровку…";
         } else if (busy) {
             message = "Жду завершения другой расшифровки";
-        } else if (localSummaryPending && (message.isEmpty() || message.equals("Разбор отменён"))) {
-            message = "Текст сохранён. Можно продолжить конспект.";
+        } else if (localSummaryPending) {
+            message = PhoneAnalysisService.pendingSummaryMessage(activity, selected);
         } else if (message.equals("Разбор отменён")) {
             message = readyOffline ? "Разбор остановлен. Можно повторить."
                     : "Загрузка остановлена. При повторе загрузка начнётся заново.";
@@ -740,6 +849,7 @@ final class AudioTranscriptPage extends LinearLayout {
         } else if (message.isEmpty() && transcriptRows.isEmpty()) {
             if (!supported) message = "Расшифровка появится после обработки на Mac.";
             else if (readyOffline) message = "Модели готовы. Разбор работает без сети.";
+            else if (PhoneModels.speechReady(activity)) message = "Модель речи на телефоне. Можно расшифровать без сети.";
             else message = "До 570 МБ при первом запуске. После загрузки разбор работает офлайн.";
         }
         if (!TextUtils.equals(transcriptStatus.getText(), message)) transcriptStatus.setText(message);
@@ -756,7 +866,7 @@ final class AudioTranscriptPage extends LinearLayout {
             StudioStyle.actionTone(transcribe, primary ? ACCENT : StudioStyle.CONTROL, primary ? StudioStyle.INK : TEXT);
             StudioStyle.actionTone(play, primary ? StudioStyle.CONTROL : ACCENT, primary ? TEXT : StudioStyle.INK);
         }
-        String label = loading ? "Остановить" : localSummaryPending ? "Завершить конспект"
+        String label = loading ? "Остановить" : localSummaryPending ? PhoneAnalysisService.summaryAction(activity)
                 : retry ? "Повторить разбор" : "Разобрать запись";
         if (!TextUtils.equals(transcribe.getText(), label)) transcribe.setText(label);
         if (!TextUtils.equals(transcribe.getContentDescription(), label)) transcribe.setContentDescription(label);
@@ -988,6 +1098,7 @@ final class AudioTranscriptPage extends LinearLayout {
             return;
         }
         if (wordEditor != null) wordEditor.dismiss();
+        if (gapList != null) gapList.dismiss();
         pausePlayback();
         ui.removeCallbacks(playbackTick);
         ui.removeCallbacks(repeatTick);
@@ -1157,6 +1268,7 @@ final class AudioTranscriptPage extends LinearLayout {
 
     private final class Waveform extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Path gapMarks = new Path();
         private PcmWave.Envelope envelope;
         private Shader spectrum;
 
@@ -1173,10 +1285,27 @@ final class AudioTranscriptPage extends LinearLayout {
             invalidate();
         }
 
+        void updateGapMarks() {
+            gapMarks.rewind();
+            float inset = dp(8);
+            float width = getWidth() - 2 * inset;
+            if (duration > 0 && width > 0) {
+                for (RecordingGap gap : recordingGaps) {
+                    if (gap.afterFile) continue;
+                    float start = inset + width * gap.start / duration;
+                    float end = inset + width * gap.end / duration;
+                    float right = Math.min(inset + width, Math.max(start + dp(2), end));
+                    gapMarks.addRect(start, getHeight() - dp(5), right, getHeight() - dp(2), Path.Direction.CW);
+                }
+            }
+            invalidate();
+        }
+
         @Override protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
             super.onSizeChanged(width, height, oldWidth, oldHeight);
             spectrum = new LinearGradient(0, 0, Math.max(1, width), 0,
                     StudioStyle.SPECTRUM, null, Shader.TileMode.CLAMP);
+            updateGapMarks();
         }
 
         @Override protected void onDraw(Canvas canvas) {
@@ -1212,6 +1341,7 @@ final class AudioTranscriptPage extends LinearLayout {
             paint.setStrokeWidth(dp(1));
             paint.setColor(ACCENT);
             canvas.drawLine(marker, dp(5), marker, getHeight() - dp(5), paint);
+            canvas.drawPath(gapMarks, paint);
         }
 
         @Override public boolean onTouchEvent(MotionEvent event) {

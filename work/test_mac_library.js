@@ -10,7 +10,7 @@
   if(location.search.includes('entry')){
    const fileTab=document.querySelector('#capture-tab-file'),micTab=document.querySelector('#capture-tab-mic');
    await until(()=>studyStatus&&document.querySelector('.library-catalog')?.hidden===false,'Первый статус');
-   assert(!document.querySelector('dialog[open]')&&document.title==='Коса'&&document.querySelector('.app-nav .brand')?.textContent==='Коса','Вход без профиля');
+   assert(!document.querySelector('dialog[open]')&&document.title==='зу'&&document.querySelector('.app-nav .brand')?.textContent==='зу','Вход без профиля');
    const choose=document.querySelector('.import-choose'),form=document.querySelector('#lecture-import');
    assert(choose.getBoundingClientRect().bottom<innerHeight&&choose.getClientRects().length>0,'Импорт на первом экране без ESP');
    fileTab.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));

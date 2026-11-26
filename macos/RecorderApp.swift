@@ -33,9 +33,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         shutdownItem.target = self; appMenu.addItem(shutdownItem)
         NSApp.mainMenu = menu
         window = NSWindow(contentRect: NSRect(x:0, y:0, width:880, height:840), styleMask:[.titled,.closable,.miniaturizable,.resizable], backing:.buffered, defer:false)
-        window.title = "Коса"
+        window.title = "зу"
         window.appearance = NSAppearance(named: .darkAqua)
-        let background = NSColor(srgbRed: 12 / 255, green: 18 / 255, blue: 22 / 255, alpha: 1)
+        let background = NSColor(srgbRed: 17 / 255, green: 17 / 255, blue: 16 / 255, alpha: 1)
         window.backgroundColor = background
         window.center(); window.delegate = self
         view = WKWebView(frame: window.contentView!.bounds)
@@ -47,10 +47,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         view.loadHTMLString("""
             <!doctype html><html lang="ru"><meta charset="utf-8">
             <style>
-            html{color-scheme:light;background:#0c1216;color:#eef2f0}
+            html{color-scheme:dark;background:#111110;color:#edece6}
             body{margin:0;min-height:100vh;display:grid;place-items:center;font:15px system-ui}
             </style>
-            <body><p role="status">Открываю приложение «Коса»…</p></body></html>
+            <body><p role="status">Открываю приложение «зу»…</p></body></html>
             """, baseURL: nil)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps:true)
@@ -184,7 +184,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         do { try child.run(); process = child }
         catch {
             let alert = NSAlert(); alert.messageText = "Нужно подготовить компоненты приложения"
-            alert.informativeText = "Открой «Установить Косу». Установщик подготовит компоненты и сохранит библиотеку."
+            alert.informativeText = "Открой «Установить зу». Установщик подготовит компоненты и сохранит библиотеку."
             alert.addButton(withTitle: "Восстановить"); alert.addButton(withTitle: "Закрыть")
             if alert.runModal() == .alertFirstButtonReturn { self.repairInstallation() }
             NSApp.terminate(nil); return
@@ -198,14 +198,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         }
     }
     @objc func repairInstallation() {
-        let installers = ["Установить Косу.app", "Установить Диктофон.app", "Установить На полях.app", "Установить Запись лекций.app"].map {
+        let installers = ["Установить зу.app", "Установить Косу.app", "Установить Диктофон.app", "Установить На полях.app", "Установить Запись лекций.app"].map {
             root.deletingLastPathComponent().appendingPathComponent($0)
         }
         if let installer = installers.first(where: { Bundle(url: $0)?.bundleIdentifier == "local.esp.recorder.installer" }) {
             NSWorkspace.shared.open(installer)
         }
         else {
-            let alert = NSAlert(); alert.messageText = "Открой «Установить Косу»"
+            let alert = NSAlert(); alert.messageText = "Открой «Установить зу»"
             alert.informativeText = "Он подготовит компоненты без терминала. Библиотека этой копии останется на месте."; alert.runModal()
         }
     }

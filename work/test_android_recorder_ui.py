@@ -6,6 +6,7 @@ import time
 import unittest
 from pathlib import Path
 from xml.etree import ElementTree
+from work.android_ui_snapshot import LiveViewTree
 
 
 class RecorderUiTests(unittest.TestCase):
@@ -17,15 +18,20 @@ class RecorderUiTests(unittest.TestCase):
         cls.command = [os.environ.get("ADB") or shutil.which("adb") or "adb", "-s", serial]
         if cls.adb("shell", "getprop", "ro.kernel.qemu").strip() != b"1":
             raise RuntimeError("Для этой проверки нужен тестовый эмулятор Android")
-        cls.package = "ru.ilya.lecturerecorder"
+        sdk = ("JAVA_HOME", "ANDROID_PLATFORM_JAR", "ANDROID_BUILD_TOOLS")
+        cls.tree_reader = LiveViewTree(cls, cls.adb) if all(os.environ.get(key) for key in sdk) else None
+        cls.package = os.environ.get("FIELDNOTES_UI_PACKAGE", "ru.ilya.lecturerecorder")
         cls.adb("shell", "pm", "grant", cls.package, "android.permission.RECORD_AUDIO")
-        cls.adb("shell", "am", "start", "-W", "-n", cls.package + "/.MainActivity")
+        cls.adb("shell", "am", "start", "-W", "-n", cls.package + "/ru.ilya.lecturerecorder.MainActivity")
 
     @classmethod
     def adb(cls, *command):
         return subprocess.check_output([*cls.command, *map(str, command)], timeout=30, stderr=subprocess.STDOUT)
 
     def screen(self):
+        if self.tree_reader is not None:
+            self.xml = self.tree_reader.xml()
+            return list(ElementTree.fromstring(self.xml).iter("node"))
         path = "/sdcard/fieldnotes-recorder-ui.xml"
         for _ in range(3):
             result = self.adb("shell", "uiautomator", "dump", path)
@@ -70,11 +76,13 @@ class RecorderUiTests(unittest.TestCase):
         new = next((n for n in nodes if n.get("text") == "Новая запись" and n.get("clickable") == "true"), None)
         if new is not None:
             self.tap(new)
-        self.wait_for("Коса")
+        self.wait_for("зу")
         self.wait_for("Источник звука")
         self.wait_for("Импортировать аудио")
         self.tap(self.wait_for("Начать запись", photograph="01-ready"))
-        stop = self.wait_for("Завершить запись", photograph="04-recording")
+        self.wait_for("Идёт запись")
+        self.wait_for("Микрофон телефона", photograph="04-recording")
+        stop = self.wait_for("Завершить запись")
         self.tap(stop)
         self.wait_for("Запись сохранена", photograph="05-saved")
         saved = self.screen()
@@ -108,3 +116,26 @@ class RecorderUiTests(unittest.TestCase):
                     self.adb("shell", "settings", "delete", *key)
                 else:
                     self.adb("shell", "settings", "put", *key, value)
+
+    def test_system_microphone_block_and_restore(self):
+        if int(self.adb("shell", "getprop", "ro.build.version.sdk")) < 31:
+            self.skipTest("Для системного переключателя микрофона нужен Android 12 или новее")
+        state = self.adb("shell", "dumpsys", "audio").decode()
+        if not re.search(r"mic mute [^\n]*from system=false", state, re.IGNORECASE):
+            self.skipTest("Для проверки нужен включённый микрофон тестового эмулятора")
+        self.tap(self.wait_for("Запись"))
+        initial = self.screen()
+        new = next((n for n in initial if n.get("text") == "Новая запись" and n.get("clickable") == "true"), None)
+        if new is not None:
+            self.tap(new)
+        self.tap(self.wait_for("Начать запись"))
+        try:
+            self.wait_for("Идёт запись")
+            self.adb("shell", "cmd", "sensor_privacy", "enable", "0", "microphone")
+            self.wait_for("Микрофон выключен", photograph="08-system-muted")
+            self.adb("shell", "cmd", "sensor_privacy", "disable", "0", "microphone")
+            self.wait_for("Идёт запись", photograph="09-system-restored")
+        finally:
+            self.adb("shell", "cmd", "sensor_privacy", "disable", "0", "microphone")
+            self.tap(self.wait_for("Завершить запись"))
+        self.wait_for("Запись сохранена")

@@ -41,6 +41,7 @@ __pycache__/
 /work/*
 !/work/test_*.py
 !/work/test_*.js
+!/work/android_ui_snapshot.py
 !/work/RecorderApp.swift
 !/work/make_icon.swift
 !/work/download_ai_models.py

@@ -45,8 +45,8 @@ struct CaptureDesk: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 12) {
                 FieldMark().frame(width: 40, height: 40).accessibilityHidden(true)
-                Text("Коса")
-                    .font(.largeTitle.weight(.bold)).tracking(-1.4)
+                Text("зу")
+                    .font(.custom("ZuForma-SemiBold", size: 34, relativeTo: .largeTitle))
                     .foregroundStyle(Studio.ink)
                     .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 0)
@@ -87,7 +87,7 @@ struct CaptureDesk: View {
                         Image(systemName: "mic.fill")
                             .foregroundStyle(Studio.accent).accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(phase == .ready ? "Источник при старте" : "Источник").font(.caption).foregroundStyle(Studio.cardMuted)
+                            Text(phase == .recording ? "Источник записи" : "Выбранный вход").font(.caption).foregroundStyle(Studio.cardMuted)
                             Text(source).font(.body.weight(.medium)).foregroundStyle(Studio.cardInk)
                         }
                     }
@@ -230,7 +230,7 @@ private struct CaptureArtwork: View {
     @Environment(\.scenePhase) private var scene
 
     var body: some View {
-        let still = reduceMotion || scene != .active
+        let still = !live || reduceMotion || scene != .active
         TimelineView(.animation(minimumInterval: 1.0 / 24, paused: still)) { frame in
             let angle = still ? 0 : frame.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 16) * .pi / 8
             GeometryReader { area in
@@ -277,7 +277,7 @@ private struct InputMeter: View {
             let lit = Int((max(0, min(1, signal())) * 10).rounded())
             HStack(alignment: .bottom, spacing: 2) {
                 ForEach(0..<10, id: \.self) { index in
-                    Capsule().fill(index < lit ? Studio.accent : Studio.cardMuted.opacity(0.3))
+                    Capsule().fill(index < lit ? Studio.live : Studio.cardMuted.opacity(0.3))
                         .frame(width: 3, height: CGFloat(4 + index * 2))
                 }
             }

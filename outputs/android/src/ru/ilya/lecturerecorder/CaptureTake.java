@@ -23,6 +23,23 @@ final class CaptureTake implements AutoCloseable {
     private final JSONObject metadata;
     private String previousLabel = "";
     private long lastCheckpoint;
+    private JSONObject mutedInterval;
+    void inputMuted(boolean muted, long frame) throws Exception {
+        if (muted == (mutedInterval != null)) return;
+        if (muted) {
+            mutedInterval = new JSONObject().put("start", frame / 16000.0).put("reason", "system_microphone_muted");
+            gaps.put(mutedInterval);
+        } else {
+            finishMutedAt(frame);
+            mutedInterval = null;
+        }
+        saveMetadata();
+    }
+    private void finishMutedAt(long frame) throws Exception {
+        if (mutedInterval == null) return;
+        double end = Math.max(frame / 16000.0, mutedInterval.getDouble("start"));
+        mutedInterval.put("end", end).put("seconds", end - mutedInterval.getDouble("start"));
+    }
 
     CaptureTake(Context context, String source) throws Exception {
         File directory = Store.root(context);
@@ -92,6 +109,7 @@ final class CaptureTake implements AutoCloseable {
 
     void checkpoint() throws Exception {
         audio.getFD().sync();
+        finishMutedAt(Math.max(0, audio.length()-44)/2);
         saveMetadata();
         lastCheckpoint = SystemClock.elapsedRealtime();
         checkCapacity();
@@ -109,6 +127,7 @@ final class CaptureTake implements AutoCloseable {
     @Override public void close() throws Exception {
         try {
             audio.getFD().sync();
+            finishMutedAt(Math.max(0, audio.length()-44)/2);
         } finally {
             audio.close();
         }

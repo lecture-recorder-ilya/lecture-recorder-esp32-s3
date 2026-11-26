@@ -154,7 +154,7 @@ void updatePairingButton() {
 }
 
 void setupBle(){
-  NimBLEDevice::init("ESP Lectures");NimBLEDevice::setMTU(517);
+  NimBLEDevice::init("зу");NimBLEDevice::setMTU(517);
   NimBLEDevice::setSecurityAuth(true, false, true);
   NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
   NimBLEDevice::setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
@@ -173,7 +173,7 @@ void setupBle(){
   auto advertising = NimBLEDevice::getAdvertising();
   advertising->enableScanResponse(true);
   advertising->addServiceUUID(BLE_SERVICE);
-  advertising->setName("ESP Lectures");
+  advertising->setName("зу");
   advertising->start();
 }
 void sendBle(uint32_t stream, size_t count) {

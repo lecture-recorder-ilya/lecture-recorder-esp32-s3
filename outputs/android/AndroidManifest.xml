@@ -26,7 +26,7 @@
  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
  <queries><intent><action android:name="android.media.action.IMAGE_CAPTURE"/></intent></queries>
- <application android:label="Коса" android:theme="@style/LectureTheme" android:icon="@mipmap/launcher_icon" android:allowBackup="false" android:usesCleartextTraffic="true" android:debuggable="false" android:extractNativeLibs="true">
+ <application android:label="зу" android:theme="@style/LectureTheme" android:icon="@mipmap/launcher_icon" android:allowBackup="false" android:usesCleartextTraffic="true" android:debuggable="false" android:extractNativeLibs="true">
   <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
   <activity android:name=".LectureReaderActivity" android:exported="false"/>
   <service android:name=".CaptureService" android:exported="false" android:foregroundServiceType="connectedDevice|microphone"/>

@@ -71,7 +71,7 @@ def manifest_for_preview(build):
     manifest = tree.getroot()
     manifest.set("package", PACKAGE + ".preview")
     app = manifest.find("application")
-    app.set(ANDROID + "label", "Коса · ИИ")
+    app.set(ANDROID + "label", "зу · тест")
     for component in app:
         name = component.get(ANDROID + "name", "")
         if name.startswith("."):
@@ -121,6 +121,10 @@ def main():
         manifest = manifest_for_preview(build) if args.preview else ROOT / "AndroidManifest.xml"
         assets = build / "assets"
         shutil.copytree(ROOT / "assets", assets)
+        map_assets = assets / "conversation"
+        map_assets.mkdir()
+        for name in ("conversation-mobile.html", "mindmap-zip.js", "mindmap.js", "conversation-map.js", "conversation-map.css"):
+            shutil.copy2(PROJECT / "outputs/recorder/vendor/interface" / name, map_assets / name)
         config = {"repository": version["repository"], "client_id": version["updates"]["client_id"]}
         (assets / "update-config.json").write_text(json.dumps(config))
         version_code = version["android_preview"]["code"] if args.preview else version["code"]

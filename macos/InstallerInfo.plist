@@ -4,8 +4,8 @@
 <dict>
  <key>CFBundleExecutable</key><string>Installer</string>
  <key>CFBundleIdentifier</key><string>local.esp.recorder.installer</string>
- <key>CFBundleName</key><string>Установить Косу</string>
- <key>CFBundleDisplayName</key><string>Установить Косу</string>
+ <key>CFBundleName</key><string>Установить зу</string>
+ <key>CFBundleDisplayName</key><string>Установить зу</string>
  <key>CFBundlePackageType</key><string>APPL</string>
  <key>CFBundleIconFile</key><string>Recorder.icns</string>
  <key>NSHighResolutionCapable</key><true/>

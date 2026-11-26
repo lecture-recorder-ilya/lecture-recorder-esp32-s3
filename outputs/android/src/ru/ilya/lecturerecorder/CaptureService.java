@@ -6,7 +6,9 @@ import android.net.nsd.*;
 import android.net.wifi.WifiManager;
 import android.os.*;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
+import android.media.AudioRecordingConfiguration;
 import android.media.AudioRouting;
 import android.media.AudioTimestamp;
 import org.json.*;
@@ -23,6 +25,12 @@ public class CaptureService extends Service {
  static volatile String inputLabel="";
  static volatile boolean recording=false;static volatile String status="Готово к записи",current="";static volatile long samples=0;
  static volatile int peak=0;
+ static volatile boolean localInputSilenced;
+ private static volatile long lastAudioAt;
+ static boolean receivingAudio() {
+  long last = lastAudioAt;
+  return recording && link == Link.CONNECTED && last > 0 && SystemClock.elapsedRealtime() - last <= 2000;
+ }
  private static final long SYNC_IDLE_NANOS=TimeUnit.SECONDS.toNanos(60);
  private static int visibleScreens;
  private static long lastScreenStopped=System.nanoTime();
@@ -71,7 +79,7 @@ public class CaptureService extends Service {
     link = Link.ERROR; status = "Разреши доступ к микрофону в настройках телефона"; stopSelf(); return START_NOT_STICKY;
    }
    linkSource = source; inputLabel = ""; link = Link.CONNECTING;
-   recording = true; stop = false; current = ""; samples = 0; peak = 0;
+   stop = false; current = ""; samples = 0; peak = 0; lastAudioAt = 0; recording = true;
    PhraseReplay.cancelActive();
    lastStatusSecond = -1; lastStatusInput = "";
    status = phoneMicrophone ? "Включаю микрофон…" : "Подключаюсь к диктофону…";
@@ -176,6 +184,7 @@ public class CaptureService extends Service {
    } catch (DeadMicrophone disconnected) {
     if (attempt >= 1) throw new IOException("Микрофон отключён. Сохранён доступный звук");
     lastInput = disconnected.lastInput;
+    link = Link.CONNECTING;
     status = "Переключаю микрофон…";
    }
   }
@@ -231,6 +240,14 @@ public class CaptureService extends Service {
       }
      }
      if (routeChanged.getAndSet(false) || lastInput - lastRouteCheck >= 1000) {
+      boolean silenced = false;
+      if (Build.VERSION.SDK_INT >= 29) {
+       AudioRecordingConfiguration config = microphone.getActiveRecordingConfiguration();
+       silenced = config != null && config.isClientSilenced();
+      }
+      AudioManager manager = getSystemService(AudioManager.class);
+      localInputSilenced = silenced || (manager != null && manager.isMicrophoneMute());
+      take.inputMuted(localInputSilenced, samples);
       markInput(take, "phone", RecordingInput.actualLabel(microphone));
       lastRouteCheck = lastInput;
      }
@@ -239,7 +256,9 @@ public class CaptureService extends Service {
       resampler.sample(block[index]);
       blockPeak = Math.max(blockPeak, Math.abs((int)block[index]));
      }
+     pcm.flush();
      peak = blockPeak; samples = base + resampler.frames();
+     lastAudioAt = lastInput;
      updateRecordingStatus();
      if (take.shouldCheckpoint()) { pcm.flush(); take.checkpoint(); }
      if (!stop && probe != null && (prepared = probe.take()) != null) break;
@@ -259,9 +278,10 @@ public class CaptureService extends Service {
     }
     return prepared;
    } finally {
-    microphone.removeOnRoutingChangedListener(listener);
+    try { take.inputMuted(false, samples); } finally { microphone.removeOnRoutingChangedListener(listener); }
    }
   } finally {
+   localInputSilenced = false;
    currentMicrophone = null;
    if (microphone != null) {
     try { microphone.stop(); } catch (RuntimeException ignored) {}
@@ -361,6 +381,7 @@ public class CaptureService extends Service {
        blockPeak=Math.max(blockPeak,Math.abs(sample));
       }
       peak = blockPeak; samples += pcm.length / 2; lastAudio = now;
+      lastAudioAt = now;
       if (input instanceof BleStream) {
        JSONArray lost = ((BleStream)input).takeGaps();
        for (int index=0; index<lost.length(); index++) {
