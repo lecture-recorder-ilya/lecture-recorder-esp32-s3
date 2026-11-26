@@ -5,6 +5,7 @@ const audio = get("audio");
 const items = new Map();
 const speeds = [1, 1.25, 1.5, 2, .75];
 let selected = null;
+let pendingTime = null;
 let speed = 1;
 let cueButtons = [];
 let previousCue = null;
@@ -41,6 +42,7 @@ function openItem(item) {
   if (selected && selected !== item && audio.readyState >= 1 && Number.isFinite(audio.currentTime)) selected.time = audio.currentTime;
   if (changed) {
     audio.pause();
+    pendingTime = null;
     selected = item;
     audio.src = item.audioURL;
     audio.load();
@@ -101,11 +103,12 @@ async function loadCaptions(file) {
 function renderCues() {
   const query = get("cue-query").value.toLocaleLowerCase("ru").trim();
   get("cue-query").hidden = !selected.cues.length;
+  get("cue-context").hidden = !selected.cues.length;
   get("cue-total").textContent = selected.cues.length ? "Фраз: " + selected.cues.length : "";
   get("text-help").hidden = !!selected.cues.length;
   previousCue = null;
   cueButtons = selected.cues.filter(cue => cue.phrase.toLocaleLowerCase("ru").includes(query)).map(cue => {
-    const row = button("", () => playAt(cue.start), "cue-row");
+    const row = button("", () => playAt(Math.max(0, cue.start - (get("lead-in").checked ? 2 : 0))), "cue-row");
     const time = document.createElement("time");
     time.textContent = stamp(cue.start);
     const words = document.createElement("span");
@@ -178,15 +181,19 @@ function drawSignal() {
     const x = i * width / 127, y = live ? height / 2 - (samples[2*i] - 128) / 128 * height * .48 : height / 2;
     if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
   }
-  ctx.strokeStyle = live ? "#ffbe75" : "#758e8f"; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = live ? "#ff9e86" : "#929187"; ctx.lineWidth = 1.5; ctx.stroke();
   if (live) frame = requestAnimationFrame(drawSignal);
 }
 function playAt(time) {
   if (!selected) return;
-  if (Number.isFinite(audio.duration) && Number.isFinite(time)) audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+  const item = selected;
+  if (Number.isFinite(time)) {
+    if (audio.readyState >= 1 && Number.isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    else pendingTime = time;
+  }
   createMeter();
-  audio.play().then(() => { createMeter(); drawSignal(); }).catch(() => {
-    get("notice").textContent = "Браузер не воспроизвёл этот файл. Попробуй MP3, WAV или M4A.";
+  audio.play().then(() => { createMeter(); drawSignal(); }).catch(error => {
+    if (item === selected && error.name !== "AbortError") get("notice").textContent = "Браузер не воспроизвёл этот файл. Попробуй MP3, WAV или M4A.";
   });
 }
 get("choose").onclick = () => get("files").click();
@@ -208,7 +215,8 @@ get("add-mark").onclick = () => {
   renderMarks();
 };
 audio.addEventListener("loadedmetadata", () => {
-  if (selected && Number.isFinite(audio.duration)) audio.currentTime = Math.min(selected.time, audio.duration);
+  if (selected && Number.isFinite(audio.duration)) audio.currentTime = Math.min(pendingTime ?? selected.time, audio.duration);
+  pendingTime = null;
   updatePlayer(); drawSignal();
 });
 for (const event of ["play","pause","ended","timeupdate","durationchange","seeked"]) audio.addEventListener(event, updatePlayer);

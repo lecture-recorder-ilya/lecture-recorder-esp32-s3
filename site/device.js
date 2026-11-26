@@ -3,325 +3,189 @@
 (() => {
   const canvas = document.querySelector("#device-model");
   if (!canvas) return;
-  const context = canvas.getContext("2d", { alpha: true });
-  if (!context) return;
-
-  const width = 53.5, height = 85, thickness = 4, radius = 3.2;
-  const backZ = -thickness / 2, frontZ = thickness / 2;
-  const bevel = .30, closureZ = backZ + .8;
-  const controlY = height / 2 - 9;
-  const camera = height * 2.95;
-  const turn = Math.PI * 2;
-  const homeAngle = -.48;
   const stage = canvas.closest(".model-stage");
   const sequence = canvas.closest(".model-sequence");
   const pin = canvas.closest(".model-pin");
   const angleLabel = document.querySelector("#model-angle");
   const motion = document.querySelector("#model-motion");
   const views = [...document.querySelectorAll("[data-model-view]")];
+  const poster = stage.querySelector(".model-poster");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-  let centerY = 0;
+  const angles = {front: "Лицевая сторона", side: "Торец", back: "Обратная сторона", detail: "Платы микрофонов"};
+  const photos = {front: "prototype-front.webp", side: "prototype-side.webp", back: "prototype-back.webp", detail: "prototype-detail.webp"};
+  const turn = Math.PI * 2, homeAngle = -.52;
   let yaw = homeAngle, destination = null, rotating = !reduced.matches;
   let motionRequested = true, inView = false, dragging = null, frame = 0, lastFrame = 0;
   let progress = null, scrollTarget = null, scrollOffset = 0, measureFrame = 0;
   let beforeSequence = true, holdingView = false, holdScrollY = 0, pageScrolled = false;
-  let targetZoom = 0, zoom = 0;
-  let viewWidth = 0, viewHeight = 0, scale = 0, density = 1;
-  let sinYaw, cosYaw, sinTilt, cosTilt;
-  const roll = -.15, sinRoll = Math.sin(roll), cosRoll = Math.cos(roll);
+  let targetZoom = 0, zoom = 0, viewWidth = 0, renderer;
 
-  function texture(w, h, paint) {
-    const image = document.createElement("canvas");
-    image.width = w; image.height = h;
-    paint(image.getContext("2d"), w, h);
-    return image;
+  function showStatic(view = "front") {
+    stage.dataset.rendered = "static";
+    poster.src = new URL("assets/" + photos[view], document.baseURI).href;
+    poster.alt = "Открытый прототип «зу». " + angles[view];
+    angleLabel.textContent = angles[view];
+    canvas.tabIndex = -1;
+    motion.hidden = true;
+    for (const button of views) button.setAttribute("aria-pressed", String(button.dataset.modelView === view));
   }
 
-  function roundedPath(ctx, x, y, w, h, r) {
-    ctx.beginPath(); ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-  }
-
-  function rounded(ctx, x, y, w, h, r, fill) {
-    roundedPath(ctx, x, y, w, h, r);
-    ctx.fillStyle = fill;
-    ctx.fill();
-  }
-
-  const graphite = texture(448, 712, (ctx, w, h) => {
-    const finish = ctx.createLinearGradient(w * .03, 0, w * .86, h);
-    finish.addColorStop(0, "#36383a");
-    finish.addColorStop(.32, "#2c2e30");
-    finish.addColorStop(.74, "#232527");
-    finish.addColorStop(1, "#1c1e20");
-    ctx.fillStyle = finish; ctx.fillRect(0, 0, w, h);
-    let seed = 287;
-    const pixels = ctx.getImageData(0, 0, w, h);
-    for (let i = 0; i < pixels.data.length; i += 4) {
-      seed = (1664525 * seed + 1013904223) >>> 0;
-      const grain = (seed / 4294967296 - .5) * 5;
-      for (let channel = 0; channel < 3; channel++) pixels.data[i + channel] += grain;
+  const vertexSource = `
+    attribute vec3 aPosition, aNormal;
+    uniform mat3 uRotation;
+    uniform vec2 uProjection;
+    uniform float uLift;
+    varying vec3 vPosition, vNormal, vLocal;
+    void main() {
+      vLocal = aPosition * 1000.;
+      vPosition = uRotation * vLocal;
+      vNormal = uRotation * aNormal;
+      float perspective = 155. / (155. - vPosition.z);
+      gl_Position = vec4(vPosition.xy * uProjection * perspective + vec2(0.,uLift), -vPosition.z / 120., 1.);
+    }`;
+  const fragmentSource = `
+    precision highp float;
+    varying vec3 vPosition, vNormal, vLocal;
+    uniform vec3 uColor;
+    uniform vec3 uFinish;
+    float panel(vec3 reflection, vec3 direction, float tightness) {
+      return pow(max(dot(reflection,normalize(direction)),0.),tightness);
     }
-    ctx.putImageData(pixels, 0, 0);
-  });
-
-  const glass = texture(352, 172, (ctx, w, h) => {
-    const surface = ctx.createLinearGradient(0, 0, w * .8, h);
-    surface.addColorStop(0, "#282d31"); surface.addColorStop(.32, "#15191b"); surface.addColorStop(1, "#0b0e10");
-    ctx.fillStyle = surface; ctx.fillRect(0, 0, w, h);
-    rounded(ctx, 26, 26, 300, 120, 20, "#0d1113");
-    ctx.fillStyle = "#cbebed"; ctx.font = '500 71px "SFMono-Regular", Menlo, monospace';
-    ctx.fillText("00:00", 38, 109);
-    ctx.strokeStyle = "#a1bdc2"; ctx.lineWidth = 2.5;
-    ctx.strokeRect(273, 47, 32, 14); ctx.fillStyle = "#a1bdc2";
-    ctx.fillRect(307, 51, 3, 6); ctx.fillRect(277, 51, 23, 6);
-    for (const [i, length] of [5, 10, 17, 25, 18, 10, 6].entries()) {
-      rounded(ctx, 272 + i * 5, 102 - length / 2, 2.7, length, 1.35, "#9ab6bb");
+    vec3 studio(vec3 r, float rough) {
+      float key = panel(r,vec3(-.68,.78,.72),mix(22.,4.,rough));
+      float strip = exp(-abs(r.x+.26+.27*r.y)*mix(34.,8.,rough)) *
+                    smoothstep(-.65,-.12,r.y) * smoothstep(-.20,.43,r.z);
+      float rim = panel(r,vec3(.87,-.08,.14),mix(46.,6.,rough));
+      return vec3(.18,.21,.24) + vec3(3.5,3.12,2.64)*key + vec3(2.0,1.94,1.72)*strip + vec3(1.85,2.12,2.35)*rim;
     }
-  });
-
-  const keyTexture = texture(96, 96, (ctx, w, h) => {
-    const finish = ctx.createLinearGradient(0, 0, w, h);
-    finish.addColorStop(0, "#292c2f"); finish.addColorStop(.45, "#1d2022"); finish.addColorStop(1, "#151719");
-    ctx.fillStyle = finish; ctx.fillRect(0, 0, w, h);
-  });
-
-  const shadow = texture(256, 128, (ctx, w, h) => {
-    ctx.translate(w / 2, h / 2); ctx.scale(w / 2, h / 2);
-    const falloff = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
-    falloff.addColorStop(0, "rgba(0,3,6,.98)");
-    falloff.addColorStop(.3, "rgba(0,3,6,.75)");
-    falloff.addColorStop(.66, "rgba(0,3,6,.25)");
-    falloff.addColorStop(1, "rgba(0,3,6,0)");
-    ctx.fillStyle = falloff; ctx.fillRect(-1, -1, 2, 2);
-  });
-
-  function outline(w, h, r, z, x = 0, y = 0) {
-    const points = [];
-    const corners = [
-      [w / 2 - r, h / 2 - r], [-w / 2 + r, h / 2 - r],
-      [-w / 2 + r, -h / 2 + r], [w / 2 - r, -h / 2 + r]
-    ];
-    for (let corner = 0; corner < 4; corner++) {
-      for (let step = 0; step <= 7; step++) {
-        const angle = (corner + step / 7) * Math.PI / 2;
-        points.push([x + corners[corner][0] + Math.cos(angle) * r,
-                     y + corners[corner][1] + Math.sin(angle) * r, z]);
+    void main() {
+      vec3 n = normalize(vNormal);
+      vec3 eye = normalize(vec3(0.,0.,155.) - vPosition);
+      if (dot(n,eye) < 0.) n = -n;
+      vec3 r = reflect(-eye,n);
+      float metal = uFinish.x, rough = uFinish.y;
+      float key = max(dot(n,normalize(vec3(-.63,.75,1.))),0.);
+      float fill = max(dot(n,normalize(vec3(.84,.12,.64))),0.);
+      float fresnel = pow(1.-max(dot(n,eye),0.),5.);
+      vec3 base = uColor;
+      if (uFinish.z > 1.5) {
+        float grain = sin(vLocal.x * 38. + vLocal.y * 26.) * sin(vLocal.y * 43. - vLocal.x * 12.);
+        base *= 1. + grain*.10;
       }
-    }
-    return points;
-  }
-
-  function solid(w, h, r, x, y, layers, top, bottom) {
-    const rings = layers.map(([z, inset]) =>
-      outline(w - 2 * inset, h - 2 * inset, Math.min(r - inset, (w - 2 * inset) / 2, (h - 2 * inset) / 2), z, x, y));
-    const sides = [];
-    for (let j = 0; j < rings.length - 1; j++) {
-      const ring = rings[j], next = rings[j + 1];
-      const dz = layers[j + 1][0] - layers[j][0];
-      const slope = (layers[j + 1][1] - layers[j][1]) / dz;
-      for (let i = 0; i < ring.length; i++) {
-        const k = (i + 1) % ring.length;
-        const dx = ring[k][0] - ring[i][0], dy = ring[k][1] - ring[i][1];
-        const length = Math.hypot(dx, dy);
-        if (length < .0001) continue;
-        const norm = Math.hypot(1, slope);
-        sides.push({
-          corners: [ring[i], ring[k], next[k], next[i]],
-          normal: [dy / length / norm, -dx / length / norm, slope / norm],
-          tone: layers[j][2]
-        });
+      vec3 diffuse = base * (.39 + .86*key + .32*fill) * (1.-metal*.56);
+      vec3 f0 = mix(vec3(.025),base,metal);
+      vec3 spec = studio(r,rough) * (f0 + (1.-f0)*fresnel*.64);
+      if (uFinish.z > .5 && uFinish.z < 1.5) {
+        float band = smoothstep(-.75,.7,r.x*.8+r.y+.03*vLocal.x);
+        spec += vec3(.014,.018,.019) * band;
       }
-    }
-    function face(index, color, reverse) {
-      const [z, inset] = layers[index];
-      return { ring: rings[index], color, reverse, z, x, y, w: w - 2 * inset, h: h - 2 * inset };
-    }
-    return { sides, top: face(rings.length - 1, top, false), bottom: face(0, bottom, true) };
+      vec3 lit = diffuse + spec;
+      lit = lit / (1. + .43*lit);
+      gl_FragColor = vec4(pow(clamp(lit,0.,1.),vec3(1./2.2)),1.);
+    }`;
+
+  function shader(gl, type, code) {
+    const result = gl.createShader(type);
+    gl.shaderSource(result, code);
+    gl.compileShader(result);
+    if (!gl.getShaderParameter(result, gl.COMPILE_STATUS)) throw Error("Ошибка шейдера");
+    return result;
   }
 
-  const body = solid(width, height, radius, 0, 0, [
-    [backZ, bevel, 51], [backZ + bevel, 0, 37], [closureZ - .025, 0, 19],
-    [closureZ + .025, 0, 42], [frontZ - bevel, 0, 69], [frontZ, bevel, 42]
-  ], graphite, graphite);
-
-  function plate(w, h, r, x, y, z, color) {
-    return { ring: outline(w, h, r, z, x, y), color, reverse: false, z, x, y, w, h };
-  }
-
-  const displayRecess = plate(18, 9, 1.6, -9, controlY, frontZ, "#101315");
-  const windowInsert = plate(17.6, 8.6, 1.4, -9, controlY, frontZ, glass);
-  const keyOpening = plate(5, 5, 2.5, 14, controlY, frontZ, "#0e1011");
-  const button = solid(4.4, 4.4, 2.2, 14, controlY, [
-    [frontZ - .25, .04, 23], [frontZ - .11, 0, 27], [frontZ - .025, 0, 40], [frontZ, .025, 32]
-  ], keyTexture, "#222426");
-  const microphoneChannels = [-9, -6.5].map(x => {
-    const z = backZ + 2.3;
-    return Array.from({ length: 24 }, (_, i) => [
-      x + .6 * Math.cos(i * turn / 24), height / 2, z + .6 * Math.sin(i * turn / 24)
-    ]);
-  });
-
-  function rotate(x, y, z) {
-    const dx = x * cosYaw + z * sinYaw, dz = -x * sinYaw + z * cosYaw;
-    const dy = y * cosTilt - dz * sinTilt;
-    return [dx * cosRoll - dy * sinRoll, dx * sinRoll + dy * cosRoll, y * sinTilt + dz * cosTilt];
-  }
-
-  function project(point) {
-    const [x, y, z] = rotate(...point);
-    const factor = scale * camera / (camera - z);
-    return [viewWidth / 2 + x * factor, centerY - y * factor];
-  }
-
-  function path(points) {
-    context.beginPath(); context.moveTo(...points[0]);
-    for (let i = 1; i < points.length; i++) context.lineTo(...points[i]);
-    context.closePath();
-  }
-
-  function material(normal, base) {
-    const [x, y, z] = normal;
-    const key = Math.max(0, -.59 * x + .65 * y + .48 * z);
-    const reflection = Math.max(0, -.74 * x + .15 * y + .66 * z);
-    const edge = Math.max(0, .84 * x + .39 * y + .37 * z);
-    const light = base * (.55 + .60 * key) + 71 * reflection ** 14 + 83 * edge ** 14;
-    return 'rgb(' + [light * .99, light, light * 1.05].map(Math.round).join(',') + ')';
-  }
-
-  function mapTexture(face) {
-    const image = face.color;
-    const columns = 5, rows = 7;
-    const cw = image.width / columns, ch = image.height / rows;
-    const sign = face.reverse ? -1 : 1;
-    function at(i, j) {
-      return project([face.x + (i / columns - .5) * face.w * sign,
-                      face.y + (.5 - j / rows) * face.h, face.z]);
-    }
-    let line = Array.from({ length: columns + 1 }, (_, i) => at(i, 0));
-    for (let j = 0; j < rows; j++) {
-      const next = Array.from({ length: columns + 1 }, (_, i) => at(i, j + 1));
-      for (let i = 0; i < columns; i++) {
-        const a = line[i], b = line[i + 1], c = next[i];
-        context.save();
-        context.transform((b[0] - a[0]) / cw, (b[1] - a[1]) / cw, (c[0] - a[0]) / ch, (c[1] - a[1]) / ch, a[0], a[1]);
-        const sourceWidth = Math.min(cw + 1.5, image.width - i * cw);
-        const sourceHeight = Math.min(ch + 1.5, image.height - j * ch);
-        context.drawImage(image, i * cw, j * ch, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
-        context.restore();
+  function loadScene(gl, bytes) {
+    const data = new DataView(bytes);
+    if (data.getUint32(0,true) !== 0x46546c67 || data.getUint32(4,true) !== 2) throw Error("Формат модели");
+    const textLength = data.getUint32(12,true);
+    const scene = JSON.parse(new TextDecoder().decode(new Uint8Array(bytes,20,textLength)));
+    const binary = 28 + textLength;
+    const program = gl.createProgram();
+    gl.attachShader(program, shader(gl,gl.VERTEX_SHADER,vertexSource));
+    gl.attachShader(program, shader(gl,gl.FRAGMENT_SHADER,fragmentSource));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program,gl.LINK_STATUS)) throw Error("Ошибка программы");
+    gl.useProgram(program);
+    const attributes = Object.fromEntries(["aPosition","aNormal"].map(k=>[k,gl.getAttribLocation(program,k)]));
+    const u = Object.fromEntries(["uRotation","uProjection","uLift","uColor","uFinish"].map(k=>[k,gl.getUniformLocation(program,k)]));
+    const buffers = scene.bufferViews.map(view=>{
+      const handle = gl.createBuffer();
+      gl.bindBuffer(view.target,handle);
+      gl.bufferData(view.target,new Uint8Array(bytes,binary + (view.byteOffset || 0),view.byteLength),gl.STATIC_DRAW);
+      return handle;
+    });
+    const surfaces = scene.meshes.flatMap(mesh=>mesh.primitives.map(p=>{
+      const material = scene.materials[p.material], pbr = material.pbrMetallicRoughness;
+      const kind = material.name === "Поляризатор" ? 1 : material.name === "Лента" ? 2 : 0;
+      return {p: scene.accessors[p.attributes.POSITION], n:scene.accessors[p.attributes.NORMAL], i:scene.accessors[p.indices],
+        pigment:pbr.baseColorFactor.slice(0,3), finish:[pbr.metallicFactor,pbr.roughnessFactor,kind]};
+    }));
+    gl.enable(gl.DEPTH_TEST);
+    gl.enableVertexAttribArray(attributes.aPosition);
+    gl.enableVertexAttribArray(attributes.aNormal);
+    gl.clearColor(0,0,0,0);
+    return function render(yaw,zoom,width,height,density) {
+      const w = Math.max(1,Math.round(width*density)), h = Math.max(1,Math.round(height*density));
+      if (canvas.width!==w || canvas.height!==h) { canvas.width=w; canvas.height=h; }
+      gl.viewport(0,0,w,h);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      const scale = Math.min(height*.79/63.3,width*.76/47.0) * (1 + .82*zoom);
+      const tilt = -.23 - .07*Math.sin(yaw) - .12*zoom, roll = -.20 + .08*zoom;
+      const ca=Math.cos(yaw), sa=Math.sin(yaw), cb=Math.cos(tilt), sb=Math.sin(tilt), cc=Math.cos(roll), sc=Math.sin(roll);
+      gl.uniformMatrix3fv(u.uRotation,false,[
+        cc*ca-sc*sb*sa, sc*ca+cc*sb*sa,-cb*sa,
+        -sc*cb,cc*cb,sb,
+        cc*sa+sc*sb*ca,sc*sa-cc*sb*ca,cb*ca
+      ]);
+      gl.uniform2f(u.uProjection,2*scale/width,2*scale/height);
+      gl.uniform1f(u.uLift,.02-zoom*.83);
+      for (const s of surfaces) {
+        gl.bindBuffer(gl.ARRAY_BUFFER,buffers[s.p.bufferView]);
+        gl.vertexAttribPointer(attributes.aPosition,3,s.p.componentType,false,0,s.p.byteOffset || 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER,buffers[s.n.bufferView]);
+        gl.vertexAttribPointer(attributes.aNormal,3,s.n.componentType,false,0,s.n.byteOffset || 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buffers[s.i.bufferView]);
+        gl.uniform3fv(u.uColor,s.pigment);
+        gl.uniform3fv(u.uFinish,s.finish);
+        gl.drawElements(gl.TRIANGLES,s.i.count,s.i.componentType,s.i.byteOffset || 0);
       }
-      line = next;
-    }
+    };
   }
 
-  function drawFace(face) {
-    const normal = rotate(0, 0, face.reverse ? -1 : 1);
-    const center = rotate(face.x, face.y, face.z);
-    if (normal[2] * (camera - center[2]) - normal[0] * center[0] - normal[1] * center[1] <= 0) return;
-    path(face.ring.map(project));
-    if (typeof face.color === "string") {
-      context.fillStyle = face.color; context.fill();
-      return;
-    }
-    context.save(); context.clip();
-    context.fillStyle = "#292a2d"; context.fill();
-    mapTexture(face);
-    if (face.color === graphite) {
-      const x = viewWidth / 2 - scale * width * (1.16 + normal[0] * 1.48);
-      const softbox = context.createLinearGradient(x, viewHeight * .18, x + scale * width * 1.55, viewHeight * .64);
-      softbox.addColorStop(0, "rgba(217,230,233,0)");
-      softbox.addColorStop(.32, "rgba(210,230,242,.23)");
-      softbox.addColorStop(.54, "rgba(210,230,242,.065)");
-      softbox.addColorStop(1, "rgba(217,230,233,0)");
-      context.fillStyle = softbox;
-      context.fillRect(0, 0, viewWidth, viewHeight);
-    } else if (face.color === glass) {
-      const middle = project([face.x, face.y, face.z]);
-      const spread = scale * face.w;
-      const glint = context.createLinearGradient(middle[0] - spread * (.6 + sinYaw), middle[1] - spread * .4,
-                                                 middle[0] + spread * (.6 - sinYaw), middle[1] + spread * .4);
-      glint.addColorStop(0, "rgba(190,219,228,0)");
-      glint.addColorStop(.42, "rgba(190,219,228,.04)");
-      glint.addColorStop(.52, "rgba(215,234,241,.25)");
-      glint.addColorStop(.64, "rgba(190,219,228,0)");
-      context.fillStyle = glint; context.fillRect(0, 0, viewWidth, viewHeight);
-    }
-    context.restore();
-  }
-
-  function drawPart(part) {
-    for (const side of part.sides) {
-      const normal = rotate(...side.normal), pos = rotate(...side.corners[0]);
-      if (normal[2] * (camera - pos[2]) - normal[0] * pos[0] - normal[1] * pos[1] <= 0) continue;
-      path(side.corners.map(project));
-      context.fillStyle = material(normal, side.tone);
-      context.strokeStyle = context.fillStyle; context.lineWidth = .4;
-      context.fill(); context.stroke();
-    }
-    drawFace(part.bottom); drawFace(part.top);
-  }
-
-  function drawMicrophones() {
-    const normal = rotate(0, 1, 0);
-    const center = rotate(0, height / 2, 0);
-    if (normal[2] * (camera - center[2]) - normal[0] * center[0] - normal[1] * center[1] <= 0) return;
-    for (const channel of microphoneChannels) {
-      path(channel.map(project));
-      context.fillStyle = "#080a0b"; context.fill();
-    }
-  }
-
-  function drawShadow() {
-    const base = project([0, -height / 2, 0]);
-    const breadth = scale * width * (.35 + .7 * Math.abs(cosYaw));
-    const ground = Math.min(viewHeight * .93, base[1] + viewHeight * .048);
-    context.save();
-    context.globalAlpha = .87 * (1 - zoom);
-    context.translate(base[0] + sinYaw * scale * 4, ground);
-    context.rotate(-.08 + sinYaw * .06);
-    context.drawImage(shadow, -breadth * .84, -scale * 3.6, breadth * 2.1, scale * 7.2);
-    context.drawImage(shadow, -breadth * .48, -scale * 1.9, breadth * 1.13, scale * 3.8);
-    context.restore();
+  async function init() {
+    const gl = canvas.getContext("webgl",{alpha:true,antialias:true,powerPreference:"low-power",premultipliedAlpha:false});
+    if (!gl || location.protocol === "file:") { showStatic(); return; }
+    const response = await fetch("assets/zu-prototype.glb");
+    if (!response.ok) throw Error("Модель недоступна");
+    const bytes = await response.arrayBuffer();
+    renderer = loadScene(gl,bytes);
+    canvas.tabIndex=0;
+    motion.hidden=false;
+    stage.removeAttribute("data-rendered");
+    canvas.addEventListener("webglcontextlost",e=>{
+      e.preventDefault();
+      renderer=null;
+      cancelAnimationFrame(frame);
+      frame=0;
+      showStatic();
+    },{once:true});
+    canvas.addEventListener("webglcontextrestored",()=>{ init().catch(()=>showStatic()); },{once:true});
+    updateControls();
+    refresh();
   }
 
   function draw() {
+    if (!renderer) return;
     const box = canvas.getBoundingClientRect();
-    viewWidth = box.width; viewHeight = box.height;
-    if (!viewWidth || !viewHeight) return;
-    density = Math.min(window.devicePixelRatio || 1, 1.8);
-    const pixelWidth = Math.round(viewWidth * density), pixelHeight = Math.round(viewHeight * density);
-    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
-      canvas.width = pixelWidth; canvas.height = pixelHeight;
-    }
-    context.setTransform(density, 0, 0, density, 0, 0);
-    context.clearRect(0, 0, viewWidth, viewHeight);
-    const edge = Math.sin(yaw);
-    const tilt = .18 + .07 * edge + .16 * zoom;
-    scale = Math.min(viewHeight * .75 / height, viewWidth * .77 / (width + height * .13));
-    scale *= (1 + .035 * Math.abs(edge)) * (1 + 1.18 * zoom);
-    centerY = viewHeight * (.48 + .38 * zoom);
-    sinYaw = edge; cosYaw = Math.cos(yaw);
-    sinTilt = Math.sin(tilt); cosTilt = Math.cos(tilt);
-    drawShadow();
-    drawPart(body); drawMicrophones();
-    if (cosYaw * cosTilt > .013) {
-      drawFace(displayRecess); drawFace(windowInsert); drawFace(keyOpening); drawPart(button);
-    }
-    const facing = Math.cos(yaw);
-    const label = zoom > .65 ? "Дисплей и кнопка" : Math.abs(facing) < .4 ? "Торец" : facing > 0 ? "Лицевая сторона" : "Спинка";
-    if (angleLabel && angleLabel.textContent !== label) angleLabel.textContent = label;
-    if (stage && stage.dataset.rendered !== "true") {
-      stage.dataset.rendered = "true";
-      requestMeasure();
-    }
+    viewWidth=box.width;
+    if (!viewWidth || !box.height) return;
+    renderer(yaw,zoom,viewWidth,box.height,Math.min(devicePixelRatio || 1,1.7));
+    const facing=Math.cos(yaw);
+    const caption = zoom>.65 ? angles.detail : Math.abs(facing)<.4 ? angles.side : facing>0 ? angles.front : angles.back;
+    if (angleLabel.textContent!==caption) angleLabel.textContent=caption;
+    if (stage.dataset.rendered !== "true") { stage.dataset.rendered="true"; requestMeasure(); }
   }
 
   function angleAt(fraction) {
-    return Math.PI * fraction + homeAngle * Math.max(0, 1 - 2 * fraction) ** 2;
+    return turn * fraction + homeAngle * Math.max(0, 1 - 2 * fraction) ** 2;
   }
 
   function measureSequence(force = false, fromScroll = false) {
@@ -371,7 +235,7 @@
   }
 
   function requestDraw() {
-    if (inView && !document.hidden && !frame) frame = requestAnimationFrame(loop);
+    if (renderer && inView && !document.hidden && !frame) frame = requestAnimationFrame(loop);
   }
 
   function loop(now) {
@@ -448,6 +312,7 @@
     updateControls(); refresh();
   });
   views.forEach(view => view.addEventListener("click", () => {
+    if (!renderer) { showStatic(view.dataset.modelView); return; }
     const target = { front: 0, side: Math.PI / 2, back: Math.PI, detail: -.20 }[view.dataset.modelView];
     if (target === undefined) return;
     holdView();
@@ -512,4 +377,5 @@
   sizes.observe(canvas);
   if (sequence && pin) { sizes.observe(sequence); sizes.observe(pin); }
   updateControls();
+  init().catch(() => showStatic());
 })();

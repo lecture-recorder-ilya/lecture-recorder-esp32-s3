@@ -53,8 +53,8 @@
     canvas.height = Math.max(1, Math.round(height * ratio));
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     lineColor = context.createLinearGradient(0, height, width, 0);
-    lineColor.addColorStop(0, "#688c96"); lineColor.addColorStop(.30, "#9fc6ca");
-    lineColor.addColorStop(.62, "#e5ede3"); lineColor.addColorStop(.81, "#e8c9a0"); lineColor.addColorStop(1, "#93afb2");
+    lineColor.addColorStop(0, "#8d8277"); lineColor.addColorStop(.30, "#c6b4a3");
+    lineColor.addColorStop(.62, "#f0e9d8"); lineColor.addColorStop(.81, "#ffac91"); lineColor.addColorStop(1, "#b8a79d");
     requestRibbon();
   }
   function drawRibbon(now) {

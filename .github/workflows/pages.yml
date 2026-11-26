@@ -32,6 +32,7 @@ jobs:
           node --check site/motion.js
           node --check site/library.js
           test -s site/assets/recorder-poster.webp
+          test -s site/assets/zu-prototype.glb
           test -s site/assets/controls.webp
           test -s site/library.html
       - name: Проверить поворот корпуса в браузере
