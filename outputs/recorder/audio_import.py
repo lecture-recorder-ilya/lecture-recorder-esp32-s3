@@ -93,9 +93,13 @@ def normalize(source, target, project, run=subprocess.run):
     if Path('/usr/bin/afconvert').exists():
         converters.append(['/usr/bin/afconvert', '-f', 'WAVE', '-d', 'LEI16@16000', '-c', '1', '--mix', str(source), str(target)])
     decoder = project / 'outputs/recorder/media_decode.py'
-    interpreter = project / 'work/asr-env/bin/python'
-    if decoder.is_file() and interpreter.is_file():
-        converters.append([str(interpreter), str(decoder), str(source), str(target)])
+    bundled = project / 'outputs/Запись лекций.app/Contents/Resources/MediaDecoder/media_decode.py'
+    recorder_python = project / 'work/esp-check-env/bin/python'
+    asr_python = project / 'work/asr-env/bin/python'
+    if bundled.is_file() and recorder_python.is_file():
+        converters.append([str(recorder_python), '-EsB', str(bundled), str(source), str(target)])
+    elif decoder.is_file() and asr_python.is_file():
+        converters.append([str(asr_python), str(decoder), str(source), str(target)])
     if not converters:
         raise ValueError('Не удалось открыть этот формат. Экспортируй запись в WAV, MP3 или M4A на Mac.')
     for command in converters:

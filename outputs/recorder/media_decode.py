@@ -17,7 +17,7 @@ def decode(source, target, max_seconds=8 * 3600):
     limit = round(max_seconds * 16000)
     written, origin = 0, None
     try:
-        with av.open(str(source)) as container, wave.open(str(temporary), 'wb') as output:
+        with av.open(str(source), options={'protocol_whitelist': 'file'}) as container, wave.open(str(temporary), 'wb') as output:
             if not container.streams.audio:
                 raise ValueError('В файле нет аудиодорожки.')
             output.setparams((1, 2, 16000, 0, 'NONE', 'not compressed'))
@@ -37,7 +37,7 @@ def decode(source, target, max_seconds=8 * 3600):
                     count = min(16000, start - written)
                     output.writeframesraw(bytes(count * 2))
                     written += count
-                data = frame.to_ndarray().astype('<i2', copy=False).tobytes()
+                data = memoryview(frame.planes[0]).cast('B')[:frame.samples * 2]
                 if len(data) != frame.samples * 2:
                     raise ValueError('Не удалось подготовить монофонический звук.')
                 output.writeframesraw(data)
