@@ -38,19 +38,15 @@
     radial-gradient(ellipse at 78% 34%, #7292a2 0%, #354d5c 18%, transparent 48%),
     linear-gradient(153deg, #263946 0%, #182834 33%, #1e333e 54%, #0b1014 83%, #030405 100%);
 }
-.product-hero .acoustic-field { perspective: 600px; }
 .product-hero .acoustic-field::before {
-  inset: -18% -38% -71% -13%;
-  transform: rotateX(68deg) rotateZ(-14deg) translate3d(0,calc(var(--model-progress,0) * 4%),0);
-  transform-origin: 65% 61%;
-  background:
-    linear-gradient(98deg, transparent 0 43%, #afc9d875 47%, #5f778580 50%, transparent 60%),
-    repeating-linear-gradient(91deg, #18293200 0 3.4rem, #90adba57 3.45rem, #0b141bbd 3.55rem, transparent 3.7rem 7rem),
-    repeating-linear-gradient(0deg, transparent 0 4.4rem, #b9cbd125 4.46rem, #0b151c78 4.52rem, transparent 4.6rem 8.3rem);
-  mask-image: linear-gradient(transparent 2%, #000 46%, #0008 90%);
+  inset: -5%;
+  transform: translate3d(calc(var(--model-progress,0) * -2.4%),0,0) scale(1.05);
+  background: linear-gradient(139deg,#1a354e69,#223b4a18 52%,#06111755),url("assets/zu-board-macro.webp") 50% 53% / cover no-repeat;
+  opacity: .76;
+  mask-image: linear-gradient(180deg,#000 77%,transparent);
 }
 .product-hero .acoustic-field::after {
-  background: linear-gradient(90deg,#071018a3,transparent 57%), linear-gradient(0deg,#030405,transparent 30%,transparent 88%,#0a141940);
+  background: linear-gradient(90deg,#071018cb,transparent 56%),linear-gradient(0deg,#030405,transparent 37%,transparent 87%,#0a141940);
 }
 .product-hero #device-model,.product-hero .model-poster { left: 42%; top: -1%; width: 52%; height: 103%; }
 .product-hero .model-stage[data-rendered=true]::after { left: 54%; width: 28%; bottom: 11%; background: #030709; opacity: .85; filter: blur(.8rem); }
@@ -148,5 +144,5 @@
 }
 @media(prefers-reduced-motion:reduce) {
   .product-page .top { transition: none; }
-  .product-hero .acoustic-field::before { transform: rotateX(68deg) rotateZ(-14deg); }
+  .product-hero .acoustic-field::before { transform: none; }
 }
